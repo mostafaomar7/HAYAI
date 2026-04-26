@@ -1,0 +1,222 @@
+/* --- Global & Layout --- */
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.login-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+/* --- Left Section (Form) --- */
+.form-section {
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 60px;
+  box-sizing: border-box;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logo {
+  height: 45px;
+  object-fit: contain;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #F3F4F6;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.lang-btn:hover {
+  background-color: #E5E7EB;
+}
+
+/* Form Container */
+.form-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.form-titles {
+  margin-bottom: 32px;
+}
+
+.form-titles h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.form-titles p {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* Input Groups */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.input-group input {
+  background-color: #F3F4F6;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.input-group input::placeholder {
+  color: #9CA3AF;
+}
+
+.input-group input:focus {
+  background-color: #ffffff;
+  border-color: #1976D2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+/* Password Wrapper for Eye Icon */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 45px; /* Make room for the icon */
+  box-sizing: border-box;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eye-icon:hover svg {
+  stroke: #4B5563;
+}
+
+/* Submit Button */
+.login-btn {
+  background-color: #1976D2; /* Exact blue from design */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #1565C0;
+}
+
+/* --- Right Section (Image/Banner) --- */
+.image-section {
+  flex: 0 0 55%;
+  background-color: #2F80ED; /* Baseline fallback blue */
+  background: linear-gradient(135deg, #4A90E2 0%, #1976D2 100%);
+  border-radius: 24px;
+  margin: 16px 16px 16px 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.image-overlay-content {
+  padding: 60px 80px 20px;
+  color: #ffffff;
+  z-index: 2;
+}
+
+.image-overlay-content h2 {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.image-overlay-content p {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.home-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  /* Adjust based on whether home.png is just the UI mockups or includes the blue background */
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 992px) {
+  .form-section {
+    flex: 1;
+    padding: 30px;
+  }
+  .image-section {
+    display: none; /* Hide image section on mobile/tablets */
+  }
+}

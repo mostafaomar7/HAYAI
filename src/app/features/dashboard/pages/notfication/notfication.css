@@ -1,0 +1,118 @@
+:host {
+  display: block;
+  background-color: #F8FAFC;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.page-container {
+  max-width: 1000px; /* حجم مناسب عشان الفورم متكونش ممطوطة أوي في الشاشات الكبيرة */
+  margin: 0 auto;
+}
+
+.notification-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #F1F5F9;
+}
+
+/* ================= Form Groups ================= */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+/* تنسيق الـ Input والـ Textarea */
+input[type="text"],
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #F8FAFC; /* لون رمادي فاتح جداً زي الديزاين */
+  border: 1px solid #F1F5F9;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+  font-family: inherit;
+}
+
+textarea {
+  resize: vertical; /* بيسمح لليوزر يكبر الطول بس مش العرض */
+  min-height: 120px;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #3B82F6; /* أزرق خفيف عند التحديد */
+  background-color: #ffffff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9CA3AF;
+}
+
+/* ================= Custom Select ================= */
+.custom-select {
+  position: relative;
+  max-width: 320px; /* ده بيخلي الـ Dropdown حجمه صغير زي الصورة ومياخدش العرض كله */
+}
+
+.custom-select select {
+  width: 100%;
+  appearance: none;
+  background-color: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4B5563;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  /* السهم بتاع الـ Dropdown */
+  background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236B7280" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>');
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+}
+
+.custom-select select:focus {
+  border-color: #3B82F6;
+  background-color: #ffffff;
+}
+
+/* ================= Actions / Button ================= */
+.form-actions {
+  display: flex;
+  justify-content: flex-end; /* بيودي الزرار لأقصى اليمين */
+  margin-top: 32px;
+}
+
+.send-btn {
+  background-color: #2563EB; /* الأزرق المميز */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.send-btn:hover {
+  background-color: #1D4ED8; /* بيغمق شوية لما تعمل Hover */
+}

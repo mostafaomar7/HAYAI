@@ -1,0 +1,380 @@
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.page-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+/* ================= Tabs Styling ================= */
+.main-tabs-wrapper {
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 24px;
+  overflow-x: auto; 
+}
+
+.main-tabs {
+  display: flex;
+  gap: 24px;
+  min-width: max-content;
+}
+
+.main-tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.main-tab-btn:hover {
+  color: #374151;
+}
+
+.main-tab-btn.active {
+  color: #2563EB; /* الأزرق */
+  border-bottom-color: #2563EB;
+  font-weight: 600;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.status-tab-btn {
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-tab-btn.active {
+  background-color: #2563EB;
+  color: #ffffff;
+  border-color: #2563EB;
+}
+
+/* ================= Table Card ================= */
+.table-card {
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: visible; /* مهم عشان الفلتر بوب أب يظهر برا الكارت لو احتاجه */
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-area h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.badge {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.actions-area {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 240px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  margin-left: 8px;
+  font-size: 14px;
+  width: 100%;
+}
+
+/* Filter Button & Popup */
+.filter-wrapper {
+  position: relative;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+
+.filter-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  padding: 20px;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.custom-select select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #6B7280;
+  outline: none;
+  appearance: none;
+  background: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236B7280" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>') no-repeat right 12px center;
+  background-size: 16px;
+}
+
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.reset-btn {
+  background: none;
+  border: none;
+  color: #2563EB;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.apply-btn {
+  background-color: #2563EB;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ================= Data Table ================= */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th, .data-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #E5E7EB;
+  font-size: 14px;
+}
+
+.data-table th {
+  font-weight: 600;
+  color: #4B5563;
+  background-color: #ffffff;
+}
+
+.data-table td {
+  color: #111827;
+  font-weight: 500;
+}
+
+.text-gray {
+  color: #6B7280 !important;
+  font-weight: 400 !important;
+}
+
+.checkbox-col {
+  width: 40px;
+  padding-right: 0 !important;
+}
+
+/* User Avatar & Name */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Status Badges */
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.status-badge-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Pending (Orange) */
+.status-badge-pill.pending {
+  background-color: #FFF7ED;
+  color: #C2410C;
+  border-color: #FFEDD5;
+}
+.status-badge-pill.pending .dot { background-color: #F97316; }
+
+/* In Progress (Green) */
+.status-badge-pill.in-progress {
+  background-color: #F0FDF4;
+  color: #15803D;
+  border-color: #DCFCE7;
+}
+.status-badge-pill.in-progress .dot { background-color: #22C55E; }
+
+/* Complete (Blue) */
+.status-badge-pill.complete {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #DBEAFE;
+}
+.status-badge-pill.complete .dot { background-color: #3B82F6; }
+
+/* ================= Pagination Footer ================= */
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-num {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4B5563;
+  cursor: pointer;
+}
+
+.page-num.active {
+  background-color: #F3F4F6;
+  color: #111827;
+}
+
+.dots {
+  color: #6B7280;
+  margin: 0 4px;
+}

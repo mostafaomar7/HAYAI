@@ -1,0 +1,66 @@
+<div class="page-container">
+  <header class="top-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      Plan Details
+    </button>
+    <div class="header-actions">
+      <button class="action-btn outline" (click)="goToEdit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5z" /></svg> Edit
+      </button>
+      <button class="action-btn outline">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Delete
+      </button>
+    </div>
+  </header>
+
+  <div class="content-wrapper">
+    <section class="info-section">
+      <h3>Plan Overview</h3>
+      <div class="grid-4">
+        <div><label>Plan Name</label><span>Free plan</span></div>
+        <div><label>Plan Type</label><span>Hospital</span></div>
+        <div><label>Price</label><span>$299</span></div>
+        <div><label>Discount</label><span>12% off</span></div>
+        <div><label>Duration</label><span>1 month</span></div>
+        <div><label>Status</label><span>Active</span></div>
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h3>Description</h3>
+      <p>Basic presence in the system</p>
+    </section>
+
+    <section class="info-section">
+      <h3>Modules</h3>
+      <div class="modules-pills">
+        <div class="pill"><span class="dot"></span> Patient Management</div>
+        <div class="pill"><span class="dot"></span> Appointments</div>
+        <div class="pill"><span class="dot"></span> Analytics</div>
+        <div class="pill"><span class="dot"></span> Billing</div>
+        <div class="pill"><span class="dot"></span> Inventory</div>
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h3>Modules Details</h3>
+      <div class="module-detail-item">
+        <h4>Patient Management</h4>
+        <p>Complete patient record management system</p>
+      </div>
+      <div class="module-detail-item">
+        <h4>Appointments</h4>
+        <p>Schedule and manage patient appointments</p>
+      </div>
+      <div class="module-detail-item">
+        <h4>Analytics</h4>
+        <p>Advanced analytics and reporting dashboard</p>
+      </div>
+      <div class="module-detail-item">
+        <h4>Billing</h4>
+        <p>Integrated billing and payment processing</p>
+      </div>
+    </section>
+  </div>
+</div>

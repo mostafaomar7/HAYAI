@@ -1,0 +1,149 @@
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background-color: #F8FAFC;
+  min-height: 100vh;
+}
+
+.details-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  padding: 0;
+}
+
+.details-header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* Form Container */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+/* Input Field */
+.form-group input {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: #93C5FD;
+}
+
+/* Upload Box (Dashed) */
+.upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: #EFF6FF; /* أزرق فاتح جداً */
+  border: 1px dashed #93C5FD;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.upload-box:hover {
+  background-color: #DBEAFE;
+}
+
+.upload-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.upload-subtitle {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* Image Preview */
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Red Remove Button */
+.remove-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #EF4444; /* أحمر زي الديزاين بالظبط */
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.remove-btn:hover {
+  background-color: #DC2626;
+  transform: scale(1.05);
+}

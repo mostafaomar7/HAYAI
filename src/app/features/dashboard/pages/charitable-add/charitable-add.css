@@ -1,0 +1,377 @@
+:host {
+  display: block;
+  background-color: #F8FAFC;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  padding-bottom: 40px;
+}
+
+.form-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header */
+.top-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  padding: 0;
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* Form Sections */
+.form-section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #F8FAFC;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: #3B82F6;
+}
+
+input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status Buttons */
+.status-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.status-btn {
+  padding: 10px 40px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background-color: #ffffff;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-btn.active {
+  background-color: #EFF6FF;
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+/* Upload Area */
+.upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: #EFF6FF;
+  border: 1px dashed #93C5FD;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.upload-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.upload-subtitle {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-img-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #EF4444;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Schedule Grid */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.schedule-card {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #ffffff;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.day-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Custom Toggle Switch CSS */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #D1D5DB;
+  transition: .3s;
+  border-radius: 20px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px; width: 16px;
+  left: 2px; bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: #3B82F6; }
+input:checked + .slider:before { transform: translateX(16px); }
+
+.time-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.time-inputs input {
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.time-inputs.disabled input {
+  background-color: #F3F4F6;
+  border-color: #F3F4F6;
+}
+
+/* Add Rows (Services & Contacts) */
+.add-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.flex-input {
+  flex: 1;
+}
+
+.btn-primary {
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  background-color: #2563EB;
+}
+
+/* Pills Grid (Services) */
+.pills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.service-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #F8FAFC;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.pill-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.blue-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #3B82F6;
+  border-radius: 50%;
+}
+
+.pill-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+/* Contacts Grid */
+.contacts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.contact-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: #F8FAFC;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.contact-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.contact-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6B7280;
+}
+
+/* Footer */
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-cancel {
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background-color: #F3F4F6;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .add-row {
+    flex-direction: column;
+  }
+}

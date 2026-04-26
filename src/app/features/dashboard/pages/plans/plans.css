@@ -1,0 +1,20 @@
+:host { display: block; font-family: 'Inter', sans-serif; background-color: #F8FAFC; min-height: 100vh; padding: 24px; }
+.page-container { max-width: 1200px; margin: 0 auto; }
+.top-actions { display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 24px; }
+.search-box { display: flex; align-items: center; background-color: #ffffff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 16px; width: 260px; }
+.search-box input { border: none; outline: none; margin-left: 8px; width: 100%; font-size: 14px; }
+.add-btn { background-color: #2563EB; color: #fff; border: none; border-radius: 8px; padding: 10px 32px; font-weight: 600; cursor: pointer; }
+
+.plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+.plan-card { background-color: #ffffff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #F3F4F6; cursor: pointer; transition: transform 0.2s; }
+.plan-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.plan-super-title { font-size: 14px; font-weight: 500; color: #111827; }
+.plan-main-title { font-size: 24px; font-weight: 700; color: #111827; margin: 4px 0; }
+.plan-desc { font-size: 13px; color: #6B7280; margin: 0; }
+.plan-badge { background-color: #EFF6FF; color: #2563EB; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.divider { height: 1px; background-color: #F3F4F6; margin: 20px 0; }
+.features-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.features-list li { display: flex; align-items: center; font-size: 14px; color: #374151; gap: 10px; }
+.features-list li.not-included { color: #9CA3AF; }
+.info-icon { margin-left: auto; color: #9CA3AF; }

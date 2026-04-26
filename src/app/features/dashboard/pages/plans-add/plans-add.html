@@ -1,0 +1,80 @@
+<div class="page-container">
+  <header class="top-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      Add plan
+    </button>
+  </header>
+
+  <div class="content-wrapper">
+    <section class="form-section">
+      <h3>Basic Information</h3>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Plan name</label>
+          <input type="text" placeholder="Enter plan name">
+        </div>
+        <div class="form-group">
+          <label>Plan type</label>
+          <div class="custom-select"><select><option>Select plan type</option></select></div>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <div class="custom-select"><select><option>Select status</option></select></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h3>Pricing</h3>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Price</label>
+          <input type="text" placeholder="Enter plan price">
+        </div>
+        <div class="form-group">
+          <label>Number of months</label>
+          <input type="text" placeholder="Enter number of months">
+        </div>
+        <div class="form-group">
+          <label>Discount</label>
+          <input type="text" placeholder="Enter discount">
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h3>Modules</h3>
+      <div class="modules-grid">
+        @for (mod of modules; track mod.id) {
+          <label class="module-checkbox-card" [class.checked]="mod.checked">
+            <input type="checkbox" [(ngModel)]="mod.checked">
+            <span class="custom-checkbox">
+              </span>
+            {{ mod.name }}
+          </label>
+        }
+      </div>
+    </section>
+
+    @if (checkedModules.length > 0) {
+      <section class="form-section">
+        <h3>Modules details</h3>
+        
+        @for (mod of checkedModules; track mod.id) {
+          <div class="form-group module-detail-input">
+            <label>{{ mod.name }}</label>
+            <span class="sub-label">Description</span>
+            <input type="text" [placeholder]="'Enter ' + mod.name + ' description'">
+          </div>
+        }
+      </section>
+    }
+
+  </div>
+
+  <footer class="form-footer">
+    <button class="btn-cancel" (click)="goBack()">Cancel</button>
+    <button class="btn-primary">Save Changes</button>
+  </footer>
+</div>

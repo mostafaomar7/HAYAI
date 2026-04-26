@@ -1,0 +1,246 @@
+/* الأكواد القديمة زي ما هي */
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background-color: #ffffff;
+  height: 80px; 
+  box-sizing: border-box;
+  border-bottom: 1px solid #F1F5F9; 
+}
+
+.navbar-title h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #F8FAFC;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #475569;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.user-profile:hover {
+  background-color: #F8FAFC;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.user-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.user-email {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.2;
+}
+
+/* =========================================
+   إضافات الـ Notification Panel الجديدة
+   ========================================= */
+
+.notification-wrapper {
+  position: relative; /* مهم عشان القائمة تتربط بمكان الزرار */
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -80px; /* لضبط المحاذاة مع البروفايل */
+  width: 380px;
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+/* Header */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+/* Tabs */
+.panel-tabs {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  padding: 10px 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.tab-btn.active {
+  color: #3B82F6;
+}
+
+/* الخط الأزرق تحت الـ Tab النشط */
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #3B82F6;
+}
+
+.tab-divider {
+  width: 1px;
+  height: 14px;
+  background-color: #E5E7EB;
+  margin: 0 16px;
+}
+
+/* Notification List */
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px 24px;
+  border-bottom: 1px solid #F3F4F6;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #F8FAFC;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-icon-wrapper {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #F0F4FA; /* نفس الدرجة الفاتحة اللي في التصميم */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 16px;
+}
+
+.notif-content {
+  flex: 1;
+  padding-right: 16px;
+}
+
+.notif-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.notif-content p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+.notif-time {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #EF4444; /* أحمر الإشعار */
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}

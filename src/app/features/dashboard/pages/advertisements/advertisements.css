@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+.page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header Actions */
+.actions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.left-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 16px;
+  width: 250px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  margin-left: 8px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.add-btn {
+  background-color: #1976D2; /* لون أزرق مطابق للديزاين */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-btn:hover { background-color: #1565C0; }
+
+/* Grid & Cards */
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.ad-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #F3F4F6;
+}
+
+.card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background-color: #D1D5DB; /* لون مبدئي لو الصورة محملتش */
+}
+
+.ad-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Actions inside the image */
+.card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+
+.action-btn:hover { transform: scale(1.05); }
+.action-btn.delete:hover svg { stroke: #EF4444; } /* يحمر لما تعمل هافر ع المسح */
+
+.card-footer {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6B7280;
+}
