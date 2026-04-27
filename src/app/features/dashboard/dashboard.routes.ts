@@ -98,7 +98,73 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () => import('./pages/users/medical-issuance/medical-issuance').then(m => m.MedicalIssuance)
   },
   {
+    path: 'home-care',
+    loadComponent: () => import('./pages/users/home-care/home-care').then(m => m.HomeCare)
+  },
+  {
     path: 'therapy',
     loadComponent: () => import('./pages/users/physical-therapy/physical-therapy').then(m => m.PhysicalTherapy)
+  },
+  {
+    path: 'employment',
+    loadComponent: () => import('./pages/users/employment-office/employment-office').then(m => m.EmploymentOffice)
+  },
+  {
+    path: 'medical-devices',
+    loadComponent: () => import('./pages/users/medical-devices/medical-devices').then(m => m.MedicalDevices)
+  },
+  {
+    path: 'dialysis',
+    loadComponent: () => import('./pages/Centers/dialysis/dialysis').then(m => m.Dialysis)
+  },
+  {
+    path: 'dialysis-details/:id',
+    loadComponent: () => import('./pages/Centers/dialysis-details/dialysis-details').then(m => m.DialysisDetails)
+  },
+  {
+    path: 'dialysis-add',
+    loadComponent: () =>
+      import('./pages/Centers/dialysis-add/dialysis-add').then(m => m.DialysisAdd)
+  },
+  {
+    path: 'dialysis/edit/:id',
+    loadComponent: () =>
+      import('./pages/Centers/dialysis-details/dialysis-details').then(m => m.DialysisDetails)
+  },
+  {
+    path: 'HyperbaricOxygen',
+    loadComponent: () => import('./pages/Centers/hyperbaric-oxygen/hyperbaric-oxygen').then(m => m.HyperbaricOxygen)
+  },
+  {
+    path: 'HyperbaricOxygen-details/:id',
+    loadComponent: () => import('./pages/Centers/hyperbaric-oxygen-details/hyperbaric-oxygen-details').then(m => m.HyperbaricOxygenDetails)
+  },
+  {
+    path: 'HyperbaricOxygen-add',
+    loadComponent: () =>
+      import('./pages/Centers/hyperbaric-oxygen-add/hyperbaric-oxygen-add').then(m => m.HyperbaricOxygenAdd)
+  },
+  {
+    path: 'HyperbaricOxygen/edit/:id',
+    loadComponent: () =>
+      import('./pages/Centers/hyperbaric-oxygen-add/hyperbaric-oxygen-add').then(m => m.HyperbaricOxygenAdd)
+  },
+  {
+    path: 'Oncology',
+    loadComponent: () => import('./pages/Centers/oncology/oncology').then(m => m.Oncology)
+  },
+  {
+    path: 'Oncology-details/:id',
+    loadComponent: () => import('./pages/Centers/oncology-details/oncology-details').then(m => m.OncologyDetails)
+  },
+  {
+    path: 'Oncology-add',
+    loadComponent: () =>
+      import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
+  },
+  {
+    path: 'Oncology/edit/:id',
+    loadComponent: () =>
+      import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
   },
 ];

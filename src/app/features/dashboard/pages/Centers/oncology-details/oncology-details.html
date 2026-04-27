@@ -1,0 +1,66 @@
+<div class="page-container">
+  
+  <header class="top-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      Oncology Details
+    </button>
+    <div class="header-actions">
+      <button class="action-btn outline" (click)="goToEdit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5z" /></svg> Edit
+      </button>
+      <button class="action-btn outline">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Delete
+      </button>
+    </div>
+  </header>
+
+  <div class="banner-section">
+    <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80" alt="Banner" class="banner-img">
+    <div class="banner-title-row">
+      <h2>Healthcare For All</h2>
+      <span class="status-badge available">available</span>
+    </div>
+  </div>
+
+  <section class="details-section">
+    <h3>Description</h3>
+    <p>Established in 2010, Al Noor Hospital is a leading healthcare facility providing comprehensive medical services with a focus on patient safety and high-quality care.</p>
+  </section>
+
+  <section class="details-section">
+    <h3>Available Dates & Times</h3>
+    <div class="dates-grid">
+      @for (date of dates; track date.day) {
+        <div class="date-card">
+          <div class="day">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            {{ date.day }}
+          </div>
+          <div class="time" [class.not-available]="!date.available">{{ date.time }}</div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="details-section">
+    <h3>Notes</h3>
+    <p>Established in 2010, Al Noor Hospital is a leading healthcare facility providing comprehensive medical services with a focus on patient safety and high-quality care.</p>
+  </section>
+
+  <section class="details-section">
+    <h3>Contacts</h3>
+    <div class="contacts-grid">
+      @for (contact of contacts; track contact.phone) {
+        <div class="contact-card">
+          <h4>{{ contact.type }}</h4>
+          <div class="phone-info">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+            {{ contact.phone }}
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+</div>

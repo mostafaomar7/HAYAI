@@ -30,9 +30,9 @@ export const MENU_ITEMS: MenuItem[] = [
   { 
     id: 'Centers', label: 'Centers', iconName: 'centers', route: '', roles: ['admin'], hasDropdown: true,
     children: [
-      { id: 'Dialysis', label: 'Dialysis', route: '/dashboard/centers/dialysis' },
-      { id: 'Hyperbaric', label: 'Hyperbaric Oxygen', route: '/dashboard/centers/hyperbaric' },
-      { id: 'Oncology', label: 'Oncology', route: '/dashboard/centers/oncology' },
+      { id: 'Dialysis', label: 'Dialysis', route: '/dashboard/dialysis' },
+      { id: 'Hyperbaric', label: 'Hyperbaric Oxygen', route: '/dashboard/HyperbaricOxygen' },
+      { id: 'Oncology', label: 'Oncology', route: '/dashboard/Oncology' },
     ]
   },
   { 
