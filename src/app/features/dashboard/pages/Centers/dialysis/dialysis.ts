@@ -1,48 +1,54 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { CentersService, MedicalCenter } from '../../../../../core/services/centers.service';
 
 @Component({
   selector: 'app-dialysis',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './dialysis.html',
-  styleUrl: './dialysis.css',
+  styleUrl: './dialysis.css'
 })
 export class Dialysis {
   private router = inject(Router);
+  private svc = inject(CentersService);
+
+  loading = signal(true);
   showFilter = false;
+  search = signal('');
+  statusFilter = signal<'' | 'active' | 'inactive'>('');
+  centers = signal<MedicalCenter[]>([]);
 
-  // داتا وهمية للكروت
-  centers = Array(6).fill({
-    id: 1,
-    name: 'Healthcare For All',
-    location: 'Healthcare For All',
-    contacts: 3,
-    services: 5,
-    status: 'available',
-    image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  });
+  constructor() { this.load(); }
 
-  // التنقل لصفحة الإضافة
-  goToAdd() {
-    this.router.navigate(['/dashboard/dialysis-add']);
+  load() {
+    this.loading.set(true);
+    this.svc.list({
+      category: 'dialysis',
+      search: this.search() || undefined,
+      status: this.statusFilter() || undefined
+    }).subscribe({
+      next: r => { this.centers.set(r.items); this.loading.set(false); },
+      error: () => this.loading.set(false)
+    });
   }
 
-  // التنقل لصفحة التفاصيل
-  goToDetails(id: number) {
-    this.router.navigate(['/dashboard/dialysis-details', id]);
-  }
+  onSearch(value: string) { this.search.set(value); this.load(); }
+  onStatusChange(value: string) { this.statusFilter.set(value as any); this.load(); }
 
-  // التنقل للتعديل من الكارت نفسه
+  goToAdd() { this.router.navigate(['/dashboard/dialysis-add']); }
+  goToDetails(id: number) { this.router.navigate(['/dashboard/dialysis-details', id]); }
+
   editCenter(event: Event, id: number) {
-    event.stopPropagation(); // عشان ميفتحش التفاصيل لما تدوس على تعديل
-    this.router.navigate(['/dashboard/dialysis/edit', id]); // تقدر تخليها تروح للـ Add برضه
+    event.stopPropagation();
+    this.router.navigate(['/dashboard/dialysis/edit', id]);
   }
 
   deleteCenter(event: Event, id: number) {
     event.stopPropagation();
-    console.log('Delete Center', id);
+    if (!confirm('Delete this center?')) return;
+    this.svc.delete(id).subscribe(() => this.load());
   }
 
   toggleFilter(event: Event) {
@@ -50,12 +56,8 @@ export class Dialysis {
     this.showFilter = !this.showFilter;
   }
 
-  preventClose(event: Event) {
-    event.stopPropagation();
-  }
+  preventClose(event: Event) { event.stopPropagation(); }
 
   @HostListener('document:click')
-  closeFilter() {
-    this.showFilter = false;
-  }
+  closeFilter() { this.showFilter = false; }
 }

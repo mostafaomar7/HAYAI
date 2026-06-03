@@ -1,0 +1,65 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>Hospital Verifications</h2>
+        <span class="badge">{{ total() }} hospitals</span>
+      </div>
+
+      <div class="actions-area" style="gap:8px;">
+        <button class="filter-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">Pending</button>
+        <button class="filter-btn" [class.active]="status() === 'verified'" (click)="setStatus('verified')">Verified</button>
+        <button class="filter-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">Rejected</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Hospital</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th class="action-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="6" style="padding:24px;color:#6B7280;">Loading…</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="6" style="padding:24px;color:#6B7280;">No hospitals in this state.</td></tr>
+          } @else {
+            @for (h of items(); track h.id) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <img [src]="h.logo || 'https://i.pravatar.cc/150'" class="avatar" alt="Logo">
+                    <span class="user-name">{{ h.name }}</span>
+                  </div>
+                </td>
+                <td class="text-gray">{{ h.email }}</td>
+                <td class="text-gray">{{ h.phone }}</td>
+                <td>
+                  <div class="status-badge"><span class="dot"></span>{{ h.verification_status }}</div>
+                </td>
+                <td class="text-gray">{{ h.created_at | date:'mediumDate' }}</td>
+                <td class="action-col" style="display:flex;gap:8px;">
+                  @if (h.verification_status === 'pending') {
+                    <button class="renew-btn" style="background:#10b981;" (click)="approve(h.id)">Approve</button>
+                    <button class="renew-btn" style="background:#ef4444;" (click)="reject(h.id)">Reject</button>
+                  } @else if (h.verification_status === 'rejected' && h.rejection_reason) {
+                    <span style="font-size:12px;color:#6B7280;">{{ h.rejection_reason }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

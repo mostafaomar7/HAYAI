@@ -1,0 +1,41 @@
+<div class="page-container">
+  <div class="table-card">
+    <div class="table-header">
+      <div class="title-area">
+        <h2>Broadcast History</h2>
+        <span class="badge">{{ total() }} broadcasts</span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Body</th>
+            <th>Audience</th>
+            <th>Recipients</th>
+            <th>Sent at</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="5" style="padding:24px;color:#6B7280;">Loading…</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="5" style="padding:24px;color:#6B7280;">No broadcasts yet.</td></tr>
+          } @else {
+            @for (b of items(); track b.id) {
+              <tr>
+                <td><strong>{{ b.title }}</strong></td>
+                <td class="text-gray" style="max-width:360px;">{{ b.body }}</td>
+                <td class="text-gray">{{ audienceLabel(b.target_audience) }}</td>
+                <td class="text-gray">{{ b.queued_recipients }}</td>
+                <td class="text-gray">{{ b.sent_at | date:'medium' }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

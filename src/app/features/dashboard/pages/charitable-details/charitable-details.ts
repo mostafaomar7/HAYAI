@@ -1,28 +1,46 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CharitableOrganization, CharitableService } from '../../../../core/services/charitable.service';
 
 @Component({
   selector: 'app-charitable-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './charitable-details.html',
-  styleUrl: './charitable-details.css',
+  styleUrl: './charitable-details.css'
 })
 export class CharitableDetails {
   private location = inject(Location);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private svc = inject(CharitableService);
 
-  // مصفوفة المواعيد عشان الـ HTML يكون أنظف
-  schedule = [
-    { day: 'Saturday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Sunday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Monday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Tuesday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Wednesday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Thursday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Friday', time: 'Not Available', available: false },
-  ];
+  loading = signal(true);
+  org = signal<CharitableOrganization | null>(null);
 
-  goBack() {
-    this.location.back();
+  constructor() {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (id) {
+      this.svc.get(id).subscribe({
+        next: org => { this.org.set(org); this.loading.set(false); },
+        error: () => this.loading.set(false)
+      });
+    } else {
+      this.loading.set(false);
+    }
+  }
+
+  goBack() { this.location.back(); }
+
+  goToEdit() {
+    const id = this.org()?.id;
+    if (id) this.router.navigate(['/dashboard/charitable/edit', id]);
+  }
+
+  onDelete() {
+    const id = this.org()?.id;
+    if (!id || !confirm('Delete this organization?')) return;
+    this.svc.delete(id).subscribe(() => this.router.navigate(['/dashboard/charitable']));
   }
 }

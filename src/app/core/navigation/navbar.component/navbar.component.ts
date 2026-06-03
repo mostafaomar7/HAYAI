@@ -1,29 +1,104 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { NotificationsService, NotificationCategory, SystemNotification } from '../../services/notifications.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
+  imports: [CommonModule],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
-  isNotificationOpen = false;
-  activeTab = 'userActivity';
+  private auth = inject(AuthService);
+  private notifs = inject(NotificationsService);
+  private router = inject(Router);
 
-  // بيانات الـ Mockup للإشعارات
-  notifications = [
-    { id: 1, type: 'hospital', title: 'New Hospital Registration', desc: 'Cairo Medical Center is waiting for activation', time: '15 min ago', unread: true },
-    { id: 2, type: 'doctor', title: 'New Doctor Signup', desc: 'Dr. Mohamed Ali is waiting for activation', time: '30 min ago', unread: true },
-    { id: 3, type: 'user', title: 'New Consultation Request', desc: 'Sara Mohamed booked a consultation with Dr. Khaled', time: '30 min ago', unread: false },
-    { id: 4, type: 'clinic', title: 'Clinic Registration', desc: 'Smile Clinic is waiting for activation', time: '30 min ago', unread: true },
-    { id: 5, type: 'user', title: 'New Lab Request', desc: 'Ahmed Ali requested a blood test from Alfa Lab', time: '30 min ago', unread: false }
-  ];
+  user = this.auth.currentUser;
+  userName = computed(() => this.user()?.name ?? 'Admin');
+  userEmail = computed(() => this.user()?.email ?? '');
+  userAvatar = computed(() => this.user()?.profile_image ?? 'assets/avatar.png');
+
+  isNotificationOpen = false;
+  isUserMenuOpen = false;
+  activeTab: NotificationCategory = 'userActivity';
+
+  notifications = signal<SystemNotification[]>([]);
+  unreadTotal = signal(0);
+  loadingFeed = signal(false);
+
+  constructor() {
+    this.refreshUnreadCount();
+  }
+
+  refreshUnreadCount() {
+    this.notifs.unreadCount().subscribe({
+      next: c => this.unreadTotal.set(c.total),
+      error: () => {}
+    });
+  }
 
   toggleNotifications() {
     this.isNotificationOpen = !this.isNotificationOpen;
+    if (this.isNotificationOpen) this.loadFeed();
   }
 
-  setActiveTab(tab: string) {
+  setActiveTab(tab: NotificationCategory) {
     this.activeTab = tab;
+    this.loadFeed();
+  }
+
+  loadFeed() {
+    this.loadingFeed.set(true);
+    this.notifs.list({ category: this.activeTab }).subscribe({
+      next: r => { this.notifications.set(r.items); this.loadingFeed.set(false); },
+      error: () => this.loadingFeed.set(false)
+    });
+  }
+
+  markRead(notif: SystemNotification) {
+    if (!notif.unread) {
+      if (notif.link) this.router.navigateByUrl(notif.link);
+      return;
+    }
+    this.notifs.markRead(notif.id).subscribe(() => {
+      this.notifications.update(list =>
+        list.map(n => (n.id === notif.id ? { ...n, unread: false } : n))
+      );
+      this.refreshUnreadCount();
+      if (notif.link) this.router.navigateByUrl(notif.link);
+    });
+  }
+
+  markAllRead() {
+    this.notifs.markAllRead(this.activeTab).subscribe(() => {
+      this.loadFeed();
+      this.refreshUnreadCount();
+    });
+  }
+
+  toggleUserMenu() {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+    if (this.isUserMenuOpen) this.isNotificationOpen = false;
+  }
+
+  goToProfile() {
+    this.isUserMenuOpen = false;
+    this.router.navigate(['/dashboard/profile']);
+  }
+
+  goToChangePassword() {
+    this.isUserMenuOpen = false;
+    this.router.navigate(['/dashboard/change-password']);
+  }
+
+  logout() {
+    this.isUserMenuOpen = false;
+    this.auth.logout().subscribe({
+      next: () => this.router.navigate(['/login']),
+      error: () => this.router.navigate(['/login'])
+    });
   }
 }

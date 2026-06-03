@@ -1,32 +1,35 @@
 <div class="page-container">
-  
+
   <div class="notification-card">
-    
+
     <div class="form-group">
       <label>Notification title</label>
-      <input type="text" placeholder="Enter notification title" />
+      <input type="text" placeholder="Enter notification title" [(ngModel)]="title" name="title" />
     </div>
 
     <div class="form-group">
       <label>Notification details</label>
-      <textarea placeholder="Write your message here ..." rows="6"></textarea>
+      <textarea placeholder="Write your message here ..." rows="6" [(ngModel)]="body" name="body"></textarea>
     </div>
 
     <div class="form-group">
       <label>Target Audience</label>
       <div class="custom-select">
-        <select>
-          <option value="" disabled selected>Select user type</option>
-          <option value="all">All Users</option>
-          <option value="doctors">Doctors</option>
-          <option value="hospitals">Hospitals</option>
-          <option value="patients">Patients</option>
+        <select [(ngModel)]="audience" name="audience">
+          @for (a of audiences; track a.value) {
+            <option [value]="a.value">{{ a.label }}</option>
+          }
         </select>
       </div>
     </div>
 
+    @if (errorMsg()) { <div style="color:#dc2626;font-size:13px;">{{ errorMsg() }}</div> }
+    @if (successMsg()) { <div style="color:#10b981;font-size:13px;">{{ successMsg() }}</div> }
+
     <div class="form-actions">
-      <button class="send-btn" (click)="sendNotification()">Send Notification</button>
+      <button class="send-btn" [disabled]="sending()" (click)="sendNotification()">
+        {{ sending() ? 'Sending…' : 'Send Notification' }}
+      </button>
     </div>
 
   </div>

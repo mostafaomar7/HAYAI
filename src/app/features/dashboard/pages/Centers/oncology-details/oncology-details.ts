@@ -1,35 +1,44 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CentersService, MedicalCenter } from '../../../../../core/services/centers.service';
 
 @Component({
   selector: 'app-oncology-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './oncology-details.html',
-  styleUrl: './oncology-details.css',
+  styleUrl: './oncology-details.css'
 })
 export class OncologyDetails {
   private location = inject(Location);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private svc = inject(CentersService);
 
-  // داتا وهمية للعرض
-  dates = [
-    { day: 'Saturday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Sunday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Monday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Tuesday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Wednesday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Thursday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Friday', time: 'Not Available', available: false }
-  ];
+  loading = signal(true);
+  center = signal<MedicalCenter | null>(null);
 
-  contacts = [
-    { type: 'Hospital', phone: '01119253120' },
-    { type: 'Home Care Manager (Mohamed ali)', phone: '01119253120' },
-    { type: 'Complaints', phone: '01119253120' }
-  ];
+  constructor() {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (id) {
+      this.svc.get(id).subscribe({
+        next: c => { this.center.set(c); this.loading.set(false); },
+        error: () => this.loading.set(false)
+      });
+    } else {
+      this.loading.set(false);
+    }
+  }
 
   goBack() { this.location.back(); }
-  goToEdit() { this.router.navigate(['/dashboard/Oncology-add']); } 
+  goToEdit() {
+    const id = this.center()?.id;
+    if (id) this.router.navigate(['/dashboard/Oncology/edit', id]);
+  }
+  onDelete() {
+    const id = this.center()?.id;
+    if (!id || !confirm('Delete this center?')) return;
+    this.svc.delete(id).subscribe(() => this.router.navigate(['/dashboard/Oncology']));
+  }
 }

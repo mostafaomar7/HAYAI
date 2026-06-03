@@ -1,32 +1,80 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RenewalItem, SubscriptionsService } from '../../../../core/services/subscriptions.service';
 
 @Component({
   selector: 'app-renewal',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './renewal.html',
-  styleUrl: './renewal.css',
+  styleUrl: './renewal.css'
 })
 export class Renewal {
-  // للتحكم في ظهور الفلتر
+  private svc = inject(SubscriptionsService);
+
+  loading = signal(true);
   showFilter = false;
+  search = signal('');
+  userTypeFilter = signal('');
+  planFilter = signal('');
+  renewalUsers = signal<RenewalItem[]>([]);
+  selectedIds = signal<Set<number>>(new Set());
 
-  // الداتا الوهمية للجدول
-  renewalUsers = [
-    { id: 1, name: 'Olivia Rhye', avatar: 'https://i.pravatar.cc/150?img=1', type: 'Doctor', plan: 'Practice', date: '2026-03-16' },
-    { id: 2, name: 'Phoenix Baker', avatar: 'https://i.pravatar.cc/150?img=2', type: 'Hospital', plan: 'Practice', date: '2026-02-05' },
-    { id: 3, name: 'Lana Steiner', avatar: 'https://i.pravatar.cc/150?img=3', type: 'Hospital', plan: 'Practice', date: '2026-03-14' },
-    { id: 4, name: 'Demi Wilkinson', avatar: 'https://i.pravatar.cc/150?img=4', type: 'Clinic', plan: 'Practice', date: '2026-01-12' },
-    { id: 5, name: 'Candice Wu', avatar: 'https://i.pravatar.cc/150?img=5', type: 'Hospital', plan: 'Practice', date: '2026-01-13' },
-    { id: 6, name: 'Natali Craig', avatar: 'https://i.pravatar.cc/150?img=6', type: 'Clinic', plan: 'Practice', date: '2026-02-28' },
-    { id: 7, name: 'Drew Cano', avatar: 'https://i.pravatar.cc/150?img=7', type: 'Clinic', plan: 'Practice', date: '2026-01-13' },
-    { id: 8, name: 'Orlando Diggs', avatar: 'https://i.pravatar.cc/150?img=8', type: 'Doctor', plan: 'Practice', date: '2026-03-06' },
-    { id: 9, name: 'Andi Lane', avatar: 'https://i.pravatar.cc/150?img=9', type: 'Clinic', plan: 'Practice', date: '2026-02-05' },
-    { id: 10, name: 'Kate Morrison', avatar: 'https://i.pravatar.cc/150?img=10', type: 'Doctor', plan: 'Practice', date: '2026-03-20' }
-  ];
+  constructor() { this.load(); }
 
-  toggleFilter() {
-    this.showFilter = !this.showFilter;
+  load() {
+    this.loading.set(true);
+    this.svc.renewals({
+      search: this.search() || undefined,
+      user_type: this.userTypeFilter() || undefined,
+      plan_id: this.planFilter() ? Number(this.planFilter()) : undefined
+    }).subscribe({
+      next: r => {
+        this.renewalUsers.set(r.items);
+        this.selectedIds.set(new Set());
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  onSearch(value: string) { this.search.set(value); this.load(); }
+  onUserType(value: string) { this.userTypeFilter.set(value); this.load(); }
+  onPlan(value: string) { this.planFilter.set(value); this.load(); }
+
+  toggleFilter() { this.showFilter = !this.showFilter; }
+  preventClose(event: Event) { event.stopPropagation(); }
+
+  @HostListener('document:click')
+  closeFilter() { /* leave open until X tapped */ }
+
+  toggleRow(id: number) {
+    const set = new Set(this.selectedIds());
+    if (set.has(id)) set.delete(id); else set.add(id);
+    this.selectedIds.set(set);
+  }
+
+  toggleAll(checked: boolean) {
+    if (checked) {
+      this.selectedIds.set(new Set(this.renewalUsers().map(r => r.id)));
+    } else {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  renewOne(id: number) {
+    if (!confirm('Renew this subscription?')) return;
+    this.svc.renew(id).subscribe(() => this.load());
+  }
+
+  renewAll() {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length) {
+      if (!confirm(`Renew ${ids.length} selected?`)) return;
+      this.svc.renewBulk({ subscription_ids: ids }).subscribe(() => this.load());
+    } else {
+      if (!confirm('Renew ALL filtered users?')) return;
+      this.svc.renewBulk({ all: true }).subscribe(() => this.load());
+    }
   }
 }

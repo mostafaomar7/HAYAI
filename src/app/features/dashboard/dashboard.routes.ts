@@ -167,4 +167,34 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
   },
+  {
+    path: 'hospital-verifications',
+    loadComponent: () =>
+      import('./pages/hospital-verifications/hospital-verifications').then(m => m.HospitalVerifications)
+  },
+  {
+    path: 'external/devices',
+    loadComponent: () =>
+      import('./pages/external-devices/external-devices').then(m => m.ExternalDevices)
+  },
+  {
+    path: 'external/orders',
+    loadComponent: () =>
+      import('./pages/external-orders/external-orders').then(m => m.ExternalOrders)
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./pages/profile/profile').then(m => m.Profile)
+  },
+  {
+    path: 'change-password',
+    loadComponent: () =>
+      import('./pages/change-password/change-password').then(m => m.ChangePassword)
+  },
+  {
+    path: 'notfication/history',
+    loadComponent: () =>
+      import('./pages/notification-history/notification-history').then(m => m.NotificationHistory)
+  },
 ];

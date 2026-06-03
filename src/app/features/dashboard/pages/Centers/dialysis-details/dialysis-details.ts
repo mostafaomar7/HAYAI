@@ -1,35 +1,44 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CentersService, MedicalCenter } from '../../../../../core/services/centers.service';
 
 @Component({
   selector: 'app-dialysis-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './dialysis-details.html',
-  styleUrl: './dialysis-details.css',
+  styleUrl: './dialysis-details.css'
 })
 export class DialysisDetails {
   private location = inject(Location);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private svc = inject(CentersService);
 
-  // داتا وهمية للعرض
-  dates = [
-    { day: 'Saturday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Sunday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Monday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Tuesday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Wednesday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Thursday', time: '10:00 AM - 08:00 PM', available: true },
-    { day: 'Friday', time: 'Not Available', available: false }
-  ];
+  loading = signal(true);
+  center = signal<MedicalCenter | null>(null);
 
-  contacts = [
-    { type: 'Hospital', phone: '01119253120' },
-    { type: 'Home Care Manager (Mohamed ali)', phone: '01119253120' },
-    { type: 'Complaints', phone: '01119253120' }
-  ];
+  constructor() {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (id) {
+      this.svc.get(id).subscribe({
+        next: c => { this.center.set(c); this.loading.set(false); },
+        error: () => this.loading.set(false)
+      });
+    } else {
+      this.loading.set(false);
+    }
+  }
 
   goBack() { this.location.back(); }
-  goToEdit() { this.router.navigate(['dashboard/dialysis/add']); } // بيفترض إنها نفس الـ Add
+  goToEdit() {
+    const id = this.center()?.id;
+    if (id) this.router.navigate(['/dashboard/dialysis/edit', id]);
+  }
+  onDelete() {
+    const id = this.center()?.id;
+    if (!id || !confirm('Delete this center?')) return;
+    this.svc.delete(id).subscribe(() => this.router.navigate(['/dashboard/dialysis']));
+  }
 }

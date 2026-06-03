@@ -1,0 +1,62 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>Device Orders</h2>
+        <span class="badge">{{ total() }} orders</span>
+      </div>
+
+      <div class="actions-area" style="gap:8px;">
+        <button class="filter-btn" [class.active]="status() === ''" (click)="setStatus('')">All</button>
+        <button class="filter-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">Pending</button>
+        <button class="filter-btn" [class.active]="status() === 'confirmed'" (click)="setStatus('confirmed')">Confirmed</button>
+        <button class="filter-btn" [class.active]="status() === 'shipped'" (click)="setStatus('shipped')">Shipped</button>
+        <button class="filter-btn" [class.active]="status() === 'delivered'" (click)="setStatus('delivered')">Delivered</button>
+        <button class="filter-btn" [class.active]="status() === 'cancelled'" (click)="setStatus('cancelled')">Cancelled</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Device</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Tracking</th>
+            <th>Created</th>
+            <th class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="9" style="padding:24px;color:#6B7280;">Loading…</td></tr>
+          } @else if (!orders().length) {
+            <tr><td colspan="9" style="padding:24px;color:#6B7280;">No orders.</td></tr>
+          } @else {
+            @for (o of orders(); track o.id) {
+              <tr>
+                <td class="text-gray">#{{ o.id }}</td>
+                <td><span class="user-name">{{ o.user.name }}</span></td>
+                <td class="text-gray">{{ o.device.name }}</td>
+                <td class="text-gray">{{ o.quantity }}</td>
+                <td class="text-gray">{{ o.total }} {{ o.currency }}</td>
+                <td><div class="status-badge"><span class="dot"></span>{{ o.status }}</div></td>
+                <td class="text-gray">{{ o.tracking_number || '—' }}</td>
+                <td class="text-gray">{{ o.created_at | date:'mediumDate' }}</td>
+                <td class="action-col">
+                  <button class="renew-btn" (click)="changeOrderStatus(o)">Update status</button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

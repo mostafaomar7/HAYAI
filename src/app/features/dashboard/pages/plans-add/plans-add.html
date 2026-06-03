@@ -2,7 +2,7 @@
   <header class="top-header">
     <button class="back-btn" (click)="goBack()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      Add plan
+      {{ isEdit() ? 'Edit plan' : 'Add plan' }}
     </button>
   </header>
 
@@ -12,15 +12,27 @@
       <div class="grid-3">
         <div class="form-group">
           <label>Plan name</label>
-          <input type="text" placeholder="Enter plan name">
+          <input type="text" placeholder="Enter plan name" [(ngModel)]="name" name="name">
         </div>
         <div class="form-group">
           <label>Plan type</label>
-          <div class="custom-select"><select><option>Select plan type</option></select></div>
+          <div class="custom-select">
+            <select [(ngModel)]="planType" name="planType">
+              <option value="">Select plan type</option>
+              @for (t of planTypes; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label>Status</label>
-          <div class="custom-select"><select><option>Select status</option></select></div>
+          <div class="custom-select">
+            <select [(ngModel)]="status" name="status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
         </div>
       </div>
     </section>
@@ -29,29 +41,35 @@
       <h3>Pricing</h3>
       <div class="grid-3">
         <div class="form-group">
-          <label>Price</label>
-          <input type="text" placeholder="Enter plan price">
+          <label>Price (EGP)</label>
+          <input type="number" min="0" placeholder="Enter plan price" [(ngModel)]="price" name="price">
         </div>
         <div class="form-group">
           <label>Number of months</label>
-          <input type="text" placeholder="Enter number of months">
+          <input type="number" min="1" placeholder="Enter number of months" [(ngModel)]="months" name="months">
         </div>
         <div class="form-group">
-          <label>Discount</label>
-          <input type="text" placeholder="Enter discount">
+          <label>Discount (%)</label>
+          <input type="number" min="0" max="100" placeholder="Enter discount" [(ngModel)]="discount" name="discount">
         </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h3>Description</h3>
+      <div class="form-group">
+        <textarea rows="3" [(ngModel)]="description" name="description"></textarea>
       </div>
     </section>
 
     <section class="form-section">
       <h3>Modules</h3>
       <div class="modules-grid">
-        @for (mod of modules; track mod.id) {
+        @for (mod of modules(); track mod.module_key; let i = $index) {
           <label class="module-checkbox-card" [class.checked]="mod.checked">
-            <input type="checkbox" [(ngModel)]="mod.checked">
-            <span class="custom-checkbox">
-              </span>
-            {{ mod.name }}
+            <input type="checkbox" [checked]="mod.checked" (change)="toggleModule(i)">
+            <span class="custom-checkbox"></span>
+            {{ mod.module_name }}
           </label>
         }
       </div>
@@ -60,21 +78,29 @@
     @if (checkedModules.length > 0) {
       <section class="form-section">
         <h3>Modules details</h3>
-        
-        @for (mod of checkedModules; track mod.id) {
-          <div class="form-group module-detail-input">
-            <label>{{ mod.name }}</label>
-            <span class="sub-label">Description</span>
-            <input type="text" [placeholder]="'Enter ' + mod.name + ' description'">
-          </div>
+
+        @for (mod of modules(); track mod.module_key; let i = $index) {
+          @if (mod.checked) {
+            <div class="form-group module-detail-input">
+              <label>{{ mod.module_name }}</label>
+              <span class="sub-label">Description</span>
+              <input type="text" [placeholder]="'Enter ' + mod.module_name + ' description'"
+                [value]="mod.description"
+                (input)="updateModuleDescription(i, $any($event.target).value)">
+            </div>
+          }
         }
       </section>
+    }
+
+    @if (errorMessage()) {
+      <div style="color:#dc2626;font-size:13px;padding:8px 0;">{{ errorMessage() }}</div>
     }
 
   </div>
 
   <footer class="form-footer">
-    <button class="btn-cancel" (click)="goBack()">Cancel</button>
-    <button class="btn-primary">Save Changes</button>
+    <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
+    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save Changes' }}</button>
   </footer>
 </div>

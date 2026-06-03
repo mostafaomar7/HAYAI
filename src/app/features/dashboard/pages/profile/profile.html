@@ -1,0 +1,73 @@
+<div class="page-container" style="padding:24px;">
+  <div style="max-width:720px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;">
+    <h2 style="margin:0 0 24px;font-size:18px;color:#111827;">My Profile</h2>
+
+    @if (loading()) {
+      <p style="color:#6B7280;">Loading…</p>
+    } @else {
+      <div style="display:flex;gap:24px;align-items:center;margin-bottom:24px;">
+        <img [src]="profileImage() || 'assets/avatar.png'" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb;" alt="Avatar" />
+        <label style="cursor:pointer;color:#2563eb;font-size:13px;font-weight:500;">
+          Change photo
+          <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="onFileSelected($event)" style="display:none;" />
+        </label>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" [(ngModel)]="name" name="name" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="email" name="email" />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" [(ngModel)]="phone" name="phone" />
+        </div>
+        <div class="form-group">
+          <label>Country code</label>
+          <input type="text" [(ngModel)]="country_code" name="country_code" placeholder="20" />
+        </div>
+        <div class="form-group">
+          <label>Governorate</label>
+          <input type="text" [(ngModel)]="governate" name="governate" />
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="custom-select">
+            <select [(ngModel)]="gender" name="gender">
+              <option value="">—</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Language</label>
+          <input type="text" [(ngModel)]="language" name="language" placeholder="en | ar" />
+        </div>
+        <div class="form-group">
+          <label>Theme</label>
+          <div class="custom-select">
+            <select [(ngModel)]="theme_mode" name="theme_mode">
+              <option value="">—</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      @if (errorMsg()) { <p style="color:#dc2626;font-size:13px;margin-top:12px;">{{ errorMsg() }}</p> }
+      @if (successMsg()) { <p style="color:#10b981;font-size:13px;margin-top:12px;">{{ successMsg() }}</p> }
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+        <button class="btn-primary" [disabled]="saving()" (click)="save()" style="padding:10px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+          {{ saving() ? 'Saving…' : 'Save Changes' }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

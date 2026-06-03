@@ -1,60 +1,34 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Plan, PlansService } from '../../../../core/services/plans.service';
 
 @Component({
   selector: 'app-plans',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './plans.html',
-  styleUrl: './plans.css',
+  styleUrl: './plans.css'
 })
 export class Plans {
   private router = inject(Router);
+  private svc = inject(PlansService);
 
-  plansList = [
-    {
-      id: 1,
-      title: 'Free',
-      subtitle: 'Free',
-      desc: 'Basic presence in the system',
-      type: 'Hospital',
-      features: [
-        { name: 'Professional Profile', included: true },
-        { name: 'Profile Preview', included: true },
-        { name: 'View Patient File', included: true },
-        { name: 'No requests', included: false },
-        { name: 'No patient management', included: false }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Free',
-      subtitle: 'Free',
-      desc: 'Basic presence in the system',
-      type: 'Hospital',
-      features: [
-        { name: 'Professional Profile', included: true },
-        { name: 'Profile Preview', included: true },
-        { name: 'View Patient File', included: true },
-        { name: 'No requests', included: false },
-        { name: 'No patient management', included: false }
-      ]
-    },
-    {
-      id: 3,
-      title: 'Free',
-      subtitle: 'Free',
-      desc: 'Basic presence in the system',
-      type: 'Hospital',
-      features: [
-        { name: 'Professional Profile', included: true },
-        { name: 'Profile Preview', included: true },
-        { name: 'View Patient File', included: true },
-        { name: 'No requests', included: false },
-        { name: 'No patient management', included: false }
-      ]
-    }
-  ];
+  loading = signal(true);
+  search = signal('');
+  plansList = signal<Plan[]>([]);
+
+  constructor() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    this.svc.list({ search: this.search() || undefined }).subscribe({
+      next: r => { this.plansList.set(r.items); this.loading.set(false); },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  onSearch(value: string) { this.search.set(value); this.load(); }
 
   goToDetails(id: number) {
     this.router.navigate(['/dashboard/plans/details', id]);

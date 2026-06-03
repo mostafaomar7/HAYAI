@@ -4,10 +4,14 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', iconName: 'dashboard', route: '/dashboard', roles: ['admin'] },
   { id: 'Advertisements', label: 'Advertisements', iconName: 'advertisements', route: '/dashboard/Advertisements', roles: ['admin'] },
   { id: 'CharitableOrganizations', label: 'Charitable Organizations', iconName: 'charitable', route: '/dashboard/charitable', roles: ['admin'] },
-  { id: 'Transactions', label: 'Transactions', iconName: 'transactions', route: '/dashboard/transactions', roles: ['admin'] },
+  // Transactions admin endpoint is not built on the backend yet (see backend integration guide §13).
+  // Re-enable once /admin/transactions ships.
+  // { id: 'Transactions', label: 'Transactions', iconName: 'transactions', route: '/dashboard/transactions', roles: ['admin'] },
   { id: 'RenewalUsers', label: 'Renewal Users', iconName: 'renewal', route: '/dashboard/renewal', roles: ['admin'] },
   { id: 'PlansManagements', label: 'Plans Managements', iconName: 'plans', route: '/dashboard/plans', roles: ['admin'] },
   { id: 'SendNotifications', label: 'Send Notifications', iconName: 'notifications', route: '/dashboard/notfication', roles: ['admin'] },
+  { id: 'NotificationHistory', label: 'Broadcast History', iconName: 'notifications', route: '/dashboard/notfication/history', roles: ['admin'] },
+  { id: 'HospitalVerifications', label: 'Hospital Verifications', iconName: 'centers', route: '/dashboard/hospital-verifications', roles: ['admin'] },
   
   // القوائم المنسدلة
   { 
