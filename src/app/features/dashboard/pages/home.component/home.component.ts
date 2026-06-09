@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 import {
   AnalyticsService,
   AnalyticsRange,
@@ -29,18 +30,24 @@ interface StatCard {
 export class HomeComponent {
   private auth = inject(AuthService);
   private analytics = inject(AnalyticsService);
+  private dialog = inject(DialogService);
 
   loading = signal(true);
   greetingName = computed(() => this.auth.currentUser()?.name ?? 'Admin');
 
+  // form-bound date inputs
+  fromDate = signal<string>('');
+  toDate = signal<string>('');
+
+  // applied range (used by API calls)
   range = signal<AnalyticsRange>({});
+
   stats = signal<StatCard[]>([]);
   usersByCategory = signal<CategoryBar | null>(null);
   revenueByPlan = signal<CategoryBar | null>(null);
   userGrowth = signal<TimeSeries | null>(null);
   revenueOverTime = signal<TimeSeries | null>(null);
 
-  // precomputed bar-height arrays (max-normalized %), referenced by the template
   usersByCategoryHeights = computed(() =>
     this.normalize((this.usersByCategory()?.items ?? []).map(i => i.value))
   );
@@ -85,14 +92,54 @@ export class HomeComponent {
     });
   }
 
+  applyDateRange() {
+    const from = this.fromDate();
+    const to = this.toDate();
+    if (from && to && from > to) {
+      this.dialog.error('Invalid date range', '"From" date must be before "To" date.');
+      return;
+    }
+    this.range.set({ from: from || undefined, to: to || undefined });
+    this.refresh();
+  }
+
+  resetDateRange() {
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.range.set({});
+    this.refresh();
+  }
+
+  applyPreset(days: number) {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    this.fromDate.set(fmt(from));
+    this.toDate.set(fmt(to));
+    this.range.set({ from: fmt(from), to: fmt(to) });
+    this.refresh();
+  }
+
   private toStats(o: OverviewKpis): StatCard[] {
     const fmt = (n: number) => n.toLocaleString('en-US');
     return [
-      { id: 1, title: 'Total Users', value: fmt(o.totalUsers.value), trend: `${o.totalUsers.trendPercent}%`, trendUp: o.totalUsers.trendPercent >= 0, icon: 'total-users' },
-      { id: 2, title: 'New Users', value: fmt(o.newUsers.value), trend: `${o.newUsers.trendPercent}%`, trendUp: o.newUsers.trendPercent >= 0, icon: 'new-users' },
-      { id: 3, title: 'Total Revenue', value: fmt(Number(o.totalRevenue.value)), trend: `${o.totalRevenue.trendPercent}%`, trendUp: o.totalRevenue.trendPercent >= 0, icon: 'total-revenue' },
-      { id: 4, title: 'Period Revenue', value: fmt(Number(o.periodRevenue.value)), trend: `${o.periodRevenue.trendPercent}%`, trendUp: o.periodRevenue.trendPercent >= 0, icon: 'period-revenue' }
+      { id: 1, title: 'Total Users', value: fmt(o.totalUsers.value), trend: this.fmtTrend(o.totalUsers.trendPercent), trendUp: o.totalUsers.trendPercent >= 0, icon: 'total-users' },
+      { id: 2, title: 'New Users', value: fmt(o.newUsers.value), trend: this.fmtTrend(o.newUsers.trendPercent), trendUp: o.newUsers.trendPercent >= 0, icon: 'new-users' },
+      { id: 3, title: 'Total Revenue', value: fmt(Number(o.totalRevenue.value)), trend: this.fmtTrend(o.totalRevenue.trendPercent), trendUp: o.totalRevenue.trendPercent >= 0, icon: 'total-revenue' },
+      { id: 4, title: 'Period Revenue', value: fmt(Number(o.periodRevenue.value)), trend: this.fmtTrend(o.periodRevenue.trendPercent), trendUp: o.periodRevenue.trendPercent >= 0, icon: 'period-revenue' }
     ];
   }
 
+  private fmtTrend(pct: number): string {
+    const sign = pct > 0 ? '+' : '';
+    return `${sign}${pct}%`;
+  }
+
+  formatValue(n: number): string {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
 }

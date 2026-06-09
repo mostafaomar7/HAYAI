@@ -1,6 +1,7 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ExternalDevice, ExternalDevicesService } from '../../../../core/services/external-devices.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-external-devices',
@@ -11,6 +12,7 @@ import { ExternalDevice, ExternalDevicesService } from '../../../../core/service
 })
 export class ExternalDevices {
   private svc = inject(ExternalDevicesService);
+  private dialog = inject(DialogService);
 
   loading = signal(true);
   showFilter = false;
@@ -47,9 +49,19 @@ export class ExternalDevices {
     this.load();
   }
 
-  deleteDevice(id: number, event: Event) {
+  async deleteDevice(id: number, event: Event) {
     event.stopPropagation();
-    if (!confirm('Delete this device?')) return;
-    this.svc.deleteDevice(id).subscribe(() => this.load());
+    const ok = await this.dialog.confirm({
+      title: 'Delete device?',
+      text: 'This action cannot be undone.',
+      icon: 'warning',
+      confirmText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
+    this.svc.deleteDevice(id).subscribe({
+      next: () => { this.dialog.toast('success', 'Device deleted'); this.load(); },
+      error: () => this.dialog.error('Delete failed', 'Please try again.')
+    });
   }
 }

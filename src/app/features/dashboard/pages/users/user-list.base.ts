@@ -1,12 +1,16 @@
 import { Directive, HostListener, inject, signal } from '@angular/core';
 import { UserListQuery, UserResource, UsersService } from '../../../../core/services/users.service';
 import { PagedResult } from '../../../../core/services/api.service';
+import { DialogService } from '../../../../core/services/dialog.service';
+import { Plan, PlansService } from '../../../../core/services/plans.service';
 
 @Directive()
 export abstract class UserListBase<T extends { id: number }> {
   abstract resource: UserResource;
 
   protected svc = inject(UsersService);
+  protected dialog = inject(DialogService);
+  protected plans = inject(PlansService);
 
   loading = signal(true);
   openActionMenuId: number | null = null;
@@ -25,8 +29,15 @@ export abstract class UserListBase<T extends { id: number }> {
 
   items = signal<T[]>([]);
   total = signal(0);
+  plansList = signal<Plan[]>([]);
 
-  protected init() { this.load(); }
+  protected init() {
+    this.plans.list({ per_page: 100 }).subscribe({
+      next: r => this.plansList.set(r.items),
+      error: () => this.plansList.set([])
+    });
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
@@ -73,20 +84,49 @@ export abstract class UserListBase<T extends { id: number }> {
   }
 
   setStatus(id: number, status: 'active' | 'inactive' | 'blocked') {
-    this.svc.setStatus(this.resource, id, status).subscribe(() => {
-      this.openActionMenuId = null;
-      this.load();
+    this.svc.setStatus(this.resource, id, status).subscribe({
+      next: () => {
+        this.openActionMenuId = null;
+        this.dialog.toast('success', `User ${status}`);
+        this.load();
+      },
+      error: err => this.dialog.error('Status change failed', err.error?.message ?? 'Please try again.')
     });
   }
 
   changePlan(id: number) {
-    const v = prompt('Enter the new plan ID:');
-    if (!v) return;
-    const planId = Number(v);
-    if (!planId) return;
-    this.svc.setPlan(this.resource, id, planId).subscribe(() => {
-      this.openActionMenuId = null;
-      this.load();
+    this.openActionMenuId = null;
+    this.plans.list({ per_page: 100 }).subscribe(async r => {
+      const options = r.items.reduce<Record<string, string>>((acc, p) => {
+        acc[String(p.id)] = `${p.name} — ${p.plan_type}`;
+        return acc;
+      }, {});
+
+      if (!Object.keys(options).length) {
+        this.dialog.info('No plans available', 'Create a plan first.');
+        return;
+      }
+
+      const SwalCtor = (await import('sweetalert2')).default;
+      const result = await SwalCtor.fire({
+        title: 'Change plan',
+        input: 'select',
+        inputOptions: options,
+        inputPlaceholder: 'Select a plan',
+        showCancelButton: true,
+        confirmButtonText: 'Update',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true
+      });
+
+      if (!result.isConfirmed || !result.value) return;
+      const planId = Number(result.value);
+      this.svc.setPlan(this.resource, id, planId).subscribe({
+        next: () => { this.dialog.toast('success', 'Plan updated'); this.load(); },
+        error: err => this.dialog.error('Plan change failed', err.error?.message ?? 'Please try again.')
+      });
     });
   }
 
@@ -105,5 +145,24 @@ export abstract class UserListBase<T extends { id: number }> {
     this.subspecialtyFilter.set('');
     this.showFilter = false;
     this.load();
+  }
+
+  /** First two letters of the name (uppercased). */
+  initials(name?: string | null): string {
+    if (!name) return '?';
+    const cleaned = name.trim();
+    if (!cleaned) return '?';
+    const parts = cleaned.split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return cleaned.slice(0, 2).toUpperCase();
+  }
+
+  /** Deterministic background color from the name. */
+  avatarColor(name?: string | null): string {
+    const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+    const s = name ?? '';
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return palette[h % palette.length];
   }
 }

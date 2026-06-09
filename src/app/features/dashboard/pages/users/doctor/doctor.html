@@ -16,13 +16,22 @@
         </div>
 
         <div class="filter-wrapper">
-          <button class="filter-btn" (click)="toggleFilter($event)">Filter</button>
+          <button class="filter-btn" (click)="toggleFilter($event)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 12h12M10 20h4" />
+            </svg>
+            Filter
+          </button>
 
           @if (showFilter) {
             <div class="filter-popup" (click)="preventClose($event)">
               <div class="popup-header">
                 <h3>Filter</h3>
-                <button class="close-icon" (click)="toggleFilter($event)">×</button>
+                <button class="close-icon" (click)="toggleFilter($event)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#111827" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
               <div class="popup-body">
@@ -60,8 +69,15 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label>Plan ID</label>
-                  <input type="number" placeholder="Plan id" [value]="planFilter()" (input)="planFilter.set($any($event.target).value)" />
+                  <label>Plan</label>
+                  <div class="custom-select">
+                    <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)">
+                      <option value="">Any</option>
+                      @for (p of plansList(); track p.id) {
+                        <option [value]="p.id">{{ p.name }}</option>
+                      }
+                    </select>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label>Status</label>
@@ -110,7 +126,11 @@
                 <td class="checkbox-col"><input type="checkbox"></td>
                 <td>
                   <div class="user-cell">
-                    <img [src]="doctor.profile_image || 'https://i.pravatar.cc/150'" alt="Avatar" class="avatar">
+                    @if (doctor.profile_image) {
+                      <img [src]="doctor.profile_image" alt="Avatar" class="avatar">
+                    } @else {
+                      <span class="avatar-initials" [style.background-color]="avatarColor(doctor.name)">{{ initials(doctor.name) }}</span>
+                    }
                     <span class="user-name">{{ doctor.name }}</span>
                   </div>
                 </td>
@@ -120,7 +140,11 @@
                 <td class="text-gray">{{ doctor.plan?.name }}</td>
                 <td class="text-gray">{{ doctor.role }}</td>
                 <td class="action-col relative-cell">
-                  <button class="dots-btn" (click)="toggleActionMenu(doctor.id, $event)">⋮</button>
+                  <button class="dots-btn" (click)="toggleActionMenu(doctor.id, $event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                  </button>
                   @if (openActionMenuId === doctor.id) {
                     <div class="action-dropdown" (click)="preventClose($event)">
                       <button class="dropdown-item" (click)="deactivate(doctor.id)">Deactivate</button>

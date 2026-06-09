@@ -1,0 +1,156 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<title>HAYAI Daily Progress Report — June 3, 2026</title>
+<!--[if gte mso 9]>
+<xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+@page WordSection1 { size: 21cm 29.7cm; margin: 2cm 2cm 2cm 2cm; }
+div.WordSection1 { page: WordSection1; }
+body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1f2937; }
+h1 { font-size: 20pt; color: #111827; border-bottom: 2pt solid #2563eb; padding-bottom: 6pt; }
+h2 { font-size: 14pt; color: #111827; margin-top: 18pt; }
+h3 { font-size: 12pt; color: #1f2937; margin-top: 12pt; margin-bottom: 4pt; }
+p { margin: 4pt 0; }
+ul, ol { margin: 4pt 0; }
+li { margin: 2pt 0; }
+code { font-family: Consolas, 'Courier New', monospace; font-size: 10pt; background: #f3f4f6; color: #b91c1c; padding: 0 4pt; }
+table { width: 100%; border-collapse: collapse; margin: 8pt 0; }
+th, td { border: 1pt solid #cccccc; padding: 6pt 10pt; text-align: left; vertical-align: top; font-size: 10.5pt; }
+th { background: #f3f4f6; font-weight: bold; }
+.meta { color: #6b7280; font-size: 10pt; }
+.meta strong { color: #374151; }
+.ok { color: #065f46; font-weight: bold; }
+.blocked { color: #991b1b; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="WordSection1">
+
+<h1>Daily Progress Report — June 3, 2026</h1>
+<p class="meta"><strong>Project:</strong> HAYAI Admin Dashboard (Angular Frontend) &nbsp;|&nbsp;
+<strong>Author:</strong> Mostafa Omar &nbsp;|&nbsp;
+<strong>Branch:</strong> <code>main</code></p>
+
+<h2>Summary</h2>
+<p>Closed all remaining gaps in the backend integration. Every endpoint from the backend integration guide is now wired to a UI, except <code>/admin/transactions</code> (deferred by the backend team per their §13). Final TypeScript compile passes with <b>zero errors</b>.</p>
+
+<h2>What was completed today</h2>
+
+<h3>1. Session restore on app boot</h3>
+<ul>
+<li><code>app.ts</code> now calls <code>AuthService.me()</code> automatically when a Sanctum token exists in <code>localStorage</code>.</li>
+<li>Effect: refreshing the page no longer logs the admin out — <code>currentUser</code> signal is rehydrated from <code>GET /auth/me</code>.</li>
+</ul>
+
+<h3>2. Lookups dropdowns wired into filters</h3>
+<ul>
+<li><b>Patients</b> filter popup: <code>Governorate</code> and <code>Gender</code> selects populated from <code>/lookups/governorates</code> and <code>/lookups/genders</code>.</li>
+<li><b>Doctors</b> filter popup: <code>Role</code>, <code>Specialty</code>, <code>Subspecialty</code> selects populated from <code>/lookups/doctor-roles</code>, <code>/lookups/doctor-specialties</code>, and <code>/lookups/doctor-subspecialties?specialty_id=…</code> (cascading — subspecialty fetches on specialty change).</li>
+</ul>
+
+<h3>3. New page — Hospital Verifications</h3>
+<ul>
+<li>Route: <code>/dashboard/hospital-verifications</code></li>
+<li>Endpoints: <code>GET /admin/hospitals/verifications</code>, <code>PATCH /admin/hospitals/{id}/approve</code>, <code>PATCH /admin/hospitals/{id}/reject</code></li>
+<li>UI: list table with Pending / Verified / Rejected status tabs, per-row Approve and Reject actions, rejection reason prompt.</li>
+</ul>
+
+<h3>4. New page — External Devices (grid)</h3>
+<ul>
+<li>Route: <code>/dashboard/external/devices</code></li>
+<li>Endpoints: <code>GET/DELETE /admin/external-devices</code></li>
+<li>UI: card grid with search, availability filter (available/unavailable), source filter (internal/external), per-card delete.</li>
+</ul>
+
+<h3>5. New page — External Device Orders</h3>
+<ul>
+<li>Route: <code>/dashboard/external/orders</code></li>
+<li>Endpoints: <code>GET /admin/external-device-orders</code>, <code>PATCH /admin/external-device-orders/{id}/status</code></li>
+<li>UI: table with status tabs (Pending, Confirmed, Shipped, Delivered, Cancelled), per-row status update with tracking number prompt when shipping.</li>
+</ul>
+
+<h3>6. New page — My Profile</h3>
+<ul>
+<li>Route: <code>/dashboard/profile</code></li>
+<li>Endpoints: <code>GET /auth/me</code>, <code>PATCH /auth/me</code> (JSON), <code>POST /auth/me</code> (multipart when avatar is uploaded)</li>
+<li>UI: editable name, email, phone, country code, governorate, gender, language, theme; profile photo upload with live preview.</li>
+</ul>
+
+<h3>7. New page — Change Password</h3>
+<ul>
+<li>Route: <code>/dashboard/change-password</code></li>
+<li>Endpoint: <code>POST /auth/change-password</code></li>
+<li>UI: current / new / confirm fields with client-side validation (min 8 chars, must differ from current, confirmation must match).</li>
+</ul>
+
+<h3>8. New page — Broadcast History</h3>
+<ul>
+<li>Route: <code>/dashboard/notfication/history</code></li>
+<li>Endpoint: <code>GET /admin/notifications/broadcast/history</code></li>
+<li>UI: table of past broadcasts with title, body preview, audience label, recipient count, and sent timestamp.</li>
+</ul>
+
+<h3>9. Navbar user menu</h3>
+<ul>
+<li>Clicking the avatar opens a dropdown with <i>My Profile</i>, <i>Change Password</i>, <i>Logout</i> instead of logging out instantly.</li>
+</ul>
+
+<h3>10. Routes and sidebar entries</h3>
+<ul>
+<li>All 6 new routes registered in <code>dashboard.routes.ts</code>.</li>
+<li>Sidebar gained <i>Hospital Verifications</i> and <i>Broadcast History</i> entries.</li>
+</ul>
+
+<h3>11. Build fixes</h3>
+<ul>
+<li>Removed inline arrow functions from <code>home.component</code> template bindings. Refactored to 4 <code>computed</code> signals (<code>usersByCategoryHeights</code>, <code>revenueByPlanHeights</code>, <code>userGrowthHeights</code>, <code>revenueOverTimeHeights</code>) which max-normalize bar values once.</li>
+<li>Cleaned redundant <code>?.</code> operators on non-nullable fields in <code>external-orders.html</code> to silence Angular NG8107 warnings.</li>
+</ul>
+
+<h2>Integration coverage status</h2>
+<table>
+<tr><th>Backend module</th><th>Status</th></tr>
+<tr><td>Auth (login, logout, me, profile edit, change password)</td><td class="ok">Wired</td></tr>
+<tr><td>Analytics (overview + 4 charts)</td><td class="ok">Wired</td></tr>
+<tr><td>Advertisements (CRUD + multipart)</td><td class="ok">Wired</td></tr>
+<tr><td>Charitable Organizations (CRUD)</td><td class="ok">Wired</td></tr>
+<tr><td>Centers — Dialysis / Hyperbaric / Oncology (CRUD)</td><td class="ok">Wired</td></tr>
+<tr><td>Plans (CRUD + modules catalog)</td><td class="ok">Wired</td></tr>
+<tr><td>Subscriptions &amp; Renewals (single + bulk)</td><td class="ok">Wired</td></tr>
+<tr><td>Users (12 types: list + status + change-plan)</td><td class="ok">Wired</td></tr>
+<tr><td>Notifications system bell + broadcast + history</td><td class="ok">Wired</td></tr>
+<tr><td>Hospital Verifications (approve/reject)</td><td class="ok">Wired</td></tr>
+<tr><td>External Devices + Orders</td><td class="ok">Wired</td></tr>
+<tr><td>Lookups (governorates, genders, doctor catalog)</td><td class="ok">Wired</td></tr>
+<tr><td><b>Transactions</b></td><td class="blocked">Not built on backend yet</td></tr>
+</table>
+
+<h2>Notes for backend team</h2>
+<ol>
+<li><code>/admin/transactions</code>, <code>/admin/transactions/{id}/status</code>, and <code>/admin/transactions/lookups/*</code> are still not built — UI displays a placeholder until they ship.</li>
+<li><code>/admin/medical-issuance</code> list returns empty until the <code>medical_issuance</code> value is added to the org-type enum on the database side (backend team flagged this in §8 of their guide).</li>
+<li>Backend confirmed migrations weren't run during their build. Please confirm <code>php artisan migrate</code> is deployed before next integration testing pass.</li>
+</ol>
+
+<h2>Next up (proposed)</h2>
+<ul>
+<li>End-to-end smoke test against the live host (<code>paleturquoise-wolf-589691.hostingersite.com</code>) once migrations are deployed.</li>
+<li>Polish pagination controls on the long tables (currently first page only; backend supports <code>?page</code> and <code>?per_page</code>).</li>
+<li>Replace the <code>prompt()</code> / <code>confirm()</code> placeholder dialogs (Change Plan, Reject Reason, Order Status update) with proper modal components once design provides them.</li>
+</ul>
+
+<p style="margin-top:18pt;color:#6b7280;font-size:9pt;font-style:italic;">Let me know if anything needs to be re-scoped or prioritized before tomorrow.</p>
+
+</div>
+</body>
+</html>

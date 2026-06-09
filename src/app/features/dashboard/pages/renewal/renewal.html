@@ -39,25 +39,30 @@
                 <div class="form-group">
                   <label>User type</label>
                   <div class="custom-select">
-                    <select [value]="userTypeFilter()" (change)="onUserType($any($event.target).value)">
+                    <select [value]="userTypeFilter()" (change)="userTypeFilter.set($any($event.target).value)">
                       <option value="">All</option>
-                      <option value="doctor">Doctor</option>
-                      <option value="hospital">Hospital</option>
-                      <option value="clinic">Clinic</option>
-                      <option value="pharmacy">Pharmacy</option>
-                      <option value="lab">Lab</option>
+                      @for (t of userTypes(); track t.id) {
+                        <option [value]="t.id">{{ t.label || t.name }}</option>
+                      }
                     </select>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label>Plan ID</label>
-                  <input type="number" placeholder="Plan id" [value]="planFilter()" (input)="onPlan($any($event.target).value)" />
+                  <label>Plan</label>
+                  <div class="custom-select">
+                    <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)">
+                      <option value="">All plans</option>
+                      @for (p of plansList(); track p.id) {
+                        <option [value]="p.id">{{ p.name }} — {{ p.plan_type }}</option>
+                      }
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <div class="popup-footer">
-                <button class="reset-btn" (click)="onUserType(''); onPlan(''); toggleFilter()">Reset</button>
-                <button class="apply-btn" (click)="toggleFilter()">Apply Filters</button>
+                <button class="reset-btn" (click)="resetFilters()">Reset</button>
+                <button class="apply-btn" (click)="applyFilters()">Apply Filters</button>
               </div>
             </div>
           }
@@ -92,7 +97,11 @@
                 </td>
                 <td>
                   <div class="user-cell">
-                    <img [src]="user.user.avatar || 'https://i.pravatar.cc/150'" alt="Avatar" class="avatar">
+                    @if (user.user.avatar) {
+                      <img [src]="user.user.avatar" alt="Avatar" class="avatar">
+                    } @else {
+                      <span class="avatar-initials" [style.background-color]="avatarColor(user.user.name)">{{ initials(user.user.name) }}</span>
+                    }
                     <span class="user-name">{{ user.user.name }}</span>
                   </div>
                 </td>

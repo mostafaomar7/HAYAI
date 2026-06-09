@@ -61,8 +61,9 @@
   margin-bottom: 12px;
 }
 
-/* Input Field */
-.form-group input {
+/* Input + Select Field */
+.form-group input,
+.form-group select {
   width: 100%;
   box-sizing: border-box;
   background-color: #F3F4F6;
@@ -74,9 +75,70 @@
   outline: none;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: #93C5FD;
 }
+
+.form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+.form-group input.invalid,
+.form-group select.invalid {
+  border-color: #DC2626;
+  background-color: #FEF2F2;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  color: #DC2626;
+  font-size: 12px;
+}
+
+.error-banner {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  background: #F3F4F6;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel:hover { background: #E5E7EB; }
+
+.btn-primary {
+  background: #2563EB;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) { background: #1D4ED8; }
+.btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
 
 /* Upload Box (Dashed) */
 .upload-box {

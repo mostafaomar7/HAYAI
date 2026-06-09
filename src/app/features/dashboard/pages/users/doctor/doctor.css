@@ -17,6 +17,7 @@
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .table-header {
@@ -181,19 +182,21 @@
 /* ================= Data Table ================= */
 .table-responsive {
   width: 100%;
-  overflow: visible; 
+  overflow-x: auto;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: auto;
 }
 
 .data-table th, .data-table td {
-  padding: 16px 24px;
+  padding: 14px 16px;
   border-bottom: 1px solid #E5E7EB;
-  font-size: 14px;
+  font-size: 13.5px;
+  white-space: nowrap;
 }
 
 .data-table th {
@@ -217,6 +220,11 @@
   padding-right: 0 !important;
 }
 
+.action-col {
+  width: 48px;
+  text-align: right;
+}
+
 .user-cell {
   display: flex;
   align-items: center;
@@ -228,6 +236,21 @@
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
 
 .user-name {

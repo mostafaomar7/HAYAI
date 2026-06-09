@@ -1,6 +1,9 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RenewalItem, SubscriptionsService } from '../../../../core/services/subscriptions.service';
+import { DialogService } from '../../../../core/services/dialog.service';
+import { Plan, PlansService } from '../../../../core/services/plans.service';
+import { LookupItem, LookupsService } from '../../../../core/services/lookups.service';
 
 @Component({
   selector: 'app-renewal',
@@ -11,6 +14,9 @@ import { RenewalItem, SubscriptionsService } from '../../../../core/services/sub
 })
 export class Renewal {
   private svc = inject(SubscriptionsService);
+  private dialog = inject(DialogService);
+  private plans = inject(PlansService);
+  private lookups = inject(LookupsService);
 
   loading = signal(true);
   showFilter = false;
@@ -20,7 +26,38 @@ export class Renewal {
   renewalUsers = signal<RenewalItem[]>([]);
   selectedIds = signal<Set<number>>(new Set());
 
-  constructor() { this.load(); }
+  plansList = signal<Plan[]>([]);
+  userTypes = signal<LookupItem[]>([]);
+
+  // Fallback if /lookups/user-types fails — these are the provider types that have subscriptions.
+  readonly defaultUserTypes: LookupItem[] = [
+    { id: 'doctor', label: 'Doctor' },
+    { id: 'hospital', label: 'Hospital' },
+    { id: 'clinic', label: 'Clinic' },
+    { id: 'pharmacy', label: 'Pharmacy' },
+    { id: 'lab', label: 'Lab / Radiology' },
+    { id: 'medical_issuance', label: 'Medical Issuance' },
+    { id: 'home_care', label: 'Home Care' },
+    { id: 'physical_therapy', label: 'Physical Therapy' },
+    { id: 'employment_office', label: 'Employment Office' },
+    { id: 'medical_devices', label: 'Medical Devices' }
+  ];
+
+  constructor() {
+    this.load();
+    this.plans.list({ per_page: 100 }).subscribe({
+      next: r => this.plansList.set(r.items),
+      error: () => this.plansList.set([])
+    });
+    this.lookups.userTypes().subscribe({
+      next: items => {
+        // exclude patient/tourist (they don't have plans)
+        const filtered = items.filter(i => !['patient', 'tourist'].includes(String(i.id)));
+        this.userTypes.set(filtered.length ? filtered : this.defaultUserTypes);
+      },
+      error: () => this.userTypes.set(this.defaultUserTypes)
+    });
+  }
 
   load() {
     this.loading.set(true);
@@ -39,14 +76,24 @@ export class Renewal {
   }
 
   onSearch(value: string) { this.search.set(value); this.load(); }
-  onUserType(value: string) { this.userTypeFilter.set(value); this.load(); }
-  onPlan(value: string) { this.planFilter.set(value); this.load(); }
 
   toggleFilter() { this.showFilter = !this.showFilter; }
   preventClose(event: Event) { event.stopPropagation(); }
 
   @HostListener('document:click')
-  closeFilter() { /* leave open until X tapped */ }
+  closeFilter() { /* keep popup open until X */ }
+
+  applyFilters() {
+    this.showFilter = false;
+    this.load();
+  }
+
+  resetFilters() {
+    this.userTypeFilter.set('');
+    this.planFilter.set('');
+    this.showFilter = false;
+    this.load();
+  }
 
   toggleRow(id: number) {
     const set = new Set(this.selectedIds());
@@ -62,19 +109,61 @@ export class Renewal {
     }
   }
 
-  renewOne(id: number) {
-    if (!confirm('Renew this subscription?')) return;
-    this.svc.renew(id).subscribe(() => this.load());
+  initials(name?: string | null): string {
+    if (!name) return '?';
+    const cleaned = name.trim();
+    if (!cleaned) return '?';
+    const parts = cleaned.split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return cleaned.slice(0, 2).toUpperCase();
   }
 
-  renewAll() {
+  avatarColor(name?: string | null): string {
+    const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+    const s = name ?? '';
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return palette[h % palette.length];
+  }
+
+  async renewOne(id: number) {
+    const ok = await this.dialog.confirm({
+      title: 'Renew subscription?',
+      icon: 'question',
+      confirmText: 'Renew'
+    });
+    if (!ok) return;
+    this.svc.renew(id).subscribe({
+      next: () => { this.dialog.toast('success', 'Subscription renewed'); this.load(); },
+      error: err => this.dialog.error('Renew failed', err.error?.message ?? 'Please try again.')
+    });
+  }
+
+  async renewAll() {
     const ids = Array.from(this.selectedIds());
     if (ids.length) {
-      if (!confirm(`Renew ${ids.length} selected?`)) return;
-      this.svc.renewBulk({ subscription_ids: ids }).subscribe(() => this.load());
+      const ok = await this.dialog.confirm({
+        title: `Renew ${ids.length} subscription(s)?`,
+        icon: 'question',
+        confirmText: 'Renew selected'
+      });
+      if (!ok) return;
+      this.svc.renewBulk({ subscription_ids: ids }).subscribe({
+        next: r => { this.dialog.toast('success', `Renewed ${r.renewed}`); this.load(); },
+        error: err => this.dialog.error('Bulk renew failed', err.error?.message ?? 'Please try again.')
+      });
     } else {
-      if (!confirm('Renew ALL filtered users?')) return;
-      this.svc.renewBulk({ all: true }).subscribe(() => this.load());
+      const ok = await this.dialog.confirm({
+        title: 'Renew ALL filtered users?',
+        text: 'This will renew every subscription matching the current filter.',
+        icon: 'warning',
+        confirmText: 'Renew all'
+      });
+      if (!ok) return;
+      this.svc.renewBulk({ all: true }).subscribe({
+        next: r => { this.dialog.toast('success', `Renewed ${r.renewed}`); this.load(); },
+        error: err => this.dialog.error('Bulk renew failed', err.error?.message ?? 'Please try again.')
+      });
     }
   }
 }

@@ -81,7 +81,11 @@
                 <td class="checkbox-col"><input type="checkbox"></td>
                 <td>
                   <div class="user-cell">
-                    <img [src]="user.profile_image || 'https://i.pravatar.cc/150'" alt="Avatar" class="avatar">
+                    @if (user.profile_image) {
+                      <img [src]="user.profile_image" alt="Avatar" class="avatar">
+                    } @else {
+                      <span class="avatar-initials" [style.background-color]="avatarColor(user.name)">{{ initials(user.name) }}</span>
+                    }
                     <span class="user-name">{{ user.name }}</span>
                   </div>
                 </td>

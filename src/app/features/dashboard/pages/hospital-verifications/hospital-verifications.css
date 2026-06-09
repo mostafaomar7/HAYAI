@@ -1,5 +1,211 @@
-.filter-btn.active {
-  background: #2563eb;
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background-color: #F8FAFC;
+  min-height: 100vh;
+}
+
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ============== Card & Header ============== */
+.table-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid #F3F4F6;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-area h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.badge {
+  background: #EFF6FF;
+  color: #2563EB;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+}
+
+/* ============== Tabs ============== */
+.tab-group {
+  display: inline-flex;
+  background: #F3F4F6;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab-btn:hover { color: #111827; }
+
+.tab-btn.active {
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ============== Table ============== */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead tr {
+  background: #F9FAFB;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  border-bottom: 1px solid #F3F4F6;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 14px 24px;
+  font-size: 13.5px;
+  color: #111827;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background-color: #FAFAFA; }
+
+.text-gray { color: #6B7280; }
+
+/* ============== User cell + initials avatar ============== */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   color: #fff;
-  border-color: #2563eb;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #F3F4F6;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ============== Status pill ============== */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill[data-status="pending"]   { background: #FEF3C7; color: #B45309; }
+.status-pill[data-status="verified"]  { background: #DCFCE7; color: #15803D; }
+.status-pill[data-status="rejected"]  { background: #FEE2E2; color: #B91C1C; }
+
+/* ============== Action buttons ============== */
+.action-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-approve,
+.btn-reject {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.btn-approve { background: #10B981; }
+.btn-approve:hover { background: #059669; }
+
+.btn-reject { background: #EF4444; }
+.btn-reject:hover { background: #DC2626; }
+
+.reason-text {
+  display: inline-block;
+  max-width: 220px;
+  font-size: 12px;
+  color: #6B7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
 }

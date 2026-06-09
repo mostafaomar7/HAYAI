@@ -13,13 +13,48 @@
   <form class="form-section" [formGroup]="form" (ngSubmit)="save()">
 
     <div class="form-group">
-      <label>Owner ID</label>
-      <input type="number" placeholder="Owner user id" formControlName="owner_id" />
+      <label>Owner type <span style="color:#dc2626;">*</span></label>
+      <select [value]="ownerType()" (change)="onOwnerTypeChange($any($event.target).value)">
+        <option value="">— Select owner type —</option>
+        @for (opt of ownerTypeOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
     </div>
 
     <div class="form-group">
-      <label>Redirect link</label>
-      <input type="text" placeholder="https://yellowpages.com" formControlName="redirect_link" />
+      <label>Owner <span style="color:#dc2626;">*</span></label>
+      @if (ownerType()) {
+        <input
+          type="text"
+          placeholder="Search by name or email…"
+          [value]="ownerSearch()"
+          (input)="onOwnerSearch($any($event.target).value)"
+          style="margin-bottom:8px;" />
+        <select
+          [value]="form.controls.owner_id.value ?? ''"
+          (change)="onOwnerSelected($any($event.target).value)"
+          [class.invalid]="ownerIdInvalid"
+          [disabled]="ownersLoading()">
+          <option value="">{{ ownersLoading() ? 'Loading…' : '— Select an owner —' }}</option>
+          @for (o of owners(); track o.id) {
+            <option [value]="o.id">#{{ o.id }} — {{ o.label }}</option>
+          }
+        </select>
+        @if (ownerIdInvalid) {
+          <span class="field-error">Owner is required.</span>
+        }
+      } @else {
+        <p style="color:#6B7280;font-size:13px;margin:0;">Select an owner type first.</p>
+      }
+    </div>
+
+    <div class="form-group">
+      <label>Redirect link <span style="color:#dc2626;">*</span></label>
+      <input type="text" placeholder="https://yellowpages.com" formControlName="redirect_link" [class.invalid]="redirectInvalid" />
+      @if (redirectInvalid) {
+        <span class="field-error">Redirect link is required.</span>
+      }
     </div>
 
     <div class="form-group">
@@ -71,12 +106,14 @@
     </div>
 
     @if (errorMessage()) {
-      <div style="color:#dc2626;font-size:13px;">{{ errorMessage() }}</div>
+      <div class="error-banner">{{ errorMessage() }}</div>
     }
 
-    <div class="form-actions" style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px;">
+    <div class="form-actions">
       <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
-      <button type="submit" class="add-btn" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save' }}</button>
+      <button type="submit" class="btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
     </div>
 
   </form>

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CharitableOrganization, CharitableService } from '../../../../core/services/charitable.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-charitable',
@@ -13,6 +14,7 @@ import { CharitableOrganization, CharitableService } from '../../../../core/serv
 export class Charitable {
   private router = inject(Router);
   private svc = inject(CharitableService);
+  private dialog = inject(DialogService);
 
   loading = signal(true);
   showFilter = false;
@@ -49,10 +51,20 @@ export class Charitable {
     this.router.navigate(['/dashboard/charitable/edit', id]);
   }
 
-  onDelete(id: number, event: Event) {
+  async onDelete(id: number, event: Event) {
     event.stopPropagation();
-    if (!confirm('Delete this organization?')) return;
-    this.svc.delete(id).subscribe(() => this.load());
+    const ok = await this.dialog.confirm({
+      title: 'Delete organization?',
+      text: 'This action cannot be undone.',
+      icon: 'warning',
+      confirmText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
+    this.svc.delete(id).subscribe({
+      next: () => { this.dialog.toast('success', 'Organization deleted'); this.load(); },
+      error: () => this.dialog.error('Delete failed', 'Please try again.')
+    });
   }
 
   toggleFilter() { this.showFilter = !this.showFilter; }

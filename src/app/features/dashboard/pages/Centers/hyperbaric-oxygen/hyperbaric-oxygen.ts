@@ -2,6 +2,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CentersService, MedicalCenter } from '../../../../../core/services/centers.service';
+import { DialogService } from '../../../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-hyperbaric-oxygen',
@@ -13,6 +14,7 @@ import { CentersService, MedicalCenter } from '../../../../../core/services/cent
 export class HyperbaricOxygen {
   private router = inject(Router);
   private svc = inject(CentersService);
+  private dialog = inject(DialogService);
 
   loading = signal(true);
   showFilter = false;
@@ -45,10 +47,20 @@ export class HyperbaricOxygen {
     this.router.navigate(['/dashboard/HyperbaricOxygen/edit', id]);
   }
 
-  deleteCenter(event: Event, id: number) {
+  async deleteCenter(event: Event, id: number) {
     event.stopPropagation();
-    if (!confirm('Delete this center?')) return;
-    this.svc.delete(id).subscribe(() => this.load());
+    const ok = await this.dialog.confirm({
+      title: 'Delete center?',
+      text: 'This action cannot be undone.',
+      icon: 'warning',
+      confirmText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
+    this.svc.delete(id).subscribe({
+      next: () => { this.dialog.toast('success', 'Center deleted'); this.load(); },
+      error: () => this.dialog.error('Delete failed', 'Please try again.')
+    });
   }
 
   toggleFilter(event: Event) {

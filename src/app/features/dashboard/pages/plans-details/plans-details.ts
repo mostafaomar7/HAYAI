@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Plan, PlansService } from '../../../../core/services/plans.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 
 @Component({
   selector: 'app-plans-details',
@@ -15,6 +16,7 @@ export class PlansDetails {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private svc = inject(PlansService);
+  private dialog = inject(DialogService);
 
   loading = signal(true);
   plan = signal<Plan | null>(null);
@@ -38,9 +40,23 @@ export class PlansDetails {
     if (id) this.router.navigate(['/dashboard/plans/edit', id]);
   }
 
-  onDelete() {
+  async onDelete() {
     const id = this.plan()?.id;
-    if (!id || !confirm('Delete this plan?')) return;
-    this.svc.delete(id).subscribe(() => this.router.navigate(['/dashboard/plans']));
+    if (!id) return;
+    const ok = await this.dialog.confirm({
+      title: 'Delete plan?',
+      text: 'Active subscriptions may block deletion.',
+      icon: 'warning',
+      confirmText: 'Delete',
+      danger: true
+    });
+    if (!ok) return;
+    this.svc.delete(id).subscribe({
+      next: () => {
+        this.dialog.toast('success', 'Plan deleted');
+        this.router.navigate(['/dashboard/plans']);
+      },
+      error: err => this.dialog.error('Delete failed', err.error?.message ?? 'Please try again.')
+    });
   }
 }

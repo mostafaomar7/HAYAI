@@ -20,19 +20,31 @@ export interface ExternalDevice {
 
 export interface ExternalDeviceOrder {
   id: number;
-  user: { id: number; name: string };
-  device: { id: number; name: string };
+  device_id: number;
+  transaction_id: number;
+  group_purchase_id: number | null;
+  purchase_type: 'solo' | 'group';
   quantity: number;
-  total: number | string;
+  unit_price: number | string;
+  total_price: number | string;
   currency: string;
+  payment_method: string;
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_reference: string | null;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   tracking_number: string | null;
-  shipping_address: {
-    line1: string;
-    city: string;
-    governate: string;
+  estimated_delivery_days: number | null;
+  address: {
+    line: string | null;
+    city: string | null;
+    governorate: string | null;
+    postal_code: string | null;
+  } | null;
+  contact: {
+    name: string;
     phone: string;
   } | null;
+  notes: string | null;
   created_at: string;
 }
 

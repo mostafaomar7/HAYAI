@@ -7,10 +7,10 @@
         <span class="badge">{{ total() }} hospitals</span>
       </div>
 
-      <div class="actions-area" style="gap:8px;">
-        <button class="filter-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">Pending</button>
-        <button class="filter-btn" [class.active]="status() === 'verified'" (click)="setStatus('verified')">Verified</button>
-        <button class="filter-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">Rejected</button>
+      <div class="tab-group">
+        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">Pending</button>
+        <button class="tab-btn" [class.active]="status() === 'verified'" (click)="setStatus('verified')">Verified</button>
+        <button class="tab-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">Rejected</button>
       </div>
     </div>
 
@@ -23,35 +23,48 @@
             <th>Phone</th>
             <th>Status</th>
             <th>Created</th>
-            <th class="action-col">Actions</th>
+            <th style="width:200px;">Actions</th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="6" style="padding:24px;color:#6B7280;">Loading…</td></tr>
+            <tr><td colspan="6" class="text-gray" style="padding:32px 24px;">Loading…</td></tr>
           } @else if (!items().length) {
-            <tr><td colspan="6" style="padding:24px;color:#6B7280;">No hospitals in this state.</td></tr>
+            <tr><td colspan="6" class="text-gray" style="padding:32px 24px;">No hospitals in this state.</td></tr>
           } @else {
             @for (h of items(); track h.id) {
               <tr>
                 <td>
                   <div class="user-cell">
-                    <img [src]="h.logo || 'https://i.pravatar.cc/150'" class="avatar" alt="Logo">
+                    @if (h.logo) {
+                      <img [src]="h.logo" class="avatar-img" [alt]="h.name" />
+                    } @else {
+                      <span class="avatar-initials" [style.background-color]="avatarColor(h.name)">
+                        {{ initials(h.name) }}
+                      </span>
+                    }
                     <span class="user-name">{{ h.name }}</span>
                   </div>
                 </td>
                 <td class="text-gray">{{ h.email }}</td>
                 <td class="text-gray">{{ h.phone }}</td>
                 <td>
-                  <div class="status-badge"><span class="dot"></span>{{ h.verification_status }}</div>
+                  <span class="status-pill" [attr.data-status]="h.verification_status">
+                    <span class="dot"></span>
+                    {{ h.verification_status }}
+                  </span>
                 </td>
                 <td class="text-gray">{{ h.created_at | date:'mediumDate' }}</td>
-                <td class="action-col" style="display:flex;gap:8px;">
+                <td>
                   @if (h.verification_status === 'pending') {
-                    <button class="renew-btn" style="background:#10b981;" (click)="approve(h.id)">Approve</button>
-                    <button class="renew-btn" style="background:#ef4444;" (click)="reject(h.id)">Reject</button>
+                    <div class="action-row">
+                      <button class="btn-approve" (click)="approve(h.id)">Approve</button>
+                      <button class="btn-reject" (click)="reject(h.id)">Reject</button>
+                    </div>
                   } @else if (h.verification_status === 'rejected' && h.rejection_reason) {
-                    <span style="font-size:12px;color:#6B7280;">{{ h.rejection_reason }}</span>
+                    <span class="reason-text" [title]="h.rejection_reason">{{ h.rejection_reason }}</span>
+                  } @else {
+                    <span class="text-gray" style="font-size:12px;">—</span>
                   }
                 </td>
               </tr>

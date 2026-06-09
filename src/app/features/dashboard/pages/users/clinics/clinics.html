@@ -15,7 +15,7 @@
             <div class="filter-popup" (click)="preventClose($event)">
               <div class="popup-header"><h3>Filter</h3><button class="close-icon" (click)="toggleFilter($event)">×</button></div>
               <div class="popup-body">
-                <div class="form-group"><label>Plan ID</label><input type="number" [value]="planFilter()" (input)="planFilter.set($any($event.target).value)" /></div>
+                <div class="form-group"><label>Plan</label><div class="custom-select"><select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)"><option value="">Any</option>@for (pl of plansList(); track pl.id) {<option [value]="pl.id">{{ pl.name }}</option>}</select></div></div>
                 <div class="form-group"><label>Status</label>
                   <div class="custom-select"><select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)"><option value="">Any</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
                 </div>
@@ -37,7 +37,7 @@
             @for (c of items(); track c.id) {
               <tr>
                 <td class="checkbox-col"><input type="checkbox"></td>
-                <td><div class="user-cell"><img [src]="c.logo || c.profile_image || 'https://i.pravatar.cc/150'" class="avatar"><span class="user-name">{{ c.name }}</span></div></td>
+                <td><div class="user-cell">@if (c.logo || c.profile_image) {<img [src]="c.logo || c.profile_image" class="avatar">} @else {<span class="avatar-initials" [style.background-color]="avatarColor(c.name)">{{ initials(c.name) }}</span>}<span class="user-name">{{ c.name }}</span></div></td>
                 <td><div class="status-badge"><span class="dot"></span>{{ c.status }}</div></td>
                 <td class="text-gray">{{ c.email }}</td>
                 <td class="text-gray">{{ c.phone }}</td>

@@ -26,8 +26,15 @@
               </div>
               <div class="popup-body">
                 <div class="form-group">
-                  <label>Plan ID</label>
-                  <input type="number" [value]="planFilter()" (input)="planFilter.set($any($event.target).value)" />
+                  <label>Plan</label>
+                  <div class="custom-select">
+                    <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)">
+                      <option value="">Any</option>
+                      @for (pl of plansList(); track pl.id) {
+                        <option [value]="pl.id">{{ pl.name }}</option>
+                      }
+                    </select>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label>Status</label>
@@ -74,7 +81,11 @@
                 <td class="checkbox-col"><input type="checkbox"></td>
                 <td>
                   <div class="user-cell">
-                    <img [src]="h.logo || h.profile_image || 'https://i.pravatar.cc/150'" alt="Avatar" class="avatar">
+                    @if (h.logo || h.profile_image) {
+                      <img [src]="h.logo || h.profile_image" alt="Avatar" class="avatar">
+                    } @else {
+                      <span class="avatar-initials" [style.background-color]="avatarColor(h.name)">{{ initials(h.name) }}</span>
+                    }
                     <span class="user-name">{{ h.name }}</span>
                   </div>
                 </td>
