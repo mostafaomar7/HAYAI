@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsService, NotificationCategory, SystemNotification } from '../../services/notifications.service';
+import { I18nService } from '../../i18n/i18n.service';
+import { TPipe } from '../../i18n/t.pipe';
+import { LayoutService } from '../../layouts/layout.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
@@ -15,6 +18,8 @@ export class NavbarComponent {
   private auth = inject(AuthService);
   private notifs = inject(NotificationsService);
   private router = inject(Router);
+  i18n = inject(I18nService);
+  layout = inject(LayoutService);
 
   user = this.auth.currentUser;
   userName = computed(() => this.user()?.name ?? 'Admin');

@@ -3,47 +3,47 @@
   <header class="top-header">
     <button class="back-btn" (click)="goBack()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      {{ isEdit() ? 'Edit Dialysis Center' : 'Add Dialysis Center' }}
+      {{ (isEdit() ? 'centers.edit_dialysis' : 'centers.add_dialysis') | t }}
     </button>
   </header>
 
   <div class="content-wrapper">
 
     <section class="form-section">
-      <h3>Basic Information</h3>
+      <h3>{{ 'charitable.basic_info' | t }}</h3>
 
       <div class="form-group">
-        <label>Status</label>
+        <label>{{ 'common.status' | t }}</label>
         <div class="status-toggle-group">
-          <button type="button" [class.active]="status === 'Active'" (click)="setStatus('Active')">Active</button>
-          <button type="button" [class.active]="status === 'Inactive'" (click)="setStatus('Inactive')">Inactive</button>
+          <button type="button" [class.active]="status === 'Active'" (click)="setStatus('Active')">{{ 'common.active' | t }}</button>
+          <button type="button" [class.active]="status === 'Inactive'" (click)="setStatus('Inactive')">{{ 'common.inactive' | t }}</button>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Center name</label>
-        <input type="text" placeholder="Enter name" [(ngModel)]="name" name="name" />
+        <label>{{ 'centers.name' | t }}</label>
+        <input type="text" [placeholder]="'centers.enter_name' | t" [(ngModel)]="name" name="name" />
       </div>
 
       <div class="form-group">
-        <label>Description</label>
+        <label>{{ 'common.description' | t }}</label>
         <textarea rows="3" [(ngModel)]="description" name="description"></textarea>
       </div>
 
       <div class="form-group">
-        <label>Notes</label>
+        <label>{{ 'charitable.notes' | t }}</label>
         <textarea rows="3" [(ngModel)]="notes" name="notes"></textarea>
       </div>
     </section>
 
     <section class="form-section">
-      <h3>Cover Image</h3>
+      <h3>{{ 'centers.cover_image' | t }}</h3>
 
       @if (!uploadedImage()) {
         <label class="upload-area" style="cursor:pointer;">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#2563EB" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-          <p class="upload-title">Click to upload image</p>
-          <p class="upload-desc">PNG, JPG up to 10MB</p>
+          <p class="upload-title">{{ 'ads.upload_click' | t }}</p>
+          <p class="upload-desc">{{ 'ads.upload_hint' | t }}</p>
           <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="onFileSelected($event)" style="display:none;" />
         </label>
       } @else {
@@ -57,7 +57,7 @@
     </section>
 
     <section class="form-section">
-      <h3>Available Dates & Times</h3>
+      <h3>{{ 'charitable.available_times' | t }}</h3>
       <div class="dates-grid">
         @for (day of days(); track day.day; let i = $index) {
           <div class="date-input-card">
@@ -72,8 +72,8 @@
               </label>
             </div>
             <div class="time-inputs">
-              <input type="time" placeholder="From" [disabled]="!day.active" [value]="day.from || ''" (input)="updateDayField(i, 'from', $any($event.target).value)">
-              <input type="time" placeholder="To" [disabled]="!day.active" [value]="day.to || ''" (input)="updateDayField(i, 'to', $any($event.target).value)">
+              <input type="time" [placeholder]="'charitable.from_time' | t" [disabled]="!day.active" [value]="day.from || ''" (input)="updateDayField(i, 'from', $any($event.target).value)">
+              <input type="time" [placeholder]="'charitable.to_time' | t" [disabled]="!day.active" [value]="day.to || ''" (input)="updateDayField(i, 'to', $any($event.target).value)">
             </div>
           </div>
         }
@@ -81,10 +81,10 @@
     </section>
 
     <section class="form-section">
-      <h3>Services Provided</h3>
+      <h3>{{ 'charitable.services_provided' | t }}</h3>
       <div class="add-contact-row">
-        <input type="text" placeholder="Service name" [(ngModel)]="newServiceName" name="newServiceName">
-        <button type="button" class="btn-primary" (click)="addService()">Add Service</button>
+        <input type="text" [placeholder]="'charitable.service_name' | t" [(ngModel)]="newServiceName" name="newServiceName">
+        <button type="button" class="btn-primary" (click)="addService()">{{ 'charitable.add_service' | t }}</button>
       </div>
       <div class="contacts-grid">
         @for (srv of services(); track $index; let i = $index) {
@@ -99,11 +99,11 @@
     </section>
 
     <section class="form-section">
-      <h3>Contacts</h3>
+      <h3>{{ 'charitable.contacts_section' | t }}</h3>
       <div class="add-contact-row">
-        <input type="text" placeholder="Contact name" [(ngModel)]="newContactName" name="newContactName">
-        <input type="text" placeholder="Phone number" [(ngModel)]="newContactPhone" name="newContactPhone">
-        <button type="button" class="btn-primary" (click)="addContact()">Add contact</button>
+        <input type="text" [placeholder]="'charitable.contact_name' | t" [(ngModel)]="newContactName" name="newContactName">
+        <input type="text" [placeholder]="'charitable.phone_number' | t" [(ngModel)]="newContactPhone" name="newContactPhone">
+        <button type="button" class="btn-primary" (click)="addContact()">{{ 'charitable.add_contact' | t }}</button>
       </div>
 
       <div class="contacts-grid">
@@ -131,7 +131,7 @@
   }
 
   <footer class="form-footer">
-    <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
-    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save Changes' }}</button>
+    <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.cancel' | t }}</button>
+    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
   </footer>
 </div>

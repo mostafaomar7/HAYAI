@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserListBase } from '../user-list.base';
 import { ProviderItem, UserResource } from '../../../../../core/services/users.service';
+import { TPipe } from '../../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-medical-issuance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './medical-issuance.html',
   styleUrl: './medical-issuance.css'
 })

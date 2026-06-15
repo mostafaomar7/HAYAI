@@ -3,17 +3,17 @@
   <div class="notification-card">
 
     <div class="form-group">
-      <label>Notification title</label>
-      <input type="text" placeholder="Enter notification title" [(ngModel)]="title" name="title" />
+      <label>{{ 'notif.send.title_label' | t }}</label>
+      <input type="text" [placeholder]="'notif.send.title_placeholder' | t" [(ngModel)]="title" name="title" />
     </div>
 
     <div class="form-group">
-      <label>Notification details</label>
-      <textarea placeholder="Write your message here ..." rows="6" [(ngModel)]="body" name="body"></textarea>
+      <label>{{ 'notif.send.body_label' | t }}</label>
+      <textarea [placeholder]="'notif.send.body_placeholder' | t" rows="6" [(ngModel)]="body" name="body"></textarea>
     </div>
 
     <div class="form-group">
-      <label>Target Audience</label>
+      <label>{{ 'notif.send.target_audience' | t }}</label>
       <div class="custom-select">
         <select [(ngModel)]="audience" name="audience">
           @for (a of audiences; track a.value) {
@@ -28,7 +28,7 @@
 
     <div class="form-actions">
       <button class="send-btn" [disabled]="sending()" (click)="sendNotification()">
-        {{ sending() ? 'Sending…' : 'Send Notification' }}
+        {{ (sending() ? 'notif.send.sending' : 'notif.send.send') | t }}
       </button>
     </div>
 

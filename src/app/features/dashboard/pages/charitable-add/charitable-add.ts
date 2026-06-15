@@ -12,11 +12,12 @@ import {
   appendSchedule,
   appendServices
 } from '../../../../shared/utils/form-data.util';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-charitable-add',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TPipe],
   templateUrl: './charitable-add.html',
   styleUrl: './charitable-add.css'
 })

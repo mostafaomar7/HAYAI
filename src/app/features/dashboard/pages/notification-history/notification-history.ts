@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BroadcastResponse, NotificationsService } from '../../../../core/services/notifications.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-notification-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './notification-history.html',
   styleUrl: './notification-history.css'
 })

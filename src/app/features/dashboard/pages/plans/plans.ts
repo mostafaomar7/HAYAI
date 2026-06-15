@@ -2,11 +2,12 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Plan, PlansService } from '../../../../core/services/plans.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-plans',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './plans.html',
   styleUrl: './plans.css'
 })

@@ -3,11 +3,12 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CharitableOrganization, CharitableService } from '../../../../core/services/charitable.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-charitable-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './charitable-details.html',
   styleUrl: './charitable-details.css'
 })

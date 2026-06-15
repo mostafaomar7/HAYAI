@@ -1,14 +1,14 @@
 :host {
   display: block;
   height: 100vh;
+  width: 100%;
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
 .sidebar {
-  width: 280px;
+  width: 100%;
   height: 100%;
   background-color: #ffffff;
-  border-right: 1px solid #f1f5f9; /* خفيف جداً لفصل الـ Sidebar */
   display: flex;
   flex-direction: column;
   padding: 24px 20px;

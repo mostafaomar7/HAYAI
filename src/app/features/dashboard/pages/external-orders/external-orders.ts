@@ -2,12 +2,13 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ExternalDevice, ExternalDeviceOrder, ExternalDevicesService } from '../../../../core/services/external-devices.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-external-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './external-orders.html',
   styleUrl: './external-orders.css'
 })

@@ -2,27 +2,27 @@
 
   <header class="page-header">
     <div class="title-section">
-      <h1>Welcome back, {{ greetingName() }} 👋</h1>
-      <p>Here's an overview of your system activity.</p>
+      <h1>{{ 'home.welcome_back' | t }}, {{ greetingName() }} 👋</h1>
+      <p>{{ 'home.overview_subtitle' | t }}</p>
     </div>
 
     <div class="date-picker">
       <div class="preset-row">
-        <button type="button" class="preset-btn" (click)="applyPreset(7)">7d</button>
-        <button type="button" class="preset-btn" (click)="applyPreset(30)">30d</button>
-        <button type="button" class="preset-btn" (click)="applyPreset(90)">90d</button>
-        <button type="button" class="preset-btn reset" (click)="resetDateRange()">All time</button>
+        <button type="button" class="preset-btn" (click)="applyPreset(7)">{{ 'home.7d' | t }}</button>
+        <button type="button" class="preset-btn" (click)="applyPreset(30)">{{ 'home.30d' | t }}</button>
+        <button type="button" class="preset-btn" (click)="applyPreset(90)">{{ 'home.90d' | t }}</button>
+        <button type="button" class="preset-btn reset" (click)="resetDateRange()">{{ 'home.all_time' | t }}</button>
       </div>
       <div class="inputs-row">
         <label class="date-field">
-          <span>From</span>
+          <span>{{ 'home.from' | t }}</span>
           <input type="date" [value]="fromDate()" (change)="fromDate.set($any($event.target).value)" />
         </label>
         <label class="date-field">
-          <span>To</span>
+          <span>{{ 'home.to' | t }}</span>
           <input type="date" [value]="toDate()" (change)="toDate.set($any($event.target).value)" />
         </label>
-        <button type="button" class="apply-btn" (click)="applyDateRange()">Apply</button>
+        <button type="button" class="apply-btn" (click)="applyDateRange()">{{ 'common.apply' | t }}</button>
       </div>
     </div>
   </header>
@@ -36,7 +36,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           </div>
-          <span class="stat-title">{{ stat.title }}</span>
+          <span class="stat-title">{{ stat.titleKey | t }}</span>
         </div>
         <div class="card-body">
           <h2 class="stat-value">{{ stat.value }}</h2>
@@ -61,7 +61,7 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>Users by Category</h3>
+        <h3>{{ 'home.users_by_category' | t }}</h3>
       </div>
       <div class="bar-chart-mockup">
         <div class="bars-container">
@@ -82,7 +82,7 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>Revenue by Plan Type</h3>
+        <h3>{{ 'home.revenue_by_plan_type' | t }}</h3>
       </div>
       <div class="bar-chart-mockup">
         <div class="bars-container">
@@ -103,7 +103,7 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>User Growth Over Time</h3>
+        <h3>{{ 'home.user_growth_over_time' | t }}</h3>
       </div>
       <div class="line-chart-mockup">
         <div class="bars-container">
@@ -124,7 +124,7 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>Revenue Over Time</h3>
+        <h3>{{ 'home.revenue_over_time' | t }}</h3>
       </div>
       <div class="line-chart-mockup">
         <div class="bars-container">

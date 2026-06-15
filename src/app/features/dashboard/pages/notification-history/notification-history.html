@@ -3,8 +3,8 @@
 
     <div class="table-header">
       <div class="title-area">
-        <h2>Broadcast History</h2>
-        <span class="badge">{{ total() }} broadcasts</span>
+        <h2>{{ 'notif.history.title' | t }}</h2>
+        <span class="badge">{{ total() }} {{ 'notif.history.count' | t }}</span>
       </div>
     </div>
 
@@ -12,18 +12,18 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width:22%;">Title</th>
-            <th style="width:34%;">Body</th>
-            <th>Audience</th>
-            <th>Recipients</th>
-            <th>Sent at</th>
+            <th style="width:22%;">{{ 'common.title' | t }}</th>
+            <th style="width:34%;">{{ 'common.body' | t }}</th>
+            <th>{{ 'common.audience' | t }}</th>
+            <th>{{ 'common.recipients' | t }}</th>
+            <th>{{ 'common.sent_at' | t }}</th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="5" class="text-gray" style="padding:32px 24px;">Loading…</td></tr>
+            <tr><td colspan="5" class="text-gray" style="padding:32px 24px;">{{ 'common.loading' | t }}</td></tr>
           } @else if (!items().length) {
-            <tr><td colspan="5" class="text-gray" style="padding:32px 24px;">No broadcasts yet.</td></tr>
+            <tr><td colspan="5" class="text-gray" style="padding:32px 24px;">{{ 'notif.history.no_broadcasts' | t }}</td></tr>
           } @else {
             @for (b of items(); track b.id) {
               <tr>

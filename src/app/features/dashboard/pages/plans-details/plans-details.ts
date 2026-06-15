@@ -3,11 +3,12 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Plan, PlansService } from '../../../../core/services/plans.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-plans-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './plans-details.html',
   styleUrl: './plans-details.css'
 })

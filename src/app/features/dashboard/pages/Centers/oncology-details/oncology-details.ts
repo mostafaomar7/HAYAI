@@ -3,11 +3,12 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CentersService, MedicalCenter } from '../../../../../core/services/centers.service';
 import { DialogService } from '../../../../../core/services/dialog.service';
+import { TPipe } from '../../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-oncology-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './oncology-details.html',
   styleUrl: './oncology-details.css'
 })

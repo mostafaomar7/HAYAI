@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CentersService, MedicalCenter } from '../../../../../core/services/centers.service';
 import { DialogService } from '../../../../../core/services/dialog.service';
+import { TPipe } from '../../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-hyperbaric-oxygen',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './hyperbaric-oxygen.html',
   styleUrl: './hyperbaric-oxygen.css'
 })

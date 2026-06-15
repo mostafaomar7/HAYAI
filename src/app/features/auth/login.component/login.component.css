@@ -19,6 +19,19 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 992px) {
+  .form-section {
+    flex: 0 0 100%;
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-section {
+    padding: 20px 16px;
+  }
+}
+
 /* Header */
 .header {
   display: flex;

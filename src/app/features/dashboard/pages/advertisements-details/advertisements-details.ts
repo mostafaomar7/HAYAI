@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdvertisementsService } from '../../../../core/services/advertisements.service';
 import { ProviderItem, UserResource, UsersService } from '../../../../core/services/users.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 interface OwnerTypeOption {
   value: UserResource;
@@ -19,7 +20,7 @@ interface OwnerOption {
 @Component({
   selector: 'app-advertisements-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TPipe],
   templateUrl: './advertisements-details.html',
   styleUrl: './advertisements-details.css'
 })

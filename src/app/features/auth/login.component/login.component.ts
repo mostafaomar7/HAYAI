@@ -4,11 +4,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TPipe } from '../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TPipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -16,6 +18,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  i18n = inject(I18nService);
 
   showPassword = false;
   loading = signal(false);
@@ -45,7 +48,7 @@ export class LoginComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.errorMessage.set(err.error?.message ?? 'Login failed. Please try again.');
+        this.errorMessage.set(err.error?.message ?? this.i18n.translate('login.failed'));
       }
     });
   }

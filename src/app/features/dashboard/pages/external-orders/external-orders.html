@@ -3,17 +3,17 @@
 
     <div class="table-header">
       <div class="title-area">
-        <h2>Device Orders</h2>
-        <span class="badge">{{ total() }} orders</span>
+        <h2>{{ 'external.orders.title' | t }}</h2>
+        <span class="badge">{{ total() }} {{ 'external.orders.orders_count' | t }}</span>
       </div>
 
       <div class="tab-group">
-        <button class="tab-btn" [class.active]="status() === ''" (click)="setStatus('')">All</button>
-        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">Pending</button>
-        <button class="tab-btn" [class.active]="status() === 'confirmed'" (click)="setStatus('confirmed')">Confirmed</button>
-        <button class="tab-btn" [class.active]="status() === 'shipped'" (click)="setStatus('shipped')">Shipped</button>
-        <button class="tab-btn" [class.active]="status() === 'delivered'" (click)="setStatus('delivered')">Delivered</button>
-        <button class="tab-btn" [class.active]="status() === 'cancelled'" (click)="setStatus('cancelled')">Cancelled</button>
+        <button class="tab-btn" [class.active]="status() === ''" (click)="setStatus('')">{{ 'external.orders.tab.all' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">{{ 'external.orders.tab.pending' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'confirmed'" (click)="setStatus('confirmed')">{{ 'external.orders.tab.confirmed' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'shipped'" (click)="setStatus('shipped')">{{ 'external.orders.tab.shipped' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'delivered'" (click)="setStatus('delivered')">{{ 'external.orders.tab.delivered' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'cancelled'" (click)="setStatus('cancelled')">{{ 'external.orders.tab.cancelled' | t }}</button>
       </div>
     </div>
 
@@ -21,23 +21,23 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Order</th>
-            <th>Customer</th>
-            <th>Device</th>
-            <th>Qty</th>
-            <th>Total</th>
-            <th>Payment</th>
-            <th>Status</th>
-            <th>Tracking</th>
-            <th>Created</th>
+            <th>{{ 'external.orders.order' | t }}</th>
+            <th>{{ 'external.orders.customer' | t }}</th>
+            <th>{{ 'common.device' | t }}</th>
+            <th>{{ 'common.quantity' | t }}</th>
+            <th>{{ 'common.total' | t }}</th>
+            <th>{{ 'external.orders.payment' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'common.tracking' | t }}</th>
+            <th>{{ 'common.created' | t }}</th>
             <th style="width:160px;"></th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="10" class="empty-cell">Loading…</td></tr>
+            <tr><td colspan="10" class="empty-cell">{{ 'common.loading' | t }}</td></tr>
           } @else if (!orders().length) {
-            <tr><td colspan="10" class="empty-cell">No orders in this state.</td></tr>
+            <tr><td colspan="10" class="empty-cell">{{ 'external.orders.no_orders' | t }}</td></tr>
           } @else {
             @for (o of orders(); track o.id) {
               <tr>
@@ -67,7 +67,7 @@
                 <td class="text-gray">{{ o.tracking_number || '—' }}</td>
                 <td class="text-gray">{{ o.created_at | date:'mediumDate' }}</td>
                 <td>
-                  <button class="action-btn" (click)="changeOrderStatus(o)">Update status</button>
+                  <button class="action-btn" (click)="changeOrderStatus(o)">{{ 'external.orders.update_status' | t }}</button>
                 </td>
               </tr>
             }

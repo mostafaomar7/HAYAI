@@ -1,12 +1,13 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ExternalDevice, ExternalDevicesService } from '../../../../core/services/external-devices.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-external-devices',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './external-devices.html',
   styleUrl: './external-devices.css'
 })
@@ -21,6 +22,10 @@ export class ExternalDevices {
   sourceFilter = signal('');
   devices = signal<ExternalDevice[]>([]);
   total = signal(0);
+
+  activeFilterCount = computed(() =>
+    (this.statusFilter() ? 1 : 0) + (this.sourceFilter() ? 1 : 0)
+  );
 
   constructor() { this.load(); }
 

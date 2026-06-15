@@ -10,10 +10,12 @@ import {
   OverviewKpis,
   TimeSeries
 } from '../../../../core/services/analytics.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 interface StatCard {
   id: number;
-  title: string;
+  titleKey: string;
   value: string;
   trend: string;
   trendUp: boolean;
@@ -23,7 +25,7 @@ interface StatCard {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
@@ -31,6 +33,7 @@ export class HomeComponent {
   private auth = inject(AuthService);
   private analytics = inject(AnalyticsService);
   private dialog = inject(DialogService);
+  private i18n = inject(I18nService);
 
   loading = signal(true);
   greetingName = computed(() => this.auth.currentUser()?.name ?? 'Admin');
@@ -96,7 +99,7 @@ export class HomeComponent {
     const from = this.fromDate();
     const to = this.toDate();
     if (from && to && from > to) {
-      this.dialog.error('Invalid date range', '"From" date must be before "To" date.');
+      this.dialog.error(this.i18n.translate('home.invalid_date_range'), this.i18n.translate('home.invalid_date_range_text'));
       return;
     }
     this.range.set({ from: from || undefined, to: to || undefined });
@@ -125,10 +128,10 @@ export class HomeComponent {
   private toStats(o: OverviewKpis): StatCard[] {
     const fmt = (n: number) => n.toLocaleString('en-US');
     return [
-      { id: 1, title: 'Total Users', value: fmt(o.totalUsers.value), trend: this.fmtTrend(o.totalUsers.trendPercent), trendUp: o.totalUsers.trendPercent >= 0, icon: 'total-users' },
-      { id: 2, title: 'New Users', value: fmt(o.newUsers.value), trend: this.fmtTrend(o.newUsers.trendPercent), trendUp: o.newUsers.trendPercent >= 0, icon: 'new-users' },
-      { id: 3, title: 'Total Revenue', value: fmt(Number(o.totalRevenue.value)), trend: this.fmtTrend(o.totalRevenue.trendPercent), trendUp: o.totalRevenue.trendPercent >= 0, icon: 'total-revenue' },
-      { id: 4, title: 'Period Revenue', value: fmt(Number(o.periodRevenue.value)), trend: this.fmtTrend(o.periodRevenue.trendPercent), trendUp: o.periodRevenue.trendPercent >= 0, icon: 'period-revenue' }
+      { id: 1, titleKey: 'home.total_users', value: fmt(o.totalUsers.value), trend: this.fmtTrend(o.totalUsers.trendPercent), trendUp: o.totalUsers.trendPercent >= 0, icon: 'total-users' },
+      { id: 2, titleKey: 'home.new_users', value: fmt(o.newUsers.value), trend: this.fmtTrend(o.newUsers.trendPercent), trendUp: o.newUsers.trendPercent >= 0, icon: 'new-users' },
+      { id: 3, titleKey: 'home.total_revenue', value: fmt(Number(o.totalRevenue.value)), trend: this.fmtTrend(o.totalRevenue.trendPercent), trendUp: o.totalRevenue.trendPercent >= 0, icon: 'total-revenue' },
+      { id: 4, titleKey: 'home.period_revenue', value: fmt(Number(o.periodRevenue.value)), trend: this.fmtTrend(o.periodRevenue.trendPercent), trendUp: o.periodRevenue.trendPercent >= 0, icon: 'period-revenue' }
     ];
   }
 

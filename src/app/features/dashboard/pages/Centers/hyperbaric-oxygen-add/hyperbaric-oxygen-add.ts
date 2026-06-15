@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CenterCategory } from '../../../../../core/services/centers.service';
 import { CenterAddBase } from '../center-add.base';
+import { TPipe } from '../../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-hyperbaric-oxygen-add',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TPipe],
   templateUrl: './hyperbaric-oxygen-add.html',
   styleUrl: './hyperbaric-oxygen-add.css'
 })

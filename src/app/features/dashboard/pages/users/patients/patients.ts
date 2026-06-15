@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { UserListBase } from '../user-list.base';
 import { PatientItem, UserResource } from '../../../../../core/services/users.service';
 import { LookupItem, LookupsService } from '../../../../../core/services/lookups.service';
+import { TPipe } from '../../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './patients.html',
   styleUrl: './patients.css'
 })

@@ -7,12 +7,12 @@
     @for (item of menuItems(); track item.id) {
       <div class="menu-item-wrapper">
         
-        <a 
-          [routerLink]="item.hasDropdown ? null : item.route" 
-          [routerLinkActive]="item.hasDropdown ? '' : 'active'" 
+        <a
+          [routerLink]="item.hasDropdown ? null : item.route"
+          [routerLinkActive]="item.hasDropdown ? '' : 'active'"
           [routerLinkActiveOptions]="{ exact: item.id === 'dashboard' }"
           class="menu-item"
-          (click)="toggleMenu(item, $event)"
+          (click)="toggleMenu(item, $event); item.hasDropdown ? null : onNavigate()"
         >
           <span class="icon">
             @switch (item.iconName) {
@@ -73,7 +73,7 @@
             }
           </span>
           
-          <span class="label">{{ item.label }}</span>
+          <span class="label">{{ item.label | t }}</span>
 
           @if (item.hasDropdown) {
             <span class="chevron" [class.rotated]="openDropdownId === item.id">
@@ -89,8 +89,8 @@
             @for (child of item.children; track child.id) {
               
               <div class="tree-item">
-                <a [routerLink]="child.route" routerLinkActive="active" class="dropdown-link">
-                  {{ child.label }}
+                <a [routerLink]="child.route" routerLinkActive="active" class="dropdown-link" (click)="onNavigate()">
+                  {{ child.label | t }}
                 </a>
               </div>
 

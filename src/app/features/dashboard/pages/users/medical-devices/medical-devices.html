@@ -1,21 +1,21 @@
 <div class="page-container">
   <div class="table-card">
     <div class="table-header">
-      <div class="title-area"><h2>Medical Devices</h2><span class="badge">{{ total() }} users</span></div>
+      <div class="title-area"><h2>{{ 'users.medical_devices.title' | t }}</h2><span class="badge">{{ total() }} {{ 'users.users_count' | t }}</span></div>
       <div class="actions-area">
-        <div class="search-box"><input type="text" placeholder="Search" [value]="search()" (input)="onSearch($any($event.target).value)" /></div>
+        <div class="search-box"><input type="text" [placeholder]="'common.search' | t" [value]="search()" (input)="onSearch($any($event.target).value)" /></div>
         <div class="filter-wrapper">
-          <button class="filter-btn" (click)="toggleFilter($event)">Filter</button>
+          <button class="filter-btn" (click)="toggleFilter($event)">{{ 'common.filter' | t }}</button>
           @if (showFilter) {
             <div class="filter-popup" (click)="preventClose($event)">
-              <div class="popup-header"><h3>Filter</h3><button class="close-icon" (click)="toggleFilter($event)">×</button></div>
+              <div class="popup-header"><h3>{{ 'common.filter' | t }}</h3><button class="close-icon" (click)="toggleFilter($event)">×</button></div>
               <div class="popup-body">
-                <div class="form-group"><label>Plan</label><div class="custom-select"><select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)"><option value="">Any</option>@for (pl of plansList(); track pl.id) {<option [value]="pl.id">{{ pl.name }}</option>}</select></div></div>
-                <div class="form-group"><label>Status</label>
-                  <div class="custom-select"><select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)"><option value="">Any</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+                <div class="form-group"><label>{{ 'common.plan' | t }}</label><div class="custom-select"><select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)"><option value="">{{ 'common.any' | t }}</option>@for (pl of plansList(); track pl.id) {<option [value]="pl.id">{{ pl.name }}</option>}</select></div></div>
+                <div class="form-group"><label>{{ 'common.status' | t }}</label>
+                  <div class="custom-select"><select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)"><option value="">{{ 'common.any' | t }}</option><option value="active">{{ 'common.active' | t }}</option><option value="inactive">{{ 'common.inactive' | t }}</option></select></div>
                 </div>
               </div>
-              <div class="popup-footer"><button class="reset-btn" (click)="resetFilters()">Reset</button><button class="apply-btn" (click)="applyFilters()">Apply Filters</button></div>
+              <div class="popup-footer"><button class="reset-btn" (click)="resetFilters()">{{ 'common.reset' | t }}</button><button class="apply-btn" (click)="applyFilters()">{{ 'common.apply_filters' | t }}</button></div>
             </div>
           }
         </div>
@@ -23,10 +23,10 @@
     </div>
     <div class="table-responsive">
       <table class="data-table">
-        <thead><tr><th class="checkbox-col"><input type="checkbox"></th><th>Name</th><th>Status</th><th>Email address</th><th>Phone</th><th>Plan</th><th class="action-col"></th></tr></thead>
+        <thead><tr><th class="checkbox-col"><input type="checkbox"></th><th>{{ 'common.name' | t }}</th><th>{{ 'common.status' | t }}</th><th>{{ 'common.email_address' | t }}</th><th>{{ 'common.phone' | t }}</th><th>{{ 'common.plan' | t }}</th><th class="action-col"></th></tr></thead>
         <tbody>
-          @if (loading()) { <tr><td colspan="7" style="padding:24px;color:#6B7280;">Loading…</td></tr> }
-          @else if (!items().length) { <tr><td colspan="7" style="padding:24px;color:#6B7280;">No medical devices providers.</td></tr> }
+          @if (loading()) { <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr> }
+          @else if (!items().length) { <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'users.no_users' | t }}</td></tr> }
           @else {
             @for (d of items(); track d.id) {
               <tr>
@@ -40,8 +40,8 @@
                   <button class="dots-btn" (click)="toggleActionMenu(d.id, $event)">⋮</button>
                   @if (openActionMenuId === d.id) {
                     <div class="action-dropdown" (click)="preventClose($event)">
-                      <button class="dropdown-item" (click)="deactivate(d.id)">Deactivate</button>
-                      <button class="dropdown-item" (click)="changePlan(d.id)">Change plan</button>
+                      <button class="dropdown-item" (click)="deactivate(d.id)">{{ 'users.actions.deactivate' | t }}</button>
+                      <button class="dropdown-item" (click)="changePlan(d.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }
                 </td>

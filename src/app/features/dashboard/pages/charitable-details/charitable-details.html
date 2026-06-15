@@ -5,28 +5,28 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Back
+        {{ 'common.back' | t }}
       </button>
-      <h1 class="page-title">Organization Details</h1>
+      <h1 class="page-title">{{ 'charitable.details' | t }}</h1>
     </div>
     <div class="header-right">
       <button class="action-btn outline" (click)="goToEdit()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5z" />
         </svg>
-        Edit
+        {{ 'common.edit' | t }}
       </button>
       <button class="action-btn outline" (click)="onDelete()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        Delete
+        {{ 'common.delete' | t }}
       </button>
     </div>
   </header>
 
   @if (loading()) {
-    <p style="padding:24px;color:#6B7280;">Loading…</p>
+    <p style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</p>
   } @else if (org(); as o) {
     <div class="banner-container">
       <img [src]="o.cover_image_url || 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1400'" [alt]="o.name" class="banner-img">
@@ -40,12 +40,12 @@
     </section>
 
     <section class="section-card">
-      <h3 class="section-label">Description</h3>
+      <h3 class="section-label">{{ 'common.description' | t }}</h3>
       <p class="section-text">{{ o.description }}</p>
     </section>
 
     <section class="section-card">
-      <h3 class="section-label">Services Provided</h3>
+      <h3 class="section-label">{{ 'charitable.services_provided' | t }}</h3>
       <div class="services-grid">
         @for (s of o.services; track s) {
           <div class="service-item"><span class="blue-dot"></span> {{ s }}</div>
@@ -54,7 +54,7 @@
     </section>
 
     <section class="section-card">
-      <h3 class="section-label">Available Dates & Times</h3>
+      <h3 class="section-label">{{ 'charitable.available_times' | t }}</h3>
       <div class="schedule-grid">
         @for (item of o.schedule; track item.day) {
           <div class="schedule-box">
@@ -68,7 +68,7 @@
               <span class="day-name">{{ item.day }}</span>
             </div>
             <span class="time-range" [class.not-available]="!item.active">
-              {{ item.active ? (item.from + ' - ' + item.to) : 'Not Available' }}
+              @if (item.active) { {{ item.from }} - {{ item.to }} } @else { {{ 'charitable.not_available' | t }} }
             </span>
           </div>
         }
@@ -76,12 +76,12 @@
     </section>
 
     <section class="section-card">
-      <h3 class="section-label">Notes</h3>
+      <h3 class="section-label">{{ 'charitable.notes' | t }}</h3>
       <p class="section-text">{{ o.notes }}</p>
     </section>
 
     <section class="section-card">
-      <h3 class="section-label">Contacts</h3>
+      <h3 class="section-label">{{ 'charitable.contacts_section' | t }}</h3>
       <div class="contacts-row">
         @for (contact of o.contacts; track contact.title) {
           <div class="contact-item">

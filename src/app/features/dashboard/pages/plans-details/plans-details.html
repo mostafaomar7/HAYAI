@@ -2,37 +2,37 @@
   <header class="top-header">
     <button class="back-btn" (click)="goBack()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      Plan Details
+      {{ 'plans.details' | t }}
     </button>
     <div class="header-actions">
-      <button class="action-btn outline" (click)="goToEdit()">Edit</button>
-      <button class="action-btn outline" (click)="onDelete()">Delete</button>
+      <button class="action-btn outline" (click)="goToEdit()">{{ 'common.edit' | t }}</button>
+      <button class="action-btn outline" (click)="onDelete()">{{ 'common.delete' | t }}</button>
     </div>
   </header>
 
   @if (loading()) {
-    <p style="padding:24px;color:#6B7280;">Loading…</p>
+    <p style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</p>
   } @else if (plan(); as p) {
     <div class="content-wrapper">
       <section class="info-section">
-        <h3>Plan Overview</h3>
+        <h3>{{ 'plans.overview' | t }}</h3>
         <div class="grid-4">
-          <div><label>Plan Name</label><span>{{ p.name }}</span></div>
-          <div><label>Plan Type</label><span>{{ p.plan_type }}</span></div>
-          <div><label>Price</label><span>{{ p.price }} EGP</span></div>
-          <div><label>Discount</label><span>{{ p.discount }}% off</span></div>
-          <div><label>Duration</label><span>{{ p.months }} months</span></div>
-          <div><label>Status</label><span>{{ p.status }}</span></div>
+          <div><label>{{ 'plans.name' | t }}</label><span>{{ p.name }}</span></div>
+          <div><label>{{ 'plans.plan_type' | t }}</label><span>{{ p.plan_type }}</span></div>
+          <div><label>{{ 'plans.price' | t }}</label><span>{{ p.price }} {{ 'plans.egp' | t }}</span></div>
+          <div><label>{{ 'plans.discount' | t }}</label><span>{{ p.discount }}% {{ 'plans.off' | t }}</span></div>
+          <div><label>{{ 'plans.duration' | t }}</label><span>{{ p.months }} {{ 'plans.months_unit' | t }}</span></div>
+          <div><label>{{ 'common.status' | t }}</label><span>{{ p.status }}</span></div>
         </div>
       </section>
 
       <section class="info-section">
-        <h3>Description</h3>
+        <h3>{{ 'plans.description' | t }}</h3>
         <p>{{ p.description }}</p>
       </section>
 
       <section class="info-section">
-        <h3>Modules</h3>
+        <h3>{{ 'plans.modules_section' | t }}</h3>
         <div class="modules-pills">
           @for (m of p.modules; track m.module_key) {
             @if (m.included) {
@@ -43,7 +43,7 @@
       </section>
 
       <section class="info-section">
-        <h3>Modules Details</h3>
+        <h3>{{ 'plans.modules_details_title' | t }}</h3>
         @for (m of p.modules; track m.module_key) {
           @if (m.included && m.description) {
             <div class="module-detail-item">

@@ -3,14 +3,14 @@
 
     <div class="table-header">
       <div class="title-area">
-        <h2>Hospital Verifications</h2>
-        <span class="badge">{{ total() }} hospitals</span>
+        <h2>{{ 'hospitals_verify.title' | t }}</h2>
+        <span class="badge">{{ total() }} {{ 'hospitals_verify.hospitals_count' | t }}</span>
       </div>
 
       <div class="tab-group">
-        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">Pending</button>
-        <button class="tab-btn" [class.active]="status() === 'verified'" (click)="setStatus('verified')">Verified</button>
-        <button class="tab-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">Rejected</button>
+        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">{{ 'hospitals_verify.tab.pending' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'verified'" (click)="setStatus('verified')">{{ 'hospitals_verify.tab.verified' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">{{ 'hospitals_verify.tab.rejected' | t }}</button>
       </div>
     </div>
 
@@ -18,19 +18,19 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Hospital</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th style="width:200px;">Actions</th>
+            <th>{{ 'hospitals_verify.hospital' | t }}</th>
+            <th>{{ 'common.email' | t }}</th>
+            <th>{{ 'common.phone' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'common.created' | t }}</th>
+            <th style="width:200px;">{{ 'common.actions' | t }}</th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="6" class="text-gray" style="padding:32px 24px;">Loading…</td></tr>
+            <tr><td colspan="6" class="text-gray" style="padding:32px 24px;">{{ 'common.loading' | t }}</td></tr>
           } @else if (!items().length) {
-            <tr><td colspan="6" class="text-gray" style="padding:32px 24px;">No hospitals in this state.</td></tr>
+            <tr><td colspan="6" class="text-gray" style="padding:32px 24px;">{{ 'hospitals_verify.no_hospitals' | t }}</td></tr>
           } @else {
             @for (h of items(); track h.id) {
               <tr>
@@ -58,8 +58,8 @@
                 <td>
                   @if (h.verification_status === 'pending') {
                     <div class="action-row">
-                      <button class="btn-approve" (click)="approve(h.id)">Approve</button>
-                      <button class="btn-reject" (click)="reject(h.id)">Reject</button>
+                      <button class="btn-approve" (click)="approve(h.id)">{{ 'common.approve' | t }}</button>
+                      <button class="btn-reject" (click)="reject(h.id)">{{ 'common.reject' | t }}</button>
                     </div>
                   } @else if (h.verification_status === 'rejected' && h.rejection_reason) {
                     <span class="reason-text" [title]="h.rejection_reason">{{ h.rejection_reason }}</span>

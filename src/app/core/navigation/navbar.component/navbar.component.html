@@ -1,18 +1,24 @@
 <header class="navbar">
   <div class="navbar-title">
-    <h1>Dashboard</h1>
+    <button class="hamburger-btn" type="button" (click)="layout.toggleSidebar()" [attr.aria-label]="'common.actions' | t">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+    <h1>{{ 'navbar.title' | t }}</h1>
   </div>
 
   <div class="navbar-actions">
 
-    <button class="icon-btn" aria-label="Language">
+    <button class="icon-btn lang-btn" [attr.aria-label]="'navbar.language' | t" (click)="i18n.toggle()" [title]="'navbar.language' | t">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
         <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
       </svg>
+      <span class="lang-code">{{ i18n.lang() === 'en' ? 'AR' : 'EN' }}</span>
     </button>
 
     <div class="notification-wrapper">
-      <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifications()">
+      <button class="icon-btn" [attr.aria-label]="'navbar.notifications' | t" (click)="toggleNotifications()">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
@@ -24,9 +30,9 @@
       @if (isNotificationOpen) {
         <div class="notification-panel">
           <div class="panel-header">
-            <h2>Notifications</h2>
+            <h2>{{ 'navbar.notifications' | t }}</h2>
             <div style="display:flex;gap:8px;align-items:center;">
-              <button class="close-btn" style="background:none;border:none;color:#3B82F6;font-size:12px;cursor:pointer;" (click)="markAllRead()">Mark all read</button>
+              <button class="close-btn" style="background:none;border:none;color:#3B82F6;font-size:12px;cursor:pointer;" (click)="markAllRead()">{{ 'navbar.mark_all_read' | t }}</button>
               <button class="close-btn" (click)="toggleNotifications()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#111827" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -36,16 +42,16 @@
           </div>
 
           <div class="panel-tabs">
-            <button class="tab-btn" [class.active]="activeTab === 'userActivity'" (click)="setActiveTab('userActivity')">User Activity</button>
+            <button class="tab-btn" [class.active]="activeTab === 'userActivity'" (click)="setActiveTab('userActivity')">{{ 'navbar.tab_user_activity' | t }}</button>
             <div class="tab-divider"></div>
-            <button class="tab-btn" [class.active]="activeTab === 'system'" (click)="setActiveTab('system')">System</button>
+            <button class="tab-btn" [class.active]="activeTab === 'system'" (click)="setActiveTab('system')">{{ 'navbar.tab_system' | t }}</button>
           </div>
 
           <div class="notification-list">
             @if (loadingFeed()) {
-              <p style="padding:16px;color:#6B7280;font-size:13px;">Loading…</p>
+              <p style="padding:16px;color:#6B7280;font-size:13px;">{{ 'common.loading' | t }}</p>
             } @else if (!notifications().length) {
-              <p style="padding:16px;color:#6B7280;font-size:13px;">No notifications.</p>
+              <p style="padding:16px;color:#6B7280;font-size:13px;">{{ 'navbar.no_notifications' | t }}</p>
             } @else {
               @for (notif of notifications(); track notif.id) {
                 <div class="notification-item" style="cursor:pointer;" (click)="markRead(notif)">
@@ -83,9 +89,9 @@
 
       @if (isUserMenuOpen) {
         <div style="position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.08);width:200px;z-index:50;overflow:hidden;">
-          <button (click)="goToProfile()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#111827;">My Profile</button>
-          <button (click)="goToChangePassword()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#111827;border-top:1px solid #f3f4f6;">Change Password</button>
-          <button (click)="logout()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#dc2626;border-top:1px solid #f3f4f6;">Logout</button>
+          <button (click)="goToProfile()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#111827;">{{ 'navbar.my_profile' | t }}</button>
+          <button (click)="goToChangePassword()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#111827;border-top:1px solid #f3f4f6;">{{ 'navbar.change_password' | t }}</button>
+          <button (click)="logout()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#dc2626;border-top:1px solid #f3f4f6;">{{ 'navbar.logout' | t }}</button>
         </div>
       }
     </div>

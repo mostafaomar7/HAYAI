@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Advertisement, AdvertisementsService } from '../../../../core/services/advertisements.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-advertisements',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './advertisements.html',
   styleUrl: './advertisements.css'
 })

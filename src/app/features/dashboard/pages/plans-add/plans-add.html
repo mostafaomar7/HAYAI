@@ -2,23 +2,23 @@
   <header class="top-header">
     <button class="back-btn" (click)="goBack()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      {{ isEdit() ? 'Edit plan' : 'Add plan' }}
+      {{ (isEdit() ? 'plans.edit' : 'plans.add_new') | t }}
     </button>
   </header>
 
   <div class="content-wrapper">
     <section class="form-section">
-      <h3>Basic Information</h3>
+      <h3>{{ 'plans.basic_info' | t }}</h3>
       <div class="grid-3">
         <div class="form-group">
-          <label>Plan name</label>
-          <input type="text" placeholder="Enter plan name" [(ngModel)]="name" name="name">
+          <label>{{ 'plans.name' | t }}</label>
+          <input type="text" [placeholder]="'plans.enter_name' | t" [(ngModel)]="name" name="name">
         </div>
         <div class="form-group">
-          <label>Plan type</label>
+          <label>{{ 'plans.plan_type' | t }}</label>
           <div class="custom-select">
             <select [(ngModel)]="planType" name="planType">
-              <option value="">Select plan type</option>
+              <option value="">{{ 'plans.select_type' | t }}</option>
               @for (t of planTypes; track t.value) {
                 <option [value]="t.value">{{ t.label }}</option>
               }
@@ -26,11 +26,11 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Status</label>
+          <label>{{ 'common.status' | t }}</label>
           <div class="custom-select">
             <select [(ngModel)]="status" name="status">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="active">{{ 'common.active' | t }}</option>
+              <option value="inactive">{{ 'common.inactive' | t }}</option>
             </select>
           </div>
         </div>
@@ -38,32 +38,32 @@
     </section>
 
     <section class="form-section">
-      <h3>Pricing</h3>
+      <h3>{{ 'plans.pricing' | t }}</h3>
       <div class="grid-3">
         <div class="form-group">
-          <label>Price (EGP)</label>
-          <input type="number" min="0" placeholder="Enter plan price" [(ngModel)]="price" name="price">
+          <label>{{ 'plans.price_egp' | t }}</label>
+          <input type="number" min="0" [placeholder]="'plans.enter_price' | t" [(ngModel)]="price" name="price">
         </div>
         <div class="form-group">
-          <label>Number of months</label>
-          <input type="number" min="1" placeholder="Enter number of months" [(ngModel)]="months" name="months">
+          <label>{{ 'plans.num_months' | t }}</label>
+          <input type="number" min="1" [placeholder]="'plans.enter_months' | t" [(ngModel)]="months" name="months">
         </div>
         <div class="form-group">
-          <label>Discount (%)</label>
-          <input type="number" min="0" max="100" placeholder="Enter discount" [(ngModel)]="discount" name="discount">
+          <label>{{ 'plans.discount_pct' | t }}</label>
+          <input type="number" min="0" max="100" [placeholder]="'plans.enter_discount' | t" [(ngModel)]="discount" name="discount">
         </div>
       </div>
     </section>
 
     <section class="form-section">
-      <h3>Description</h3>
+      <h3>{{ 'plans.description' | t }}</h3>
       <div class="form-group">
         <textarea rows="3" [(ngModel)]="description" name="description"></textarea>
       </div>
     </section>
 
     <section class="form-section">
-      <h3>Modules</h3>
+      <h3>{{ 'plans.modules_section' | t }}</h3>
       <div class="modules-grid">
         @for (mod of modules(); track mod.module_key; let i = $index) {
           <label class="module-checkbox-card" [class.checked]="mod.checked">
@@ -77,14 +77,14 @@
 
     @if (checkedModules.length > 0) {
       <section class="form-section">
-        <h3>Modules details</h3>
+        <h3>{{ 'plans.modules_details' | t }}</h3>
 
         @for (mod of modules(); track mod.module_key; let i = $index) {
           @if (mod.checked) {
             <div class="form-group module-detail-input">
               <label>{{ mod.module_name }}</label>
-              <span class="sub-label">Description</span>
-              <input type="text" [placeholder]="'Enter ' + mod.module_name + ' description'"
+              <span class="sub-label">{{ 'plans.module_description' | t }}</span>
+              <input type="text" [placeholder]="mod.module_name"
                 [value]="mod.description"
                 (input)="updateModuleDescription(i, $any($event.target).value)">
             </div>
@@ -100,7 +100,7 @@
   </div>
 
   <footer class="form-footer">
-    <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
-    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save Changes' }}</button>
+    <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.cancel' | t }}</button>
+    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
   </footer>
 </div>

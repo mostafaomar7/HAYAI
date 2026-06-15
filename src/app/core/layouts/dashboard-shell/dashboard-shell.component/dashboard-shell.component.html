@@ -1,5 +1,9 @@
-<div class="dashboard-layout">
+<div class="dashboard-layout" [class.sidebar-open]="layout.sidebarOpen()">
   <app-sidebar></app-sidebar>
+
+  @if (layout.sidebarOpen()) {
+    <div class="sidebar-backdrop" (click)="layout.closeSidebar()"></div>
+  }
 
   <div class="dashboard-content">
     <app-navbar></app-navbar>

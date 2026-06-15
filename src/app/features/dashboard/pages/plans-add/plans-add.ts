@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Plan, PlanModule, PlanModuleCatalog, PlansService, PlanType } from '../../../../core/services/plans.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 interface ModuleRow {
   module_key: string;
@@ -15,7 +16,7 @@ interface ModuleRow {
 @Component({
   selector: 'app-plans-add',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TPipe],
   templateUrl: './plans-add.html',
   styleUrl: './plans-add.css'
 })

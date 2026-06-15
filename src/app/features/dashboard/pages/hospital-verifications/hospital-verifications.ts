@@ -6,11 +6,12 @@ import {
   VerificationStatus
 } from '../../../../core/services/hospital-verifications.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-hospital-verifications',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './hospital-verifications.html',
   styleUrl: './hospital-verifications.css'
 })

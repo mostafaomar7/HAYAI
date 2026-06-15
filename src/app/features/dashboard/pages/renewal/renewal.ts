@@ -4,11 +4,12 @@ import { RenewalItem, SubscriptionsService } from '../../../../core/services/sub
 import { DialogService } from '../../../../core/services/dialog.service';
 import { Plan, PlansService } from '../../../../core/services/plans.service';
 import { LookupItem, LookupsService } from '../../../../core/services/lookups.service';
+import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
   selector: 'app-renewal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TPipe],
   templateUrl: './renewal.html',
   styleUrl: './renewal.css'
 })
