@@ -132,7 +132,11 @@
 
                   @if (openActionMenuId === user.id) {
                     <div class="action-dropdown" (click)="preventClose($event)">
-                      <button class="dropdown-item" (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
+                      @if (user.status === 'blocked') {
+                        <button class="dropdown-item" (click)="unblockUser(user.id)">{{ 'users.actions.unblock' | t }}</button>
+                      } @else {
+                        <button class="dropdown-item" (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
+                      }
                     </div>
                   }
                 </td>

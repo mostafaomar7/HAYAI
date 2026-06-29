@@ -46,7 +46,7 @@ export class PlansDetails {
     if (!id) return;
     const ok = await this.dialog.confirm({
       title: 'Delete plan?',
-      text: 'Active subscriptions may block deletion.',
+      text: 'The plan will be removed from all lists. Existing subscriptions continue to work.',
       icon: 'warning',
       confirmText: 'Delete',
       danger: true

@@ -176,6 +176,7 @@
   "users.no_doctors": "No doctors.",
   "users.no_users": "No users.",
   "users.actions.block": "Block user",
+  "users.actions.unblock": "Unblock user",
   "users.actions.deactivate": "Deactivate",
   "users.actions.change_plan": "Change plan",
 
@@ -286,6 +287,7 @@
   "plans.discount_pct": "Discount (%)",
   "plans.select_type": "Select plan type",
   "plans.save_changes": "Save Changes",
+  "plans.select_type_first": "Select a plan type to see its modules.",
   "plans.overview": "Plan Overview",
   "plans.duration": "Duration",
   "plans.months_unit": "months",

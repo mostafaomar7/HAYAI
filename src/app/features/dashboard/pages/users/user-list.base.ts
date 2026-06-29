@@ -84,14 +84,25 @@ export abstract class UserListBase<T extends { id: number }> {
   }
 
   setStatus(id: number, status: 'active' | 'inactive' | 'blocked') {
-    this.svc.setStatus(this.resource, id, status).subscribe({
-      next: () => {
+    this.svc.setStatus<T & { status?: string }>(this.resource, id, status).subscribe({
+      next: updated => {
         this.openActionMenuId = null;
-        this.dialog.toast('success', `User ${status}`);
-        this.load();
+        // Backend response is the source of truth — update the row in place
+        // instead of refetching the whole list.
+        const next = (updated?.status ?? status) as 'active' | 'inactive' | 'blocked';
+        this.items.update(list =>
+          list.map(u => u.id === id ? { ...u, status: next } as T : u)
+        );
+        this.dialog.toast('success', this.statusToastLabel(next));
       },
       error: err => this.dialog.error('Status change failed', err.error?.message ?? 'Please try again.')
     });
+  }
+
+  private statusToastLabel(s: 'active' | 'inactive' | 'blocked'): string {
+    if (s === 'blocked') return 'User blocked';
+    if (s === 'inactive') return 'User deactivated';
+    return 'User unblocked';
   }
 
   changePlan(id: number) {

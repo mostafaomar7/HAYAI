@@ -27,6 +27,7 @@ export interface PlanModule {
 }
 
 export interface PlanModuleCatalog {
+  plan_type: PlanType;
   key: string;
   name: string;
   description: string | null;
@@ -70,8 +71,9 @@ export class PlansService {
     return this.api.get<Plan>(`${this.path}/${id}`);
   }
 
-  modules(): Observable<PlanModuleCatalog[]> {
-    return this.api.get<PlanModuleCatalog[]>(`${this.path}/modules`);
+  /** Module catalog is now scoped per plan type — pass the selected type. */
+  modules(planType: PlanType): Observable<PlanModuleCatalog[]> {
+    return this.api.get<PlanModuleCatalog[]>(`${this.path}/modules`, { plan_type: planType });
   }
 
   create(body: Partial<Plan>): Observable<Plan> {

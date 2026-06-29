@@ -59,14 +59,38 @@ export class PlansAdd {
   ];
 
   constructor() {
-    this.svc.modules().subscribe(catalog => this.seedModules(catalog));
-
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       const id = Number(idParam);
       this.id.set(id);
       this.load(id);
     }
+  }
+
+  /** Called from the template whenever the Plan Type dropdown changes. */
+  onPlanTypeChange(next: PlanType | '') {
+    this.planType = next;
+    if (!next) {
+      this.modules.set([]);
+      return;
+    }
+    // Preserve user's previous selections for module keys that still exist
+    // in the new catalog; drop the rest (the backend would reject unknown keys).
+    const prevByKey = new Map(this.modules().map(m => [m.module_key, m]));
+    this.svc.modules(next).subscribe({
+      next: catalog => {
+        this.modules.set(catalog.map(c => {
+          const prev = prevByKey.get(c.key);
+          return {
+            module_key: c.key,
+            module_name: c.name,
+            checked: prev?.checked ?? false,
+            description: prev?.description ?? ''
+          };
+        }));
+      },
+      error: () => this.modules.set([])
+    });
   }
 
   private seedModules(catalog: PlanModuleCatalog[], existing?: PlanModule[]) {
@@ -94,7 +118,7 @@ export class PlansAdd {
         this.months = p.months;
         this.discount = p.discount;
         this.description = p.description ?? '';
-        this.svc.modules().subscribe(catalog => this.seedModules(catalog, p.modules));
+        this.svc.modules(p.plan_type).subscribe(catalog => this.seedModules(catalog, p.modules));
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

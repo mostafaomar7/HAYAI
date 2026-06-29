@@ -16,4 +16,5 @@ export class Tourists extends UserListBase<TouristItem> {
   constructor() { super(); this.init(); }
 
   blockUser(id: number) { this.setStatus(id, 'blocked'); }
+  unblockUser(id: number) { this.setStatus(id, 'active'); }
 }

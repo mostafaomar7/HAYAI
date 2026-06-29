@@ -29,4 +29,8 @@ export class Patients extends UserListBase<PatientItem> {
   blockUser(id: number) {
     this.setStatus(id, 'blocked');
   }
+
+  unblockUser(id: number) {
+    this.setStatus(id, 'active');
+  }
 }

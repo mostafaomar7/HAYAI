@@ -176,6 +176,7 @@
   "users.no_doctors": "لا يوجد أطباء.",
   "users.no_users": "لا يوجد مستخدمون.",
   "users.actions.block": "حظر المستخدم",
+  "users.actions.unblock": "إلغاء الحظر",
   "users.actions.deactivate": "إيقاف",
   "users.actions.change_plan": "تغيير الخطة",
 
@@ -286,6 +287,7 @@
   "plans.discount_pct": "الخصم (%)",
   "plans.select_type": "اختر نوع الخطة",
   "plans.save_changes": "حفظ التغييرات",
+  "plans.select_type_first": "اختر نوع الخطة لعرض الوحدات المتاحة لها.",
   "plans.overview": "نظرة عامة على الخطة",
   "plans.duration": "المدة",
   "plans.months_unit": "شهر",

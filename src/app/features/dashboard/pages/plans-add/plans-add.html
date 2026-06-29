@@ -17,7 +17,7 @@
         <div class="form-group">
           <label>{{ 'plans.plan_type' | t }}</label>
           <div class="custom-select">
-            <select [(ngModel)]="planType" name="planType">
+            <select [ngModel]="planType" name="planType" (ngModelChange)="onPlanTypeChange($event)">
               <option value="">{{ 'plans.select_type' | t }}</option>
               @for (t of planTypes; track t.value) {
                 <option [value]="t.value">{{ t.label }}</option>
@@ -64,15 +64,19 @@
 
     <section class="form-section">
       <h3>{{ 'plans.modules_section' | t }}</h3>
-      <div class="modules-grid">
-        @for (mod of modules(); track mod.module_key; let i = $index) {
-          <label class="module-checkbox-card" [class.checked]="mod.checked">
-            <input type="checkbox" [checked]="mod.checked" (change)="toggleModule(i)">
-            <span class="custom-checkbox"></span>
-            {{ mod.module_name }}
-          </label>
-        }
-      </div>
+      @if (!planType) {
+        <p style="color:#6B7280;font-size:13px;">{{ 'plans.select_type_first' | t }}</p>
+      } @else {
+        <div class="modules-grid">
+          @for (mod of modules(); track mod.module_key; let i = $index) {
+            <label class="module-checkbox-card" [class.checked]="mod.checked">
+              <input type="checkbox" [checked]="mod.checked" (change)="toggleModule(i)">
+              <span class="custom-checkbox"></span>
+              {{ mod.module_name }}
+            </label>
+          }
+        </div>
+      }
     </section>
 
     @if (checkedModules.length > 0) {
