@@ -23,10 +23,11 @@ export class SidebarComponent {
   openDropdownId: string | null = null;
 
   menuItems = computed(() => {
-    const userType = this.currentUser()?.user_type;
-    // Map backend user_type ('admin' | 'manager' | …) into the sidebar role union
-    const role: UserRole = (userType === 'admin' || userType === 'manager') ? userType : 'admin';
-    return MENU_ITEMS.filter(item => item.roles.includes(role));
+    // `admin` is the only user_type the backend lets through `/admin/*`;
+    // anything else would 403 behind every link, so show no menu at all.
+    const role = this.currentUser()?.user_type;
+    if (role !== 'admin') return [];
+    return MENU_ITEMS.filter(item => item.roles.includes(role satisfies UserRole));
   });
 
   toggleMenu(item: any, event: Event) {

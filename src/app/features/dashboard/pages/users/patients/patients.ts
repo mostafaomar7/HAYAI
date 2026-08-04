@@ -4,11 +4,12 @@ import { UserListBase } from '../user-list.base';
 import { PatientItem, UserResource } from '../../../../../core/services/users.service';
 import { LookupItem, LookupsService } from '../../../../../core/services/lookups.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
+import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PaginationComponent],
   templateUrl: './patients.html',
   styleUrl: './patients.css'
 })
@@ -24,13 +25,5 @@ export class Patients extends UserListBase<PatientItem> {
     this.lookups.governorates().subscribe(items => this.governorates.set(items));
     this.lookups.genders().subscribe(items => this.genders.set(items));
     this.init();
-  }
-
-  blockUser(id: number) {
-    this.setStatus(id, 'blocked');
-  }
-
-  unblockUser(id: number) {
-    this.setStatus(id, 'active');
   }
 }

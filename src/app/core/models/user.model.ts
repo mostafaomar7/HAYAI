@@ -1,13 +1,14 @@
+/** Mirrors the `users.user_type` enum on the backend. */
 export type UserType =
   | 'admin'
-  | 'manager'
   | 'patient'
   | 'tourist'
   | 'doctor'
   | 'hospital'
   | 'clinic'
-  | 'pharmacy'
-  | 'lab'
+  | 'pharmacies'
+  | 'labs_radiology'
+  | 'medical_insurance'
   | 'medical_issuance'
   | 'home_care'
   | 'physical_therapy'

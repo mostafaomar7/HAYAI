@@ -139,7 +139,11 @@ export class AdvertisementsDetails {
     this.users.list<ProviderItem>(resource, {
       per_page: 50,
       search: this.ownerSearch() || undefined,
-      status: 'active'
+      // Only a provider that cleared registration and can still sign in may
+      // own an ad. `status` is the approval lifecycle here — `active` belongs
+      // to `account_status`.
+      status: 'approved',
+      account_status: 'active'
     }).subscribe({
       next: r => {
         this.owners.set(r.items.map(u => ({

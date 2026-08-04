@@ -2,20 +2,39 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, PagedResult } from './api.service';
 
+export interface DeviceCompany {
+  id: number;
+  name: string;
+  logo_url: string | null;
+}
+
 export interface ExternalDevice {
   id: number;
   name: string;
   slug: string;
   source: 'internal' | 'external';
   company_id: number | null;
+  owner_facility_id: number | null;
   brand: string | null;
-  cover_image: string | null;
+  cover_image_url: string | null;
   price: number | string;
+  /** Pre-discount price when the device is on offer. */
+  original_price: number | string | null;
   currency: string;
+  /** Per-unit price once the group buy reaches its minimum. */
+  group_price: number | string | null;
   is_available: boolean;
+  group_purchase_enabled: boolean;
+  group_purchase_min_slots: number | null;
   description: string | null;
   rating_avg: number;
   rating_count: number;
+  location: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  company: DeviceCompany | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ExternalDeviceOrder {

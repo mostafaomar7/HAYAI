@@ -1,0 +1,42 @@
+@if (lastPage() > 1) {
+  <nav class="pagination">
+    <span class="pagination-summary">
+      {{ 'pagination.showing' | t }} {{ from() }}–{{ to() }} {{ 'pagination.of' | t }} {{ total() }}
+    </span>
+
+    <div class="pagination-controls">
+      <button
+        type="button"
+        class="page-btn nav-btn"
+        [disabled]="page() <= 1"
+        (click)="go(page() - 1)"
+      >
+        {{ 'common.prev' | t }}
+      </button>
+
+      @for (p of pages(); track $index) {
+        @if (p === null) {
+          <span class="page-gap">…</span>
+        } @else {
+          <button
+            type="button"
+            class="page-btn"
+            [class.is-current]="p === page()"
+            (click)="go(p)"
+          >
+            {{ p }}
+          </button>
+        }
+      }
+
+      <button
+        type="button"
+        class="page-btn nav-btn"
+        [disabled]="page() >= lastPage()"
+        (click)="go(page() + 1)"
+      >
+        {{ 'common.next' | t }}
+      </button>
+    </div>
+  </nav>
+}

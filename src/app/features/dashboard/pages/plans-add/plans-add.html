@@ -41,7 +41,7 @@
       <h3>{{ 'plans.pricing' | t }}</h3>
       <div class="grid-3">
         <div class="form-group">
-          <label>{{ 'plans.price_egp' | t }}</label>
+          <label>{{ 'plans.price' | t }}@if (currency()) { ({{ currency() }})}</label>
           <input type="number" min="0" [placeholder]="'plans.enter_price' | t" [(ngModel)]="price" name="price">
         </div>
         <div class="form-group">

@@ -45,19 +45,19 @@ export class CharitableDetails {
     const id = this.org()?.id;
     if (!id) return;
     const ok = await this.dialog.confirm({
-      title: 'Delete organization?',
-      text: 'This action cannot be undone.',
+      title: 'charitable.delete_title',
+      text: 'dialog.delete_text',
       icon: 'warning',
-      confirmText: 'Delete',
+      confirmText: 'common.delete',
       danger: true
     });
     if (!ok) return;
     this.svc.delete(id).subscribe({
       next: () => {
-        this.dialog.toast('success', 'Organization deleted');
+        this.dialog.toast('success', 'charitable.deleted');
         this.router.navigate(['/dashboard/charitable']);
       },
-      error: () => this.dialog.error('Delete failed', 'Please try again.')
+      error: () => this.dialog.error('dialog.delete_failed', 'dialog.try_again')
     });
   }
 }

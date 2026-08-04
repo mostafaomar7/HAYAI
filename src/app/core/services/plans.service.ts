@@ -40,6 +40,8 @@ export interface Plan {
   doctor_role_id: number | null;
   doctor_role?: { id: number; name: string } | null;
   price: number | string;
+  /** Emitted as a constant ("EGP") today — read it rather than hardcoding. */
+  currency: string;
   months: number;
   discount: number;
   description: string | null;

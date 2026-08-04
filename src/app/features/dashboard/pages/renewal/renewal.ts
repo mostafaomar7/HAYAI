@@ -5,11 +5,13 @@ import { DialogService } from '../../../../core/services/dialog.service';
 import { Plan, PlansService } from '../../../../core/services/plans.service';
 import { LookupItem, LookupsService } from '../../../../core/services/lookups.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
+import { debounce } from '../../../../shared/utils/debounce.util';
 
 @Component({
   selector: 'app-renewal',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PaginationComponent],
   templateUrl: './renewal.html',
   styleUrl: './renewal.css'
 })
@@ -26,6 +28,10 @@ export class Renewal {
   planFilter = signal('');
   renewalUsers = signal<RenewalItem[]>([]);
   selectedIds = signal<Set<number>>(new Set());
+
+  readonly perPage = 15;
+  page = signal(1);
+  total = signal(0);
 
   plansList = signal<Plan[]>([]);
   userTypes = signal<LookupItem[]>([]);
@@ -63,12 +69,21 @@ export class Renewal {
   load() {
     this.loading.set(true);
     this.svc.renewals({
+      page: this.page(),
+      per_page: this.perPage,
       search: this.search() || undefined,
       user_type: this.userTypeFilter() || undefined,
       plan_id: this.planFilter() ? Number(this.planFilter()) : undefined
     }).subscribe({
       next: r => {
+        // Renewing the last row of the last page leaves us past the end.
+        if (!r.items.length && this.page() > 1) {
+          this.page.update(p => p - 1);
+          this.load();
+          return;
+        }
         this.renewalUsers.set(r.items);
+        this.total.set(r.pagination.total);
         this.selectedIds.set(new Set());
         this.loading.set(false);
       },
@@ -76,7 +91,15 @@ export class Renewal {
     });
   }
 
-  onSearch(value: string) { this.search.set(value); this.load(); }
+  /** Search and filters change the result set — restart from page 1. */
+  private reload() { this.page.set(1); this.load(); }
+
+  goToPage(page: number) { this.page.set(page); this.load(); }
+
+  onSearch = debounce((value: string) => {
+    this.search.set(value);
+    this.reload();
+  });
 
   toggleFilter() { this.showFilter = !this.showFilter; }
   preventClose(event: Event) { event.stopPropagation(); }
@@ -86,14 +109,14 @@ export class Renewal {
 
   applyFilters() {
     this.showFilter = false;
-    this.load();
+    this.reload();
   }
 
   resetFilters() {
     this.userTypeFilter.set('');
     this.planFilter.set('');
     this.showFilter = false;
-    this.load();
+    this.reload();
   }
 
   toggleRow(id: number) {
@@ -129,14 +152,14 @@ export class Renewal {
 
   async renewOne(id: number) {
     const ok = await this.dialog.confirm({
-      title: 'Renew subscription?',
+      title: 'renewal.renew_title',
       icon: 'question',
-      confirmText: 'Renew'
+      confirmText: 'common.renew'
     });
     if (!ok) return;
     this.svc.renew(id).subscribe({
-      next: () => { this.dialog.toast('success', 'Subscription renewed'); this.load(); },
-      error: err => this.dialog.error('Renew failed', err.error?.message ?? 'Please try again.')
+      next: () => { this.dialog.toast('success', 'renewal.renewed'); this.load(); },
+      error: err => this.dialog.error('renewal.renew_failed', err.error?.message ?? 'dialog.try_again')
     });
   }
 
@@ -144,26 +167,27 @@ export class Renewal {
     const ids = Array.from(this.selectedIds());
     if (ids.length) {
       const ok = await this.dialog.confirm({
-        title: `Renew ${ids.length} subscription(s)?`,
+        title: 'renewal.renew_selected_title',
+        params: { count: ids.length },
         icon: 'question',
-        confirmText: 'Renew selected'
+        confirmText: 'renewal.renew_selected'
       });
       if (!ok) return;
       this.svc.renewBulk({ subscription_ids: ids }).subscribe({
-        next: r => { this.dialog.toast('success', `Renewed ${r.renewed}`); this.load(); },
-        error: err => this.dialog.error('Bulk renew failed', err.error?.message ?? 'Please try again.')
+        next: r => { this.dialog.toast('success', 'renewal.renewed_count', { count: r.renewed }); this.load(); },
+        error: err => this.dialog.error('renewal.bulk_failed', err.error?.message ?? 'dialog.try_again')
       });
     } else {
       const ok = await this.dialog.confirm({
-        title: 'Renew ALL filtered users?',
-        text: 'This will renew every subscription matching the current filter.',
+        title: 'renewal.renew_all_title',
+        text: 'renewal.renew_all_text',
         icon: 'warning',
-        confirmText: 'Renew all'
+        confirmText: 'renewal.renew_all_confirm'
       });
       if (!ok) return;
       this.svc.renewBulk({ all: true }).subscribe({
-        next: r => { this.dialog.toast('success', `Renewed ${r.renewed}`); this.load(); },
-        error: err => this.dialog.error('Bulk renew failed', err.error?.message ?? 'Please try again.')
+        next: r => { this.dialog.toast('success', 'renewal.renewed_count', { count: r.renewed }); this.load(); },
+        error: err => this.dialog.error('renewal.bulk_failed', err.error?.message ?? 'dialog.try_again')
       });
     }
   }

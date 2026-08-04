@@ -39,6 +39,8 @@ export class PlansAdd {
   months: number | null = null;
   discount = 0;
   description = '';
+  /** Set from the loaded plan when editing; the backend owns it on create. */
+  currency = signal('');
 
   modules = signal<ModuleRow[]>([]);
 
@@ -115,6 +117,7 @@ export class PlansAdd {
         this.planType = p.plan_type;
         this.status = p.status;
         this.price = Number(p.price);
+        this.currency.set(p.currency ?? '');
         this.months = p.months;
         this.discount = p.discount;
         this.description = p.description ?? '';

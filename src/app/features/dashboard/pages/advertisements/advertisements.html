@@ -104,4 +104,10 @@
     </div>
   }
 
+  <app-pagination
+    [page]="page()"
+    [total]="total()"
+    [perPage]="perPage"
+    (pageChange)="goToPage($event)"
+  />
 </div>

@@ -80,12 +80,25 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label>{{ 'common.status' | t }}</label>
+                  <label>{{ 'approval.status' | t }}</label>
                   <div class="custom-select">
                     <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
                       <option value="">{{ 'common.any' | t }}</option>
+                      <option value="pending">{{ 'approval.pending' | t }}</option>
+                      <option value="approved">{{ 'approval.approved' | t }}</option>
+                      <option value="rejected">{{ 'approval.rejected' | t }}</option>
+                      <option value="blocked">{{ 'approval.blocked' | t }}</option>
+                      <option value="closed">{{ 'approval.closed' | t }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>{{ 'users.account_status' | t }}</label>
+                  <div class="custom-select">
+                    <select [value]="accountStatusFilter()" (change)="accountStatusFilter.set($any($event.target).value)">
+                      <option value="">{{ 'common.any' | t }}</option>
                       <option value="active">{{ 'common.active' | t }}</option>
-                      <option value="inactive">{{ 'common.inactive' | t }}</option>
+                      <option value="blocked">{{ 'common.blocked' | t }}</option>
                     </select>
                   </div>
                 </div>
@@ -107,7 +120,7 @@
           <tr>
             <th class="checkbox-col"><input type="checkbox"></th>
             <th>{{ 'users.doctor_name' | t }}</th>
-            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'approval.status' | t }}</th>
             <th>{{ 'common.email_address' | t }}</th>
             <th>{{ 'common.phone' | t }}</th>
             <th>{{ 'common.plan' | t }}</th>
@@ -134,7 +147,14 @@
                     <span class="user-name">{{ doctor.name }}</span>
                   </div>
                 </td>
-                <td><div class="status-badge"><span class="dot"></span>{{ doctor.status }}</div></td>
+                <td>
+                  <div class="status-badge" [attr.data-status]="doctor.status" [title]="doctor.rejection_reason || ''">
+                    <span class="dot"></span>{{ approvalLabel(doctor.status) | t }}
+                  </div>
+                  @if (doctor.account_status === 'blocked') {
+                    <span class="account-flag">{{ 'users.account_blocked' | t }}</span>
+                  }
+                </td>
                 <td class="text-gray">{{ doctor.email }}</td>
                 <td class="text-gray">{{ doctor.phone }}</td>
                 <td class="text-gray">{{ doctor.plan?.name }}</td>
@@ -146,8 +166,16 @@
                     </svg>
                   </button>
                   @if (openActionMenuId === doctor.id) {
-                    <div class="action-dropdown" (click)="preventClose($event)">
-                      <button class="dropdown-item" (click)="deactivate(doctor.id)">{{ 'users.actions.deactivate' | t }}</button>
+                    <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
+                      @if (doctor.status === 'pending') {
+                        <button class="dropdown-item" (click)="approve(doctor.id)">{{ 'common.approve' | t }}</button>
+                        <button class="dropdown-item" (click)="reject(doctor.id)">{{ 'common.reject' | t }}</button>
+                      }
+                      @if (doctor.account_status === 'blocked') {
+                        <button class="dropdown-item" (click)="unblockProvider(doctor.id)">{{ 'users.actions.unblock_account' | t }}</button>
+                      } @else {
+                        <button class="dropdown-item" (click)="blockProvider(doctor.id)">{{ 'users.actions.block_account' | t }}</button>
+                      }
                       <button class="dropdown-item" (click)="changePlan(doctor.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }
@@ -159,5 +187,11 @@
       </table>
     </div>
 
+    <app-pagination
+      [page]="page()"
+      [total]="total()"
+      [perPage]="perPage"
+      (pageChange)="goToPage($event)"
+    />
   </div>
 </div>

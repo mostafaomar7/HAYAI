@@ -4,11 +4,12 @@ import { UserListBase } from '../user-list.base';
 import { DoctorItem, UserResource } from '../../../../../core/services/users.service';
 import { LookupItem, LookupsService } from '../../../../../core/services/lookups.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
+import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-doctor',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PaginationComponent],
   templateUrl: './doctor.html',
   styleUrl: './doctor.css'
 })
@@ -36,6 +37,4 @@ export class Doctor extends UserListBase<DoctorItem> {
       this.subspecialties.set([]);
     }
   }
-
-  deactivate(id: number) { this.setStatus(id, 'inactive'); }
 }

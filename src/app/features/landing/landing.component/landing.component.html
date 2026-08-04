@@ -1,0 +1,276 @@
+<div class="landing">
+
+  <!-- Nav + hero share one rounded, inset card — as in the design. -->
+  <div class="hero-card">
+
+  <!-- ============ nav ============ -->
+  <header class="nav">
+    <a class="brand" href="#top"><img src="logo.png" alt="HAYAI" /></a>
+
+    <nav class="nav-links">
+      <a href="#features">{{ 'landing.nav.features' | t }}</a>
+      <a href="#experience">{{ 'landing.nav.experience' | t }}</a>
+      <a href="#feedback">{{ 'landing.nav.feedback' | t }}</a>
+      <a href="#faq">{{ 'landing.nav.faq' | t }}</a>
+    </nav>
+
+    <div class="nav-end">
+      <button type="button" class="lang-btn" (click)="i18n.toggle()"
+              [attr.aria-label]="'navbar.language' | t">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+        </svg>
+        <span>{{ i18n.lang() === 'en' ? 'العربية' : 'EN' }}</span>
+      </button>
+
+    <a class="nav-cta" href="#download">
+      {{ 'landing.nav.download' | t }}
+      <span class="nav-cta-arrow">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </span>
+    </a>
+    </div>
+  </header>
+
+  <!-- ============ hero ============ -->
+  <section class="hero" id="top">
+    <h1>{{ 'landing.hero.line1' | t }}<br />{{ 'landing.hero.line2' | t }}</h1>
+    <p class="hero-sub">{{ 'landing.hero.subtitle' | t }}</p>
+
+    <div class="badges">
+      <a class="badge" [attr.href]="appStoreUrl || null" [class.is-inactive]="!appStoreUrl">
+        <img src="assets/landing/badge-appstore.png" alt="Download on the App Store" />
+      </a>
+      <a class="badge" [attr.href]="googlePlayUrl || null" [class.is-inactive]="!googlePlayUrl">
+        <img src="assets/landing/badge-googleplay.png" alt="Get it on Google Play" />
+      </a>
+    </div>
+
+    <div class="hero-phones">
+      <img class="phone phone-side" src="assets/landing/hero-phone-left.webp" alt="" />
+      <img class="phone phone-main" src="assets/landing/hero-phone-center.webp" alt="" />
+      <img class="phone phone-side" src="assets/landing/hero-phone-right.webp" alt="" />
+    </div>
+  </section>
+
+  </div>
+
+  <!-- ============ provider strip ============ -->
+  <section class="provider-strip">
+    <div class="provider-box">
+      <span>{{ 'landing.provider.question' | t }}</span>
+      <a routerLink="/login">
+        {{ 'landing.provider.cta' | t }}
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ features ============ -->
+  <section class="section" id="features">
+    <p class="eyebrow">{{ 'landing.nav.features' | t }}</p>
+    <h2>{{ 'landing.features.title' | t }}</h2>
+    <p class="section-sub">{{ 'landing.features.subtitle' | t }}</p>
+
+    <div class="feature-grid">
+      @for (f of features; track f.key) {
+        <article class="feature-card">
+          <span class="icon-badge">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+              @for (d of f.icon; track $index) {
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="d" />
+              }
+            </svg>
+          </span>
+          <h3>{{ 'landing.feature.' + f.key + '.title' | t }}</h3>
+          <p>{{ 'landing.feature.' + f.key + '.text' | t }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ============ experience ============ -->
+  <section class="section experience" id="experience">
+    <p class="eyebrow">{{ 'landing.nav.experience' | t }}</p>
+    <h2>{{ 'landing.experience.title' | t }}</h2>
+    <p class="section-sub">{{ 'landing.experience.subtitle' | t }}</p>
+
+    <div class="exp-track" #expTrack>
+      @for (e of experience; track e.key) {
+        <article class="exp-card">
+          <span class="icon-badge">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+              @for (d of e.icon; track $index) {
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="d" />
+              }
+            </svg>
+          </span>
+          <h3>{{ 'landing.exp.' + e.key + '.title' | t }}</h3>
+          <p>{{ 'landing.exp.' + e.key + '.text' | t }}</p>
+          <div class="exp-shots">
+            <img [src]="'assets/landing/' + e.shots[0]" alt="" />
+            <img [src]="'assets/landing/' + e.shots[1]" alt="" />
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="exp-nav">
+      <button type="button" (click)="scrollExperience(-1)" [attr.aria-label]="'common.prev' | t">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button type="button" (click)="scrollExperience(1)" [attr.aria-label]="'common.next' | t">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ roles ============ -->
+  <section class="section roles">
+    <h2>{{ 'landing.roles.title' | t }}</h2>
+    <p class="section-sub">{{ 'landing.roles.subtitle' | t }}</p>
+
+    <div class="role-grid">
+      @for (r of roles; track r.key) {
+        <article class="role-card">
+          <span class="role-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+              @for (d of r.icon; track $index) {
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="d" />
+              }
+            </svg>
+          </span>
+          <span class="role-name">{{ 'landing.role.' + r.key | t }}</span>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ============ testimonials ============ -->
+  <section class="section feedback" id="feedback">
+    <p class="eyebrow">{{ 'landing.nav.feedback' | t }}</p>
+    <h2>{{ 'landing.reviews.title' | t }}</h2>
+
+    <div class="review-grid">
+      @for (r of testimonials; track r.name) {
+        <article class="review-card">
+          <header>
+            <span class="avatar" [attr.data-a]="r.avatar">{{ initials(r.name) }}</span>
+            <strong>{{ r.name }}</strong>
+            <span class="stars" aria-label="5 / 5">
+              @for (s of [1,2,3,4,5]; track s) {
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                  <path d="M12 2.5l2.9 5.9 6.6.9-4.8 4.6 1.2 6.5-5.9-3.1-5.9 3.1 1.2-6.5L2.5 9.3l6.6-.9L12 2.5z" />
+                </svg>
+              }
+            </span>
+          </header>
+          <p>{{ r.bodyKey | t }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ============ faq ============ -->
+  <section class="section faq" id="faq">
+    <p class="eyebrow">{{ 'landing.nav.faq' | t }}</p>
+    <h2>{{ 'landing.faq.title' | t }}</h2>
+
+    <div class="faq-list">
+      @for (q of faqs; track q; let i = $index) {
+        <div class="faq-item" [class.is-open]="openFaq === i">
+          <button type="button" class="faq-q" (click)="toggleFaq(i)" [attr.aria-expanded]="openFaq === i">
+            <span>{{ 'landing.faq.' + q + '.q' | t }}</span>
+            <span class="faq-chevron">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </button>
+          @if (openFaq === i) {
+            <p class="faq-a">{{ 'landing.faq.' + q + '.a' | t }}</p>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ============ download cta ============ -->
+  <section class="download-wrap" id="download">
+    <div class="download">
+      <div class="download-copy">
+        <h2>{{ 'landing.cta.title' | t }}</h2>
+        <p>{{ 'landing.cta.text' | t }}</p>
+        <div class="badges">
+          <a class="badge" [attr.href]="appStoreUrl || null" [class.is-inactive]="!appStoreUrl">
+            <img src="assets/landing/badge-appstore.png" alt="Download on the App Store" />
+          </a>
+          <a class="badge" [attr.href]="googlePlayUrl || null" [class.is-inactive]="!googlePlayUrl">
+            <img src="assets/landing/badge-googleplay.png" alt="Get it on Google Play" />
+          </a>
+        </div>
+      </div>
+      <img class="download-phone" src="assets/landing/hero-phone-center.webp" alt="" />
+    </div>
+  </section>
+
+  <!-- ============ footer ============ -->
+  <footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-about">
+        <span class="footer-brand">HAYAI</span>
+        <p>{{ 'landing.footer.tagline' | t }}</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>{{ 'landing.footer.product' | t }}</h4>
+        <a href="#features">{{ 'landing.nav.features' | t }}</a>
+        <a href="#experience">{{ 'landing.nav.experience' | t }}</a>
+        <a href="#download">{{ 'landing.footer.download' | t }}</a>
+        <a href="#download">{{ 'landing.footer.pricing' | t }}</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>{{ 'landing.footer.company' | t }}</h4>
+        <a href="#top">{{ 'landing.footer.about' | t }}</a>
+        <a href="#top">{{ 'landing.footer.privacy' | t }}</a>
+        <a href="#top">{{ 'landing.footer.terms' | t }}</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>{{ 'landing.footer.contact' | t }}</h4>
+        <span class="footer-contact">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h2l2 5-2 1a12 12 0 006 6l1-2 5 2v2a2 2 0 01-2 2A16 16 0 013 5z" /></svg>
+          {{ 'landing.footer.phone' | t }}
+        </span>
+        <span class="footer-contact">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 .5l9 6 9-6" /></svg>
+          {{ 'landing.footer.email' | t }}
+        </span>
+        <span class="footer-contact">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+          {{ 'landing.footer.address' | t }}
+        </span>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© {{ currentYear }} HAYAI. {{ 'landing.footer.rights' | t }}</span>
+      <div class="socials">
+        <a href="#top" aria-label="Facebook"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.5-1.5h1.7V4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1V10H7.4v3h2.9v8h3.2z"/></svg></a>
+        <a href="#top" aria-label="X"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M17.2 4h2.7l-6 6.8L21 20h-5.4l-3.6-4.7L7.8 20H5.1l6.4-7.3L4.6 4H10l3.3 4.3L17.2 4zm-1 14.4h1.5L8.9 5.5H7.3l8.9 12.9z"/></svg></a>
+        <a href="#top" aria-label="Instagram"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r="1" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#top" aria-label="LinkedIn"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M6.9 8.5H4V20h2.9V8.5zM5.4 4a1.7 1.7 0 100 3.4 1.7 1.7 0 000-3.4zM20 13.7c0-3.1-1.7-4.6-3.9-4.6-1.8 0-2.6 1-3 1.7V8.5H10V20h3v-6.4c0-1.4.6-2.2 1.8-2.2 1.1 0 1.6.8 1.6 2.2V20h3v-6.3z"/></svg></a>
+      </div>
+    </div>
+  </footer>
+
+</div>

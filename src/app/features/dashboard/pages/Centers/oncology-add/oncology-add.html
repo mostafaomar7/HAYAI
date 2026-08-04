@@ -7,6 +7,12 @@
     </button>
   </header>
 
+  @if (loading()) {
+    <p class="state-msg">{{ 'common.loading' | t }}</p>
+  } @else if (loadFailed()) {
+    <p class="state-msg error">{{ 'centers.load_failed' | t }}</p>
+  } @else {
+
   <div class="content-wrapper">
 
     <section class="form-section">
@@ -64,7 +70,7 @@
             <div class="day-header">
               <span class="day-name">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                {{ day.day }}
+                {{ dayLabel(day.day) | t }}
               </span>
               <label class="toggle-switch">
                 <input type="checkbox" [checked]="day.active" (change)="toggleDay(i)">
@@ -125,13 +131,14 @@
     </section>
 
   </div>
+  }
 
   @if (errorMessage()) {
-    <div style="color:#dc2626;font-size:13px;padding:8px 0;">{{ errorMessage() }}</div>
+    <div style="color:#dc2626;font-size:13px;padding:8px 0;">{{ errorMessage() | t }}</div>
   }
 
   <footer class="form-footer">
     <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.cancel' | t }}</button>
-    <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
+    <button type="button" class="btn-primary" [disabled]="saving() || !ready()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
   </footer>
 </div>

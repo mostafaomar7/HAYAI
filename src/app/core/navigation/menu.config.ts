@@ -4,9 +4,8 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'dashboard', label: 'menu.dashboard', iconName: 'dashboard', route: '/dashboard', roles: ['admin'] },
   { id: 'Advertisements', label: 'menu.advertisements', iconName: 'advertisements', route: '/dashboard/Advertisements', roles: ['admin'] },
   { id: 'CharitableOrganizations', label: 'menu.charitable', iconName: 'charitable', route: '/dashboard/charitable', roles: ['admin'] },
-  // Transactions admin endpoint is not built on the backend yet (see backend integration guide §13).
-  // Re-enable once /admin/transactions ships.
-  // { id: 'Transactions', label: 'menu.transactions', iconName: 'transactions', route: '/dashboard/transactions', roles: ['admin'] },
+  // There is no admin-wide transactions endpoint — `/api/v1/transactions` is
+  // scoped to the caller. A menu entry will need a new endpoint first.
   { id: 'RenewalUsers', label: 'menu.renewal', iconName: 'renewal', route: '/dashboard/renewal', roles: ['admin'] },
   { id: 'PlansManagements', label: 'menu.plans', iconName: 'plans', route: '/dashboard/plans', roles: ['admin'] },
   { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notfication', roles: ['admin'] },

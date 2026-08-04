@@ -21,7 +21,7 @@
           <div class="card-header">
             <div class="title-area">
               <span class="plan-super-title">{{ plan.name }}</span>
-              <h3 class="plan-main-title">@if (plan.price === 0 || plan.price === '0' || plan.price === '0.00') { {{ 'plans.free' | t }} } @else { {{ plan.price }} {{ 'plans.egp' | t }} }</h3>
+              <h3 class="plan-main-title">@if (plan.price === 0 || plan.price === '0' || plan.price === '0.00') { {{ 'plans.free' | t }} } @else { {{ plan.price }} {{ plan.currency }} }</h3>
               <p class="plan-desc">{{ plan.description }}</p>
             </div>
             <span class="plan-badge">{{ plan.plan_type }}</span>
@@ -49,4 +49,10 @@
       }
     </div>
   }
+  <app-pagination
+    [page]="page()"
+    [total]="total()"
+    [perPage]="perPage"
+    (pageChange)="goToPage($event)"
+  />
 </div>

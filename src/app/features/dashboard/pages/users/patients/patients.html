@@ -131,7 +131,7 @@
                   </button>
 
                   @if (openActionMenuId === user.id) {
-                    <div class="action-dropdown" (click)="preventClose($event)">
+                    <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
                       @if (user.status === 'blocked') {
                         <button class="dropdown-item" (click)="unblockUser(user.id)">{{ 'users.actions.unblock' | t }}</button>
                       } @else {
@@ -147,5 +147,11 @@
       </table>
     </div>
 
+    <app-pagination
+      [page]="page()"
+      [total]="total()"
+      [perPage]="perPage"
+      (pageChange)="goToPage($event)"
+    />
   </div>
 </div>

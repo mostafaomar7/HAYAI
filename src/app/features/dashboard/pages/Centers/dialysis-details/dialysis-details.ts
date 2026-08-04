@@ -44,19 +44,19 @@ export class DialysisDetails {
     const id = this.center()?.id;
     if (!id) return;
     const ok = await this.dialog.confirm({
-      title: 'Delete center?',
-      text: 'This action cannot be undone.',
+      title: 'centers.delete_title',
+      text: 'dialog.delete_text',
       icon: 'warning',
-      confirmText: 'Delete',
+      confirmText: 'common.delete',
       danger: true
     });
     if (!ok) return;
     this.svc.delete(id).subscribe({
       next: () => {
-        this.dialog.toast('success', 'Center deleted');
+        this.dialog.toast('success', 'centers.deleted');
         this.router.navigate(['/dashboard/dialysis']);
       },
-      error: () => this.dialog.error('Delete failed', 'Please try again.')
+      error: () => this.dialog.error('dialog.delete_failed', 'dialog.try_again')
     });
   }
 }

@@ -18,7 +18,9 @@
 .status-toggle-group button.active { background: #fff; color: #2563EB; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
 /* Upload Area */
-.upload-area { border: 2px dashed #93C5FD; border-radius: 12px; background: #EFF6FF; padding: 32px; text-align: center; cursor: pointer; margin-bottom: 16px; }
+/* A <label> is inline by default, so the block-level text inside it split the
+   dashed box into fragments. Make it a real block-level drop zone. */
+.upload-area { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed #93C5FD; border-radius: 12px; background: #EFF6FF; padding: 32px; text-align: center; cursor: pointer; margin-bottom: 16px; }
 .upload-title { margin: 12px 0 4px 0; font-size: 14px; font-weight: 600; color: #1E3A8A; }
 .upload-desc { margin: 0; font-size: 12px; color: #60A5FA; }
 
@@ -27,7 +29,12 @@
 .remove-img-btn { position: absolute; top: 12px; right: 12px; background: #EF4444; color: #fff; border: none; border-radius: 6px; padding: 6px; cursor: pointer; }
 
 /* Dates Grid & Toggle Switch */
-.dates-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* Four fixed columns overflowed the 1000px page: two time inputs cannot go
+   below ~97px each in Chrome, so a day card has a hard minimum width and the
+   fourth column spilled outside the section. Let the track count follow the
+   space actually available. */
+.dates-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.date-input-card { min-width: 0; }
 .date-input-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
 .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .day-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #111827; }
@@ -41,7 +48,7 @@ input:checked + .slider { background-color: #2563EB; }
 input:checked + .slider:before { transform: translateX(16px); }
 
 .time-inputs { display: flex; gap: 8px; }
-.time-inputs input { flex: 1; width: 100%; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; font-size: 13px; outline: none; }
+.time-inputs input { flex: 1; width: 100%; min-width: 0; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; font-size: 13px; outline: none; }
 .time-inputs input:disabled { background: #F3F4F6; color: #9CA3AF; cursor: not-allowed; }
 
 /* Contacts Section */
@@ -58,3 +65,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 .btn-cancel { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px 24px; font-weight: 600; cursor: pointer; }
 .btn-primary { background: #2563EB; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-weight: 600; cursor: pointer; }
 .btn-primary:hover { background: #1D4ED8; }
+
+/* Load / failure states for the edit form. */
+.state-msg { padding: 24px; color: #6B7280; font-size: 14px; }
+.state-msg.error { color: #B91C1C; }

@@ -17,7 +17,9 @@
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  /* The filter popup is absolutely positioned inside .table-header — clipping the
+     card would cut it off, so the card must not be an overflow container. */
+  overflow: visible;
 }
 
 .table-header {
@@ -301,9 +303,12 @@
 }
 
 .action-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 24px; 
+  /* Fixed, not absolute: the row sits inside .table-responsive, which scrolls
+     horizontally and would clip an absolutely positioned menu. Coordinates come
+     from the trigger button; the translate lines the menu up with the button
+     edge without having to measure the menu first. */
+  position: fixed;
+  transform: translateX(-100%);
   background-color: #ffffff;
   border: 1px solid #E5E7EB;
   border-radius: 8px;
@@ -312,6 +317,10 @@
   min-width: 140px;
   z-index: 50;
 }
+
+.action-dropdown.flip { transform: translate(-100%, -100%); }
+:host-context(html[dir="rtl"]) .action-dropdown { transform: none; }
+:host-context(html[dir="rtl"]) .action-dropdown.flip { transform: translateY(-100%); }
 
 .dropdown-item {
   width: 100%;

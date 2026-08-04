@@ -4,11 +4,13 @@ import { Router } from '@angular/router';
 import { CharitableOrganization, CharitableService } from '../../../../core/services/charitable.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
+import { debounce } from '../../../../shared/utils/debounce.util';
 
 @Component({
   selector: 'app-charitable',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PaginationComponent],
   templateUrl: './charitable.html',
   styleUrl: './charitable.css'
 })
@@ -23,21 +25,46 @@ export class Charitable {
   statusFilter = signal<'' | 'active' | 'inactive'>('');
   charityList = signal<CharitableOrganization[]>([]);
 
+  readonly perPage = 12;
+  page = signal(1);
+  total = signal(0);
+
   constructor() { this.load(); }
 
   load() {
     this.loading.set(true);
     this.svc.list({
+      page: this.page(),
+      per_page: this.perPage,
       search: this.search() || undefined,
       status: this.statusFilter() || undefined
     }).subscribe({
-      next: r => { this.charityList.set(r.items); this.loading.set(false); },
+      next: r => {
+        // Deleting the last row of the last page leaves us past the end.
+        if (!r.items.length && this.page() > 1) {
+          this.page.update(p => p - 1);
+          this.load();
+          return;
+        }
+        this.charityList.set(r.items);
+        this.total.set(r.pagination.total);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
     });
   }
 
-  onSearch(value: string) { this.search.set(value); this.load(); }
-  onStatusChange(value: string) { this.statusFilter.set(value as any); this.load(); }
+  /** Search and filters change the result set — restart from page 1. */
+  private reload() { this.page.set(1); this.load(); }
+
+  goToPage(page: number) { this.page.set(page); this.load(); }
+
+  onSearch = debounce((value: string) => {
+    this.search.set(value);
+    this.reload();
+  });
+
+  onStatusChange(value: string) { this.statusFilter.set(value as any); this.reload(); }
 
   goToDetails(id: number) {
     this.router.navigate(['/dashboard/charitable/details', id]);
@@ -55,16 +82,16 @@ export class Charitable {
   async onDelete(id: number, event: Event) {
     event.stopPropagation();
     const ok = await this.dialog.confirm({
-      title: 'Delete organization?',
-      text: 'This action cannot be undone.',
+      title: 'charitable.delete_title',
+      text: 'dialog.delete_text',
       icon: 'warning',
-      confirmText: 'Delete',
+      confirmText: 'common.delete',
       danger: true
     });
     if (!ok) return;
     this.svc.delete(id).subscribe({
-      next: () => { this.dialog.toast('success', 'Organization deleted'); this.load(); },
-      error: () => this.dialog.error('Delete failed', 'Please try again.')
+      next: () => { this.dialog.toast('success', 'charitable.deleted'); this.load(); },
+      error: () => this.dialog.error('dialog.delete_failed', 'dialog.try_again')
     });
   }
 

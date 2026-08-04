@@ -11,8 +11,28 @@
               <div class="popup-header"><h3>{{ 'common.filter' | t }}</h3><button class="close-icon" (click)="toggleFilter($event)">×</button></div>
               <div class="popup-body">
                 <div class="form-group"><label>{{ 'common.plan' | t }}</label><div class="custom-select"><select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)"><option value="">{{ 'common.any' | t }}</option>@for (pl of plansList(); track pl.id) {<option [value]="pl.id">{{ pl.name }}</option>}</select></div></div>
-                <div class="form-group"><label>{{ 'common.status' | t }}</label>
-                  <div class="custom-select"><select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)"><option value="">{{ 'common.any' | t }}</option><option value="active">{{ 'common.active' | t }}</option><option value="inactive">{{ 'common.inactive' | t }}</option></select></div>
+                <div class="form-group">
+                  <label>{{ 'approval.status' | t }}</label>
+                  <div class="custom-select">
+                    <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+                      <option value="">{{ 'common.any' | t }}</option>
+                      <option value="pending">{{ 'approval.pending' | t }}</option>
+                      <option value="approved">{{ 'approval.approved' | t }}</option>
+                      <option value="rejected">{{ 'approval.rejected' | t }}</option>
+                      <option value="blocked">{{ 'approval.blocked' | t }}</option>
+                      <option value="closed">{{ 'approval.closed' | t }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>{{ 'users.account_status' | t }}</label>
+                  <div class="custom-select">
+                    <select [value]="accountStatusFilter()" (change)="accountStatusFilter.set($any($event.target).value)">
+                      <option value="">{{ 'common.any' | t }}</option>
+                      <option value="active">{{ 'common.active' | t }}</option>
+                      <option value="blocked">{{ 'common.blocked' | t }}</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div class="popup-footer"><button class="reset-btn" (click)="resetFilters()">{{ 'common.reset' | t }}</button><button class="apply-btn" (click)="applyFilters()">{{ 'common.apply_filters' | t }}</button></div>
@@ -23,7 +43,7 @@
     </div>
     <div class="table-responsive">
       <table class="data-table">
-        <thead><tr><th class="checkbox-col"><input type="checkbox"></th><th>{{ 'common.name' | t }}</th><th>{{ 'common.status' | t }}</th><th>{{ 'common.email_address' | t }}</th><th>{{ 'common.phone' | t }}</th><th>{{ 'common.plan' | t }}</th><th class="action-col"></th></tr></thead>
+        <thead><tr><th class="checkbox-col"><input type="checkbox"></th><th>{{ 'common.name' | t }}</th><th>{{ 'approval.status' | t }}</th><th>{{ 'common.email_address' | t }}</th><th>{{ 'common.phone' | t }}</th><th>{{ 'common.plan' | t }}</th><th class="action-col"></th></tr></thead>
         <tbody>
           @if (loading()) { <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr> }
           @else if (!items().length) { <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'users.no_users' | t }}</td></tr> }
@@ -32,15 +52,30 @@
               <tr>
                 <td class="checkbox-col"><input type="checkbox"></td>
                 <td><div class="user-cell">@if (d.profile_image) {<img [src]="d.profile_image" class="avatar">} @else {<span class="avatar-initials" [style.background-color]="avatarColor(d.name)">{{ initials(d.name) }}</span>}<span class="user-name">{{ d.name }}</span></div></td>
-                <td><div class="status-badge"><span class="dot"></span>{{ d.status }}</div></td>
+                <td>
+                  <div class="status-badge" [attr.data-status]="d.status" [title]="d.rejection_reason || ''">
+                    <span class="dot"></span>{{ approvalLabel(d.status) | t }}
+                  </div>
+                  @if (d.account_status === 'blocked') {
+                    <span class="account-flag">{{ 'users.account_blocked' | t }}</span>
+                  }
+                </td>
                 <td class="text-gray">{{ d.email }}</td>
                 <td class="text-gray">{{ d.phone }}</td>
                 <td class="text-gray">{{ d.plan?.name }}</td>
                 <td class="action-col relative-cell">
                   <button class="dots-btn" (click)="toggleActionMenu(d.id, $event)">⋮</button>
                   @if (openActionMenuId === d.id) {
-                    <div class="action-dropdown" (click)="preventClose($event)">
-                      <button class="dropdown-item" (click)="deactivate(d.id)">{{ 'users.actions.deactivate' | t }}</button>
+                    <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
+                      @if (d.status === 'pending') {
+                        <button class="dropdown-item" (click)="approve(d.id)">{{ 'common.approve' | t }}</button>
+                        <button class="dropdown-item" (click)="reject(d.id)">{{ 'common.reject' | t }}</button>
+                      }
+                      @if (d.account_status === 'blocked') {
+                        <button class="dropdown-item" (click)="unblockProvider(d.id)">{{ 'users.actions.unblock_account' | t }}</button>
+                      } @else {
+                        <button class="dropdown-item" (click)="blockProvider(d.id)">{{ 'users.actions.block_account' | t }}</button>
+                      }
                       <button class="dropdown-item" (click)="changePlan(d.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }
@@ -51,5 +86,11 @@
         </tbody>
       </table>
     </div>
+    <app-pagination
+      [page]="page()"
+      [total]="total()"
+      [perPage]="perPage"
+      (pageChange)="goToPage($event)"
+    />
   </div>
 </div>

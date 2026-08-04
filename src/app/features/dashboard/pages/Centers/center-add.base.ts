@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CentersService, CenterCategory } from '../../../../core/services/centers.service';
-import { ContactItem, DEFAULT_SCHEDULE, ScheduleSlot, Weekday } from '../../../../core/models/scheduled-entity.model';
+import { ContactItem, DEFAULT_SCHEDULE, ScheduleSlot, WEEKDAYS, Weekday } from '../../../../core/models/scheduled-entity.model';
 import {
   appendContacts,
   appendFile,
@@ -26,7 +26,16 @@ export abstract class CenterAddBase {
   isEdit = computed(() => this.id() !== null);
   loading = signal(false);
   saving = signal(false);
+  loadFailed = signal(false);
   errorMessage = signal<string | null>(null);
+
+  /**
+   * The form must stay hidden until an edit target has actually been read.
+   * Rendering it early hands the user a blank form over a real record, and
+   * saving that would overwrite the name, description, services and contacts
+   * with empty values.
+   */
+  ready = computed(() => !this.isEdit() || (!this.loading() && !this.loadFailed()));
 
   name = '';
   description = '';
@@ -56,6 +65,7 @@ export abstract class CenterAddBase {
 
   private load(id: number) {
     this.loading.set(true);
+    this.loadFailed.set(false);
     this.svc.get(id).subscribe({
       next: c => {
         this.name = c.name;
@@ -63,19 +73,29 @@ export abstract class CenterAddBase {
         this.notes = c.notes ?? '';
         this.status = c.status === 'active' ? 'Active' : 'Inactive';
         this.uploadedImage.set(c.cover_image_url);
-        if (c.schedule?.length) this.days.set(this.normalizeSchedule(c.schedule));
+        // An existing centre with no saved schedule means every day is closed.
+        // Falling back to DEFAULT_SCHEDULE here would silently switch all seven
+        // days on the moment the record was opened for editing.
+        this.days.set(this.normalizeSchedule(c.schedule ?? []));
         this.services.set(c.services ?? []);
         this.contacts.set(c.contacts ?? []);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      // `errorMessage` is reserved for save failures — the load failure has its
+      // own message in the template, and showing both reads as two problems.
+      error: () => {
+        this.loading.set(false);
+        this.loadFailed.set(true);
+      }
     });
   }
 
   private normalizeSchedule(raw: ScheduleSlot[]): ScheduleSlot[] {
-    const order: Weekday[] = ['saturday','sunday','monday','tuesday','wednesday','thursday','friday'];
-    return order.map(day => raw.find(s => s.day === day) ?? { day, active: false, from: '', to: '' });
+    return WEEKDAYS.map(day => raw.find(s => s.day === day) ?? { day, active: false, from: '', to: '' });
   }
+
+  /** i18n key for a weekday — the model stores the English name. */
+  dayLabel(day: Weekday): string { return `days.${day}`; }
 
   setStatus(val: 'Active' | 'Inactive') { this.status = val; }
 
@@ -130,6 +150,13 @@ export abstract class CenterAddBase {
   }
 
   save() {
+    // Never write back a form that has not finished loading its record.
+    if (!this.ready()) return;
+    if (!this.name.trim()) {
+      this.errorMessage.set('centers.name_required');
+      return;
+    }
+
     this.saving.set(true);
     this.errorMessage.set(null);
 

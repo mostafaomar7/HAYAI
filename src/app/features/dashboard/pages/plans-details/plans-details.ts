@@ -45,19 +45,19 @@ export class PlansDetails {
     const id = this.plan()?.id;
     if (!id) return;
     const ok = await this.dialog.confirm({
-      title: 'Delete plan?',
-      text: 'The plan will be removed from all lists. Existing subscriptions continue to work.',
+      title: 'plans.delete_title',
+      text: 'plans.delete_text',
       icon: 'warning',
-      confirmText: 'Delete',
+      confirmText: 'common.delete',
       danger: true
     });
     if (!ok) return;
     this.svc.delete(id).subscribe({
       next: () => {
-        this.dialog.toast('success', 'Plan deleted');
+        this.dialog.toast('success', 'plans.deleted');
         this.router.navigate(['/dashboard/plans']);
       },
-      error: err => this.dialog.error('Delete failed', err.error?.message ?? 'Please try again.')
+      error: err => this.dialog.error('dialog.delete_failed', err.error?.message ?? 'dialog.try_again')
     });
   }
 }

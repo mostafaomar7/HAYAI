@@ -13,6 +13,11 @@ export interface ContactItem {
   phone: string;
 }
 
+/** Display and payload order — the week starts on Saturday. */
+export const WEEKDAYS: Weekday[] = [
+  'saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'
+];
+
 export const DEFAULT_SCHEDULE: ScheduleSlot[] = [
   { day: 'saturday', active: true, from: '', to: '' },
   { day: 'sunday', active: true, from: '', to: '' },

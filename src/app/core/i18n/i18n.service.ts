@@ -33,9 +33,18 @@ export class I18nService {
     this.setLang(this.lang() === 'en' ? 'ar' : 'en');
   }
 
-  translate(key: string): string {
+  /**
+   * Looks up `key` and substitutes `{name}` placeholders from `params`.
+   * An unknown key falls back to itself, so passing a literal string through
+   * `translate` is safe (used for backend-supplied messages).
+   */
+  translate(key: string, params?: Record<string, string | number>): string {
     const value = this.dict()[key];
-    return value === undefined || value === '' ? key : value;
+    const text = value === undefined || value === '' ? key : value;
+    if (!params) return text;
+    return text.replace(/\{(\w+)\}/g, (match, name) =>
+      params[name] === undefined ? match : String(params[name])
+    );
   }
 
   private detectInitial(): Lang {

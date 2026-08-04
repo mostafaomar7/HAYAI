@@ -3,6 +3,13 @@ import { dashboardShellGuard } from './core/guards/auth.guard';
 import { DashboardShellComponent } from './core/layouts/dashboard-shell/dashboard-shell.component/dashboard-shell.component';
 
 export const routes: Routes = [
+  // Public marketing page — deliberately outside the dashboard shell, so it
+  // carries no guard, no navbar and no sidebar.
+  {
+    path: 'landing',
+    loadComponent: () =>
+      import('./features/landing/landing.component/landing.component').then(m => m.LandingComponent)
+  },
   {
     path: 'login',
     loadComponent: () =>

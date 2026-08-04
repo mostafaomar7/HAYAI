@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ExternalDevice, ExternalDeviceOrder, ExternalDevicesService } from '../../../../core/services/external-devices.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
-import Swal from 'sweetalert2';
+import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-external-orders',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PaginationComponent],
   templateUrl: './external-orders.html',
   styleUrl: './external-orders.css'
 })
@@ -21,6 +21,9 @@ export class ExternalOrders {
   orders = signal<ExternalDeviceOrder[]>([]);
   total = signal(0);
   devicesById = signal<Map<number, ExternalDevice>>(new Map());
+
+  readonly perPage = 15;
+  page = signal(1);
 
   constructor() {
     this.load();
@@ -36,13 +39,34 @@ export class ExternalOrders {
 
   load() {
     this.loading.set(true);
-    this.svc.listOrders({ status: this.status() || undefined }).subscribe({
-      next: r => { this.orders.set(r.items); this.total.set(r.pagination.total); this.loading.set(false); },
+    this.svc.listOrders({
+      page: this.page(),
+      per_page: this.perPage,
+      status: this.status() || undefined
+    }).subscribe({
+      next: r => {
+        // A status change can empty the current page — fall back one page.
+        if (!r.items.length && this.page() > 1) {
+          this.page.update(p => p - 1);
+          this.load();
+          return;
+        }
+        this.orders.set(r.items);
+        this.total.set(r.pagination.total);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
     });
   }
 
-  setStatus(s: string) { this.status.set(s); this.load(); }
+  goToPage(page: number) { this.page.set(page); this.load(); }
+
+  setStatus(s: string) {
+    this.status.set(s);
+    // A different tab is a different result set — restart from page 1.
+    this.page.set(1);
+    this.load();
+  }
 
   deviceName(id: number): string {
     return this.devicesById().get(id)?.name ?? `Device #${id}`;
@@ -66,40 +90,34 @@ export class ExternalOrders {
   }
 
   async changeOrderStatus(o: ExternalDeviceOrder) {
-    const { value: next } = await Swal.fire({
-      title: 'Update order status',
-      input: 'select',
-      inputOptions: {
-        pending: 'Pending',
-        confirmed: 'Confirmed',
-        shipped: 'Shipped',
-        delivered: 'Delivered',
-        cancelled: 'Cancelled'
+    const next = await this.dialog.select({
+      title: 'external.orders.update_status_title',
+      options: {
+        pending: 'external.orders.tab.pending',
+        confirmed: 'external.orders.tab.confirmed',
+        shipped: 'external.orders.tab.shipped',
+        delivered: 'external.orders.tab.delivered',
+        cancelled: 'external.orders.tab.cancelled'
       },
-      inputValue: o.status,
-      showCancelButton: true,
-      confirmButtonText: 'Continue',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#2563eb',
-      cancelButtonColor: '#6b7280',
-      reverseButtons: true
+      defaultValue: o.status,
+      confirmText: 'common.continue'
     });
     if (!next) return;
 
     let tracking: string | undefined;
     if (next === 'shipped') {
       const t = await this.dialog.prompt({
-        title: 'Tracking number',
-        placeholder: 'e.g. ABC-12345',
-        text: 'Optional. Leave blank to skip.'
+        title: 'external.orders.tracking_title',
+        placeholder: 'external.orders.tracking_placeholder',
+        text: 'external.orders.tracking_hint'
       });
       if (t === null) return;
       tracking = t || undefined;
     }
 
-    this.svc.setOrderStatus(o.id, { status: next as string, tracking_number: tracking }).subscribe({
-      next: () => { this.dialog.toast('success', 'Order updated'); this.load(); },
-      error: err => this.dialog.error('Update failed', err.error?.message ?? 'Please try again.')
+    this.svc.setOrderStatus(o.id, { status: next, tracking_number: tracking }).subscribe({
+      next: () => { this.dialog.toast('success', 'external.orders.updated'); this.load(); },
+      error: err => this.dialog.error('dialog.update_failed', err.error?.message ?? 'dialog.try_again')
     });
   }
 }

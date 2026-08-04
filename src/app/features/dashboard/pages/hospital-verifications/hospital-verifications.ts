@@ -7,11 +7,12 @@ import {
 } from '../../../../core/services/hospital-verifications.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-hospital-verifications',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PaginationComponent],
   templateUrl: './hospital-verifications.html',
   styleUrl: './hospital-verifications.css'
 })
@@ -24,18 +25,44 @@ export class HospitalVerifications {
   total = signal(0);
   status = signal<VerificationStatus>('pending');
 
+  readonly perPage = 15;
+  page = signal(1);
+
   constructor() { this.load(); }
 
   load() {
     this.loading.set(true);
-    this.svc.list({ verification_status: this.status() }).subscribe({
-      next: r => { this.items.set(r.items); this.total.set(r.pagination.total); this.loading.set(false); },
+    this.svc.list({
+      verification_status: this.status(),
+      page: this.page(),
+      per_page: this.perPage
+    }).subscribe({
+      next: r => {
+        // Approving/rejecting the last row of the last page leaves us past the end.
+        if (!r.items.length && this.page() > 1) {
+          this.page.update(p => p - 1);
+          this.load();
+          return;
+        }
+        this.items.set(r.items);
+        this.total.set(r.pagination.total);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
     });
   }
 
+  goToPage(page: number) { this.page.set(page); this.load(); }
+
+  /** i18n key for the verification badge — reuses the tab labels. */
+  verificationLabel(status: VerificationStatus | null | undefined): string {
+    return status ? `hospitals_verify.tab.${status}` : 'common.no_data';
+  }
+
   setStatus(s: VerificationStatus) {
     this.status.set(s);
+    // A different tab is a different result set — restart from page 1.
+    this.page.set(1);
     this.load();
   }
 
@@ -61,29 +88,30 @@ export class HospitalVerifications {
 
   async approve(id: number) {
     const ok = await this.dialog.confirm({
-      title: 'Approve this hospital?',
+      title: 'hospitals_verify.approve_title',
       icon: 'question',
-      confirmText: 'Approve'
+      confirmText: 'common.approve'
     });
     if (!ok) return;
     this.svc.approve(id).subscribe({
-      next: () => { this.dialog.toast('success', 'Hospital approved'); this.load(); },
-      error: err => this.dialog.error('Approve failed', err.error?.message ?? 'Please try again.')
+      next: () => { this.dialog.toast('success', 'hospitals_verify.approved'); this.load(); },
+      error: err => this.dialog.error('hospitals_verify.approve_failed', err.error?.message ?? 'dialog.try_again')
     });
   }
 
   async reject(id: number) {
+    // The reason is optional here — unlike registration rejection.
     const reason = await this.dialog.prompt({
-      title: 'Reject this hospital?',
-      text: 'Optional rejection reason.',
-      placeholder: 'e.g. License document is unclear',
+      title: 'hospitals_verify.reject_title',
+      text: 'hospitals_verify.reject_text',
+      placeholder: 'hospitals_verify.reject_placeholder',
       inputType: 'textarea',
-      confirmText: 'Reject'
+      confirmText: 'common.reject'
     });
     if (reason === null) return;
-    this.svc.reject(id, reason || undefined).subscribe({
-      next: () => { this.dialog.toast('success', 'Hospital rejected'); this.load(); },
-      error: err => this.dialog.error('Reject failed', err.error?.message ?? 'Please try again.')
+    this.svc.reject(id, reason.trim() || undefined).subscribe({
+      next: () => { this.dialog.toast('success', 'hospitals_verify.rejected'); this.load(); },
+      error: err => this.dialog.error('hospitals_verify.reject_failed', err.error?.message ?? 'dialog.try_again')
     });
   }
 }

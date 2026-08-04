@@ -105,10 +105,9 @@ html[lang="ar"] body {
     z-index: 1000;
   }
 
-  /* Action dropdowns near right edge */
-  .action-dropdown {
-    right: 8px !important;
-  }
+  /* Row action menus are position:fixed with coordinates computed from their
+     trigger button (see UserListBase.positionMenu), so nudging `right` here
+     would over-constrain them against the bound `left` and stretch the menu. */
 
   /* Table headers/cells smaller padding */
   .data-table th,
@@ -214,4 +213,52 @@ html[lang="ar"] body {
   h1 { font-size: 18px !important; }
   h2 { font-size: 16px !important; }
   h3 { font-size: 14px !important; }
+}
+
+/* ============================================
+   Approval status badges — shared by every provider list.
+   Global so the colours stay identical across the 10 pages
+   without duplicating them in each component stylesheet.
+   ============================================ */
+.status-badge[data-status="pending"] {
+  background-color: #FFFBEB;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+.status-badge[data-status="pending"] .dot { background-color: #F59E0B; }
+
+.status-badge[data-status="approved"] {
+  background-color: #ECFDF5;
+  border-color: #A7F3D0;
+  color: #065F46;
+}
+.status-badge[data-status="approved"] .dot { background-color: #10B981; }
+
+.status-badge[data-status="rejected"] {
+  background-color: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B;
+}
+.status-badge[data-status="rejected"] .dot { background-color: #EF4444; }
+
+.status-badge[data-status="blocked"],
+.status-badge[data-status="closed"] {
+  background-color: #F3F4F6;
+  border-color: #E5E7EB;
+  color: #4B5563;
+}
+.status-badge[data-status="blocked"] .dot,
+.status-badge[data-status="closed"] .dot { background-color: #9CA3AF; }
+
+/* Sign-in blocked marker shown under the approval badge. */
+.account-flag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: #FEF2F2;
+  color: #991B1B;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
 }

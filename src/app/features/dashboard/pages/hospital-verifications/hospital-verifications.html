@@ -51,7 +51,7 @@
                 <td>
                   <span class="status-pill" [attr.data-status]="h.verification_status">
                     <span class="dot"></span>
-                    {{ h.verification_status }}
+                    {{ verificationLabel(h.verification_status) | t }}
                   </span>
                 </td>
                 <td class="text-gray">{{ h.created_at | date:'mediumDate' }}</td>
@@ -74,5 +74,11 @@
       </table>
     </div>
 
+    <app-pagination
+      [page]="page()"
+      [total]="total()"
+      [perPage]="perPage"
+      (pageChange)="goToPage($event)"
+    />
   </div>
 </div>

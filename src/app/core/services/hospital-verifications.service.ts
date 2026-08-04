@@ -2,6 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, PagedResult } from './api.service';
 
+/**
+ * The verification badge is a separate feature from registration approval.
+ * It lives on `hospitals.verification_status`, is keyed by the **hospital id**,
+ * and has no bearing on whether the account can sign in — that is the approval
+ * lifecycle on `facilities.status`, handled by `ApprovalsService`.
+ */
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 
 export interface HospitalVerification {
@@ -20,10 +26,16 @@ export interface HospitalVerification {
 export class HospitalVerificationsService {
   private api = inject(ApiService);
 
-  list(query: { verification_status?: VerificationStatus; page?: number; per_page?: number; search?: string } = {}): Observable<PagedResult<HospitalVerification>> {
+  list(query: {
+    verification_status?: VerificationStatus;
+    page?: number;
+    per_page?: number;
+    search?: string;
+  } = {}): Observable<PagedResult<HospitalVerification>> {
     return this.api.getPaged<HospitalVerification>('/admin/hospitals/verifications', query);
   }
 
+  /** `id` is the hospital id from this list — not a facility id. */
   approve(id: number): Observable<HospitalVerification> {
     return this.api.patch<HospitalVerification>(`/admin/hospitals/${id}/approve`, {});
   }

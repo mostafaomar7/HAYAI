@@ -12,6 +12,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
+      // 401 is terminal — there is no refresh-token flow to fall back on, and
+      // it now also means an admin blocked this account and revoked its
+      // tokens. Either way the only correct response is to end the session.
       if (err.status === 401) {
         tokens.clearToken();
         auth.clearUser();

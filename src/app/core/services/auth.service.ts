@@ -38,9 +38,18 @@ export class AuthService {
     );
   }
 
-  refresh(): Observable<{ token: string }> {
-    return this.api.post<{ token: string }>('/auth/refresh').pipe(
-      tap(res => this.tokens.setToken(res.token))
+  /**
+   * Rotates the current token — it does **not** recover an expired session.
+   * Sanctum tokens here have no expiry, and the endpoint itself needs a valid
+   * bearer token, so it can never resolve a 401. Do not wire this into the
+   * error interceptor; a 401 means the session is gone for good.
+   */
+  refresh(): Observable<UserModel & { token: string }> {
+    return this.api.post<UserModel & { token: string }>('/auth/refresh').pipe(
+      tap(res => {
+        this.tokens.setToken(res.token);
+        this.setUser(res);
+      })
     );
   }
 
