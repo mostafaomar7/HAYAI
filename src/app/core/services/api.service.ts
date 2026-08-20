@@ -21,6 +21,21 @@ export class ApiService {
       .pipe(map(r => r.data));
   }
 
+  /**
+   * Same as `get`, but keeps `meta`. `get` throws the envelope away, which is
+   * fine for most endpoints — but some carry ordering/labelling data there
+   * (the plan module catalog returns its group order in `meta.groups`) and
+   * that must not be hardcoded on the client.
+   */
+  getWithMeta<T, M = Record<string, unknown>>(
+    path: string,
+    params?: Record<string, any>
+  ): Observable<{ data: T; meta: M | undefined }> {
+    return this.http
+      .get<ApiResponse<T> & { meta?: M }>(this.url(path), { params: this.buildParams(params) })
+      .pipe(map(r => ({ data: r.data, meta: r.meta })));
+  }
+
   getPaged<T>(path: string, params?: Record<string, any>): Observable<PagedResult<T>> {
     return this.http
       .get<ApiResponse<T[]>>(this.url(path), { params: this.buildParams(params) })

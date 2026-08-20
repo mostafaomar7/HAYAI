@@ -76,6 +76,7 @@
                       } @else {
                         <button class="dropdown-item" (click)="blockProvider(d.id)">{{ 'users.actions.block_account' | t }}</button>
                       }
+                      <button class="dropdown-item" (click)="goToActivity(d)">{{ 'activity.title' | t }}</button>
                       <button class="dropdown-item" (click)="changePlan(d.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }

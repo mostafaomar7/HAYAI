@@ -23,6 +23,9 @@
           <div><label>{{ 'plans.discount' | t }}</label><span>{{ p.discount }}% {{ 'plans.off' | t }}</span></div>
           <div><label>{{ 'plans.duration' | t }}</label><span>{{ p.months }} {{ 'plans.months_unit' | t }}</span></div>
           <div><label>{{ 'common.status' | t }}</label><span>{{ p.status }}</span></div>
+          @if (p.subscribers_count !== undefined) {
+            <div><label>{{ 'plans.subscribers' | t }}</label><span>{{ p.subscribers_count }}</span></div>
+          }
         </div>
       </section>
 
@@ -36,7 +39,10 @@
         <div class="modules-pills">
           @for (m of p.modules; track m.module_key) {
             @if (m.included) {
-              <div class="pill"><span class="dot"></span> {{ m.module_name }}</div>
+              <div class="pill">
+                <span class="dot"></span> {{ m.module_name }}
+                @if (m.limit) { <b>· {{ m.limit }}{{ m.limit_unit ? ' ' + m.limit_unit : '' }}</b> }
+              </div>
             }
           }
         </div>

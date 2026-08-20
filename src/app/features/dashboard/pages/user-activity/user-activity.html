@@ -1,0 +1,143 @@
+<div class="page-container">
+
+  <div class="top-header">
+    <button class="back-btn" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      {{ 'common.back' | t }}
+    </button>
+  </div>
+
+  @if (meta(); as m) {
+    <section class="user-card">
+      <div class="user-main">
+        <h2>{{ m.user.name }}</h2>
+        <div class="user-meta">
+          <span class="chip-type">{{ m.user.user_type }}</span>
+          <span class="chip-status" [class.blocked]="m.user.status !== 'active'">{{ m.user.status }}</span>
+          @if (m.user.phone) { <span>{{ m.user.phone }}</span> }
+          @if (m.user.email) { <span>{{ m.user.email }}</span> }
+        </div>
+      </div>
+
+      <!-- The default plan has no term, so an empty date range would read as a
+           broken subscription rather than "the plan everybody is on". -->
+      @if (m.user.plan_status; as plan) {
+        <div class="plan-box">
+          <span class="plan-label">{{ 'users.plan' | t }}</span>
+          <strong>{{ plan.plan_name || ('users.default_plan' | t) }}</strong>
+          @if (!plan.started_at && !plan.ends_at) {
+            <span class="plan-term">{{ 'users.default_plan' | t }}</span>
+          } @else {
+            <span class="plan-term">{{ plan.started_at }} — {{ plan.ends_at }}</span>
+          }
+          <span class="plan-modules">{{ 'activity.modules_open' | t : { count: plan.enabled_module_keys.length } }}</span>
+        </div>
+      }
+    </section>
+  }
+
+  @if (summary(); as s) {
+    <section class="summary-row">
+      <div class="stat total">
+        <span class="stat-value">{{ s.total }}</span>
+        <span class="stat-label">{{ 'activity.total' | t }}</span>
+      </div>
+      @for (row of s.by_type; track row.type) {
+        <button class="stat" [class.active]="selectedTypes().includes(row.type)" (click)="toggleType(row.type)">
+          <span class="stat-value">{{ row.count }}</span>
+          <span class="stat-label">{{ row.label }}</span>
+        </button>
+      }
+    </section>
+
+    @if (statusCounts().length) {
+      <section class="status-row">
+        @for (entry of statusCounts(); track entry[0]) {
+          <span class="status-count">
+            <em>{{ statusLabel(entry[0]) }}</em>
+            {{ entry[1] }}
+          </span>
+        }
+      </section>
+    }
+  }
+
+  <section class="filter-bar">
+    <div class="direction-tabs">
+      <button class="dir-tab" [class.active]="direction() === ''" (click)="setDirection('')">{{ 'common.all' | t }}</button>
+      @if (outgoingTypes().length) {
+        <button class="dir-tab" [class.active]="direction() === 'outgoing'" (click)="setDirection('outgoing')">{{ 'activity.outgoing' | t }}</button>
+      }
+      @if (incomingTypes().length) {
+        <button class="dir-tab" [class.active]="direction() === 'incoming'" (click)="setDirection('incoming')">{{ 'activity.incoming' | t }}</button>
+      }
+    </div>
+
+    <div class="date-range">
+      <label>
+        {{ 'common.from' | t }}
+        <input type="date" [value]="from()" (change)="setFrom($any($event.target).value)">
+      </label>
+      <label>
+        {{ 'common.to' | t }}
+        <input type="date" [value]="to()" (change)="setTo($any($event.target).value)">
+      </label>
+      @if (activeFilterCount() > 0) {
+        <button class="reset-btn" (click)="resetFilters()">{{ 'common.reset' | t }} ({{ activeFilterCount() }})</button>
+      }
+    </div>
+  </section>
+
+  <!-- Chips come from meta.available_types, never a hardcoded list — which
+       kinds exist differs per account. -->
+  @if (outgoingTypes().length && direction() !== 'incoming') {
+    <section class="chip-group">
+      <span class="chip-group-label">{{ 'activity.outgoing' | t }}</span>
+      @for (t of outgoingTypes(); track t.type) {
+        <button class="chip" [class.active]="selectedTypes().includes(t.type)" (click)="toggleType(t.type)">{{ t.label }}</button>
+      }
+    </section>
+  }
+  @if (incomingTypes().length && direction() !== 'outgoing') {
+    <section class="chip-group">
+      <span class="chip-group-label">{{ 'activity.incoming' | t }}</span>
+      @for (t of incomingTypes(); track t.type) {
+        <button class="chip" [class.active]="selectedTypes().includes(t.type)" (click)="toggleType(t.type)">{{ t.label }}</button>
+      }
+    </section>
+  }
+
+  <section class="timeline">
+    @if (loading()) {
+      <p class="hint">{{ 'common.loading' | t }}</p>
+    } @else if (errorMessage()) {
+      <p class="error-box">{{ errorMessage() | t }}</p>
+    } @else if (!rows().length) {
+      <p class="hint">{{ 'activity.empty' | t }}</p>
+    } @else {
+      @for (row of rows(); track row.type + '-' + row.id) {
+        <article class="activity-row" [class.incoming]="row.direction === 'incoming'">
+          <span class="dir-dot" [title]="(row.direction === 'incoming' ? 'activity.incoming' : 'activity.outgoing') | t"></span>
+          <div class="row-main">
+            <span class="row-kind">{{ row.label }}</span>
+            <span class="row-title">{{ rowTitle(row) }}</span>
+          </div>
+          <span class="row-status" [attr.data-status]="row.status">{{ statusLabel(row.status) }}</span>
+          @if (row.amount !== null && row.amount !== undefined) {
+            <span class="row-amount">{{ row.amount }} {{ 'common.egp' | t }}</span>
+          }
+          <span class="row-time" [title]="absoluteTime(row.happened_at)">{{ relativeTime(row.happened_at) }}</span>
+        </article>
+      }
+    }
+  </section>
+
+  <app-pagination
+    [page]="page()"
+    [total]="total()"
+    [perPage]="perPage"
+    (pageChange)="goToPage($event)"
+  />
+</div>

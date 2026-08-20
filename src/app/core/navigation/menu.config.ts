@@ -10,7 +10,9 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'PlansManagements', label: 'menu.plans', iconName: 'plans', route: '/dashboard/plans', roles: ['admin'] },
   { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notfication', roles: ['admin'] },
   { id: 'NotificationHistory', label: 'menu.notification_history', iconName: 'notifications', route: '/dashboard/notfication/history', roles: ['admin'] },
-  { id: 'HospitalVerifications', label: 'menu.hospital_verifications', iconName: 'centers', route: '/dashboard/hospital-verifications', roles: ['admin'] },
+  // Hidden from the sidebar on request. The page, its route and its service are
+  // all still in place — restore this line to bring the entry back.
+  // { id: 'HospitalVerifications', label: 'menu.hospital_verifications', iconName: 'centers', route: '/dashboard/hospital-verifications', roles: ['admin'] },
 
   {
     id: 'Users', label: 'menu.users', iconName: 'users', route: '', roles: ['admin'], hasDropdown: true,
@@ -35,6 +37,20 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'Dialysis', label: 'menu.centers.dialysis', route: '/dashboard/dialysis' },
       { id: 'Hyperbaric', label: 'menu.centers.hyperbaric', route: '/dashboard/HyperbaricOxygen' },
       { id: 'Oncology', label: 'menu.centers.oncology', route: '/dashboard/Oncology' },
+    ]
+  },
+  // The option lists a provider's forms read and can never write. Adding one
+  // used to need a deploy; these screens are what replaced that.
+  {
+    id: 'OptionLists', label: 'menu.lists', iconName: 'plans', route: '', roles: ['admin'], hasDropdown: true,
+    children: [
+      { id: 'IcuGroups', label: 'lists.icu_groups', route: '/dashboard/lists/icu-specialty-groups' },
+      { id: 'IcuCategories', label: 'lists.icu_categories', route: '/dashboard/lists/icu-specialty-categories' },
+      { id: 'IcuSpecialties', label: 'lists.icu_specialties', route: '/dashboard/lists/icu-specialties' },
+      { id: 'IcuTeamRoles', label: 'lists.icu_team_roles', route: '/dashboard/lists/icu-team-roles' },
+      { id: 'MtSpecialties', label: 'lists.mt_specialties', route: '/dashboard/lists/mt-specialties' },
+      { id: 'MtSubspecialties', label: 'lists.mt_subspecialties', route: '/dashboard/lists/mt-subspecialties' },
+      { id: 'InsuranceProviders', label: 'lists.insurance', route: '/dashboard/lists/insurance-providers' },
     ]
   },
   {

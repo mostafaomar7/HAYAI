@@ -1,8 +1,9 @@
-import { DestroyRef, Directive, HostListener, NgZone, inject, signal } from '@angular/core';
+import { DestroyRef, Directive, HostListener, NgZone, computed, inject, signal } from '@angular/core';
 import {
   AccountStatus,
   ApprovalStatus,
   BlockableResource,
+  PlanStatus,
   UserListQuery,
   UserResource,
   UsersService
@@ -10,13 +11,38 @@ import {
 import { APPROVAL_GROUP, ApprovalsService, approvalStatusKey } from '../../../../core/services/approvals.service';
 import { PagedResult } from '../../../../core/services/api.service';
 import { DialogService } from '../../../../core/services/dialog.service';
-import { Plan, PlansService } from '../../../../core/services/plans.service';
+import { PLAN_TYPES_FOR_RESOURCE, Plan, PlansService } from '../../../../core/services/plans.service';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { ActivityIdType } from '../../../../core/services/activity.service';
 import { debounce } from '../../../../shared/utils/debounce.util';
+
+/**
+ * Which table each list's row id belongs to. The activity endpoint keys off
+ * user ids, and only patients and tourists are listed by one — every provider
+ * list hands out an organization / facility / doctor id instead, which the
+ * endpoint has to be told about explicitly.
+ */
+const ACTIVITY_ID_TYPE: Record<UserResource, ActivityIdType> = {
+  patients: 'user',
+  tourists: 'user',
+  doctors: 'doctor',
+  hospitals: 'organization',
+  clinics: 'organization',
+  pharmacies: 'facility',
+  labs: 'facility',
+  'medical-issuance': 'facility',
+  'home-care': 'facility',
+  'physical-therapy': 'facility',
+  'employment-offices': 'facility',
+  'medical-devices': 'facility'
+};
 
 @Directive()
 export abstract class UserListBase<T extends { id: number }> {
   abstract resource: UserResource;
 
+  protected router = inject(Router);
   protected svc = inject(UsersService);
   protected approvals = inject(ApprovalsService);
   protected dialog = inject(DialogService);
@@ -55,15 +81,39 @@ export abstract class UserListBase<T extends { id: number }> {
   total = signal(0);
   plansList = signal<Plan[]>([]);
 
+  /**
+   * The plan every account of this resource falls back to. Only patients have
+   * one today; for the rest this stays null and the "exception" badge and the
+   * reset action never appear.
+   */
+  defaultPlanId = computed(() => this.plansList().find(p => p.is_default)?.id ?? null);
+
   readonly perPage = 15;
   page = signal(1);
 
   protected init() {
-    this.plans.list({ per_page: 100 }).subscribe({
-      next: r => this.plansList.set(r.items),
+    this.loadPlans();
+    this.load();
+  }
+
+  /**
+   * Only the plans that apply to this resource — a hospital must not be offered
+   * a pharmacy plan. Filtering happens server-side so the `per_page` cap can
+   * never hide a valid plan behind a hundred irrelevant ones.
+   *
+   * `plan_type` takes one value per request, and doctors span four types, so
+   * the calls are issued together and merged.
+   */
+  private loadPlans() {
+    const types = PLAN_TYPES_FOR_RESOURCE[this.resource];
+    if (!types?.length) {
+      this.plansList.set([]);
+      return;
+    }
+    forkJoin(types.map(type => this.plans.list({ per_page: 100, plan_type: type }))).subscribe({
+      next: results => this.plansList.set(results.flatMap(r => r.items)),
       error: () => this.plansList.set([])
     });
-    this.load();
   }
 
   load() {
@@ -304,6 +354,20 @@ export abstract class UserListBase<T extends { id: number }> {
     });
   }
 
+  /**
+   * Opens the cross-vertical timeline for one row. `user_id` is preferred where
+   * the backend sends it — it needs no `id_type` and cannot be misclassified.
+   * Without it the row id is passed along with the table it came from.
+   */
+  goToActivity(row: { id: number; user_id?: number | null }) {
+    this.openActionMenuId = null;
+    const userId = row.user_id ?? null;
+    this.router.navigate(
+      ['/dashboard/users', userId ?? row.id, 'activity'],
+      userId ? {} : { queryParams: { id_type: ACTIVITY_ID_TYPE[this.resource] } }
+    );
+  }
+
   /** i18n key for a provider's approval badge. */
   approvalLabel(status: ApprovalStatus | null | undefined): string {
     return approvalStatusKey(status);
@@ -333,6 +397,33 @@ export abstract class UserListBase<T extends { id: number }> {
 
     this.svc.setPlan(this.resource, id, Number(choice)).subscribe({
       next: () => { this.dialog.toast('success', 'users.plan_updated'); this.load(); },
+      error: err => this.dialog.error('users.plan_failed', err.error?.message ?? 'dialog.try_again')
+    });
+  }
+
+  /**
+   * True when this account was moved off the default plan. Rendered as an
+   * "exception" badge so an admin can see at a glance which rows were changed
+   * by hand — everyone else silently follows the default.
+   */
+  isPlanException(planStatus: PlanStatus | null | undefined): boolean {
+    const fallback = this.defaultPlanId();
+    return !!planStatus?.plan_id && fallback !== null && planStatus.plan_id !== fallback;
+  }
+
+  /** Puts an account back on the default plan for its type. */
+  async resetPlan(id: number) {
+    this.openActionMenuId = null;
+    const ok = await this.dialog.confirm({
+      title: 'users.reset_plan_title',
+      text: 'users.reset_plan_text',
+      icon: 'question',
+      confirmText: 'users.actions.reset_plan'
+    });
+    if (!ok) return;
+
+    this.svc.clearPlan(this.resource, id).subscribe({
+      next: () => { this.dialog.toast('success', 'users.plan_reset'); this.load(); },
       error: err => this.dialog.error('users.plan_failed', err.error?.message ?? 'dialog.try_again')
     });
   }

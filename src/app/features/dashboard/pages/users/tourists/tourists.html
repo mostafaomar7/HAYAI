@@ -101,6 +101,7 @@
                       } @else {
                         <button class="dropdown-item" (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
                       }
+                      <button class="dropdown-item" (click)="goToActivity(user)">{{ 'activity.title' | t }}</button>
                     </div>
                   }
                 </td>

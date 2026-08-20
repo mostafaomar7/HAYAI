@@ -5,6 +5,21 @@ export type Lang = 'en' | 'ar';
 
 const STORAGE_KEY = 'hayai_lang';
 
+/**
+ * The chosen language, read straight from storage. The HTTP interceptor needs
+ * it to stamp `Accept-Language` on every request, and it cannot inject
+ * `I18nService` to ask: the very first request the app makes is this service's
+ * own dictionary fetch, issued from its constructor, so the interceptor would
+ * be asking for a service that is still being built.
+ */
+export function readStoredLang(): Lang {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === 'en' || stored === 'ar') return stored;
+  } catch {}
+  return (navigator?.language ?? 'en').toLowerCase().startsWith('ar') ? 'ar' : 'en';
+}
+
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private http = inject(HttpClient);
@@ -48,12 +63,7 @@ export class I18nService {
   }
 
   private detectInitial(): Lang {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'en' || stored === 'ar') return stored;
-    } catch {}
-    const browser = (this.document.defaultView?.navigator?.language ?? 'en').toLowerCase();
-    return browser.startsWith('ar') ? 'ar' : 'en';
+    return readStoredLang();
   }
 
   private applyDocumentAttrs(lang: Lang) {

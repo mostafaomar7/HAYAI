@@ -390,3 +390,4 @@
   color: #6B7280;
   margin: 0 4px;
 }
+.plan-exception { display: inline-block; background: #FEF3C7; color: #92400E; border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }

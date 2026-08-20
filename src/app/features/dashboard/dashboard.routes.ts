@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { OPTION_LISTS } from '../../core/services/option-lists.service';
 
 /**
  * `data.title` is the i18n key the navbar shows for the page. It reuses the
@@ -237,6 +238,20 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/change-password/change-password').then(m => m.ChangePassword)
   },
+  {
+    path: 'users/:id/activity',
+    data: { title: 'activity.title' },
+    loadComponent: () =>
+      import('./pages/user-activity/user-activity').then(m => m.UserActivity)
+  },
+  // One screen serves all seven option lists. The routes are generated so a new
+  // list is a single entry in `OPTION_LISTS`, and each carries its own title so
+  // the navbar reads like the sidebar entry that was clicked.
+  ...Object.values(OPTION_LISTS).map(config => ({
+    path: `lists/${config.key}`,
+    data: { title: config.titleKey, listKey: config.key },
+    loadComponent: () => import('./pages/option-lists/option-lists').then(m => m.OptionLists)
+  })),
   {
     path: 'notfication/history',
     data: { title: 'menu.notification_history' },

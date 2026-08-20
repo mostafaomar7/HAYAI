@@ -126,6 +126,7 @@
                       } @else {
                         <button class="dropdown-item" (click)="blockProvider(h.id)">{{ 'users.actions.block_account' | t }}</button>
                       }
+                      <button class="dropdown-item" (click)="goToActivity(h)">{{ 'activity.title' | t }}</button>
                       <button class="dropdown-item" (click)="changePlan(h.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }

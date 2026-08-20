@@ -11,6 +11,23 @@ export type AccountStatus = 'active' | 'blocked';
  */
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'blocked' | 'closed';
 
+/**
+ * The plan an account currently resolves to, and the module keys it opens.
+ * Every patient now carries one; providers gained the same shape.
+ */
+export interface PlanStatus {
+  status: string;
+  is_active: boolean;
+  plan_name: string | null;
+  plan_id: number | null;
+  plan_type?: string;
+  /** Both `null` on the default plan — it has no term. Render "Default plan". */
+  started_at: string | null;
+  ends_at: string | null;
+  enabled_module_keys: string[];
+  modules?: { key: string; name: string; limit: number | null }[];
+}
+
 export interface BaseUserListItem {
   id: number;
   name: string;
@@ -26,6 +43,8 @@ export interface PatientItem extends BaseUserListItem {
   status: AccountStatus;
   governate: string | null;
   gender: 'male' | 'female' | null;
+  /** Present on the detail payload; the list may omit it. */
+  plan_status?: PlanStatus | null;
 }
 
 export interface TouristItem extends BaseUserListItem {
@@ -38,6 +57,12 @@ export interface TouristItem extends BaseUserListItem {
  * `account_status` is the login flag.
  */
 export interface ProviderItem extends BaseUserListItem {
+  /**
+   * The owning account's id. Provider rows are keyed by organization / facility
+   * / doctor id, which is NOT a user id — the activity endpoints need one or
+   * the other, and this saves passing `id_type` around.
+   */
+  user_id?: number | null;
   status: ApprovalStatus;
   account_status: AccountStatus;
   is_approved: boolean;
@@ -131,5 +156,13 @@ export class UsersService {
 
   setPlan<T = ProviderItem>(resource: UserResource, id: number, planId: number): Observable<T> {
     return this.api.patch<T>(`/admin/${resource}/${id}/plan`, { plan_id: planId });
+  }
+
+  /**
+   * Drops an account's per-record plan so it falls back to the default for its
+   * type. Only meaningful where a default exists — today that is patients.
+   */
+  clearPlan<T = ProviderItem>(resource: UserResource, id: number): Observable<T> {
+    return this.api.delete<T>(`/admin/${resource}/${id}/plan`);
   }
 }

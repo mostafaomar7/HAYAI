@@ -90,14 +90,15 @@
             <th>{{ 'common.phone' | t }}</th>
             <th>{{ 'common.governorate' | t }}</th>
             <th>{{ 'common.gender' | t }}</th>
+            <th>{{ 'users.plan' | t }}</th>
             <th class="action-col"></th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="8" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
+            <tr><td colspan="9" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
           } @else if (!items().length) {
-            <tr><td colspan="8" style="padding:24px;color:#6B7280;">{{ 'users.no_patients' | t }}</td></tr>
+            <tr><td colspan="9" style="padding:24px;color:#6B7280;">{{ 'users.no_patients' | t }}</td></tr>
           } @else {
             @for (user of items(); track user.id) {
               <tr>
@@ -122,6 +123,13 @@
                 <td class="text-gray">{{ user.phone }}</td>
                 <td class="text-gray">{{ user.governate }}</td>
                 <td class="text-gray">{{ user.gender }}</td>
+                <td>
+                  @if (isPlanException(user.plan_status)) {
+                    <span class="plan-exception">{{ user.plan_status?.plan_name }}</span>
+                  } @else {
+                    <span class="text-gray">{{ 'users.default_plan' | t }}</span>
+                  }
+                </td>
 
                 <td class="action-col relative-cell">
                   <button class="dots-btn" (click)="toggleActionMenu(user.id, $event)">
@@ -136,6 +144,11 @@
                         <button class="dropdown-item" (click)="unblockUser(user.id)">{{ 'users.actions.unblock' | t }}</button>
                       } @else {
                         <button class="dropdown-item" (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
+                      }
+                      <button class="dropdown-item" (click)="goToActivity(user)">{{ 'activity.title' | t }}</button>
+                      <button class="dropdown-item" (click)="changePlan(user.id)">{{ 'users.actions.change_plan' | t }}</button>
+                      @if (isPlanException(user.plan_status)) {
+                        <button class="dropdown-item" (click)="resetPlan(user.id)">{{ 'users.actions.reset_plan' | t }}</button>
                       }
                     </div>
                   }

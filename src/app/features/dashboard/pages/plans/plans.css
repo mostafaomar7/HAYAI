@@ -13,8 +13,91 @@
 .plan-main-title { font-size: 24px; font-weight: 700; color: #111827; margin: 4px 0; }
 .plan-desc { font-size: 13px; color: #6B7280; margin: 0; }
 .plan-badge { background-color: #EFF6FF; color: #2563EB; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.default-badge { background-color: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+
 .divider { height: 1px; background-color: #F3F4F6; margin: 20px 0; }
 .features-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .features-list li { display: flex; align-items: center; font-size: 14px; color: #374151; gap: 10px; }
 .features-list li.not-included { color: #9CA3AF; }
 .info-icon { margin-left: auto; color: #9CA3AF; }
+/* ===== Filter (matches the popup idiom used across the other lists) ===== */
+.top-actions { align-items: center; }
+.filter-wrapper { position: relative; }
+.filter-btn { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 500; color: #374151; cursor: pointer; font-family: inherit; }
+.filter-btn.has-active { border-color: #2563EB; color: #2563EB; }
+.filter-count { background: #2563EB; color: #fff; border-radius: 10px; font-size: 11px; font-weight: 700; padding: 1px 6px; }
+
+.filter-popup { position: absolute; top: calc(100% + 8px); inset-inline-end: 0; width: 300px; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; padding: 20px; text-align: start; }
+.popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.popup-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.close-icon { background: none; border: none; cursor: pointer; padding: 0; line-height: 0; }
+.form-group { margin-bottom: 14px; display: flex; flex-direction: column; }
+.form-group label { font-size: 13px; color: #374151; margin-bottom: 6px; font-weight: 500; }
+.custom-select select { width: 100%; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 14px; color: #374151; outline: none; font-family: inherit; background: #fff; }
+.popup-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.reset-btn { background: none; border: none; color: #2563EB; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.apply-btn { background: #2563EB; color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.apply-btn:hover { background: #1D4ED8; }
+.apply-btn:disabled { background: #93C5FD; cursor: not-allowed; }
+
+/* ===== Per-card module picker ===== */
+.card-actions { position: relative; margin-top: 18px; padding-top: 16px; border-top: 1px solid #F3F4F6; cursor: default; display: flex; flex-wrap: wrap; gap: 8px; }
+.modules-btn { display: inline-flex; align-items: center; gap: 8px; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; font-family: inherit; }
+.modules-btn:hover { background: #EFF6FF; border-color: #BFDBFE; color: #2563EB; }
+
+/* The card itself is not an overflow container, so this can escape it. */
+.modules-popup { position: absolute; top: calc(100% + 8px); inset-inline-start: 0; width: 320px; max-width: 92vw; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.14); z-index: 60; padding: 16px; text-align: start; }
+.draft-count { font-size: 12px; font-weight: 600; color: #6B7280; font-variant-numeric: tabular-nums; }
+
+.modules-search { display: flex; align-items: center; gap: 8px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 7px 10px; margin-bottom: 10px; }
+.modules-search input { flex: 1; min-width: 0; border: none; outline: none; font-size: 13px; font-family: inherit; background: transparent; }
+
+.bulk-row { display: flex; gap: 14px; margin-bottom: 8px; }
+.link-btn { background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: #2563EB; cursor: pointer; font-family: inherit; }
+.link-btn:hover { text-decoration: underline; }
+
+.modules-options { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0 -6px; padding: 0 6px; }
+.option-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; font-size: 13px; color: #374151; cursor: pointer; }
+.option-row:hover { background: #F8FAFC; }
+.option-row.selected { color: #111827; font-weight: 600; }
+.option-row.locked { cursor: default; color: #6B7280; }
+.option-row input { display: none; }
+.option-box { width: 16px; height: 16px; flex: none; border: 2px solid #D1D5DB; border-radius: 4px; background: #fff; display: flex; align-items: center; justify-content: center; }
+.option-row input:checked + .option-box { background: #2563EB; border-color: #2563EB; }
+.option-row input:checked + .option-box::after { content: "✓"; color: #fff; font-size: 11px; font-weight: 700; }
+.option-row input:disabled + .option-box { background: #9CA3AF; border-color: #9CA3AF; }
+.option-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge-always { flex: none; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; background: #E5E7EB; color: #4B5563; white-space: nowrap; }
+.empty-hint { margin: 8px 0; font-size: 13px; color: #9CA3AF; }
+
+.feature-limit { margin-inline-start: auto; font-size: 12px; font-weight: 600; color: #2563EB; background: #EFF6FF; border-radius: 10px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+
+/* The whole card is clickable; keep the popup from triggering navigation. */
+.plan-card:has(.modules-popup) { transform: none !important; }
+
+@media (max-width: 768px) {
+  .top-actions { flex-wrap: wrap; }
+  .modules-popup { inset-inline-start: auto; inset-inline-end: 0; }
+}
+
+/* ===== Account-type tabs ===== */
+.type-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.type-tab { flex: none; background: #fff; border: 1px solid #E5E7EB; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #4B5563; cursor: pointer; white-space: nowrap; font-family: inherit; transition: background-color .15s, border-color .15s, color .15s; }
+.type-tab:hover { border-color: #BFDBFE; color: #2563EB; }
+.type-tab.active { background: #2563EB; border-color: #2563EB; color: #fff; }
+
+/* ===== Bulk module editor ===== */
+.bulk-wrapper { position: relative; }
+.bulk-btn { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 500; color: #374151; cursor: pointer; font-family: inherit; }
+.bulk-btn.has-active { border-color: #2563EB; color: #2563EB; }
+.bulk-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.bulk-popup { position: absolute; top: calc(100% + 8px); inset-inline-end: 0; width: 340px; max-width: 92vw; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.14); z-index: 110; padding: 18px; text-align: start; }
+.bulk-scope { margin: 0 0 12px; font-size: 12px; color: #6B7280; background: #F8FAFC; border-radius: 6px; padding: 8px 10px; }
+.bulk-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
+.bulk-buttons { display: flex; gap: 8px; }
+.danger-btn { background: #fff; color: #DC2626; border: 1px solid #FECACA; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.danger-btn:hover { background: #FEF2F2; }
+.danger-btn:disabled, .bulk-actions .apply-btn:disabled { opacity: .5; cursor: not-allowed; }
+.bulk-actions .apply-btn { padding: 9px 16px; font-size: 13px; }

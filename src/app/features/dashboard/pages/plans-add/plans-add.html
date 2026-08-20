@@ -63,19 +63,88 @@
     </section>
 
     <section class="form-section">
-      <h3>{{ 'plans.modules_section' | t }}</h3>
+      <div class="modules-head">
+        <h3>{{ 'plans.modules_section' | t }}</h3>
+        @if (modules().length) {
+          <span class="modules-count">{{ 'plans.included_of' | t : { included: includedCount(), total: modules().length } }}</span>
+        }
+      </div>
+
+      @if (planType === 'patient') {
+        <p class="hint patient-hint">{{ 'plans.patient_modules_hint' | t }}</p>
+      }
+
       @if (!planType) {
-        <p style="color:#6B7280;font-size:13px;">{{ 'plans.select_type_first' | t }}</p>
+        <p class="hint">{{ 'plans.select_type_first' | t }}</p>
+      } @else if (!modules().length) {
+        <p class="hint">{{ 'plans.no_modules' | t }}</p>
       } @else {
-        <div class="modules-grid">
-          @for (mod of modules(); track mod.module_key; let i = $index) {
-            <label class="module-checkbox-card" [class.checked]="mod.checked">
-              <input type="checkbox" [checked]="mod.checked" (change)="toggleModule(i)">
-              <span class="custom-checkbox"></span>
-              {{ mod.module_name }}
-            </label>
-          }
+        @if (newCount() > 0) {
+          <div class="new-banner">
+            <span class="badge-new">{{ 'plans.new_badge' | t }}</span>
+            {{ 'plans.new_features_notice' | t : { count: newCount() } }}
+          </div>
+        }
+
+        <div class="module-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'plans.search_modules' | t"
+                 [value]="moduleSearch()" (input)="onSearch($any($event.target).value)">
         </div>
+
+        @for (section of sections(); track section.key) {
+          <div class="module-section">
+            @if (hasGroups() && section.label) {
+              <div class="section-head">
+                <h4>{{ section.label }}</h4>
+                <div class="section-actions">
+                  <span class="section-count">{{ section.includedCount }}/{{ section.rows.length }}</span>
+                  @if (section.togglableCount > 0) {
+                    <button type="button" class="link-btn" (click)="setSection(section, true)">{{ 'plans.enable_all' | t }}</button>
+                    <button type="button" class="link-btn" (click)="setSection(section, false)">{{ 'plans.disable_all' | t }}</button>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="modules-grid">
+              @for (entry of section.rows; track entry.row.module_key) {
+                <div class="module-card"
+                     [class.checked]="entry.row.checked"
+                     [class.locked]="!entry.row.gateable"
+                     [class.is-new]="entry.row.isNew">
+                  <label class="module-toggle">
+                    <input type="checkbox" [checked]="entry.row.checked"
+                           [disabled]="!entry.row.gateable"
+                           (change)="toggleModule(entry.index)">
+                    <span class="custom-checkbox"></span>
+                    <span class="module-name">{{ entry.row.module_name }}</span>
+                    @if (entry.row.isNew) {
+                      <span class="badge-new">{{ 'plans.new_badge' | t }}</span>
+                    }
+                    @if (!entry.row.gateable) {
+                      <span class="badge-always" [title]="'plans.always_on_hint' | t">{{ 'plans.always_on' | t }}</span>
+                    }
+                  </label>
+
+                  @if (entry.row.checked && entry.row.supportsLimit) {
+                    <div class="module-limit">
+                      <label>{{ 'plans.limit' | t }}</label>
+                      <input type="number" min="0" [placeholder]="'plans.limit_unlimited' | t"
+                             [value]="entry.row.limit ?? ''"
+                             (input)="updateModuleLimit(entry.index, $any($event.target).value)">
+                      @if (entry.row.limitUnit) {
+                        <span class="limit-unit">{{ entry.row.limitUnit }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
       }
     </section>
 
@@ -84,7 +153,7 @@
         <h3>{{ 'plans.modules_details' | t }}</h3>
 
         @for (mod of modules(); track mod.module_key; let i = $index) {
-          @if (mod.checked) {
+          @if (mod.checked && mod.gateable) {
             <div class="form-group module-detail-input">
               <label>{{ mod.module_name }}</label>
               <span class="sub-label">{{ 'plans.module_description' | t }}</span>
@@ -98,7 +167,7 @@
     }
 
     @if (errorMessage()) {
-      <div style="color:#dc2626;font-size:13px;padding:8px 0;">{{ errorMessage() }}</div>
+      <div style="color:#dc2626;font-size:13px;padding:8px 0;">{{ errorMessage() | t }}</div>
     }
 
   </div>

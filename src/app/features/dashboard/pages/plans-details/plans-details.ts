@@ -41,20 +41,34 @@ export class PlansDetails {
     if (id) this.router.navigate(['/dashboard/plans/edit', id]);
   }
 
+  /**
+   * Deleting is a soft delete: the plan disappears from every list and can no
+   * longer be bought, but current subscribers keep it until their term ends.
+   * That is worth saying out loud when anyone is actually on the plan.
+   */
   async onDelete() {
-    const id = this.plan()?.id;
-    if (!id) return;
+    const plan = this.plan();
+    if (!plan?.id) return;
+
+    const subscribers = plan.subscribers_count ?? 0;
     const ok = await this.dialog.confirm({
       title: 'plans.delete_title',
-      text: 'plans.delete_text',
+      text: subscribers > 0 ? 'plans.delete_text_subscribers' : 'plans.delete_text',
+      params: { count: subscribers },
       icon: 'warning',
       confirmText: 'common.delete',
       danger: true
     });
     if (!ok) return;
-    this.svc.delete(id).subscribe({
-      next: () => {
-        this.dialog.toast('success', 'plans.deleted');
+
+    this.svc.delete(plan.id).subscribe({
+      next: res => {
+        const kept = res?.subscribers_kept ?? 0;
+        if (kept > 0) {
+          this.dialog.info('plans.deleted', 'plans.deleted_subscribers_kept', { count: kept });
+        } else {
+          this.dialog.toast('success', 'plans.deleted');
+        }
         this.router.navigate(['/dashboard/plans']);
       },
       error: err => this.dialog.error('dialog.delete_failed', err.error?.message ?? 'dialog.try_again')
