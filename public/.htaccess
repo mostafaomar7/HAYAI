@@ -43,9 +43,13 @@
   ExpiresByType text/javascript "access plus 1 year"
   ExpiresByType text/css "access plus 1 year"
 
-  # Translations — short cache so language file updates show up
+  # Translations are NOT expiry-cached. Their filenames never change — Angular
+  # copies `public/` verbatim without hashing — so a freshness window means a
+  # deploy's new strings simply do not arrive until it lapses, and a hard reload
+  # does not help because the app fetches them by XHR after bootstrap.
+  # Validation instead: a 304 costs a couple of hundred bytes.
   <FilesMatch "\.json$">
-    ExpiresDefault "access plus 1 hour"
+    ExpiresDefault "access plus 0 seconds"
   </FilesMatch>
 
   # Images
@@ -77,9 +81,11 @@
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # Translation JSONs — re-check hourly
+  # Translation JSONs — always revalidate, never served blind from cache.
+  # `no-cache` does not mean "do not store": the copy is kept and reused after
+  # the server confirms it with a 304. It only forbids using it unchecked.
   <FilesMatch "^(en|ar)\.json$">
-    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
 
   # ============================================

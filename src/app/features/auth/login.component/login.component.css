@@ -180,11 +180,19 @@
 
 /* --- Right Section (Image/Banner) --- */
 .image-section {
-  flex: 0 0 55%;
+  /* 45% + 55% already fills the row, so the gutter below has nowhere to go
+     unless this panel may shrink. Without the shrink it pushed 16px past the
+     edge — invisible in LTR, but in RTL that edge is the left one, which is
+     where the horizontal scrollbar came from. */
+  flex: 1 1 55%;
+  min-width: 0;
   background-color: #2F80ED; /* Baseline fallback blue */
   background: linear-gradient(135deg, #4A90E2 0%, #1976D2 100%);
   border-radius: 24px;
-  margin: 16px 16px 16px 0;
+  /* Logical, so the gutter stays on the outer edge in both directions —
+     a physical margin-right lands on the inner edge once the page flips. */
+  margin: 16px;
+  margin-inline-start: 0;
   position: relative;
   overflow: hidden;
   display: flex;

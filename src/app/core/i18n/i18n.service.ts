@@ -72,8 +72,27 @@ export class I18nService {
     html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   }
 
+  /**
+   * Per-deploy cache key for the dictionaries.
+   *
+   * Angular copies `public/` verbatim, so `en.json` keeps the same URL forever
+   * while its contents change every release. Any browser holding a cached copy
+   * keeps serving the old strings, and a hard reload does not dislodge it —
+   * the file is fetched by XHR after bootstrap, not as part of the navigation.
+   *
+   * The main bundle IS content-hashed, so its hash is a free token that moves
+   * on a deploy. It is a nudge, not the guarantee: a build that changes only
+   * translations can leave the bundle hash untouched. Correctness comes from
+   * the `no-cache` header on these files in `.htaccess`; this just retires the
+   * entries browsers cached back when they carried a one-hour lifetime.
+   */
+  private buildTag(): string {
+    const src = this.document.querySelector<HTMLScriptElement>('script[src*="main-"]')?.src ?? '';
+    return /main-([A-Za-z0-9_-]+)\.js/.exec(src)?.[1] ?? 'dev';
+  }
+
   private load(lang: Lang) {
-    this.http.get<Record<string, string>>(`assets/i18n/${lang}.json`).subscribe({
+    this.http.get<Record<string, string>>(`assets/i18n/${lang}.json?v=${this.buildTag()}`).subscribe({
       next: d => this.dict.set(d),
       error: () => this.dict.set({})
     });

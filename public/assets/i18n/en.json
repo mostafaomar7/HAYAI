@@ -612,5 +612,14 @@
   "lists.delete_failed": "Could not delete",
   "lists.in_use_title": "Still in use",
   "lists.in_use_entry": "Used by {count} {label}",
-  "plans.patient_modules_hint": "Every patient module ships open. Switch one off here and it disappears from the app for every patient on this plan."
+  "plans.patient_modules_hint": "Every patient module ships open. Switch one off here and it disappears from the app for every patient on this plan.",
+  "coming_soon.badge": "Launching Soon",
+  "coming_soon.title": "The Future of Healthcare Is Connected.",
+  "coming_soon.subtitle": "HAYAI connects patients with doctors, hospitals, laboratories, pharmacies, home care, and essential healthcare services — all in one connected ecosystem.",
+  "coming_soon.tagline": "One platform. One healthcare journey.",
+  "coming_soon.around_you": "Healthcare, connected around you.",
+  "coming_soon.cta": "Be among the first to experience a simpler, smarter, more connected way to access healthcare.",
+  "coming_soon.whatsapp": "WhatsApp",
+  "coming_soon.email": "Email",
+  "coming_soon.strapline": "Connecting Healthcare. Empowering Patients. Enabling Better Care."
 }

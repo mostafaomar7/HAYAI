@@ -8,7 +8,15 @@
 .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
 .plan-card { background-color: #ffffff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #F3F4F6; cursor: pointer; transition: transform 0.2s; }
 .plan-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+/* A flex item will not shrink below its content, and an unbroken run of
+   characters has no break opportunity — so a description typed without spaces
+   stretched this column past the card and pushed the badge out over the
+   neighbouring one. `min-width: 0` lets it shrink, `overflow-wrap` gives the
+   text somewhere to break. The card cannot use `overflow: hidden` instead: the
+   module picker is positioned inside it and has to escape. */
+.title-area { flex: 1; min-width: 0; }
+.plan-super-title, .plan-main-title, .plan-desc { overflow-wrap: anywhere; }
 .plan-super-title { font-size: 14px; font-weight: 500; color: #111827; }
 .plan-main-title { font-size: 24px; font-weight: 700; color: #111827; margin: 4px 0; }
 .plan-desc { font-size: 13px; color: #6B7280; margin: 0; }
@@ -19,6 +27,7 @@
 .divider { height: 1px; background-color: #F3F4F6; margin: 20px 0; }
 .features-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .features-list li { display: flex; align-items: center; font-size: 14px; color: #374151; gap: 10px; }
+.features-list li > span { min-width: 0; overflow-wrap: anywhere; }
 .features-list li.not-included { color: #9CA3AF; }
 .info-icon { margin-left: auto; color: #9CA3AF; }
 /* ===== Filter (matches the popup idiom used across the other lists) ===== */
@@ -73,12 +82,37 @@
 
 .feature-limit { margin-inline-start: auto; font-size: 12px; font-weight: 600; color: #2563EB; background: #EFF6FF; border-radius: 10px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
 
-/* The whole card is clickable; keep the popup from triggering navigation. */
-.plan-card:has(.modules-popup) { transform: none !important; }
+/* The whole card is clickable; keep the popup from triggering navigation.
+   The transition is killed as well: a card mid-hover-transform would make a
+   position:fixed popup inside it resolve against the card instead of the
+   viewport, which is exactly what the mobile rule below relies on. */
+.plan-card:has(.modules-popup) { transform: none !important; transition: none !important; }
 
 @media (max-width: 768px) {
   .top-actions { flex-wrap: wrap; }
   .modules-popup { inset-inline-start: auto; inset-inline-end: 0; }
+}
+
+/* A fixed-width popup anchored inside a padded card runs off the screen once
+   the card is narrower than the popup: measured 25px clipped at 360px wide, on
+   whichever side the reading direction puts it, plus 465px hanging below the
+   fold. Pinning them to the viewport instead cannot clip at any width, and the
+   gutters are symmetric so it behaves the same in Arabic and English. */
+@media (max-width: 640px) {
+  .filter-popup,
+  .modules-popup,
+  .bulk-popup {
+    position: fixed;
+    inset: auto 12px 12px 12px;
+    width: auto;
+    max-width: none;
+    max-height: 82dvh;
+    overflow-y: auto;
+    z-index: 200;
+  }
+  /* The inner list had its own scroller to keep the popup short; the sheet is
+     already bounded, so a second scroll area just splits the gesture. */
+  .modules-options { max-height: none; }
 }
 
 /* ===== Account-type tabs ===== */

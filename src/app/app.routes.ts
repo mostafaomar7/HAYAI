@@ -13,16 +13,30 @@ import { DashboardShellComponent } from './core/layouts/dashboard-shell/dashboar
  * wildcard.
  */
 export const routes: Routes = [
-  // Public marketing page — deliberately outside the dashboard shell, so it
+  // Public holding page — deliberately outside the dashboard shell, so it
   // carries no guard, no navbar and no sidebar.
+  //
+  // ---------------------------------------------------------------------
+  // The marketing site is finished and lives at
+  // `features/landing/landing.component/` — it is parked, not deleted. To put
+  // it back, swap the `loadComponent` below for the commented line and delete
+  // the coming-soon import.
+  //
+  // It is unrouted rather than hidden on purpose. Covering it with an overlay
+  // would still send the whole page to every visitor, and one `display: none`
+  // in devtools would expose it. With no route referencing it, the lazy chunk
+  // is never even built, so there is nothing in the browser to reveal.
+  // ---------------------------------------------------------------------
   {
     path: '',
     pathMatch: 'full',
+    // import('./features/landing/landing.component/landing.component').then(m => m.LandingComponent)
     loadComponent: () =>
-      import('./features/landing/landing.component/landing.component').then(m => m.LandingComponent)
+      import('./features/coming-soon/coming-soon.component/coming-soon.component')
+        .then(m => m.ComingSoonComponent)
   },
-  // The page lived at `/landing` before it moved to the root; keep old links
-  // and bookmarks working instead of dropping them on the wildcard.
+  // `/landing` was the marketing page's old address. It stays pointed at the
+  // root so an old link cannot slip past the holding page.
   { path: 'landing', pathMatch: 'full', redirectTo: '' },
   {
     path: 'login',
