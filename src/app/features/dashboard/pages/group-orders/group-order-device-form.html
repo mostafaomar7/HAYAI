@@ -1,0 +1,226 @@
+<div class="page-container">
+
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ (editingExisting() ? 'gorders.edit_device' : 'gorders.add_device') | t }}</h2>
+      </div>
+    </div>
+
+    <!-- Step rail. Completed steps stay clickable so a typo in step 1 does not
+         mean restarting; future steps do not, because each one commits. -->
+    <div class="steps">
+      <button type="button" class="step" [class.active]="step() === 1" [class.done]="step() > 1"
+              [disabled]="step() === 1" (click)="step.set(1)">
+        <span class="step-num">1</span>{{ 'gorders.step_basic' | t }}
+      </button>
+      <span class="step-line"></span>
+      <!-- In edit mode the device already exists, so its specifications can be
+           opened directly; in the add flow step 1 has to commit first. -->
+      <button type="button" class="step" [class.active]="step() === 2" [class.done]="step() > 2"
+              [disabled]="step() < 2 && !editingExisting()" (click)="step.set(2)">
+        <span class="step-num">2</span>{{ 'gorders.step_specs' | t }}
+      </button>
+      <span class="step-line"></span>
+      <button type="button" class="step" [class.active]="step() === 3" [disabled]="true">
+        <span class="step-num">3</span>{{ 'gorders.step_group' | t }}
+      </button>
+    </div>
+
+    <div class="step-body">
+      @if (formError()) {
+        <p class="form-error">{{ formError()! | t }}</p>
+      }
+
+      @if (loading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      }
+
+      <!-- ============================ step 1 ============================ -->
+      @if (step() === 1 && !loading()) {
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'gorders.name_ar' | t }} <span class="req">*</span></label>
+            <input type="text" [value]="basic().name_ar"
+                   (input)="setBasic('name_ar', $any($event.target).value)">
+            @if (errorFor('name_ar')) { <span class="field-error">{{ errorFor('name_ar')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.name_en' | t }} <span class="req">*</span></label>
+            <input type="text" [value]="basic().name_en"
+                   (input)="setBasic('name_en', $any($event.target).value)">
+            @if (errorFor('name_en')) { <span class="field-error">{{ errorFor('name_en')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.category' | t }} <span class="req">*</span></label>
+            <select [value]="basic().category_id" (change)="setBasic('category_id', $any($event.target).value)">
+              <option value="">{{ 'gorders.choose_category' | t }}</option>
+              @for (c of categories(); track c.id) {
+                <option [value]="c.id" [selected]="basic().category_id === (c.id + '')">{{ c.name }}</option>
+              }
+            </select>
+            @if (errorFor('category_id')) { <span class="field-error">{{ errorFor('category_id')! | t }}</span> }
+            <span class="hint">{{ 'gorders.category_drives_specs' | t }}</span>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.brand' | t }}</label>
+            <input type="text" [value]="basic().brand_model"
+                   (input)="setBasic('brand_model', $any($event.target).value)">
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.manufacturer' | t }}</label>
+            <input type="text" [value]="basic().manufacturer"
+                   (input)="setBasic('manufacturer', $any($event.target).value)">
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.country_of_origin' | t }}</label>
+            <input type="text" [value]="basic().country_of_origin"
+                   (input)="setBasic('country_of_origin', $any($event.target).value)">
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.made_in' | t }}</label>
+            <input type="text" [value]="basic().made_in"
+                   (input)="setBasic('made_in', $any($event.target).value)">
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'gorders.short_description' | t }} ({{ 'gorders.lang_en' | t }})</label>
+            <textarea [value]="basic().short_description_en"
+                      (input)="setBasic('short_description_en', $any($event.target).value)"></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'gorders.short_description' | t }} ({{ 'gorders.lang_ar' | t }})</label>
+            <textarea dir="rtl" [value]="basic().short_description_ar"
+                      (input)="setBasic('short_description_ar', $any($event.target).value)"></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'gorders.cover_image' | t }}</label>
+            @if (basic().coverUrl) {
+              <div class="cover-preview">
+                <img [src]="basic().coverUrl!" [alt]="basic().name_en">
+                <span class="hint">{{ 'gorders.cover_replace_hint' | t }}</span>
+              </div>
+            }
+            <input type="file" accept="image/*" (change)="onCover($event)">
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <button class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+          <button class="btn-primary" [disabled]="saving()" (click)="saveBasic()">
+            {{ (saving() ? 'common.saving' : 'common.next') | t }}
+          </button>
+        </div>
+      }
+
+      <!-- ============================ step 2 ============================ -->
+      @if (step() === 2 && !loading()) {
+        @if (specFields().length) {
+          <div class="form-grid">
+            @for (field of specFields(); track field.key) {
+              <div class="form-group">
+                <label>
+                  {{ labelFor(field) }}
+                  @if (field.unit) { <span class="unit">({{ field.unit }})</span> }
+                  @if (field.required) { <span class="req">*</span> }
+                </label>
+
+                @if (field.type === 'select' && field.options?.length) {
+                  <select [value]="specValues()[field.key] || ''"
+                          (change)="setSpec(field.key, $any($event.target).value)">
+                    <option value="">{{ 'gorders.choose' | t }}</option>
+                    @for (opt of field.options!; track opt) {
+                      <option [value]="opt" [selected]="specValues()[field.key] === opt">{{ opt }}</option>
+                    }
+                  </select>
+                } @else if (field.type === 'textarea') {
+                  <textarea [value]="specValues()[field.key] || ''"
+                            [placeholder]="field.placeholder || ''"
+                            (input)="setSpec(field.key, $any($event.target).value)"></textarea>
+                } @else {
+                  <input [type]="inputTypeFor(field)"
+                         [value]="specValues()[field.key] || ''"
+                         [placeholder]="field.placeholder || ''"
+                         (input)="setSpec(field.key, $any($event.target).value)">
+                }
+
+                @if (errorFor(field.key)) { <span class="field-error">{{ errorFor(field.key)! | t }}</span> }
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="table-hint">{{ 'gorders.no_spec_schema' | t }}</p>
+        }
+
+        <div class="step-footer">
+          <button class="btn-secondary" (click)="step.set(1)">{{ 'common.back' | t }}</button>
+          <button class="btn-primary" [disabled]="saving()" (click)="saveSpecs()">
+            {{ (saving() ? 'common.saving' : (editingExisting() && hasRound() ? 'common.save' : 'common.next')) | t }}
+          </button>
+        </div>
+      }
+
+      <!-- ============================ step 3 ============================ -->
+      @if (step() === 3 && !loading()) {
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'gorders.target_size' | t }} <span class="req">*</span></label>
+            <input type="number" min="2" [value]="round().target_size"
+                   (input)="setRound('target_size', $any($event.target).value)">
+            @if (errorFor('target_size')) { <span class="field-error">{{ errorFor('target_size')! | t }}</span> }
+            <span class="hint">{{ 'gorders.target_size_hint' | t }}</span>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.estimated_delivery' | t }} <span class="req">*</span></label>
+            <!-- Bound to the index: the API stores two week numbers, and the
+                 label it shows back is derived from them server-side. -->
+            <select [value]="round().delivery"
+                    (change)="setRound('delivery', +$any($event.target).value)">
+              @for (w of deliveryWindows; track $index) {
+                <option [value]="$index" [selected]="round().delivery === $index">{{ deliveryLabel(w) }}</option>
+              }
+            </select>
+            @if (errorFor('delivery')) { <span class="field-error">{{ errorFor('delivery')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'gorders.join_deadline' | t }} <span class="req">*</span></label>
+            <input type="date" [value]="round().join_deadline"
+                   (input)="setRound('join_deadline', $any($event.target).value)">
+            @if (errorFor('join_deadline')) { <span class="field-error">{{ errorFor('join_deadline')! | t }}</span> }
+            <span class="hint">{{ 'gorders.join_deadline_hint' | t }}</span>
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'gorders.notes_for_users' | t }}</label>
+            <textarea [value]="round().notes_for_users"
+                      (input)="setRound('notes_for_users', $any($event.target).value)"></textarea>
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <button class="btn-secondary" (click)="step.set(2)">{{ 'common.back' | t }}</button>
+          <button class="btn-primary" [disabled]="saving()" (click)="createRound()">
+            {{ (saving() ? 'common.saving' : 'gorders.add_device') | t }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

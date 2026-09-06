@@ -1,0 +1,74 @@
+/* Only what this screen adds on top of group-orders.shared.css. */
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid #F1F5F9;
+  overflow-x: auto;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9CA3AF;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.step:disabled { cursor: default; }
+.step.done { color: #047857; }
+.step.active { color: #2563EB; }
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+.step.done .step-num { background: #ECFDF5; color: #047857; }
+.step.active .step-num { background: #2563EB; color: #fff; }
+
+.step-line { flex: 1; min-width: 20px; height: 1px; background: #E5E7EB; }
+
+.step-body { padding: 24px; }
+
+.step-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.unit { font-weight: 500; color: #6B7280; }
+
+.cover-preview { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.cover-preview img {
+  width: 72px; height: 72px; object-fit: contain;
+  border-radius: 8px; background: #F8FAFC; border: 1px solid #F1F5F9;
+}
+.cover-preview .hint { margin: 0; }
+
+@media (max-width: 640px) {
+  .step-body { padding: 18px 16px; }
+  .step-footer { flex-direction: column-reverse; }
+  .step-footer button { width: 100%; }
+  /* The rail is the only thing that has to stay on one line; let it scroll. */
+  .step-line { min-width: 12px; }
+}

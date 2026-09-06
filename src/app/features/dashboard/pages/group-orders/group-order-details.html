@@ -1,0 +1,449 @@
+<div class="page-container">
+
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card"><p class="table-hint">{{ loadError()! | t }}</p></div>
+  } @else if (order(); as o) {
+
+    <!-- ===================== screen 7/9 — summary ===================== -->
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area">
+          <h2>{{ deviceName() || ('gorders.device_n' | t) }}</h2>
+          <span [class]="'pill pill-' + o.status">{{ statusLabel() }}</span>
+          @if (o.round_number > 1) {
+            <span class="pill pill-draft">{{ 'gorders.round' | t }} {{ o.round_number }}</span>
+          }
+        </div>
+        <div class="actions-area">
+          @if (canExport()) {
+            <button class="btn-secondary" [disabled]="busy()" (click)="exportCsv()">
+              {{ 'gorders.export_csv' | t }}
+            </button>
+          }
+          @if (canCancel()) {
+            <button class="btn-danger" [disabled]="busy()" (click)="cancel()">
+              {{ 'gorders.cancel_round' | t }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="summary">
+        @if (coverImage()) {
+          <img class="summary-image" [src]="coverImage()!" [alt]="deviceName()">
+        }
+
+        <div class="summary-facts">
+          <div class="fact">
+            <span class="fact-label">{{ 'gorders.category' | t }}</span>
+            <span class="fact-value">{{ categoryName() || '—' }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'gorders.group_size' | t }}</span>
+            <span class="fact-value num">{{ o.group_size }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'gorders.joined' | t }}</span>
+            <span class="fact-value num">{{ o.joined }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'gorders.remaining' | t }}</span>
+            <span class="fact-value num">{{ remaining() }}</span>
+          </div>
+          <!-- Held by requests still under review: it blocks a newcomer, but it
+               does not complete the round and is not divided into. -->
+          @if (o.pending_review) {
+            <div class="fact">
+              <span class="fact-label">{{ 'gorders.reserved' | t }}</span>
+              <span class="fact-value num">{{ o.pending_review }}</span>
+            </div>
+          }
+          <div class="fact">
+            <span class="fact-label">{{ 'gorders.estimated_delivery' | t }}</span>
+            <span class="fact-value">{{ o.estimated_delivery || '—' }}</span>
+          </div>
+          @if (o.join_deadline) {
+            <div class="fact">
+              <span class="fact-label">{{ 'gorders.join_deadline' | t }}</span>
+              <span class="fact-value">{{ o.join_deadline | date:'mediumDate' }}</span>
+            </div>
+          }
+
+          <div class="fact fact-wide">
+            <span class="fact-label">{{ 'gorders.progress' | t }}</span>
+            <div class="progress">
+              <div class="progress-track">
+                <div class="progress-fill" [class.full]="percent() >= 100" [style.width.%]="percent()"></div>
+              </div>
+              <span class="progress-value">{{ percent() }}%</span>
+            </div>
+          </div>
+        </div>
+
+        @if (description() || o.notes_for_users) {
+          <div class="summary-notes">
+            @if (description()) {
+              <p class="note-label">{{ 'gorders.description' | t }}</p>
+              <p class="note-body">{{ description() }}</p>
+            }
+            @if (o.notes_for_users) {
+              <p class="note-label">{{ 'gorders.notes_for_users' | t }}</p>
+              <p class="note-body">{{ o.notes_for_users }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ================= screen 9/10 — cost & shipping ================= -->
+    @if (canAddCost()) {
+      <div class="card">
+        <div class="card-head">
+          <div class="title-area">
+            <h2>{{ 'gorders.cost_shipping' | t }}</h2>
+            <p class="sub">{{ 'gorders.cost_step_hint' | t }}</p>
+          </div>
+          @if (!costFormOpen()) {
+            <button class="btn-primary" (click)="openCostForm()">{{ 'gorders.add_cost' | t }}</button>
+          }
+        </div>
+
+        @if (costFormOpen()) {
+          <div class="panel">
+            @if (costError()) { <p class="form-error">{{ costError()! | t }}</p> }
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'gorders.total_cost' | t }} <span class="req">*</span></label>
+                <input type="number" min="0" step="0.01" [value]="costDraft().total_cost"
+                       (input)="setCost('total_cost', $any($event.target).value)">
+                @if (costErrors()['total_cost']) {
+                  <span class="field-error">{{ costErrors()['total_cost'] | t }}</span>
+                }
+                <span class="hint">{{ 'gorders.currency_hint' | t }}</span>
+              </div>
+
+              <!-- Derived, never typed: the division is what the importer
+                   invoices against, so it cannot be edited independently. -->
+              <div class="form-group">
+                <label>{{ 'gorders.cost_per_person' | t }}</label>
+                <input type="text" readonly
+                       [value]="costPerPerson() === null ? '—' : money(costPerPerson())">
+                <span class="hint">{{ 'gorders.divided_by' | t }} {{ o.joined }}</span>
+              </div>
+
+              <div class="form-group">
+                <label>{{ 'gorders.estimated_delivery' | t }} <span class="req">*</span></label>
+                <!-- Bound to the index: the API stores two week numbers and
+                     renders the label back from them. -->
+                <select [value]="costDraft().delivery"
+                        (change)="setCost('delivery', +$any($event.target).value)">
+                  @for (w of deliveryWindows; track $index) {
+                    <option [value]="$index" [selected]="costDraft().delivery === $index">
+                      {{ deliveryLabel(w) }}
+                    </option>
+                  }
+                </select>
+                @if (costErrors()['delivery']) {
+                  <span class="field-error">{{ costErrors()['delivery'] | t }}</span>
+                }
+              </div>
+
+              <!-- The quote will not save without a saved partner, so this is a
+                   picker rather than the free-text fields in the mock-up: those
+                   could never have been accepted by the API. -->
+              <div class="form-group">
+                <label>{{ 'gorders.shipping_company' | t }} <span class="req">*</span></label>
+                <select [value]="costDraft().shipping_company_id"
+                        (change)="setCost('shipping_company_id', $any($event.target).value)">
+                  <option value="">{{ 'gorders.choose_company' | t }}</option>
+                  @for (c of shippingCompanies(); track c.id) {
+                    <option [value]="c.id" [selected]="costDraft().shipping_company_id === (c.id + '')">
+                      {{ c.name }}
+                    </option>
+                  }
+                </select>
+                @if (costErrors()['shipping_company_id']) {
+                  <span class="field-error">{{ costErrors()['shipping_company_id'] | t }}</span>
+                }
+                @if (!shippingCompanies().length) {
+                  <span class="hint">
+                    {{ 'gorders.no_companies_hint' | t }}
+                    <button class="link-btn" (click)="goToCompanies()">
+                      {{ 'gorders.add_company' | t }}
+                    </button>
+                  </span>
+                }
+              </div>
+
+              <!-- Read-only: these belong to the partner record, and editing them
+                   here would suggest a per-round override the API does not have. -->
+              @if (selectedCompany(); as c) {
+                <div class="form-group">
+                  <label>{{ 'gorders.contact_phone' | t }}</label>
+                  <input type="text" dir="ltr" [value]="c.phone || ''" readonly>
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'gorders.email' | t }}</label>
+                  <input type="email" dir="ltr" [value]="c.email || ''" readonly>
+                </div>
+              }
+
+              <div class="form-group full">
+                <label>{{ 'gorders.notes_for_users' | t }}</label>
+                <textarea [value]="costDraft().notes"
+                          (input)="setCost('notes', $any($event.target).value)"></textarea>
+              </div>
+            </div>
+
+            <div class="panel-footer">
+              <button class="btn-secondary" (click)="costFormOpen.set(false)">{{ 'common.cancel' | t }}</button>
+              <button class="btn-primary" [disabled]="busy()" (click)="submitCost()">
+                {{ (busy() ? 'common.saving' : 'gorders.send_for_approval') | t }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ============ screen 11 — the quote that went out ============ -->
+    @if (hasSentCost()) {
+      <div class="card">
+        <div class="card-head">
+          <div class="title-area"><h2>{{ 'gorders.cost_summary' | t }}</h2></div>
+        </div>
+        <div class="panel">
+          <div class="summary-facts">
+            <div class="fact">
+              <span class="fact-label">{{ 'gorders.total_cost' | t }}</span>
+              <span class="fact-value">{{ money(o.cost!.total_cost, o.cost!.currency) }}</span>
+            </div>
+            <div class="fact">
+              <span class="fact-label">{{ 'gorders.cost_per_person' | t }}</span>
+              <span class="fact-value">{{ money(o.cost!.cost_per_person, o.cost!.currency) }}</span>
+            </div>
+            <div class="fact">
+              <span class="fact-label">{{ 'gorders.estimated_delivery' | t }}</span>
+              <span class="fact-value">{{ o.estimated_delivery || '—' }}</span>
+            </div>
+            @if (o.shipping_company?.name) {
+              <div class="fact">
+                <span class="fact-label">{{ 'gorders.shipping_company' | t }}</span>
+                <span class="fact-value">{{ o.shipping_company!.name }}</span>
+              </div>
+              <div class="fact">
+                <span class="fact-label">{{ 'gorders.contact_phone' | t }}</span>
+                <span class="fact-value"><bdi dir="ltr">{{ o.shipping_company!.phone || '—' }}</bdi></span>
+              </div>
+              <div class="fact">
+                <span class="fact-label">{{ 'gorders.email' | t }}</span>
+                <span class="fact-value"><bdi dir="ltr">{{ o.shipping_company!.email || '—' }}</bdi></span>
+              </div>
+            }
+            @if (o.cost!.approval_deadline) {
+              <div class="fact">
+                <span class="fact-label">{{ 'gorders.approval_deadline' | t }}</span>
+                <span class="fact-value">{{ o.cost!.approval_deadline | date:'medium' }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Shown only when an FX rate is configured, and never without
+               saying the contract is settled in the quote currency. -->
+          @if (o.cost!.fx_rate && o.cost!.total_cost) {
+            <p class="local-estimate">
+              ≈ {{ money(+o.cost!.total_cost! * +o.cost!.fx_rate!, o.cost!.local_currency || '') }}
+              <span class="hint">{{ 'gorders.fx_disclaimer' | t }}</span>
+            </p>
+          }
+
+          @if (o.cost!.notes) {
+            <p class="note-label">{{ 'gorders.notes_for_users' | t }}</p>
+            <p class="note-body">{{ o.cost!.notes }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ============ screen 14 — approval tracking ============ -->
+    @if (showApprovalPanel() && approvals(); as a) {
+      <div class="card">
+        <div class="card-head">
+          <div class="title-area"><h2>{{ 'gorders.approval_summary' | t }}</h2></div>
+          <div class="actions-area">
+            @if (canRemind()) {
+              <button class="btn-secondary" [disabled]="busy()" (click)="sendReminder()">
+                {{ 'gorders.send_reminder' | t }}
+              </button>
+            }
+            @if (canShareContacts()) {
+              <button class="btn-success" [disabled]="busy()" (click)="shareContacts()">
+                {{ 'gorders.share_contacts' | t }}
+              </button>
+            }
+            @if (canClose()) {
+              <button class="btn-secondary" [disabled]="busy()" (click)="close()">
+                {{ 'gorders.close_round' | t }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="tally">
+            <span class="tally-item"><i class="dot green"></i>{{ 'gorders.approved' | t }} <b>{{ a.approved }}</b></span>
+            <span class="tally-item"><i class="dot amber"></i>{{ 'gorders.pending' | t }} <b>{{ a.pending }}</b></span>
+            <span class="tally-item"><i class="dot red"></i>{{ 'gorders.rejected' | t }} <b>{{ a.rejected }}</b></span>
+          </div>
+
+          <div class="progress">
+            <div class="progress-track">
+              <div class="progress-fill" [class.full]="approvalPercent() >= 100"
+                   [style.width.%]="approvalPercent()"></div>
+            </div>
+            <span class="progress-value">{{ a.approved }}/{{ a.total }} · {{ approvalPercent() }}%</span>
+          </div>
+
+          @if (isReady()) {
+            <!-- Screen 16. Saying where HAYAI stops is the point of this box. -->
+            <div class="handover">
+              <p class="handover-title">{{ 'gorders.handover_title' | t }}</p>
+              <p class="handover-body">{{ 'gorders.handover_body' | t }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ============ screen 7 — participants and log ============ -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab" [class.active]="tab() === 'joined'" (click)="tab.set('joined')">
+          {{ 'gorders.tab_joined' | t }} ({{ joined().length }})
+        </button>
+        <button class="tab" [class.active]="tab() === 'pending'" (click)="tab.set('pending')">
+          {{ 'gorders.tab_pending' | t }} ({{ pending().length }})
+        </button>
+        <button class="tab" [class.active]="tab() === 'activity'" (click)="tab.set('activity')">
+          {{ 'gorders.tab_activity' | t }}
+        </button>
+      </div>
+
+      @if (tab() === 'activity') {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'gorders.event' | t }}</th>
+                <th>{{ 'gorders.actor' | t }}</th>
+                <th>{{ 'gorders.reason' | t }}</th>
+                <th>{{ 'gorders.date' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of activity(); track h.id) {
+                <tr>
+                  <td class="event-cell">
+                    @if (h.from_status) {
+                      <span class="text-gray">{{ 'gorders.status.' + h.from_status | t }} →</span>
+                    }
+                    <span [class]="h.to_status ? 'pill pill-' + h.to_status : 'pill pill-draft'">
+                      {{ activityLabel(h) | t }}
+                    </span>
+                  </td>
+                  <td class="text-gray">{{ h.actor_name || '—' }}</td>
+                  <td class="text-gray">{{ h.note || '—' }}</td>
+                  <td class="text-gray">{{ h.created_at | date:'medium' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'gorders.user_name' | t }}</th>
+                <th>{{ 'gorders.phone' | t }}</th>
+                <th>{{ 'gorders.request_date' | t }}</th>
+                <th>{{ 'gorders.status_col' | t }}</th>
+                @if (tab() === 'joined') {
+                  <th>{{ 'gorders.share' | t }}</th>
+                  <th>{{ 'gorders.cost_decision' | t }}</th>
+                }
+                <th class="action-col">{{ 'common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of (tab() === 'joined' ? joined() : pending()); track p.id) {
+                <tr>
+                  <td class="name-cell">{{ p.user_name }}</td>
+                  <!-- A phone number reads left-to-right whatever the page does. -->
+                  <td class="text-gray"><bdi dir="ltr">{{ p.phone || '—' }}</bdi></td>
+                  <td class="text-gray">{{ p.request_date | date:'mediumDate' }}</td>
+                  <td>
+                    <span [class]="'pill pill-' + p.membership_status">
+                      {{ p.membership_status_label || p.membership_status }}
+                    </span>
+                  </td>
+
+                  @if (tab() === 'joined') {
+                    <td class="num">{{ money(p.share_amount) }}</td>
+                    <td>
+                      @if (p.cost_decision) {
+                        <span [class]="'pill pill-' + p.cost_decision">
+                          {{ p.cost_decision_label || p.cost_decision }}
+                        </span>
+                      } @else {
+                        <span class="text-gray">—</span>
+                      }
+                    </td>
+                  }
+
+                  <td class="action-col">
+                    <div class="row-actions">
+                      @if (p.membership_status === 'pending') {
+                        <button class="link-btn" [disabled]="busy()" (click)="approve(p)">
+                          {{ 'gorders.approve' | t }}
+                        </button>
+                        <button class="link-btn danger" [disabled]="busy()" (click)="reject(p)">
+                          {{ 'gorders.reject' | t }}
+                        </button>
+                      } @else if (p.membership_status === 'joined') {
+                        <button class="link-btn danger" [disabled]="busy()" (click)="removeParticipant(p)">
+                          {{ 'gorders.remove' | t }}
+                        </button>
+                      } @else {
+                        <span class="text-gray">—</span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td [attr.colspan]="tab() === 'joined' ? 7 : 5" class="table-hint">
+                    {{ 'common.no_data' | t }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

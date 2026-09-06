@@ -1,0 +1,6 @@
+/* Only what this screen adds on top of group-orders.shared.css. */
+
+.device-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+/* Long device names are the norm here ("Advanced Anaesthesia Machine"), so the
+   name is allowed to wrap rather than forcing the row wider. */
+.device-cell .name-cell { min-width: 0; overflow-wrap: anywhere; }

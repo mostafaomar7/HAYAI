@@ -65,6 +65,13 @@ export class Plans {
   /** Modules are scoped per plan type, so a bulk edit needs one type open. */
   canBulkEdit = computed(() => this.activeType() !== '');
 
+  /**
+   * Patients do not subscribe plan by plan: one patient plan is the default and
+   * applies to the whole patient base, so a second one is edited into existence
+   * rather than added. Hiding the button keeps the screen honest about that.
+   */
+  canAddPlan = computed(() => this.activeType() !== 'patient');
+
   visibleBulk = computed(() => {
     const term = this.bulkSearch().trim().toLowerCase();
     const rows = this.bulkCatalog().filter(c => c.gateable !== false);

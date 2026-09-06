@@ -226,6 +226,58 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/external-orders/external-orders').then(m => m.ExternalOrders)
   },
+  // ===================== External device group orders =====================
+  // A separate section from `external/*` above: that is the legacy marketplace,
+  // which sells a unit and tracks a payment and a shipment. This module does
+  // none of those — HAYAI's role ends at connecting users with the importer —
+  // so the two are kept apart rather than merged behind one screen.
+  //
+  // Literal segments come before ':id', otherwise 'devices' would match the
+  // detail route and be parsed as a group-order id.
+  {
+    path: 'group-orders',
+    pathMatch: 'full',
+    data: { title: 'menu.group_orders.overview' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-orders-overview').then(m => m.GroupOrdersOverview)
+  },
+  {
+    path: 'group-orders/devices',
+    pathMatch: 'full',
+    data: { title: 'menu.group_orders.devices' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-order-devices').then(m => m.GroupOrderDevices)
+  },
+  {
+    path: 'group-orders/devices/new',
+    data: { title: 'gorders.add_device' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-order-device-form').then(m => m.GroupOrderDeviceForm)
+  },
+  {
+    path: 'group-orders/devices/:id/edit',
+    data: { title: 'gorders.edit_device' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-order-device-form').then(m => m.GroupOrderDeviceForm)
+  },
+  {
+    path: 'group-orders/categories',
+    data: { title: 'menu.group_orders.categories', kind: 'categories' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-order-partners').then(m => m.GroupOrderPartners)
+  },
+  {
+    path: 'group-orders/shipping-companies',
+    data: { title: 'menu.group_orders.companies', kind: 'shipping-companies' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-order-partners').then(m => m.GroupOrderPartners)
+  },
+  {
+    path: 'group-orders/:id',
+    data: { title: 'menu.group_orders' },
+    loadComponent: () =>
+      import('./pages/group-orders/group-order-details').then(m => m.GroupOrderDetails)
+  },
   {
     path: 'profile',
     data: { title: 'navbar.my_profile' },

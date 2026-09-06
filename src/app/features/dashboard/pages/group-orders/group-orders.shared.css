@@ -1,0 +1,211 @@
+/* Shared chrome for the five group-order screens.
+   Pulled into each component through `styleUrls`, so Angular still scopes every
+   rule to its own component — this is deduplication, not a global stylesheet.
+   Anything only one screen needs stays in that screen's own file. */
+
+:host {
+  display: block;
+  background-color: #F8FAFC;
+  font-family: 'Inter', 'Cairo', sans-serif;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.page-container { max-width: 1280px; margin: 0 auto; }
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
+  margin-bottom: 20px;
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+.card-head h2 { margin: 0; font-size: 17px; font-weight: 700; color: #111827; }
+.card-head .sub { margin: 4px 0 0; font-size: 13px; color: #6B7280; }
+.title-area { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.actions-area { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* ===================== stat tiles ===================== */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.tile {
+  background: #fff;
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.tile-label { font-size: 13px; color: #6B7280; margin: 0 0 8px; }
+.tile-value { font-size: 26px; font-weight: 700; color: #111827; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile-value.blue { color: #2563EB; }
+.tile-value.green { color: #047857; }
+.tile-value.amber { color: #B45309; }
+
+/* ===================== tables ===================== */
+
+.table-responsive { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: start;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  padding: 12px 24px;
+  background: #F8FAFC;
+  white-space: nowrap;
+}
+.data-table td { padding: 14px 24px; font-size: 14px; color: #111827; border-top: 1px solid #F1F5F9; }
+.data-table tr.clickable { cursor: pointer; }
+.data-table tr.clickable:hover td { background: #F8FAFC; }
+.name-cell { font-weight: 600; }
+.text-gray { color: #6B7280; }
+.num { font-variant-numeric: tabular-nums; }
+.table-hint { padding: 24px; color: #6B7280; }
+.action-col { width: 1%; white-space: nowrap; }
+
+.row-actions { display: flex; align-items: center; gap: 14px; }
+.link-btn {
+  background: none; border: none; padding: 0;
+  font-size: 13px; font-weight: 600; color: #2563EB;
+  cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+.link-btn:hover { text-decoration: underline; }
+.link-btn.danger { color: #DC2626; }
+.link-btn:disabled { color: #9CA3AF; cursor: not-allowed; text-decoration: none; }
+
+.thumb { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; background: #F8FAFC; }
+
+/* ===================== status pills ===================== */
+
+.pill {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* One colour per lifecycle stage, matching the status legend in the flow chart. */
+.pill-draft            { background: #F3F4F6; color: #6B7280; }
+.pill-in_progress      { background: #EFF6FF; color: #2563EB; }
+.pill-completed        { background: #ECFDF5; color: #047857; }
+.pill-cost_pending     { background: #FEF3C7; color: #92400E; }
+.pill-approval_pending { background: #FFEDD5; color: #C2410C; }
+.pill-all_approved     { background: #ECFDF5; color: #047857; }
+.pill-ready            { background: #EDE9FE; color: #6D28D9; }
+.pill-closed           { background: #F3F4F6; color: #4B5563; }
+.pill-cancelled        { background: #FEF2F2; color: #B91C1C; }
+.pill-expired          { background: #FEF2F2; color: #B91C1C; }
+/* participant-level */
+.pill-pending  { background: #FEF3C7; color: #92400E; }
+.pill-joined   { background: #ECFDF5; color: #047857; }
+.pill-approved { background: #ECFDF5; color: #047857; }
+.pill-rejected { background: #FEF2F2; color: #B91C1C; }
+.pill-removed  { background: #F3F4F6; color: #6B7280; }
+.pill-left     { background: #F3F4F6; color: #6B7280; }
+.pill-awaiting { background: #FEF3C7; color: #92400E; }
+
+/* ===================== progress ===================== */
+
+.progress-cell { min-width: 160px; }
+.progress { display: flex; align-items: center; gap: 10px; }
+.progress-track { flex: 1; min-width: 80px; height: 6px; border-radius: 999px; background: #F1F5F9; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999px; background: #2563EB; }
+.progress-fill.full { background: #059669; }
+.progress-value { font-size: 12px; font-weight: 600; color: #6B7280; font-variant-numeric: tabular-nums; }
+
+/* ===================== inputs ===================== */
+
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  padding: 8px 14px; width: 240px;
+}
+.search-box input {
+  flex: 1; min-width: 0; border: none; outline: none;
+  font-size: 14px; font-family: inherit; background: transparent;
+}
+.custom-select select {
+  padding: 9px 12px; border: 1px solid #E5E7EB; border-radius: 8px;
+  font-size: 14px; color: #374151; outline: none; font-family: inherit;
+  background: #fff; width: 100%; min-width: 180px;
+}
+.custom-select select:focus { border-color: #2563EB; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 8px; }
+.req { color: #DC2626; }
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="email"],
+.form-group select,
+.form-group textarea {
+  background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 8px;
+  padding: 11px 14px; font-size: 14px; outline: none;
+  font-family: inherit; width: 100%; box-sizing: border-box; color: #111827;
+}
+.form-group textarea { resize: vertical; min-height: 84px; line-height: 1.6; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #3B82F6; }
+.form-group input[readonly] { background: #F3F4F6; color: #6B7280; cursor: not-allowed; }
+.hint { font-size: 12px; color: #6B7280; margin-top: 6px; }
+.field-error { font-size: 12px; color: #DC2626; margin-top: 6px; }
+.form-error {
+  background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C;
+  border-radius: 8px; padding: 12px 14px; font-size: 13px; margin: 0 0 18px;
+}
+
+/* ===================== buttons ===================== */
+
+.btn-primary {
+  background: #2563EB; color: #fff; border: none; border-radius: 8px;
+  padding: 11px 26px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.btn-primary:hover { background: #1D4ED8; }
+.btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
+.btn-secondary {
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  padding: 11px 22px; font-weight: 600; font-size: 14px; cursor: pointer;
+  font-family: inherit; color: #374151;
+}
+.btn-secondary:hover { border-color: #CBD5E1; }
+.btn-success {
+  background: #059669; color: #fff; border: none; border-radius: 8px;
+  padding: 11px 26px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.btn-success:hover { background: #047857; }
+.btn-danger {
+  background: #fff; border: 1px solid #FECACA; color: #B91C1C; border-radius: 8px;
+  padding: 11px 22px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; padding: 0; margin-bottom: 14px;
+  font-size: 14px; font-weight: 600; color: #4B5563; cursor: pointer; font-family: inherit;
+}
+.back-btn:hover { color: #111827; }
+/* The chevron points back, which is the opposite direction in Arabic. */
+.back-btn svg { transform: scaleX(1); }
+:host-context([dir="rtl"]) .back-btn svg { transform: scaleX(-1); }
+
+@media (max-width: 640px) {
+  :host { padding: 16px; }
+  .search-box, .custom-select select { width: 100%; }
+  .actions-area { width: 100%; }
+  .data-table th, .data-table td { padding: 12px 16px; }
+}

@@ -1,0 +1,16 @@
+/* Only what this screen adds on top of group-orders.shared.css. */
+
+/* A device can be ordered again once a round completes, so the round number is
+   shown as soon as there has been more than one — otherwise two rows for the
+   same device look like a duplicate. */
+.round-tag {
+  display: inline-block;
+  margin-inline-start: 8px;
+  background: #F3F4F6;
+  color: #6B7280;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}

@@ -1,0 +1,105 @@
+<div class="page-container">
+
+  <!-- Screen 1 — the four headline numbers -->
+  <div class="tiles">
+    <div class="tile">
+      <p class="tile-label">{{ 'gorders.total_devices' | t }}</p>
+      <div class="tile-value">{{ statsLoading() ? '—' : (stats()?.stats?.total_devices ?? 0) }}</div>
+    </div>
+    <div class="tile">
+      <p class="tile-label">{{ 'gorders.active_group_orders' | t }}</p>
+      <div class="tile-value blue">{{ statsLoading() ? '—' : (stats()?.stats?.active_group_orders ?? 0) }}</div>
+    </div>
+    <div class="tile">
+      <p class="tile-label">{{ 'gorders.completed_orders' | t }}</p>
+      <div class="tile-value green">{{ statsLoading() ? '—' : (stats()?.stats?.completed_orders ?? 0) }}</div>
+    </div>
+    <div class="tile">
+      <p class="tile-label">{{ 'gorders.pending_requests' | t }}</p>
+      <div class="tile-value amber">{{ statsLoading() ? '—' : (stats()?.stats?.pending_requests ?? 0) }}</div>
+    </div>
+  </div>
+
+  <!-- Screen 6 — every round, with how full it is -->
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'gorders.overview_title' | t }}</h2>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'gorders.search_devices' | t"
+                 (input)="onSearch($any($event.target).value)">
+        </div>
+
+        <div class="custom-select">
+          <select [value]="status()" (change)="setStatus($any($event.target).value)">
+            <option value="">{{ 'gorders.all_statuses' | t }}</option>
+            @for (s of statuses; track s) {
+              <option [value]="s" [selected]="status() === s">{{ 'gorders.status.' + s | t }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'gorders.device' | t }}</th>
+              <th>{{ 'gorders.group_size' | t }}</th>
+              <th>{{ 'gorders.joined' | t }}</th>
+              <th>{{ 'gorders.remaining' | t }}</th>
+              <th>{{ 'gorders.status_col' | t }}</th>
+              <th>{{ 'gorders.progress' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="open(row)">
+                <td class="name-cell">
+                  {{ deviceName(row) || ('gorders.device_n' | t) }}
+                  @if (row.round_number > 1) {
+                    <span class="round-tag">{{ 'gorders.round' | t }} {{ row.round_number }}</span>
+                  }
+                </td>
+                <td class="num">{{ row.group_size }}</td>
+                <td class="num">{{ row.joined }}</td>
+                <td class="num">{{ remaining(row) }}</td>
+                <td><span class="pill" [class]="'pill pill-' + row.status">{{ statusLabel(row) }}</span></td>
+                <td class="progress-cell">
+                  <div class="progress">
+                    <div class="progress-track">
+                      <div class="progress-fill" [class.full]="percent(row) >= 100"
+                           [style.width.%]="percent(row)"></div>
+                    </div>
+                    <span class="progress-value">{{ percent(row) }}%</span>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="page()"
+        [total]="total()"
+        [perPage]="perPage"
+        (pageChange)="goToPage($event)"
+      />
+    }
+  </div>
+</div>

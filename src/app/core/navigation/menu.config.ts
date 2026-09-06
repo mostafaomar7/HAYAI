@@ -60,4 +60,13 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'Orders', label: 'menu.external_devices.orders', route: '/dashboard/external/orders' },
     ]
   },
+  {
+    id: 'GroupOrders', label: 'menu.group_orders', iconName: 'devices', route: '', roles: ['admin'], hasDropdown: true,
+    children: [
+      { id: 'GroupOrdersOverview', label: 'menu.group_orders.overview', route: '/dashboard/group-orders' },
+      { id: 'GroupOrderDevices', label: 'menu.group_orders.devices', route: '/dashboard/group-orders/devices' },
+      { id: 'GroupOrderCategories', label: 'menu.group_orders.categories', route: '/dashboard/group-orders/categories' },
+      { id: 'GroupOrderCompanies', label: 'menu.group_orders.companies', route: '/dashboard/group-orders/shipping-companies' },
+    ]
+  },
 ];

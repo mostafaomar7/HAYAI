@@ -1,0 +1,98 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'gorders.devices_title' | t }}</h2>
+        <span class="pill pill-in_progress">{{ total() }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'gorders.search_devices' | t"
+                 (input)="onSearch($any($event.target).value)">
+        </div>
+
+        <div class="custom-select">
+          <select [value]="categoryId()" (change)="setCategory($any($event.target).value)">
+            <option value="">{{ 'gorders.all_categories' | t }}</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id" [selected]="categoryId() === (c.id + '')">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        <button class="btn-primary" (click)="addDevice()">+ {{ 'gorders.add_device' | t }}</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'gorders.device' | t }}</th>
+              <th>{{ 'gorders.category' | t }}</th>
+              <th>{{ 'gorders.group_size' | t }}</th>
+              <th>{{ 'gorders.joined' | t }}</th>
+              <th>{{ 'gorders.remaining' | t }}</th>
+              <th>{{ 'gorders.status_col' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr>
+                <td>
+                  <div class="device-cell">
+                    @if (row.cover_image_url) {
+                      <img class="thumb" [src]="row.cover_image_url" [alt]="row.name">
+                    }
+                    <span class="name-cell">{{ row.name }}</span>
+                  </div>
+                </td>
+                <td class="text-gray">{{ categoryName(row) }}</td>
+
+                <!-- A device with no round yet has no size, count or status to
+                     show; an em dash says that more clearly than a zero. -->
+                <td class="num">{{ row.active_group_order?.group_size ?? '—' }}</td>
+                <td class="num">{{ row.active_group_order?.joined ?? '—' }}</td>
+                <td class="num">{{ remaining(row) }}</td>
+                <td>
+                  @if (row.active_group_order; as o) {
+                    <span [class]="'pill pill-' + o.status">{{ o.status_label || o.status }}</span>
+                  } @else {
+                    <span class="pill pill-draft">{{ 'gorders.status.not_started' | t }}</span>
+                  }
+                </td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    <button class="link-btn" [disabled]="!row.active_group_order"
+                            (click)="viewRound(row)">{{ 'common.view' | t }}</button>
+                    <button class="link-btn" (click)="edit(row)">{{ 'common.edit' | t }}</button>
+                    <button class="link-btn danger" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="page()"
+        [total]="total()"
+        [perPage]="perPage"
+        (pageChange)="goToPage($event)"
+      />
+    }
+  </div>
+</div>

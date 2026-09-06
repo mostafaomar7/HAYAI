@@ -120,7 +120,9 @@
       }
     </div>
 
-    <button class="add-btn" (click)="goToAdd()">{{ 'common.add' | t }}</button>
+    @if (canAddPlan()) {
+      <button class="add-btn" (click)="goToAdd()">{{ 'common.add' | t }}</button>
+    }
   </div>
 
   @if (loading()) {

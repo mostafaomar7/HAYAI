@@ -1,0 +1,246 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ (isCategories() ? 'gorders.categories_title' : 'gorders.companies_title') | t }}</h2>
+        <span class="pill pill-in_progress">
+          {{ isCategories() ? categories().length : companies().length }}
+        </span>
+      </div>
+      <div class="actions-area">
+        <button class="btn-primary" (click)="openNew()">
+          + {{ (isCategories() ? 'gorders.add_category' : 'gorders.add_company') | t }}
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else if (isCategories()) {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'gorders.category' | t }}</th>
+              <th>{{ 'gorders.slug' | t }}</th>
+              <th>{{ 'gorders.spec_fields' | t }}</th>
+              <th>{{ 'gorders.devices' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of categories(); track row.id) {
+              <tr>
+                <td class="name-cell">{{ row.name }}</td>
+                <td><span class="code-chip">{{ row.slug }}</span></td>
+                <td>
+                  <!-- A category with no fields yields a device with no
+                       specifications, so an empty template is called out. -->
+                  @if (fieldCount(row)) {
+                    <span class="num">{{ fieldCount(row) }}</span>
+                  } @else {
+                    <span class="pill pill-cost_pending">{{ 'gorders.no_fields' | t }}</span>
+                  }
+                </td>
+                <td class="num text-gray">{{ row.devices_count ?? '—' }}</td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="editCategory(row)">{{ 'common.edit' | t }}</button>
+                    <button class="link-btn danger" (click)="removeCategory(row)">{{ 'common.delete' | t }}</button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="table-hint">{{ 'gorders.no_categories' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'gorders.company_name' | t }}</th>
+              <th>{{ 'gorders.contact_phone' | t }}</th>
+              <th>{{ 'gorders.email' | t }}</th>
+              <th>{{ 'gorders.status_col' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of companies(); track row.id) {
+              <tr>
+                <td class="name-cell">{{ row.name }}</td>
+                <td class="text-gray"><bdi dir="ltr">{{ row.phone || '—' }}</bdi></td>
+                <td class="text-gray"><bdi dir="ltr">{{ row.email || '—' }}</bdi></td>
+                <td>
+                  <span class="pill" [class.pill-joined]="row.is_active !== false"
+                        [class.pill-removed]="row.is_active === false">
+                    {{ (row.is_active === false ? 'common.inactive' : 'common.active') | t }}
+                  </span>
+                </td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="editCompany(row)">{{ 'common.edit' | t }}</button>
+                    <button class="link-btn danger" (click)="removeCompany(row)">{{ 'common.delete' | t }}</button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ===================== editor drawer ===================== -->
+@if (drawerOpen()) {
+  <div class="drawer-backdrop" (click)="close()"></div>
+  <aside class="drawer">
+    <div class="drawer-header">
+      <h3>
+        {{ (isEdit()
+            ? (isCategories() ? 'gorders.edit_category' : 'gorders.edit_company')
+            : (isCategories() ? 'gorders.add_category' : 'gorders.add_company')) | t }}
+      </h3>
+      <button class="close-icon" (click)="close()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="drawer-body">
+      @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
+
+      @if (isCategories() && categoryDraft(); as d) {
+        <div class="form-group">
+          <label>{{ 'gorders.name_en' | t }} <span class="req">*</span></label>
+          <input type="text" [value]="d.name_en" (input)="setCategory('name_en', $any($event.target).value)">
+          @if (errorFor('name_en')) { <span class="field-error">{{ errorFor('name_en')! | t }}</span> }
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.name_ar' | t }} <span class="req">*</span></label>
+          <input type="text" [value]="d.name_ar" (input)="setCategory('name_ar', $any($event.target).value)">
+          @if (errorFor('name_ar')) { <span class="field-error">{{ errorFor('name_ar')! | t }}</span> }
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.slug' | t }}</label>
+          <input type="text" dir="ltr" [value]="d.slug" (input)="setCategory('slug', $any($event.target).value)">
+          <span class="hint">{{ 'gorders.slug_hint' | t }}</span>
+        </div>
+
+        <div class="schema-head">
+          <div>
+            <p class="schema-title">{{ 'gorders.spec_fields' | t }}</p>
+            <p class="hint">{{ 'gorders.spec_fields_hint' | t }}</p>
+          </div>
+          <button class="link-btn" (click)="addField()">+ {{ 'gorders.add_field' | t }}</button>
+        </div>
+
+        @if (errorFor('fields')) { <p class="field-error">{{ errorFor('fields')! | t }}</p> }
+
+        @for (f of d.fields; track $index) {
+          <div class="schema-row">
+            <div class="schema-grid">
+              <div class="form-group">
+                <label>{{ 'gorders.field_key' | t }} <span class="req">*</span></label>
+                <input type="text" dir="ltr" [value]="f.key"
+                       (input)="setField($index, 'key', $any($event.target).value)">
+              </div>
+              <div class="form-group">
+                <label>{{ 'gorders.field_label' | t }} <span class="req">*</span></label>
+                <input type="text" [value]="f.label_en || ''"
+                       (input)="setField($index, 'label_en', $any($event.target).value)">
+              </div>
+
+              <div class="form-group">
+                <label>{{ 'gorders.field_label_ar' | t }}</label>
+                <input type="text" dir="rtl" [value]="f.label_ar || ''"
+                       (input)="setField($index, 'label_ar', $any($event.target).value)">
+              </div>
+              <div class="form-group">
+                <label>{{ 'gorders.field_unit' | t }}</label>
+                <input type="text" [value]="f.unit || ''"
+                       (input)="setField($index, 'unit', $any($event.target).value)">
+              </div>
+              <div class="form-group">
+                <label>{{ 'gorders.field_type' | t }}</label>
+                <select [value]="f.type || 'text'"
+                        (change)="setField($index, 'type', $any($event.target).value)">
+                  @for (ft of fieldTypes; track ft) {
+                    <option [value]="ft" [selected]="(f.type || 'text') === ft">{{ ft }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="schema-row-foot">
+              <label class="check-row">
+                <input type="checkbox" [checked]="!!f.required"
+                       (change)="setField($index, 'required', $any($event.target).checked)">
+                {{ 'gorders.field_required' | t }}
+              </label>
+              <button class="link-btn danger" (click)="removeField($index)">{{ 'common.delete' | t }}</button>
+            </div>
+          </div>
+        } @empty {
+          <p class="hint">{{ 'gorders.no_fields_yet' | t }}</p>
+        }
+      }
+
+      @if (!isCategories() && companyDraft(); as d) {
+        <div class="form-group">
+          <label>{{ 'gorders.company_name' | t }} <span class="req">*</span></label>
+          <input type="text" [value]="d.name" (input)="setCompany('name', $any($event.target).value)">
+          @if (errorFor('name')) { <span class="field-error">{{ errorFor('name')! | t }}</span> }
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.contact_person' | t }}</label>
+          <input type="text" [value]="d.contact_person"
+                 (input)="setCompany('contact_person', $any($event.target).value)">
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.contact_phone' | t }} <span class="req">*</span></label>
+          <input type="text" dir="ltr" [value]="d.phone"
+                 (input)="setCompany('phone', $any($event.target).value)">
+          @if (errorFor('phone')) { <span class="field-error">{{ errorFor('phone')! | t }}</span> }
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.email' | t }}</label>
+          <input type="email" dir="ltr" [value]="d.email"
+                 (input)="setCompany('email', $any($event.target).value)">
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.notes' | t }}</label>
+          <textarea [value]="d.notes" (input)="setCompany('notes', $any($event.target).value)"></textarea>
+        </div>
+
+        <label class="check-row">
+          <input type="checkbox" [checked]="d.is_active"
+                 (change)="setCompany('is_active', $any($event.target).checked)">
+          {{ 'common.active' | t }}
+        </label>
+      }
+    </div>
+
+    <div class="drawer-footer">
+      <button class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        {{ (saving() ? 'common.saving' : 'common.save') | t }}
+      </button>
+    </div>
+  </aside>
+}
