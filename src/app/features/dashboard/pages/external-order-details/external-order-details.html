@@ -1,0 +1,136 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <p class="hint-block">{{ loadError()! | t }}</p>
+  } @else if (order(); as o) {
+
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area">
+          <h2>{{ 'external.orders.order' | t }} #{{ o.id }}</h2>
+          <span class="pill" [attr.data-status]="o.status">{{ o.status_label || o.status }}</span>
+          @if (o.purchase_type) {
+            <span class="pill pill-quiet">{{ o.purchase_type_label || o.purchase_type }}</span>
+          }
+        </div>
+        <button class="btn-primary" [disabled]="busy()" (click)="updateStatus()">
+          {{ 'external.orders.update_status' | t }}
+        </button>
+      </div>
+
+      <div class="panel">
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ 'common.device' | t }}</span>
+            <span class="fact-value">{{ deviceLabel() }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'common.quantity' | t }}</span>
+            <span class="fact-value num">{{ o.quantity }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'external.orders.payment' | t }}</span>
+            <span class="fact-value">{{ o.payment_status_label || o.payment_status }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'common.created' | t }}</span>
+            <span class="fact-value">{{ o.created_at | date:'medium' }}</span>
+          </div>
+          @if (o.needed_at) {
+            <div class="fact">
+              <span class="fact-label">{{ 'external.orders.needed_at' | t }}</span>
+              <span class="fact-value">{{ o.needed_at | date:'medium' }}</span>
+            </div>
+          }
+          <div class="fact">
+            <span class="fact-label">{{ 'common.tracking' | t }}</span>
+            <!-- Tracking numbers are issued by the courier and are always latin. -->
+            <span class="fact-value"><bdi dir="ltr">{{ o.tracking_number || '—' }}</bdi></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Money, laid out so the grand total is the line that stands out. -->
+    <div class="card">
+      <div class="card-head"><div class="title-area"><h2>{{ 'external.orders.amounts' | t }}</h2></div></div>
+      <div class="panel">
+        <dl class="money">
+          <div class="money-row">
+            <dt>{{ 'external.orders.unit_price' | t }}</dt>
+            <dd>{{ o.unit_price }} {{ o.currency }}</dd>
+          </div>
+          <div class="money-row">
+            <dt>{{ 'common.total' | t }}</dt>
+            <dd>{{ o.total_price }} {{ o.currency }}</dd>
+          </div>
+          @if (o.delivery_fee !== null && o.delivery_fee !== undefined) {
+            <div class="money-row">
+              <dt>{{ 'external.orders.delivery_fee' | t }}</dt>
+              <dd>{{ o.delivery_fee }} {{ o.currency }}</dd>
+            </div>
+          }
+          @if (o.grand_total !== null && o.grand_total !== undefined) {
+            <div class="money-row grand">
+              <dt>{{ 'external.orders.grand_total' | t }}</dt>
+              <dd>{{ o.grand_total }} {{ o.currency }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="title-area"><h2>{{ 'external.orders.customer' | t }}</h2></div></div>
+      <div class="panel">
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ 'common.name' | t }}</span>
+            <span class="fact-value">{{ o.contact?.name || '—' }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'common.phone' | t }}</span>
+            <span class="fact-value">
+              @if (o.contact?.phone) {
+                <a class="tel" [href]="'tel:' + o.contact!.phone"><bdi dir="ltr">{{ o.contact!.phone }}</bdi></a>
+              } @else { — }
+            </span>
+          </div>
+        </div>
+
+        @if (addressLine()) {
+          <p class="note-label">{{ 'external.orders.address' | t }}</p>
+          <p class="note-body">{{ addressLine() }}</p>
+        }
+      </div>
+    </div>
+
+    @if (o.notes || o.owner_note || o.cancellation_reason) {
+      <div class="card">
+        <div class="card-head"><div class="title-area"><h2>{{ 'external.orders.notes' | t }}</h2></div></div>
+        <div class="panel">
+          @if (o.notes) {
+            <p class="note-label">{{ 'external.orders.buyer_note' | t }}</p>
+            <p class="note-body">{{ o.notes }}</p>
+          }
+          @if (o.owner_note) {
+            <p class="note-label">{{ 'external.orders.owner_note' | t }}</p>
+            <p class="note-body">{{ o.owner_note }}</p>
+          }
+          @if (o.cancellation_reason) {
+            <p class="note-label">{{ 'external.orders.cancellation_reason' | t }}</p>
+            <p class="note-body danger">{{ o.cancellation_reason }}</p>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,231 @@
+:host {
+  display: block;
+  background-color: #F8FAFC;
+  font-family: 'Inter', 'Cairo', sans-serif;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.page-container { max-width: 920px; margin: 0 auto; }
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4B5563;
+  cursor: pointer;
+  font-family: inherit;
+}
+.back-btn:hover { color: #111827; }
+/* The chevron points the way back, which flips with the reading direction. */
+:host-context([dir="rtl"]) .back-btn svg { transform: scaleX(-1); }
+
+.hint-block { padding: 24px; color: #6B7280; }
+
+.empty-block {
+  background: #fff;
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.empty-title { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: #111827; }
+.empty-hint { margin: 0; font-size: 13px; color: #6B7280; line-height: 1.7; }
+
+/* ===================== cards ===================== */
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+.card-head h2 { margin: 0; font-size: 17px; font-weight: 700; color: #111827; }
+.title-area { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.panel { padding: 20px 24px; }
+
+.type-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #6366F1;
+  background: #EEF2FF;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+.created { font-size: 12px; color: #6B7280; white-space: nowrap; }
+
+/* ===================== status ===================== */
+
+.pill {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* Driven by the tone the API sends, never by the raw status string. */
+.pill[data-tone="neutral"] { background: #F3F4F6; color: #4B5563; }
+.pill[data-tone="info"]    { background: #EFF6FF; color: #2563EB; }
+.pill[data-tone="success"] { background: #ECFDF5; color: #047857; }
+.pill[data-tone="warning"] { background: #FEF3C7; color: #92400E; }
+.pill[data-tone="danger"]  { background: #FEF2F2; color: #B91C1C; }
+
+/* ===================== parties ===================== */
+
+.parties {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.party {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #F1F5F9;
+  border-radius: 10px;
+  background: #FCFDFE;
+}
+.party.linked { cursor: pointer; }
+.party.linked:hover { border-color: #DBEAFE; background: #F8FBFF; }
+.party.linked:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }
+.party-role { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #98A2B3; }
+.party-name { font-size: 14px; font-weight: 600; color: #111827; overflow-wrap: anywhere; }
+.party-phone { font-size: 13px; color: #2563EB; text-decoration: none; width: fit-content; }
+.party-phone:hover { text-decoration: underline; }
+
+/* ===================== fields ===================== */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px 24px;
+}
+.fact { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+/* A paragraph in a 200px column is unreadable, so it takes the row. */
+.fact.full { grid-column: 1 / -1; }
+.fact-label { font-size: 12px; color: #6B7280; }
+.fact-value { font-size: 14px; font-weight: 600; color: #111827; overflow-wrap: anywhere; }
+.fact-value.pre { font-weight: 500; line-height: 1.7; white-space: pre-wrap; }
+.fact-value.link { color: #2563EB; text-decoration: none; }
+.fact-value.link:hover { text-decoration: underline; }
+
+/* ===================== money ===================== */
+
+.money-card { background: #fff; }
+.money-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.money-label { font-size: 13px; font-weight: 600; color: #6B7280; }
+.money-value { font-size: 26px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+.money-rest { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid #F1F5F9; }
+.money-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 5px 0; }
+.money-row dt { margin: 0; font-size: 13px; color: #6B7280; }
+.money-row dd { margin: 0; font-size: 13px; font-weight: 600; color: #374151; font-variant-numeric: tabular-nums; }
+
+/* ===================== tables ===================== */
+
+/* The table scrolls inside its card; the page itself never scrolls sideways. */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: 12px 24px;
+  text-align: start;
+  font-size: 13px;
+  white-space: nowrap;
+}
+th { font-weight: 600; color: #6B7280; background: #FCFDFE; border-bottom: 1px solid #F1F5F9; }
+td { color: #111827; border-bottom: 1px solid #F8FAFC; }
+tbody tr:last-child td { border-bottom: 0; }
+.empty-cell { color: #9CA3AF; text-align: center; }
+
+/* ===================== attachments ===================== */
+
+.attachments { display: flex; flex-wrap: wrap; gap: 10px; }
+.attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  max-width: 100%;
+}
+.attachment:hover { border-color: #2563EB; color: #2563EB; }
+.attachment:disabled { opacity: .6; cursor: progress; }
+.attachment span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-busy { font-weight: 500; color: #9CA3AF; }
+
+/* ===================== timeline ===================== */
+
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 0 0 16px;
+  position: relative;
+  padding-inline-start: 20px;
+}
+.timeline li:last-child { padding-bottom: 0; }
+/* The connector stops at the last dot instead of trailing past it. */
+.timeline li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 4px;
+  top: 12px;
+  bottom: 0;
+  width: 1px;
+  background: #E5E7EB;
+}
+.dot {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #CBD5E1;
+}
+.timeline li:last-child .dot { background: #2563EB; }
+.event-label { font-size: 14px; font-weight: 600; color: #111827; }
+.event-time { font-size: 12px; color: #9CA3AF; }
+
+@media (max-width: 640px) {
+  :host { padding: 16px; }
+  .card-head { padding: 16px; }
+  .panel { padding: 16px; }
+  th, td { padding: 10px 16px; }
+  .money-value { font-size: 22px; }
+}

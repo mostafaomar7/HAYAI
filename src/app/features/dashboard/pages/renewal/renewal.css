@@ -270,6 +270,21 @@
 }
 
 /* Renew Action Button */
+/* Flags a record the backend cannot have meant, so it is not mistaken for work
+   the admin still has to do. */
+.broken-term {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #FEF2F2;
+  color: #B91C1C;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: help;
+}
+
 .renew-btn {
   background-color: #2563EB;
   color: #ffffff;

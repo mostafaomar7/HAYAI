@@ -51,6 +51,19 @@ export interface ExternalDeviceOrder {
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   payment_reference: string | null;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status_label?: string;
+  purchase_type_label?: string;
+  payment_status_label?: string;
+  /** Null on every order measured so far; the device name comes from the catalogue. */
+  device?: { id: number; name: string } | null;
+  product_name?: string | null;
+  brand?: string | null;
+  delivery_fee?: number | string | null;
+  grand_total?: number | string | null;
+  /** What the buyer wrote, and what the seller wrote back. */
+  owner_note?: string | null;
+  cancellation_reason?: string | null;
+  needed_at?: string | null;
   tracking_number: string | null;
   estimated_delivery_days: number | null;
   address: {
@@ -62,6 +75,8 @@ export interface ExternalDeviceOrder {
   contact: {
     name: string;
     phone: string;
+    contact_phone?: string | null;
+    account_phone?: string | null;
   } | null;
   notes: string | null;
   created_at: string;

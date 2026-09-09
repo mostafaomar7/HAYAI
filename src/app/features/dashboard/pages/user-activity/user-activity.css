@@ -52,6 +52,13 @@
 
 /* ===== timeline ===== */
 .timeline { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.activity-row.openable { cursor: pointer; }
+.activity-row.openable:hover { background: #F8FAFC; }
+.activity-row.openable:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
+/* Points the way the reader travels, which is mirrored in Arabic. */
+.row-open { flex: none; color: #9CA3AF; }
+:host-context([dir="rtl"]) .row-open { transform: scaleX(-1); }
+
 .activity-row { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #F1F5F9; border-radius: 10px; padding: 14px 18px; }
 .dir-dot { width: 8px; height: 8px; border-radius: 50%; background: #2563EB; flex: none; }
 .activity-row.incoming .dir-dot { background: #F59E0B; }

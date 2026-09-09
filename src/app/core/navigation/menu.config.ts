@@ -44,6 +44,8 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     id: 'OptionLists', label: 'menu.lists', iconName: 'plans', route: '', roles: ['admin'], hasDropdown: true,
     children: [
+      { id: 'DoctorSpecialties', label: 'lists.doctor_specialties', route: '/dashboard/lists/doctor-specialties' },
+      { id: 'DoctorSubspecialties', label: 'lists.doctor_subspecialties', route: '/dashboard/lists/doctor-subspecialties' },
       { id: 'IcuGroups', label: 'lists.icu_groups', route: '/dashboard/lists/icu-specialty-groups' },
       { id: 'IcuCategories', label: 'lists.icu_categories', route: '/dashboard/lists/icu-specialty-categories' },
       { id: 'IcuSpecialties', label: 'lists.icu_specialties', route: '/dashboard/lists/icu-specialties' },
@@ -58,6 +60,17 @@ export const MENU_ITEMS: MenuItem[] = [
     children: [
       { id: 'Devices', label: 'menu.external_devices.devices', route: '/dashboard/external/devices' },
       { id: 'Orders', label: 'menu.external_devices.orders', route: '/dashboard/external/orders' },
+    ]
+  },
+  {
+    id: 'RecordLists', label: 'menu.records', iconName: 'plans', route: '', roles: ['admin'], hasDropdown: true,
+    children: [
+      { id: 'RecPharmacyOrders', label: 'records.pharmacy_orders', route: '/dashboard/records/pharmacy-orders' },
+      { id: 'RecTherapyRequests', label: 'records.therapy_requests', route: '/dashboard/records/physical-therapy-requests' },
+      { id: 'RecInsuranceRequests', label: 'records.insurance_requests', route: '/dashboard/records/insurance-requests' },
+      { id: 'RecLimitRequests', label: 'records.limit_requests', route: '/dashboard/records/insurance-limit-requests' },
+      { id: 'RecJobs', label: 'records.jobs', route: '/dashboard/records/jobs' },
+      { id: 'RecJobApplications', label: 'records.job_applications', route: '/dashboard/records/job-applications' },
     ]
   },
   {

@@ -29,6 +29,13 @@
               {{ 'gorders.export_csv' | t }}
             </button>
           }
+          <!-- Correcting the terms beats cancelling: a cancel throws away
+               everyone who already joined. Offered only until a quote exists. -->
+          @if (canEditRound()) {
+            <button class="btn-secondary" [disabled]="busy()" (click)="openEditForm()">
+              {{ 'gorders.edit_round' | t }}
+            </button>
+          }
           @if (canCancel()) {
             <button class="btn-danger" [disabled]="busy()" (click)="cancel()">
               {{ 'gorders.cancel_round' | t }}
@@ -102,6 +109,72 @@
           </div>
         }
       </div>
+      @if (editOpen()) {
+        <div class="panel">
+          @if (editError()) { <p class="form-error">{{ editError()! | t }}</p> }
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'gorders.group_size' | t }} <span class="req">*</span></label>
+              <input type="number" min="2" step="1" [value]="editDraft().target_size"
+                     (input)="setRound('target_size', $any($event.target).value)">
+              @if (editErrors()['target_size']) {
+                <span class="field-error">{{ editErrors()['target_size'] | t : { min: heldSeats() } }}</span>
+              }
+              <span class="hint">{{ 'gorders.group_size_floor' | t : { count: heldSeats() } }}</span>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'gorders.join_deadline' | t }} <span class="req">*</span></label>
+              <input type="date" [value]="editDraft().join_deadline"
+                     (input)="setRound('join_deadline', $any($event.target).value)">
+              @if (editErrors()['join_deadline']) {
+                <span class="field-error">{{ editErrors()['join_deadline'] | t }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'gorders.estimated_delivery' | t }}</label>
+              <select [value]="editDraft().delivery"
+                      (change)="setRound('delivery', +$any($event.target).value)">
+                <!-- A round can genuinely have no window yet, so "not set" is
+                     an option rather than a silent default. -->
+                <option value="-1" [selected]="editDraft().delivery === -1">
+                  {{ 'gorders.delivery_unset' | t }}
+                </option>
+                @for (w of deliveryWindows; track $index) {
+                  <option [value]="$index" [selected]="editDraft().delivery === $index">
+                    {{ deliveryLabel(w) }}
+                  </option>
+                }
+              </select>
+              @if (editErrors()['delivery_weeks_min'] || editErrors()['delivery_weeks_max']) {
+                <span class="field-error">
+                  {{ (editErrors()['delivery_weeks_min'] || editErrors()['delivery_weeks_max']) | t }}
+                </span>
+              }
+            </div>
+
+            <div class="form-group full">
+              <label>{{ 'gorders.notes_for_users' | t }}</label>
+              <textarea [value]="editDraft().notes_for_users"
+                        (input)="setRound('notes_for_users', $any($event.target).value)"></textarea>
+              @if (editErrors()['notes_for_users']) {
+                <span class="field-error">{{ editErrors()['notes_for_users'] | t }}</span>
+              }
+            </div>
+          </div>
+
+          <p class="hint">{{ 'gorders.edit_notifies' | t }}</p>
+
+          <div class="panel-footer">
+            <button class="btn-secondary" (click)="editOpen.set(false)">{{ 'common.cancel' | t }}</button>
+            <button class="btn-primary" [disabled]="busy()" (click)="saveRound()">
+              {{ (busy() ? 'common.saving' : 'common.save') | t }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
     <!-- ================= screen 9/10 — cost & shipping ================= -->
@@ -159,8 +232,8 @@
               </div>
 
               <!-- The quote will not save without a saved partner, so this is a
-                   picker rather than the free-text fields in the mock-up: those
-                   could never have been accepted by the API. -->
+                   picker, plus the mock-up's free-text branch for a one-off
+                   importer the partners list does not carry yet. -->
               <div class="form-group">
                 <label>{{ 'gorders.shipping_company' | t }} <span class="req">*</span></label>
                 <select [value]="costDraft().shipping_company_id"
@@ -171,6 +244,7 @@
                       {{ c.name }}
                     </option>
                   }
+                  <option value="__new" [selected]="isNewCompany()">{{ 'gorders.new_company' | t }}</option>
                 </select>
                 @if (costErrors()['shipping_company_id']) {
                   <span class="field-error">{{ costErrors()['shipping_company_id'] | t }}</span>
@@ -185,9 +259,39 @@
                 }
               </div>
 
-              <!-- Read-only: these belong to the partner record, and editing them
-                   here would suggest a per-round override the API does not have. -->
-              @if (selectedCompany(); as c) {
+              <!-- Typed onto this round only. The API creates no partner record
+                   from these, so they are not offered as an edit of one. -->
+              @if (isNewCompany()) {
+                <div class="form-group">
+                  <label>{{ 'gorders.company_name' | t }} <span class="req">*</span></label>
+                  <input type="text" [value]="costDraft().ship_company_name"
+                         (input)="setCost('ship_company_name', $any($event.target).value)">
+                  @if (costErrors()['ship_company_name']) {
+                    <span class="field-error">{{ costErrors()['ship_company_name'] | t }}</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'gorders.contact_person' | t }}</label>
+                  <input type="text" [value]="costDraft().ship_company_contact_person"
+                         (input)="setCost('ship_company_contact_person', $any($event.target).value)">
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'gorders.contact_phone' | t }}</label>
+                  <input type="text" dir="ltr" [value]="costDraft().ship_company_phone"
+                         (input)="setCost('ship_company_phone', $any($event.target).value)">
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'gorders.email' | t }}</label>
+                  <input type="email" dir="ltr" [value]="costDraft().ship_company_email"
+                         (input)="setCost('ship_company_email', $any($event.target).value)">
+                </div>
+              } @else if (selectedCompany(); as c) {
+                <!-- Read-only: these belong to the partner record, and editing
+                     them here would suggest a per-round override the API
+                     does not have. -->
                 <div class="form-group">
                   <label>{{ 'gorders.contact_phone' | t }}</label>
                   <input type="text" dir="ltr" [value]="c.phone || ''" readonly>

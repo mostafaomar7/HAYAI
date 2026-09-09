@@ -19,7 +19,7 @@
           <div class="custom-select">
             <select [ngModel]="planType" name="planType" (ngModelChange)="onPlanTypeChange($event)">
               <option value="">{{ 'plans.select_type' | t }}</option>
-              @for (t of planTypes; track t.value) {
+              @for (t of planTypes(); track t.value) {
                 <option [value]="t.value">{{ t.label }}</option>
               }
             </select>

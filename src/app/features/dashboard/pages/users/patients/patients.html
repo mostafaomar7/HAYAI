@@ -146,6 +146,7 @@
                         <button class="dropdown-item" (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
                       }
                       <button class="dropdown-item" (click)="goToActivity(user)">{{ 'activity.title' | t }}</button>
+                      <button class="dropdown-item" (click)="resetPassword(user)">{{ 'users.reset_password.action' | t }}</button>
                       <button class="dropdown-item" (click)="changePlan(user.id)">{{ 'users.actions.change_plan' | t }}</button>
                       @if (isPlanException(user.plan_status)) {
                         <button class="dropdown-item" (click)="resetPlan(user.id)">{{ 'users.actions.reset_plan' | t }}</button>

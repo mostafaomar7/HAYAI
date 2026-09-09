@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { RECORD_LISTS } from '../../core/services/record-lists.service';
 import { OPTION_LISTS } from '../../core/services/option-lists.service';
 
 /**
@@ -221,6 +222,12 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/external-devices/external-devices').then(m => m.ExternalDevices)
   },
   {
+    path: 'external/orders/:id',
+    data: { title: 'external.orders.order' },
+    loadComponent: () =>
+      import('./pages/external-order-details/external-order-details').then(m => m.ExternalOrderDetails)
+  },
+  {
     path: 'external/orders',
     data: { title: 'menu.external_devices.orders' },
     loadComponent: () =>
@@ -291,11 +298,27 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/change-password/change-password').then(m => m.ChangePassword)
   },
   {
+    // One screen for all 21 record types. `type` is the machine value straight
+    // off the timeline row, so a type added to the app later routes here with
+    // no change to this file.
+    path: 'activity/:type/:id',
+    data: { title: 'activity.record.title' },
+    loadComponent: () =>
+      import('./pages/activity-record/activity-record').then(m => m.ActivityRecordPage)
+  },
+  {
     path: 'users/:id/activity',
     data: { title: 'activity.title' },
     loadComponent: () =>
       import('./pages/user-activity/user-activity').then(m => m.UserActivity)
   },
+  // Six record lists on one screen, generated the same way the option lists
+  // are: a seventh is a config entry, not a route and a component.
+  ...Object.values(RECORD_LISTS).map(config => ({
+    path: `records/${config.key}`,
+    data: { title: config.titleKey, listKey: config.key },
+    loadComponent: () => import('./pages/record-lists/record-lists').then(m => m.RecordLists)
+  })),
   // One screen serves all seven option lists. The routes are generated so a new
   // list is a single entry in `OPTION_LISTS`, and each carries its own title so
   // the navbar reads like the sidebar entry that was clicked.

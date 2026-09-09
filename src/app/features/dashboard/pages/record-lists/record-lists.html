@@ -1,0 +1,88 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ config().titleKey | t }}</h2>
+        <span class="badge">{{ 'records.count' | t : { count: total() } }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'common.search' | t" (input)="onSearch($any($event.target).value)" />
+        </div>
+
+        <!-- Only statuses this list has actually returned; the set differs per
+             list and no endpoint publishes it. -->
+        @if (statusOptions().length > 1) {
+          <div class="custom-select filter-select">
+            <select [value]="statusFilter()" (change)="setStatus($any($event.target).value)">
+              <option value="">{{ 'common.all' | t }} — {{ 'records.col.status' | t }}</option>
+              @for (s of statusOptions(); track s.value) {
+                <option [value]="s.value" [selected]="statusFilter() === s.value">{{ s.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Set when the list is opened from one account's timeline, so it is worth
+         saying whose rows these are and offering the way out. -->
+    @if (userId()) {
+      <div class="scope-bar">
+        <span>{{ 'records.scoped_to_user' | t : { id: userId() ?? 0 } }}</span>
+        <button class="link-btn" (click)="clearUserFilter()">{{ 'records.show_all' | t }}</button>
+      </div>
+    }
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="id-col">#</th>
+            @for (col of config().columns; track col.path) {
+              <th>{{ col.labelKey | t }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td class="table-hint" [attr.colspan]="config().columns.length + 1">{{ 'common.loading' | t }}</td></tr>
+          } @else if (loadError()) {
+            <tr><td class="table-hint" [attr.colspan]="config().columns.length + 1">{{ loadError()! | t }}</td></tr>
+          } @else if (!rows().length) {
+            <tr><td class="table-hint" [attr.colspan]="config().columns.length + 1">{{ 'common.no_data' | t }}</td></tr>
+          } @else {
+            @for (row of rows(); track row.id) {
+              <!-- Every row has a detail view: the unified record screen. -->
+              <tr class="openable" role="button" tabindex="0"
+                  (click)="open(row)" (keydown.enter)="open(row)">
+                <td class="id-col num">{{ row.id }}</td>
+                @for (col of config().columns; track col.path) {
+                  <td>
+                    @if (isStatus(col)) {
+                      <span class="pill" [attr.data-status]="statusValue(row)">{{ cell(row, col) }}</span>
+                    } @else {
+                      <bdi>{{ cell(row, col) }}</bdi>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [total]="total()"
+      [perPage]="perPage"
+      (pageChange)="goToPage($event)"
+    />
+  </div>
+</div>

@@ -70,6 +70,18 @@ export class Plans {
    * applies to the whole patient base, so a second one is edited into existence
    * rather than added. Hiding the button keeps the screen honest about that.
    */
+  /**
+   * Account types that fall back to a default plan. The API keeps this list and
+   * rejects anything else; it is mirrored here so the button is never offered
+   * where pressing it can only fail.
+   */
+  private static readonly TYPES_WITH_DEFAULT = ['patient'];
+
+  canSetDefault(plan: { plan_type?: string | null; is_default?: boolean }): boolean {
+    if (plan.is_default) return false;
+    return Plans.TYPES_WITH_DEFAULT.includes(plan.plan_type ?? '');
+  }
+
   canAddPlan = computed(() => this.activeType() !== 'patient');
 
   visibleBulk = computed(() => {

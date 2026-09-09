@@ -144,7 +144,9 @@
 .notification-panel {
   position: absolute;
   top: calc(100% + 12px);
-  right: -80px; /* لضبط المحاذاة مع البروفايل */
+  /* Logical, not physical: with `right` the panel hung off the left edge of the
+     viewport in Arabic, because the navbar is mirrored but the offset was not. */
+  inset-inline-end: -80px; /* لضبط المحاذاة مع البروفايل */
   width: 380px;
   background-color: #ffffff;
   border: 1px solid #E5E7EB;
@@ -225,6 +227,11 @@
   max-height: 400px;
   overflow-y: auto;
 }
+
+/* A notification with no destination is not a link, and does not pretend to be. */
+.notification-item { cursor: default; }
+.notification-item.openable { cursor: pointer; }
+.notification-item.openable:hover { background: #F8FAFC; }
 
 .notification-item {
   display: flex;

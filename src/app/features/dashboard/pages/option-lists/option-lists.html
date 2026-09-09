@@ -30,6 +30,17 @@
           </div>
         }
 
+        <!-- Not a server-side filter; the rows are narrowed on the client. -->
+        @if (config().hasVisibilityFlag) {
+          <div class="custom-select filter-select">
+            <select [value]="visibilityFilter()" (change)="setVisibilityFilter($any($event.target).value)">
+              <option value="" [selected]="visibilityFilter() === ''">{{ 'common.all' | t }} — {{ 'lists.visibility' | t }}</option>
+              <option value="1" [selected]="visibilityFilter() === '1'">{{ 'lists.visible_to_apps' | t }}</option>
+              <option value="0" [selected]="visibilityFilter() === '0'">{{ 'lists.hidden_from_apps' | t }}</option>
+            </select>
+          </div>
+        }
+
         @if (config().hasIsActive) {
           <div class="custom-select filter-select">
             <select [value]="activeFilter()" (change)="setActiveFilter($any($event.target).value)">
@@ -61,6 +72,7 @@
             @if (config().countFields?.length) { <th>{{ 'lists.items' | t }}</th> }
             @if (config().hasSortOrder) { <th>{{ 'lists.sort_order' | t }}</th> }
             @if (config().hasIsOtherOption) { <th>{{ 'lists.other_option' | t }}</th> }
+            @if (config().hasVisibilityFlag) { <th>{{ 'lists.visibility' | t }}</th> }
             @if (config().hasIsActive) { <th>{{ 'common.status' | t }}</th> }
             <th class="action-col"></th>
           </tr>
@@ -101,6 +113,15 @@
                       <span class="pill pill-amber">{{ 'lists.other_option' | t }}</span>
                     } @else {
                       <span class="text-gray">—</span>
+                    }
+                  </td>
+                }
+                @if (config().hasVisibilityFlag) {
+                  <td>
+                    @if (row.visible_to_apps === false) {
+                      <span class="pill pill-red" [title]="'lists.hidden_hint' | t">{{ 'lists.hidden_from_apps' | t }}</span>
+                    } @else {
+                      <span class="pill pill-green">{{ 'lists.visible_to_apps' | t }}</span>
                     }
                   </td>
                 }
@@ -238,11 +259,21 @@
         </div>
       }
 
+      <!-- Derived from whether any subspecialty points here, so it is stated
+           rather than offered as a checkbox. -->
+      @if (config().hasSubspecialtiesFlag && isEdit()) {
+        <div class="form-group">
+          <label>{{ 'lists.has_subspecialties' | t }}</label>
+          <input type="text" [value]="(d.has_subspecialties ? 'common.yes' : 'common.no') | t" readonly>
+          <span class="hint">{{ 'lists.has_subspecialties_hint' | t }}</span>
+        </div>
+      }
+
       @if (config().hasIsOtherOption) {
         <label class="check-row">
           <input type="checkbox" [checked]="d.is_other_option" (change)="patchDraft({ is_other_option: $any($event.target).checked })">
           <span>{{ 'lists.other_option' | t }}</span>
-          <span class="hint">{{ 'lists.other_option_hint' | t }}</span>
+          <span class="hint">{{ (config().otherOptionHintKey ?? 'lists.other_option_hint') | t }}</span>
         </label>
       }
 

@@ -9,6 +9,8 @@ import { ApiService, PagedResult } from './api.service';
  * service and one screen driven by `OPTION_LISTS` below.
  */
 export type OptionListKey =
+  | 'doctor-specialties'
+  | 'doctor-subspecialties'
   | 'icu-specialty-groups'
   | 'icu-specialty-categories'
   | 'icu-specialties'
@@ -37,6 +39,19 @@ export interface OptionRow {
   code?: string;
   /** MT subspecialties: marks the free-text "Other" row. One per specialty. */
   is_other_option?: boolean;
+  /**
+   * Doctor specialties: true once the row has at least one subspecialty. It is
+   * what decides whether the signup form draws the second dropdown at all, so
+   * it is shown — but it is derived server-side and cannot be set.
+   */
+  has_subspecialties?: boolean;
+  /**
+   * ICU specialties: false on a row saved before a category became mandatory.
+   * The app asks for leaves by category, so such a row is in this dashboard and
+   * in no dropdown anywhere — which is why it is flagged rather than left to
+   * look normal.
+   */
+  visible_to_apps?: boolean;
   // insurance
   logo?: string | null;
   logo_url?: string | null;
@@ -88,6 +103,16 @@ export interface OptionListConfig {
   /** Generated server-side from `name_en`; sending it back is a 422. */
   hasReadonlyCode: boolean;
   hasIsOtherOption: boolean;
+  /**
+   * `is_other_option` is one-per-parent on the subspecialty lists and
+   * one-per-table on doctor specialties. Only the wording differs, so the
+   * hint is overridable rather than the behaviour.
+   */
+  otherOptionHintKey?: string;
+  /** Show the derived `has_subspecialties` state, read-only. */
+  hasSubspecialtiesFlag: boolean;
+  /** Show the `visible_to_apps` warning column and its filter. */
+  hasVisibilityFlag: boolean;
   /** A row with this `code` is a fallback the forms depend on — no delete. */
   protectedCode?: string;
   /**
@@ -99,6 +124,42 @@ export interface OptionListConfig {
 }
 
 export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
+  // The doctor signup form reads these two before login. They existed only as a
+  // seeder until now, which is why they had no screen.
+  'doctor-specialties': {
+    key: 'doctor-specialties',
+    base: '/admin/doctor/specialties',
+    titleKey: 'lists.doctor_specialties',
+    bilingual: true,
+    parents: [],
+    countFields: ['subspecialties_count'],
+    hasSortOrder: false,
+    hasIsActive: false,
+    hasLogo: false,
+    hasReadonlyCode: true,
+    hasIsOtherOption: true,
+    otherOptionHintKey: 'lists.other_option_hint_global',
+    hasSubspecialtiesFlag: true,
+    hasVisibilityFlag: false,
+    offerDeactivate: false
+  },
+  'doctor-subspecialties': {
+    key: 'doctor-subspecialties',
+    base: '/admin/doctor/subspecialties',
+    titleKey: 'lists.doctor_subspecialties',
+    bilingual: true,
+    parents: [
+      { field: 'specialty_id', from: 'doctor-specialties', labelKey: 'lists.specialty' }
+    ],
+    hasSortOrder: false,
+    hasIsActive: false,
+    hasLogo: false,
+    hasReadonlyCode: true,
+    hasIsOtherOption: true,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
+    offerDeactivate: false
+  },
   'icu-specialty-groups': {
     key: 'icu-specialty-groups',
     base: '/admin/icu/specialty-groups',
@@ -111,6 +172,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasLogo: false,
     hasReadonlyCode: false,
     hasIsOtherOption: false,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
     offerDeactivate: false
   },
   'icu-specialty-categories': {
@@ -127,6 +190,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasLogo: false,
     hasReadonlyCode: false,
     hasIsOtherOption: false,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
     offerDeactivate: false
   },
   'icu-specialties': {
@@ -148,6 +213,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasLogo: false,
     hasReadonlyCode: false,
     hasIsOtherOption: false,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: true,
     offerDeactivate: false
   },
   'icu-team-roles': {
@@ -162,6 +229,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasReadonlyCode: true,
     hasIsOtherOption: false,
     protectedCode: 'other',
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
     offerDeactivate: true
   },
   'mt-specialties': {
@@ -176,6 +245,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasLogo: false,
     hasReadonlyCode: false,
     hasIsOtherOption: false,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
     offerDeactivate: false
   },
   'mt-subspecialties': {
@@ -191,6 +262,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasLogo: false,
     hasReadonlyCode: false,
     hasIsOtherOption: true,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
     offerDeactivate: false
   },
   'insurance-providers': {
@@ -204,6 +277,8 @@ export const OPTION_LISTS: Record<OptionListKey, OptionListConfig> = {
     hasLogo: true,
     hasReadonlyCode: false,
     hasIsOtherOption: false,
+    hasSubspecialtiesFlag: false,
+    hasVisibilityFlag: false,
     offerDeactivate: true
   }
 };

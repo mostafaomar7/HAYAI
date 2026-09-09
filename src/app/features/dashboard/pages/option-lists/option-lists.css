@@ -37,6 +37,8 @@
 .pill-green { background: #ECFDF5; color: #047857; }
 .pill-gray { background: #F3F4F6; color: #6B7280; }
 .pill-amber { background: #FEF3C7; color: #92400E; }
+/* A row the app cannot see. `cursor: help` because the title explains why. */
+.pill-red { background: #FEF2F2; color: #B91C1C; cursor: help; }
 
 /* ===== editor drawer ===== */
 .drawer-backdrop { position: fixed; inset: 0; background: rgba(17, 24, 39, .35); z-index: 200; }

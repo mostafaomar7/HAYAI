@@ -7,10 +7,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActivityEntry,
   ApprovalTally,
+  CostPayload,
   DELIVERY_WINDOWS,
   DeliveryWindow,
   DeviceGroupOrdersService,
   ExternalDeviceEntry,
+  GroupOrderPatch,
   GroupOrderDetail,
   GroupOrderParticipant,
   ShippingCompany,
@@ -26,9 +28,28 @@ interface CostDraft {
   total_cost: string;
   /** Index into DELIVERY_WINDOWS — the API stores a week range, not a label. */
   delivery: number;
-  /** Required by the API; an ad-hoc importer is not accepted on a quote. */
+  /**
+   * A partner id, or the sentinel `NEW_COMPANY` when the importer is being
+   * typed onto this round instead of picked from the partners list.
+   */
   shipping_company_id: string;
+  ship_company_name: string;
+  ship_company_contact_person: string;
+  ship_company_phone: string;
+  ship_company_email: string;
   notes: string;
+}
+
+/** Not an id the API could ever issue, so it cannot collide with a real one. */
+const NEW_COMPANY = '__new';
+
+/** The round's own terms, as the edit form holds them: strings from inputs. */
+interface RoundDraft {
+  target_size: string;
+  join_deadline: string;
+  /** Index into DELIVERY_WINDOWS, or -1 for "not set yet". */
+  delivery: number;
+  notes_for_users: string;
 }
 
 /**
@@ -75,8 +96,15 @@ export class GroupOrderDetails {
 
   // ---- cost form (screens 9 and 10) ----
   costFormOpen = signal(false);
+
+  editOpen = signal(false);
+  editDraft = signal<RoundDraft>({ target_size: '', join_deadline: '', delivery: -1, notes_for_users: '' });
+  editErrors = signal<Record<string, string>>({});
+  editError = signal<string | null>(null);
   costDraft = signal<CostDraft>({
-    total_cost: '', delivery: 2, shipping_company_id: '', notes: ''
+    total_cost: '', delivery: 2, shipping_company_id: '',
+    ship_company_name: '', ship_company_contact_person: '',
+    ship_company_phone: '', ship_company_email: '', notes: ''
   });
   costErrors = signal<Record<string, string>>({});
   costError = signal<string | null>(null);
@@ -141,6 +169,8 @@ export class GroupOrderDetails {
       total_cost: c?.total_cost != null ? String(c.total_cost) : '',
       delivery: idx >= 0 ? idx : 2,
       shipping_company_id: company?.id ? String(company.id) : '',
+      ship_company_name: '', ship_company_contact_person: '',
+      ship_company_phone: '', ship_company_email: '',
       notes: c?.notes ?? ''
     });
   }
@@ -185,6 +215,12 @@ export class GroupOrderDetails {
   isReady = computed(() => ['ready', 'closed'].includes(this.status()));
   canClose = computed(() => this.status() === 'ready');
   canCancel = computed(() => !['closed', 'cancelled', 'expired'].includes(this.status()));
+  /**
+   * Terms can be corrected until a quote exists. After that the participants
+   * agreed to a price, so changing what they agreed to is not the admin's call
+   * — the API answers 405, and the only way out stays cancelling.
+   */
+  canEditRound = computed(() => this.canCancel() && this.order()?.cost?.total_cost == null);
   /** The file is buyers' phone numbers, so it only exists once consent is recorded. */
   canExport = computed(() => ['all_approved', 'ready', 'closed'].includes(this.status()));
   /** A quote exists and is no longer editable — screen 11. */
@@ -230,6 +266,97 @@ export class GroupOrderDetails {
     this.run(this.svc.removeParticipant(this.id(), p.id, reason.trim()), 'gorders.participant_removed');
   }
 
+  // ------------------------------------------------------ round terms (edit)
+
+  openEditForm(): void {
+    const o = this.order();
+    if (!o) return;
+    const idx = DELIVERY_WINDOWS.findIndex(
+      w => w.min === o.delivery_weeks_min && w.max === o.delivery_weeks_max
+    );
+    this.editErrors.set({});
+    this.editError.set(null);
+    this.editDraft.set({
+      target_size: String(o.group_size ?? ''),
+      // The input wants YYYY-MM-DD; the field may arrive with a time on it.
+      join_deadline: (o.join_deadline ?? '').slice(0, 10),
+      delivery: idx,
+      notes_for_users: o.notes_for_users ?? ''
+    });
+    this.editOpen.set(true);
+  }
+
+  setRound<K extends keyof RoundDraft>(key: K, value: RoundDraft[K]): void {
+    this.editDraft.update(d => ({ ...d, [key]: value }));
+  }
+
+  /** The seats already spoken for — the floor `target_size` cannot go under. */
+  heldSeats = computed(() => {
+    const o = this.order();
+    return Math.max(o?.joined ?? 0, 0);
+  });
+
+  saveRound(): void {
+    const o = this.order();
+    const d = this.editDraft();
+    if (!o) return;
+
+    const errors: Record<string, string> = {};
+    const size = Number(d.target_size);
+    if (!d.target_size || !Number.isInteger(size) || size < 2) {
+      errors['target_size'] = 'gorders.group_size_invalid';
+    } else if (size < this.heldSeats()) {
+      // Caught here so the admin sees which number is the floor, rather than a
+      // 422 that only says the request was refused.
+      errors['target_size'] = 'gorders.group_size_below_joined';
+    }
+    if (!d.join_deadline) errors['join_deadline'] = 'gorders.required';
+    if (Object.keys(errors).length) { this.editErrors.set(errors); return; }
+
+    // Only what actually changed: a PATCH naming a field rewrites it, and
+    // resending an unchanged deadline that has since passed would 422.
+    const body: GroupOrderPatch = {};
+    if (size !== o.group_size) body.target_size = size;
+    if (d.join_deadline !== (o.join_deadline ?? '').slice(0, 10)) body.join_deadline = d.join_deadline;
+    const w = DELIVERY_WINDOWS[d.delivery];
+    if (w && (w.min !== o.delivery_weeks_min || w.max !== o.delivery_weeks_max)) {
+      body.delivery_weeks_min = w.min;
+      body.delivery_weeks_max = w.max;
+    }
+    const notes = d.notes_for_users.trim();
+    if (notes !== (o.notes_for_users ?? '')) body.notes_for_users = notes || null;
+
+    if (!Object.keys(body).length) { this.editOpen.set(false); return; }
+
+    this.busy.set(true);
+    this.editError.set(null);
+    this.svc.updateRound(this.id(), body).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.editOpen.set(false);
+        this.dialog.toast('success', 'gorders.round_updated');
+        // Shrinking the size onto the headcount fills the round, so the status
+        // may have moved; the whole record is refetched rather than patched.
+        this.load();
+      },
+      error: err => {
+        this.busy.set(false);
+        const r = err as HttpErrorResponse;
+        // 405 and 409 are not validation: the round moved past the point where
+        // its terms are the admin's to change, so the form says so and closes.
+        if (r.status === 405) { this.editError.set('gorders.edit_locked_priced'); return; }
+        if (r.status === 409) { this.editError.set('gorders.edit_locked_closed'); return; }
+        const bag = r?.error?.errors as Record<string, string[]> | undefined;
+        if (bag) {
+          this.editErrors.set(Object.fromEntries(
+            Object.entries(bag).map(([k, v]) => [k, Array.isArray(v) ? v[0] : String(v)])));
+        } else {
+          this.editError.set(r?.error?.message ?? 'gorders.save_failed');
+        }
+      }
+    });
+  }
+
   // ------------------------------------------------------- cost (screen 10)
 
   openCostForm(): void {
@@ -245,6 +372,9 @@ export class GroupOrderDetails {
   /** Drives the read-only contact fields under the picker. */
   selectedCompany = computed(() =>
     this.shippingCompanies().find(c => String(c.id) === this.costDraft().shipping_company_id) ?? null);
+
+  /** True while the importer is being typed rather than picked. */
+  isNewCompany = computed(() => this.costDraft().shipping_company_id === NEW_COMPANY);
 
   goToCompanies(): void {
     this.router.navigate(['/dashboard/group-orders/shipping-companies']);
@@ -266,8 +396,20 @@ export class GroupOrderDetails {
 
     if (!d.total_cost || !isFinite(total) || total <= 0) errors['total_cost'] = 'gorders.total_cost_invalid';
     if (!window) errors['delivery'] = 'gorders.required';
+    // Either branch satisfies the API, but one of them has to be filled in.
+    const typing = d.shipping_company_id === NEW_COMPANY;
     if (!d.shipping_company_id) errors['shipping_company_id'] = 'gorders.required';
+    else if (typing && !d.ship_company_name.trim()) errors['ship_company_name'] = 'gorders.required';
     if (Object.keys(errors).length) { this.costErrors.set(errors); return; }
+
+    const company: Partial<CostPayload> = typing
+      ? {
+          ship_company_name: d.ship_company_name.trim(),
+          ship_company_contact_person: d.ship_company_contact_person.trim() || null,
+          ship_company_phone: d.ship_company_phone.trim() || null,
+          ship_company_email: d.ship_company_email.trim() || null
+        }
+      : { shipping_company_id: Number(d.shipping_company_id) };
 
     this.busy.set(true);
     this.costError.set(null);
@@ -276,7 +418,7 @@ export class GroupOrderDetails {
         total_cost: total,
         delivery_weeks_min: window!.min,
         delivery_weeks_max: window!.max,
-        shipping_company_id: Number(d.shipping_company_id),
+        ...company,
         notes: d.notes.trim() || null
       })
       .subscribe({

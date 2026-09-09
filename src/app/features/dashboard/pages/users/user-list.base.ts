@@ -368,6 +368,41 @@ export abstract class UserListBase<T extends { id: number }> {
     );
   }
 
+  /**
+   * Provider rows are keyed by organization / facility / doctor id; the endpoint
+   * wants the owning account. A row with no `user_id` cannot be reset — which is
+   * a data gap, not something to paper over with the wrong id.
+   */
+  async resetPassword(row: { id: number; user_id?: number | null; name?: string }) {
+    this.openActionMenuId = null;
+    const userId = row.user_id ?? null;
+    if (!userId) {
+      this.dialog.error('users.reset_password.no_account', 'users.reset_password.no_account_hint');
+      return;
+    }
+
+    const ok = await this.dialog.confirm({
+      title: 'users.reset_password.title',
+      text: 'users.reset_password.text',
+      params: { name: row.name ?? String(userId) },
+      confirmText: 'users.reset_password.confirm',
+      danger: true
+    });
+    if (!ok) return;
+
+    this.svc.resetPassword(userId).subscribe({
+      next: r => this.dialog.revealSecret({
+        title: 'users.reset_password.done',
+        text: 'users.reset_password.done_hint',
+        secret: r.password
+      }),
+      error: err => this.dialog.error(
+        'users.reset_password.failed',
+        err?.error?.message ?? 'dialog.try_again'
+      )
+    });
+  }
+
   /** i18n key for a provider's approval badge. */
   approvalLabel(status: ApprovalStatus | null | undefined): string {
     return approvalStatusKey(status);

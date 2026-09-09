@@ -78,6 +78,15 @@ export interface DoctorItem extends ProviderItem {
   subspecialty: string | null;
 }
 
+export interface PasswordResetResult {
+  user: { id: number; name: string; phone: string | null; email: string | null; user_type: string };
+  /** Shown once and never retrievable again. */
+  password: string;
+  generated: boolean;
+  must_change_password: boolean;
+  sessions_revoked: boolean;
+}
+
 export type UserResource =
   | 'patients'
   | 'tourists'
@@ -146,6 +155,20 @@ export class UsersService {
   }
 
   /** Blocks a patient/tourist — the backend also revokes their tokens. */
+  /**
+   * Issues a new password for any account type. `id` is the users.id — not the
+   * organization / facility / doctor id a provider list hands out.
+   *
+   * The password comes back once and is stored nowhere; calling again produces a
+   * different one. Every session of that account is signed out.
+   */
+  resetPassword(userId: number, password?: string): Observable<PasswordResetResult> {
+    return this.api.post<PasswordResetResult>(
+      `/admin/users/${userId}/reset-password`,
+      password ? { password } : {}
+    );
+  }
+
   block(resource: BlockableResource, id: number): Observable<{ id: number; status: AccountStatus }> {
     return this.api.post<{ id: number; status: AccountStatus }>(`/admin/${resource}/${id}/block`);
   }

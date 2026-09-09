@@ -53,7 +53,7 @@ export class AdvertisementsDetails {
     { value: 'clinics', label: 'Clinic' },
     { value: 'pharmacies', label: 'Pharmacy' },
     { value: 'labs', label: 'Lab / Radiology' },
-    { value: 'medical-issuance', label: 'Medical Issuance' },
+    { value: 'medical-issuance', label: 'Medical Insurance' },
     { value: 'home-care', label: 'Home Care' },
     { value: 'physical-therapy', label: 'Physical Therapy' },
     { value: 'employment-offices', label: 'Employment Office' },

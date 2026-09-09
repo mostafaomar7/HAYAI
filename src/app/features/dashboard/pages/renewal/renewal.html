@@ -105,9 +105,19 @@
                     <span class="user-name">{{ user.user.name }}</span>
                   </div>
                 </td>
-                <td class="text-gray">{{ user.user.type }}</td>
+                <td class="text-gray">{{ user.user.type || '—' }}</td>
                 <td class="text-gray">{{ user.plan.name }}</td>
-                <td class="text-gray">{{ user.ended_at }}</td>
+                <td class="text-gray">
+                  {{ user.ended_at }}
+                  <!-- A term that ends on the day it starts is not a lapsed
+                       subscription, it is a broken record: renewing it will not
+                       clear it from this list. -->
+                  @if (isZeroLength(user)) {
+                    <span class="broken-term" [title]="'renewal.zero_length_hint' | t">
+                      {{ 'renewal.zero_length' | t }}
+                    </span>
+                  }
+                </td>
                 <td class="action-col">
                   <button class="renew-btn" (click)="renewOne(user.id)">{{ 'renewal.renew' | t }}</button>
                 </td>

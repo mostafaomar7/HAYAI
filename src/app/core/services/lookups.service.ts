@@ -8,6 +8,14 @@ export interface LookupItem {
   label?: string;
   code?: string;
   specialty_id?: number;
+  /**
+   * Plan types only: whether an admin may create a plan of this type. Absent on
+   * a server that has not shipped it yet, which reads as "allowed" rather than
+   * emptying the dropdown.
+   */
+  sellable?: boolean;
+  label_en?: string;
+  label_ar?: string;
 }
 
 @Injectable({ providedIn: 'root' })

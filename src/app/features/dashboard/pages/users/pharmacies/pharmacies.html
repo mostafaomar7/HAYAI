@@ -77,6 +77,7 @@
                         <button class="dropdown-item" (click)="blockProvider(p.id)">{{ 'users.actions.block_account' | t }}</button>
                       }
                       <button class="dropdown-item" (click)="goToActivity(p)">{{ 'activity.title' | t }}</button>
+                      <button class="dropdown-item" (click)="resetPassword(p)">{{ 'users.reset_password.action' | t }}</button>
                       <button class="dropdown-item" (click)="changePlan(p.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }

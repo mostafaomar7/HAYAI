@@ -183,14 +183,16 @@
               {{ 'plans.edit_modules' | t }}
             </button>
 
-            <!-- Promoting the patient plan changes what the whole patient base
-                 can reach, so the label says so rather than "set default". -->
-            @if (!plan.is_default) {
+            <!-- Only a patient plan has a default to promote: every other
+                 account type is assigned its plan at approval and never falls
+                 back to one. Offering the button elsewhere just produced a
+                 refusal the admin could do nothing about. -->
+            @if (canSetDefault(plan)) {
               <button class="modules-btn" (click)="setDefault(plan, $event)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                {{ (plan.plan_type === 'patient' ? 'plans.apply_to_all_patients' : 'plans.set_default') | t }}
+                {{ 'plans.apply_to_all_patients' | t }}
               </button>
             }
 

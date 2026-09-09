@@ -21,7 +21,13 @@ export class ExternalDevices {
   showFilter = false;
   search = signal('');
   statusFilter = signal('');
-  sourceFilter = signal('');
+  /**
+   * This section is the internal catalogue — every device in it is sold by a
+   * medical-device account on the platform. The externally imported ones are
+   * managed under Group Orders. It opens on `internal` to match its name; the
+   * filter is still there to widen it.
+   */
+  sourceFilter = signal('internal');
   devices = signal<ExternalDevice[]>([]);
   total = signal(0);
 

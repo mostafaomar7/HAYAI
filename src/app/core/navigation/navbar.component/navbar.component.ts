@@ -4,7 +4,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { NotificationsService, NotificationCategory, SystemNotification } from '../../services/notifications.service';
+import {
+  NotificationsService,
+  NotificationCategory,
+  SystemNotification,
+  notificationTarget
+} from '../../services/notifications.service';
 import { I18nService } from '../../i18n/i18n.service';
 import { TPipe } from '../../i18n/t.pipe';
 import { LayoutService } from '../../layouts/layout.service';
@@ -94,17 +99,28 @@ export class NavbarComponent {
     });
   }
 
+  /** Null for a notification with nowhere to go — the row stays unclickable. */
+  targetFor(notif: SystemNotification): string | null {
+    return notificationTarget(notif.link);
+  }
+
   markRead(notif: SystemNotification) {
-    if (!notif.unread) {
-      if (notif.link) this.router.navigateByUrl(notif.link);
-      return;
-    }
+    const target = this.targetFor(notif);
+    const go = () => {
+      if (!target) return;
+      // The panel is absolutely positioned inside the navbar, so it has to be
+      // dismissed explicitly — a route change alone leaves it hanging open.
+      this.isNotificationOpen = false;
+      this.router.navigateByUrl(target);
+    };
+
+    if (!notif.unread) { go(); return; }
     this.notifs.markRead(notif.id).subscribe(() => {
       this.notifications.update(list =>
         list.map(n => (n.id === notif.id ? { ...n, unread: false } : n))
       );
       this.refreshUnreadCount();
-      if (notif.link) this.router.navigateByUrl(notif.link);
+      go();
     });
   }
 

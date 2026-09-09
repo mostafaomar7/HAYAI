@@ -118,7 +118,12 @@
       <p class="hint">{{ 'activity.empty' | t }}</p>
     } @else {
       @for (row of rows(); track row.type + '-' + row.id) {
-        <article class="activity-row" [class.incoming]="row.direction === 'incoming'">
+        <article class="activity-row" [class.incoming]="row.direction === 'incoming'"
+                 [class.openable]="canOpen(row)"
+                 [attr.role]="canOpen(row) ? 'button' : null"
+                 [attr.tabindex]="canOpen(row) ? 0 : null"
+                 (click)="canOpen(row) && open(row)"
+                 (keydown.enter)="canOpen(row) && open(row)">
           <span class="dir-dot" [title]="(row.direction === 'incoming' ? 'activity.incoming' : 'activity.outgoing') | t"></span>
           <div class="row-main">
             <span class="row-kind">{{ row.label }}</span>
@@ -129,6 +134,12 @@
             <span class="row-amount">{{ row.amount }} {{ 'common.egp' | t }}</span>
           }
           <span class="row-time" [title]="absoluteTime(row.happened_at)">{{ relativeTime(row.happened_at) }}</span>
+          @if (canOpen(row)) {
+            <svg class="row-open" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          }
         </article>
       }
     }

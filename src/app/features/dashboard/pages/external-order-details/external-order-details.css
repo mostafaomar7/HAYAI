@@ -1,0 +1,135 @@
+:host {
+  display: block;
+  background-color: #F8FAFC;
+  font-family: 'Inter', 'Cairo', sans-serif;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.page-container { max-width: 880px; margin: 0 auto; }
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4B5563;
+  cursor: pointer;
+  font-family: inherit;
+}
+.back-btn:hover { color: #111827; }
+/* The chevron points the way back, which flips with the reading direction. */
+:host-context([dir="rtl"]) .back-btn svg { transform: scaleX(-1); }
+
+.hint-block { padding: 24px; color: #6B7280; }
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
+  margin-bottom: 20px;
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+.card-head h2 { margin: 0; font-size: 17px; font-weight: 700; color: #111827; }
+.title-area { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.panel { padding: 20px 24px; }
+
+.btn-primary {
+  background: #2563EB; color: #fff; border: none; border-radius: 8px;
+  padding: 11px 22px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.btn-primary:hover { background: #1D4ED8; }
+.btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
+
+/* ===================== facts ===================== */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px 24px;
+}
+.fact { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fact-label { font-size: 12px; color: #6B7280; }
+.fact-value { font-size: 14px; font-weight: 600; color: #111827; overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+
+.tel { color: #2563EB; text-decoration: none; font-weight: 600; }
+.tel:hover { text-decoration: underline; }
+
+/* ===================== status pills ===================== */
+
+.pill {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #F3F4F6;
+  color: #4B5563;
+}
+.pill-quiet { background: #F8FAFC; color: #6B7280; }
+.pill[data-status="pending"]   { background: #FEF3C7; color: #92400E; }
+.pill[data-status="confirmed"] { background: #EFF6FF; color: #2563EB; }
+.pill[data-status="shipped"]   { background: #EDE9FE; color: #6D28D9; }
+.pill[data-status="delivered"] { background: #ECFDF5; color: #047857; }
+.pill[data-status="cancelled"] { background: #FEF2F2; color: #B91C1C; }
+
+/* ===================== money ===================== */
+
+.money { margin: 0; }
+.money-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F1F5F9;
+}
+.money-row:last-child { border-bottom: 0; }
+.money-row dt { font-size: 13px; color: #6B7280; margin: 0; }
+.money-row dd { margin: 0; font-size: 14px; font-weight: 600; color: #111827; font-variant-numeric: tabular-nums; }
+/* The one number anyone is actually looking for. */
+.money-row.grand { border-top: 1px solid #E5E7EB; margin-top: 4px; padding-top: 14px; }
+.money-row.grand dt { color: #111827; font-weight: 600; }
+.money-row.grand dd { font-size: 18px; }
+
+/* ===================== notes ===================== */
+
+.note-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #98A2B3;
+}
+.note-body {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #374151;
+  overflow-wrap: anywhere;
+}
+.note-body:last-child { margin-bottom: 0; }
+.note-body.danger { color: #B91C1C; }
+
+@media (max-width: 640px) {
+  :host { padding: 16px; }
+  .card-head { padding: 16px; }
+  .panel { padding: 16px; }
+  .btn-primary { width: 100%; }
+}

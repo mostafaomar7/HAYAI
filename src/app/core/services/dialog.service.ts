@@ -105,6 +105,67 @@ export class DialogService {
     return result.isConfirmed && result.value ? String(result.value) : null;
   }
 
+  /**
+   * Shows a value that exists exactly once — a freshly issued password. The API
+   * does not store it and a second call produces a different one, so this is
+   * deliberately a dialog the admin has to dismiss, with a copy button, rather
+   * than a toast that can scroll past.
+   */
+  async revealSecret(opts: {
+    title: string;
+    text?: string;
+    secret: string;
+    copyText?: string;
+    copiedText?: string;
+    params?: DialogParams;
+  }): Promise<void> {
+    // The value is server-generated, but an admin may have typed it, so it is
+    // escaped rather than trusted into innerHTML.
+    const escape = (v: string) =>
+      v.replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+
+    const copyLabel = this.t(opts.copyText ?? 'common.copy') ?? 'Copy';
+    const copiedLabel = this.t(opts.copiedText ?? 'common.copied') ?? 'Copied';
+
+    await Swal.fire({
+      title: this.t(opts.title, opts.params),
+      icon: 'success',
+      html:
+        (opts.text ? `<p style="margin:0 0 14px;color:#4b5563;font-size:14px;line-height:1.7">${escape(this.t(opts.text, opts.params) ?? '')}</p>` : '') +
+        `<div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+           <code id="secret-value" dir="ltr" style="font-family:Consolas,monospace;font-size:17px;font-weight:700;
+                 background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;
+                 letter-spacing:.5px;user-select:all">${escape(opts.secret)}</code>
+           <button id="secret-copy" type="button" style="background:#2563eb;color:#fff;border:none;border-radius:8px;
+                   padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer">${escape(copyLabel)}</button>
+         </div>`,
+      confirmButtonText: this.t('common.done') ?? 'Done',
+      confirmButtonColor: '#2563eb',
+      allowOutsideClick: false,
+      didOpen: () => {
+        const btn = document.getElementById('secret-copy');
+        btn?.addEventListener('click', () => {
+          // clipboard needs a secure context; select-all is the fallback so the
+          // admin can still copy by hand rather than being stuck.
+          navigator.clipboard?.writeText(opts.secret).then(
+            () => { btn.textContent = copiedLabel; },
+            () => {
+              const el = document.getElementById('secret-value');
+              if (el) {
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const sel = window.getSelection();
+                sel?.removeAllRanges();
+                sel?.addRange(range);
+              }
+            }
+          );
+        });
+      }
+    });
+  }
+
   success(title: string, text?: string, params?: DialogParams) {
     return this.alert('success', title, text, params);
   }

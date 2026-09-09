@@ -43,7 +43,7 @@ export class Renewal {
     { id: 'clinic', label: 'Clinic' },
     { id: 'pharmacy', label: 'Pharmacy' },
     { id: 'lab', label: 'Lab / Radiology' },
-    { id: 'medical_issuance', label: 'Medical Issuance' },
+    { id: 'medical_issuance', label: 'Medical Insurance' },
     { id: 'home_care', label: 'Home Care' },
     { id: 'physical_therapy', label: 'Physical Therapy' },
     { id: 'employment_office', label: 'Employment Office' },
@@ -93,6 +93,16 @@ export class Renewal {
 
   /** Search and filters change the result set — restart from page 1. */
   private reload() { this.page.set(1); this.load(); }
+
+  /**
+   * The row is not a lapsed subscription but a corrupt one: the API returned a
+   * term that ends on the day it starts, which no plan can produce — every plan
+   * carries a duration in months. Renewing it will not clear it from the list.
+   */
+  isZeroLength(row: { started_at?: string | null; ended_at?: string | null }): boolean {
+    if (!row.started_at || !row.ended_at) return false;
+    return String(row.started_at).slice(0, 10) === String(row.ended_at).slice(0, 10);
+  }
 
   goToPage(page: number) { this.page.set(page); this.load(); }
 

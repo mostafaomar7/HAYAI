@@ -32,7 +32,7 @@ export class Notfication {
     { value: 'clinic', label: 'Clinics' },
     { value: 'pharmacy', label: 'Pharmacies' },
     { value: 'lab', label: 'Labs & Radiology' },
-    { value: 'medical_issuance', label: 'Medical Issuance' },
+    { value: 'medical_issuance', label: 'Medical Insurance' },
     { value: 'home_care', label: 'Home Care' },
     { value: 'physical_therapy', label: 'Physical Therapy' },
     { value: 'employment_office', label: 'Employment Offices' },

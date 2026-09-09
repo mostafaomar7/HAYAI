@@ -13,10 +13,17 @@ import {
   PlanType
 } from '../../../../core/services/plans.service';
 import { DialogService } from '../../../../core/services/dialog.service';
+import { LookupsService } from '../../../../core/services/lookups.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 
 interface ModuleRow {
   module_key: string;
+  /**
+   * The catalogue's display `name`, localized — NOT its `module_name`, which is
+   * the raw stored text and renders as a bare key for any module that never got
+   * a display name. The local field keeps the old spelling only because the save
+   * payload uses it.
+   */
   module_name: string;
   checked: boolean;
   description: string;
@@ -55,6 +62,7 @@ export class PlansAdd {
   private router = inject(Router);
   private svc = inject(PlansService);
   private dialog = inject(DialogService);
+  private lookups = inject(LookupsService);
 
   id = signal<number | null>(null);
   isEdit = computed(() => this.id() !== null);
@@ -79,7 +87,12 @@ export class PlansAdd {
   moduleSearch = signal('');
 
   /** Shared with the list's tab strip so a new plan type is one edit, not two. */
-  readonly planTypes = PLAN_TYPE_OPTIONS;
+  /**
+   * Filled from `/lookups/plan-types`. `PLAN_TYPE_OPTIONS` is the fallback for
+   * an unreachable lookup, so the form still works offline of it — but the API
+   * is the source of truth for both the labels and what may be created.
+   */
+  planTypes = signal<{ value: string; label: string }[]>(PLAN_TYPE_OPTIONS);
 
   /**
    * The catalog runs to ~18 keys per plan type, so it is grouped and
@@ -118,7 +131,22 @@ export class PlansAdd {
   /** True once the server starts sending groups — hides the section chrome otherwise. */
   hasGroups = computed(() => this.groups().length > 0);
 
+  private loadPlanTypes(): void {
+    this.lookups.planTypes().subscribe({
+      next: rows => {
+        const usable = rows
+          // A type with no `sellable` is one the server has not classified yet.
+          .filter(r => r.sellable !== false)
+          .map(r => ({ value: String(r.id), label: r.label ?? r.name ?? String(r.id) }));
+        if (usable.length) this.planTypes.set(usable);
+      },
+      // The constant is already in place; a failed lookup changes nothing.
+      error: () => undefined
+    });
+  }
+
   constructor() {
+    this.loadPlanTypes();
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       const id = Number(idParam);

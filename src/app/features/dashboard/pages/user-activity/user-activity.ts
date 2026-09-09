@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ActivityDirection,
@@ -25,6 +25,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination.component/
 })
 export class UserActivity {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private location = inject(Location);
   private svc = inject(ActivityService);
   private i18n = inject(I18nService);
@@ -209,6 +210,38 @@ export class UserActivity {
   }
 
   /** Absolute timestamp for the row's tooltip — relative time alone loses the date. */
+  /**
+   * Every row now opens: `/admin/activity/{type}/{id}` serves all 21 record
+   * types through one envelope, so the default is the generic screen rather
+   * than a dead link.
+   *
+   * The two exceptions go somewhere better rather than somewhere different —
+   * both have a screen that can *act* on the record, and the generic one is
+   * read-only by contract. `_received` is the same record seen from the other
+   * side, so it resolves to the same place.
+   */
+  private destinationFor(row: ActivityRow): unknown[] | null {
+    if (!row.id) return null;
+    switch (row.type) {
+      case 'advertisement':
+        return ['/dashboard/Advertisements/edit', row.id];
+      case 'device_order':
+      case 'device_order_received':
+        return ['/dashboard/external/orders', row.id];
+      default:
+        return ['/dashboard/activity', row.type, row.id];
+    }
+  }
+
+  canOpen(row: ActivityRow): boolean {
+    return this.destinationFor(row) !== null;
+  }
+
+  open(row: ActivityRow): void {
+    const target = this.destinationFor(row);
+    if (target) this.router.navigate(target);
+  }
+
   absoluteTime(iso: string | null): string {
     if (!iso) return '';
     const parsed = new Date(iso);

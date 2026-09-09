@@ -277,17 +277,37 @@ export interface GroupOrderDashboard {
   group_orders?: GroupOrderSummary[];
 }
 
+/**
+ * The quote names an importer one of two ways, and the API needs exactly one of
+ * them: an existing partner by id, or a one-off typed onto this round. The
+ * cross-field rule reads `ship_company_name`, so an id-less body without it
+ * fails on `shipping_company_id` even though that field is itself nullable —
+ * which is what made the branch look impossible.
+ */
 export interface CostPayload {
   total_cost: number;
   delivery_weeks_min: number;
   delivery_weeks_max: number;
-  /**
-   * Required. The API will not take an ad-hoc importer on the quote — the
-   * partner has to exist first, so the cost form points at the partners screen
-   * rather than offering free-text fields that could never save.
-   */
-  shipping_company_id: number;
+  shipping_company_id?: number | null;
+  /** The one-off branch. Present only when `shipping_company_id` is absent. */
+  ship_company_name?: string;
+  ship_company_contact_person?: string | null;
+  ship_company_phone?: string | null;
+  ship_company_email?: string | null;
   notes?: string | null;
+}
+
+/**
+ * Terms that can still be corrected on a live round. Every field is optional —
+ * a PATCH naming one leaves the rest untouched, so only what changed is sent.
+ */
+export interface GroupOrderPatch {
+  target_size?: number;
+  /** `YYYY-MM-DD`, and must be in the future. */
+  join_deadline?: string;
+  delivery_weeks_min?: number | null;
+  delivery_weeks_max?: number | null;
+  notes_for_users?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -416,6 +436,19 @@ export class DeviceGroupOrdersService {
 
   groupOrder(id: number): Observable<GroupOrderDetail> {
     return this.api.get<GroupOrderDetail>(`${ADMIN}/group-orders/${id}`);
+  }
+
+  /**
+   * Correcting a round's terms before it is priced. The API refuses this with
+   * 405 once a cost has been sent — a round reopened after a rejection is back
+   * to `in_progress` but has still been priced, so status alone cannot gate it.
+   *
+   * Dropping `target_size` onto the confirmed headcount fills the round, so the
+   * response may come back `completed`; callers re-render from it rather than
+   * assuming the status held.
+   */
+  updateRound(id: number, body: GroupOrderPatch): Observable<GroupOrderDetail> {
+    return this.api.patch<GroupOrderDetail>(`${ADMIN}/group-orders/${id}`, body);
   }
 
   approvals(id: number): Observable<ApprovalSummary> {

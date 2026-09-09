@@ -25,6 +25,8 @@ interface Draft {
   sort_order: string;
   is_active: boolean;
   is_other_option: boolean;
+  /** Read-only, shown so an admin knows why the app draws a second dropdown. */
+  has_subspecialties: boolean;
   marketplace_provider_id: string;
   code: string;
   parents: Record<string, string>;
@@ -58,6 +60,8 @@ export class OptionLists {
   search = signal('');
   /** '' = both. Only shown on the lists that carry `is_active`. */
   activeFilter = signal<string>('');
+  /** '' = both, '1' = reachable from the app, '0' = the broken rows. */
+  visibilityFilter = signal<string>('');
 
   /** Parent field → chosen id, used both as a table filter and a form default. */
   parentFilter = signal<Record<string, string>>({});
@@ -93,6 +97,7 @@ export class OptionLists {
     this.page.set(1);
     this.search.set('');
     this.activeFilter.set('');
+    this.visibilityFilter.set('');
     this.parentFilter.set({});
     this.parentOptions.set({});
     this.rows.set([]);
@@ -103,24 +108,38 @@ export class OptionLists {
 
   load() {
     const config = this.config();
+    // `visible_to_apps` is not a filter the endpoint honours — passing it
+    // returns the list unchanged — so narrowing by it means pulling the whole
+    // list and paging it here. It is a hundred-odd rows and only ever asked for
+    // deliberately, so that is cheaper than waiting for the query parameter.
+    const localFilter = config.hasVisibilityFlag && this.visibilityFilter() !== '';
+
     this.loading.set(true);
     this.svc.list(config, {
-      page: this.page(),
-      per_page: this.perPage,
+      page: localFilter ? undefined : this.page(),
+      per_page: localFilter ? 'all' : this.perPage,
       search: this.search() || undefined,
       // Sent as 1/0 — a retired row is still a row, so "both" is the default.
       is_active: this.activeFilter() === '' ? undefined : this.activeFilter(),
       ...this.activeParentFilters()
     }).subscribe({
       next: r => {
+        let items = r.items;
+        let total = r.pagination.total;
+        if (localFilter) {
+          const wantVisible = this.visibilityFilter() === '1';
+          items = items.filter(row => (row.visible_to_apps !== false) === wantVisible);
+          total = items.length;
+          items = items.slice((this.page() - 1) * this.perPage, this.page() * this.perPage);
+        }
         // Deleting the last row of the last page leaves us past the end.
-        if (!r.items.length && this.page() > 1) {
+        if (!items.length && this.page() > 1) {
           this.page.update(p => p - 1);
           this.load();
           return;
         }
-        this.rows.set(r.items);
-        this.total.set(r.pagination.total);
+        this.rows.set(items);
+        this.total.set(total);
         this.loading.set(false);
       },
       error: () => { this.rows.set([]); this.loading.set(false); }
@@ -148,6 +167,12 @@ export class OptionLists {
     this.load();
   }
 
+  setVisibilityFilter(value: string) {
+    this.visibilityFilter.set(value);
+    this.page.set(1);
+    this.load();
+  }
+
   setParentFilter(field: string, value: string) {
     this.parentFilter.update(f => ({ ...f, [field]: value }));
     // A child select scoped to this parent no longer matches — clear it.
@@ -163,7 +188,7 @@ export class OptionLists {
   // ================= parent selects =================
 
   /** Fills every parent select. `per_page=all` — a select must show everything. */
-  private loadParents(config: OptionListConfig) {
+  loadParents(config: OptionListConfig) {
     for (const parent of config.parents) {
       this.svc.all(OPTION_LISTS[parent.from]).subscribe({
         next: r => this.parentOptions.update(o => ({ ...o, [parent.field]: r.items })),
@@ -211,6 +236,7 @@ export class OptionLists {
       // Rows ship usable; retiring one is the deliberate action.
       is_active: true,
       is_other_option: false,
+      has_subspecialties: false,
       marketplace_provider_id: '',
       code: '',
       // Seed from whatever the table is filtered by — that is almost always
@@ -238,6 +264,7 @@ export class OptionLists {
       sort_order: row.sort_order === undefined || row.sort_order === null ? '' : String(row.sort_order),
       is_active: row.is_active !== false,
       is_other_option: row.is_other_option === true,
+      has_subspecialties: row.has_subspecialties === true,
       marketplace_provider_id:
         row.marketplace_provider_id === null || row.marketplace_provider_id === undefined
           ? ''
@@ -326,6 +353,9 @@ export class OptionLists {
         // `is_other_option` silently clears on the previous holder, so the
         // whole list is refetched rather than patched in place.
         this.load();
+        // Adding a subspecialty flips `has_subspecialties` on its parent, and
+        // that flag is what decides whether the app draws the second dropdown.
+        this.loadParents(config);
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
@@ -416,7 +446,12 @@ export class OptionLists {
     if (!ok) return;
 
     this.svc.delete(config, row.id).subscribe({
-      next: () => { this.dialog.toast('success', 'lists.deleted'); this.load(); },
+      next: () => {
+        this.dialog.toast('success', 'lists.deleted');
+        this.load();
+        // Removing the last subspecialty flips the parent's flag back to false.
+        this.loadParents(config);
+      },
       error: (err: HttpErrorResponse) => this.handleDeleteRefusal(config, row, err)
     });
   }
@@ -495,6 +530,7 @@ export class OptionLists {
       + (config.hasReadonlyCode ? 1 : 0)
       + (config.hasIsActive ? 1 : 0)
       + (config.hasLogo ? 1 : 0)
-      + (config.hasIsOtherOption ? 1 : 0);
+      + (config.hasIsOtherOption ? 1 : 0)
+      + (config.hasVisibilityFlag ? 1 : 0);
   });
 }

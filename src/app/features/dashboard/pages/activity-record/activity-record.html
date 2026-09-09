@@ -1,0 +1,162 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <!-- A deleted record is a state, not a failure, so it reads as one. -->
+    <div class="empty-block">
+      <p class="empty-title">{{ loadError()! | t }}</p>
+      <p class="empty-hint">{{ 'activity.record.gone_hint' | t }}</p>
+    </div>
+  } @else if (record(); as r) {
+
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area">
+          <span class="type-tag">{{ r.type_label }}</span>
+          <h2><bdi>{{ r.title }}</bdi></h2>
+          @if (hasStatus()) {
+            <span class="pill" [attr.data-tone]="tone()">{{ r.status.label }}</span>
+          }
+        </div>
+        <span class="created">{{ r.created_at | date:'medium' }}</span>
+      </div>
+
+      @if (r.parties.length) {
+        <div class="panel">
+          <div class="parties">
+            @for (p of r.parties; track $index) {
+              <!-- A party with no account is plain text: there is nowhere to go. -->
+              <div class="party" [class.linked]="p.user_id"
+                   [attr.role]="p.user_id ? 'button' : null"
+                   [attr.tabindex]="p.user_id ? 0 : null"
+                   (click)="openParty(p)" (keydown.enter)="openParty(p)">
+                <span class="party-role">{{ p.role_label }}</span>
+                <span class="party-name"><bdi>{{ p.name }}</bdi></span>
+                @if (p.phone) {
+                  <a class="party-phone" [href]="'tel:' + p.phone" (click)="$event.stopPropagation()">
+                    <bdi dir="ltr">{{ p.phone }}</bdi>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (primaryAmount(); as main) {
+      <div class="card money-card">
+        <div class="panel">
+          <div class="money-main">
+            <span class="money-label">{{ main.label }}</span>
+            <span class="money-value">{{ money(main.value, main.currency) }}</span>
+          </div>
+          @if (otherAmounts().length) {
+            <dl class="money-rest">
+              @for (a of otherAmounts(); track $index) {
+                <div class="money-row">
+                  <dt>{{ a.label }}</dt>
+                  <dd>{{ money(a.value, a.currency) }}</dd>
+                </div>
+              }
+            </dl>
+          }
+        </div>
+      </div>
+    }
+
+    @for (s of r.sections; track $index) {
+      <div class="card">
+        <div class="card-head"><div class="title-area"><h2>{{ s.title }}</h2></div></div>
+
+        @if (s.type === 'table') {
+          <!-- Wide tables scroll inside the card rather than the page. -->
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>@for (c of s.columns; track $index) { <th>{{ c }}</th> }</tr>
+              </thead>
+              <tbody>
+                @for (row of s.rows; track $index) {
+                  <!-- A cell may hold Arabic or Latin depending on what was
+                       typed. bdi isolates each one so a latin drug name does
+                       not get reordered by the Arabic paragraph around it. -->
+                  <tr>@for (cell of row; track $index) { <td><bdi>{{ cell }}</bdi></td> }</tr>
+                }
+                @if (!s.rows.length) {
+                  <tr><td class="empty-cell" [attr.colspan]="s.columns.length">{{ 'common.no_data' | t }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="panel">
+            <div class="facts">
+              @for (f of s.fields; track $index) {
+                <!-- long_text gets the full width; a paragraph in a 180px
+                     column is unreadable. -->
+                <div class="fact" [class.full]="f.type === 'long_text'">
+                  <span class="fact-label">{{ f.label }}</span>
+                  @if (linkFor(f.type, f.value); as href) {
+                    <a class="fact-value link" [href]="href"><bdi dir="ltr">{{ f.value }}</bdi></a>
+                  } @else {
+                    <span class="fact-value" [class.pre]="f.type === 'long_text'"><bdi>{{ f.value || '—' }}</bdi></span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (r.attachments.length) {
+      <div class="card">
+        <div class="card-head"><div class="title-area"><h2>{{ 'activity.record.attachments' | t }}</h2></div></div>
+        <div class="panel">
+          <div class="attachments">
+            @for (a of r.attachments; track $index) {
+              <!-- Not an anchor: the file needs the bearer token, so it is
+                   fetched and then opened. -->
+              <button class="attachment" [disabled]="openingAttachment() === a.url"
+                      (click)="openAttachment(a)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                </svg>
+                <span>{{ a.label }}</span>
+                @if (openingAttachment() === a.url) {
+                  <span class="attachment-busy">{{ 'common.loading' | t }}</span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (r.timeline.length) {
+      <div class="card">
+        <div class="card-head"><div class="title-area"><h2>{{ 'activity.record.history' | t }}</h2></div></div>
+        <div class="panel">
+          <ol class="timeline">
+            @for (e of r.timeline; track $index) {
+              <li>
+                <span class="dot" aria-hidden="true"></span>
+                <span class="event-label">{{ e.label }}</span>
+                <span class="event-time">{{ e.at | date:'medium' }}</span>
+              </li>
+            }
+          </ol>
+        </div>
+      </div>
+    }
+  }
+</div>
