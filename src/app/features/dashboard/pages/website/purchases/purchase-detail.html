@@ -1,0 +1,218 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading() && !purchase()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card"><p class="table-hint">{{ loadError()! | t }}</p></div>
+  } @else if (purchase(); as p) {
+
+    <!-- ===================== header + status actions ===================== -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="title-area">
+            <h2 class="mono-title" dir="ltr">{{ p.reference }}</h2>
+            <span [class]="'pill pill-' + p.status">{{ statusLabel(p.status, p.status_label) }}</span>
+          </div>
+          <p class="sub">{{ p.organization_name }} · {{ 'web.purchases.submitted' | t }} {{ date(p.submitted_at || p.created_at) }}</p>
+        </div>
+        @if (canUpdate() && p.allowed_statuses.length) {
+          <div class="actions-area">
+            @for (s of p.allowed_statuses; track s) {
+              <button [class]="isDanger(s) ? 'btn-danger btn-sm' : 'btn-primary btn-sm'" [disabled]="busy()" (click)="move(s)">
+                {{ 'web.purchases.mark_as' | t: { status: statusLabel(s) } }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="card-body">
+        @if (p.status === 'approved') {
+          <p class="notice info">{{ 'web.purchases.offline_notice' | t }}</p>
+        }
+        @if (p.decision_reason) {
+          <p class="notice" [class.error]="p.status === 'rejected' || p.status === 'canceled'" [class.info]="p.status !== 'rejected' && p.status !== 'canceled'">
+            <strong>{{ 'web.purchases.decision_reason' | t }}:</strong> {{ p.decision_reason }}
+          </p>
+        }
+
+        <dl class="detail-grid">
+          <div><dt>{{ 'web.purchases.organization_name' | t }}</dt><dd>{{ p.organization_name }}</dd></div>
+          <div><dt>{{ 'web.purchases.organization_type' | t }}</dt><dd>{{ p.organization_type || '—' }}</dd></div>
+          <div><dt>{{ 'web.purchases.contact_name' | t }}</dt><dd>{{ p.contact_name }}</dd></div>
+          <div><dt>{{ 'web.purchases.job_title' | t }}</dt><dd>{{ p.job_title || '—' }}</dd></div>
+          <div><dt>{{ 'common.email' | t }}</dt><dd dir="ltr" class="ltr-cell"><a [href]="'mailto:' + p.email">{{ p.email }}</a></dd></div>
+          <div><dt>{{ 'common.phone' | t }}</dt><dd dir="ltr" class="ltr-cell">
+            @if (p.phone) { <a [href]="'tel:' + p.phone">{{ p.phone }}</a> } @else { — }
+          </dd></div>
+          <div><dt>{{ 'web.purchases.country' | t }}</dt><dd>{{ p.country || '—' }}</dd></div>
+          <div><dt>{{ 'common.city' | t }}</dt><dd>{{ p.city || '—' }}</dd></div>
+          <div><dt>{{ 'web.purchases.locale' | t }}</dt><dd>{{ p.locale === 'ar' ? 'العربية' : 'English' }}</dd></div>
+          <div><dt>{{ 'web.purchases.consent' | t }}</dt><dd>{{ (p.consent ? 'common.yes' : 'common.no') | t }}</dd></div>
+          <div><dt>{{ 'web.purchases.account' | t }}</dt><dd>{{ p.user?.name || ('web.purchases.guest' | t) }}</dd></div>
+          @if (p.hospital_id) { <div><dt>{{ 'web.purchases.hospital_id' | t }}</dt><dd class="num">#{{ p.hospital_id }}</dd></div> }
+          @if (p.organization_id) { <div><dt>{{ 'web.purchases.organization_id' | t }}</dt><dd class="num">#{{ p.organization_id }}</dd></div> }
+          <div><dt>{{ 'common.created_at' | t }}</dt><dd>{{ date(p.created_at) }}</dd></div>
+          <div><dt>{{ 'web.purchases.submitted' | t }}</dt><dd>{{ date(p.submitted_at) }}</dd></div>
+          @if (p.decided_at) { <div><dt>{{ 'web.purchases.decided_at' | t }}</dt><dd>{{ date(p.decided_at) }}</dd></div> }
+          @if (p.completed_at) { <div><dt>{{ 'web.purchases.completed_at' | t }}</dt><dd>{{ date(p.completed_at) }}</dd></div> }
+          @if (p.canceled_at) { <div><dt>{{ 'web.purchases.canceled_at' | t }}</dt><dd>{{ date(p.canceled_at) }}</dd></div> }
+          <div><dt>{{ 'web.purchases.customer_can_cancel' | t }}</dt><dd>{{ (p.can_cancel ? 'common.yes' : 'common.no') | t }}</dd></div>
+          @if (p.notes) {
+            <div class="wide"><dt>{{ 'web.purchases.customer_notes' | t }}</dt><dd class="pre">{{ p.notes }}</dd></div>
+          }
+        </dl>
+      </div>
+    </div>
+
+    <!-- ===================== items ===================== -->
+    <div class="card">
+      <div class="card-head"><h2>{{ 'web.purchases.items' | t }}</h2></div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.purchases.product' | t }}</th>
+              <th>{{ 'web.purchases.pricing' | t }}</th>
+              <th>{{ 'web.purchases.unit_price' | t }}</th>
+              <th>{{ 'common.quantity' | t }}</th>
+              <th>{{ 'web.purchases.billing_period' | t }}</th>
+              <th>{{ 'web.purchases.line_total' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (it of p.items; track it.id) {
+              <tr>
+                <td>
+                  <div class="name-cell">{{ it.product_name }}</div>
+                  @if (it.tier_name) { <div class="muted">{{ it.tier_name }}</div> }
+                  @if (it.sku) { <div class="muted mono" dir="ltr">{{ it.sku }}</div> }
+                  @if (it.notes) { <div class="muted">{{ it.notes }}</div> }
+                </td>
+                <td class="text-gray">{{ humanize(it.pricing_type) }}</td>
+                <td class="num">
+                  @if (it.unit_price !== null) { {{ money(it.unit_price, it.currency) }} }
+                  @else { <span class="quote-tag">{{ 'web.purchases.to_be_quoted' | t }}</span> }
+                </td>
+                <td class="num">{{ it.quantity }}</td>
+                <td class="text-gray">{{ it.billing_period ? humanize(it.billing_period) : '—' }}</td>
+                <td class="num">
+                  @if (it.line_total !== null) { {{ money(it.line_total, it.currency) }} }
+                  @else { <span class="quote-tag">{{ 'web.purchases.to_be_quoted' | t }}</span> }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" class="total-label">{{ 'web.purchases.estimated_total' | t }}</td>
+              <td class="num total-value">
+                {{ money(p.estimated_total) }}
+                @if (p.has_unpriced_items) { <div class="quote-tag">+ {{ 'web.purchases.to_be_quoted' | t }}</div> }
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- ===================== assignment / notes ===================== -->
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.purchases.handling' | t }}</h2></div>
+        <div class="card-body">
+          @if (metaError()) { <p class="form-error">{{ metaError()! | t }}</p> }
+          <div class="form-group">
+            <label>{{ 'web.purchases.assigned_to' | t }}</label>
+            @if (!adminsDenied()) {
+              <select [value]="assignee()" [disabled]="!canUpdate()" (change)="assignee.set($any($event.target).value)">
+                <option value="">{{ 'web.purchases.unassigned' | t }}</option>
+                @if (p.assigned_to && assigneeMissing()) {
+                  <option [value]="p.assigned_to.id" selected>{{ p.assigned_to.name }}</option>
+                }
+                @for (a of admins(); track a.id) {
+                  <option [value]="a.id" [selected]="assignee() === (a.id + '')">{{ adminLabel(a) }}</option>
+                }
+              </select>
+            } @else {
+              <input type="text" dir="ltr" inputmode="numeric" [value]="assignee()" [readOnly]="!canUpdate()"
+                     [placeholder]="'web.purchases.admin_id' | t" (input)="assignee.set($any($event.target).value)">
+              <span class="hint">
+                {{ 'web.purchases.admin_id_hint' | t }}
+                @if (p.assigned_to) { — {{ p.assigned_to.name }} (#{{ p.assigned_to.id }}) }
+              </span>
+            }
+            @if (canUpdate() && ctx.me()) {
+              <button class="link-btn self" (click)="assignToMe()">{{ 'web.purchases.assign_me' | t }}</button>
+            }
+          </div>
+          <div class="form-group spaced">
+            <label>{{ 'web.purchases.internal_notes' | t }}</label>
+            <textarea rows="5" [value]="notes()" [readOnly]="!canUpdate()" (input)="notes.set($any($event.target).value)"></textarea>
+            <span class="hint">{{ 'web.purchases.internal_notes_hint' | t }}</span>
+          </div>
+          @if (canUpdate()) {
+            <div class="foot">
+              <button class="btn-primary btn-sm" [disabled]="!dirty() || metaSaving()" (click)="saveMeta()">
+                {{ (metaSaving() ? 'common.saving' : 'common.save') | t }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ===================== attribution ===================== -->
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.purchases.attribution' | t }}</h2></div>
+        <div class="card-body">
+          @if (attribution().length) {
+            <dl class="kv">
+              @for (a of attribution(); track a.key) {
+                <dt>{{ attrLabel(a.key) }}</dt>
+                <dd dir="ltr" class="ltr-cell">{{ a.value }}</dd>
+              }
+            </dl>
+          } @else {
+            <p class="muted">{{ 'web.purchases.no_attribution' | t }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== history ===================== -->
+    <div class="card">
+      <div class="card-head"><h2>{{ 'web.purchases.history' | t }}</h2></div>
+      <div class="card-body">
+        @if (history().length) {
+          <ul class="timeline">
+            @for (h of history(); track $index) {
+              <li>
+                <div class="tl-head">
+                  @if (h.from_status) {
+                    <span [class]="'pill pill-' + h.from_status">{{ statusLabel(h.from_status) }}</span>
+                    <span class="arrow">→</span>
+                  }
+                  <span [class]="'pill pill-' + h.to_status">{{ statusLabel(h.to_status) }}</span>
+                  <span class="spacer"></span>
+                  <span class="muted">{{ actorLabel(h) }} · {{ date(h.created_at) }}</span>
+                </div>
+                @if (h.reason) { <p class="tl-reason">{{ h.reason }}</p> }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="muted">{{ 'web.purchases.no_history' | t }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

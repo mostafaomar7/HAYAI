@@ -1,0 +1,36 @@
+/* Only what this screen adds on top of website.shared.css.
+   lead-detail.css reuses the same rules (same layout, same record shape). */
+
+:where(.pill) { background: #F3F4F6; color: #4B5563; }
+.mono-title { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.detail-grid { margin: 0; }
+.detail-grid .wide { grid-column: 1 / -1; }
+.pre { white-space: pre-wrap; line-height: 1.6; }
+.ltr-cell { text-align: start; unicode-bidi: plaintext; }
+.ltr-cell a, .detail-grid a { color: #2563EB; text-decoration: none; }
+.ltr-cell a:hover { text-decoration: underline; }
+
+.quote-tag { font-size: 12px; font-weight: 600; color: #B45309; }
+.data-table tfoot td { border-top: 2px solid #E5E7EB; font-weight: 700; }
+.total-label { text-align: end; color: #374151; }
+.total-value { font-size: 15px; white-space: nowrap; }
+
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 20px; }
+.form-group.spaced { margin-top: 16px; }
+.link-btn.self { align-self: flex-start; margin-top: 8px; }
+.foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+.kv { display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 10px 16px; margin: 0; }
+.kv dt { font-size: 12px; color: #6B7280; }
+.kv dd { margin: 0; font-size: 13.5px; color: #111827; overflow-wrap: anywhere; }
+
+.tl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.arrow { color: #9CA3AF; }
+:host-context([dir="rtl"]) .arrow { display: inline-block; transform: scaleX(-1); }
+.tl-reason { margin: 8px 0 0; color: #374151; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+
+@media (max-width: 640px) {
+  .two-col { grid-template-columns: 1fr; }
+  .kv { grid-template-columns: 1fr; gap: 2px; }
+  .kv dd { margin-bottom: 8px; }
+}

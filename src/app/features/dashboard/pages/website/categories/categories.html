@@ -1,0 +1,212 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ 'web.categories.title' | t }}</h2>
+          <span class="pill pill-scheduled">{{ all().length }}</span>
+        </div>
+        <p class="sub">{{ 'web.categories.subtitle' | t }}</p>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [value]="q()" [placeholder]="'web.categories.search' | t" (input)="onSearch($any($event.target).value)">
+        </div>
+        @if (canCreate()) {
+          <button class="btn-primary" (click)="create()">+ {{ 'web.categories.add' | t }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="tabs">
+      @for (k of kinds; track k) {
+        <button type="button" class="tab" [class.active]="kind() === k" (click)="setKind(k)">
+          {{ 'web.categories.kind_' + k | t }}
+        </button>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.categories.name_en' | t }}</th>
+              <th>{{ 'web.categories.name_ar' | t }}</th>
+              <th>{{ 'web.categories.slugs' | t }}</th>
+              <th>{{ 'web.categories.parent' | t }}</th>
+              <th>{{ 'web.categories.sort' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows(); track r.cat.id) {
+              <tr class="clickable" (click)="edit(r.cat)">
+                <td class="name-cell">
+                  <span class="indent" [style.padding-inline-start.px]="r.depth * 20">
+                    @if (r.depth) { <span class="branch">└</span> }
+                    {{ r.cat.name_en }}
+                  </span>
+                </td>
+                <td dir="rtl" class="ar-cell">{{ r.cat.name_ar || '—' }}</td>
+                <td class="mono text-gray slug-cell" dir="ltr">
+                  <div>{{ r.cat.slug_en || '—' }}</div>
+                  @if (r.cat.slug_ar) { <div>{{ r.cat.slug_ar }}</div> }
+                </td>
+                <td class="text-gray">{{ parentName(r.cat) }}</td>
+                <td class="num">{{ r.cat.sort_order ?? 0 }}</td>
+                <td>
+                  <span class="pill" [class.pill-active]="r.cat.is_active !== false" [class.pill-inactive]="r.cat.is_active === false">
+                    {{ (r.cat.is_active !== false ? 'common.active' : 'common.inactive') | t }}
+                  </span>
+                </td>
+                <td class="action-col" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="edit(r.cat)">{{ (canUpdate() ? 'common.edit' : 'common.view') | t }}</button>
+                    @if (canUpdate()) {
+                      <button class="link-btn" (click)="toggle(r.cat, r.cat.is_active === false)">
+                        {{ (r.cat.is_active === false ? 'web.categories.activate' : 'web.categories.deactivate') | t }}
+                      </button>
+                    }
+                    @if (canDelete()) {
+                      <button class="link-btn danger" (click)="remove(r.cat)">{{ 'common.delete' | t }}</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (open()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'web.categories.edit_title' : 'web.categories.new_title') | t }}</h3>
+        <button type="button" class="modal-close" (click)="close()">×</button>
+      </div>
+
+      <fieldset class="plain modal-body" [disabled]="!canSave()">
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'web.categories.kind' | t }}</label>
+            @if (editing()) {
+              <input type="text" readonly [value]="'web.categories.kind_' + draft().kind | t">
+              <span class="hint">{{ 'web.categories.kind_locked' | t }}</span>
+            } @else {
+              <select [value]="draft().kind" (change)="set('kind', $any($event.target).value); set('parent_id', '')">
+                @for (k of kinds; track k) {
+                  <option [value]="k" [selected]="draft().kind === k">{{ 'web.categories.kind_' + k | t }}</option>
+                }
+              </select>
+              <span class="hint">{{ 'web.categories.kind_hint' | t }}</span>
+            }
+            @if (errorFor('kind')) { <span class="field-error">{{ errorFor('kind')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.categories.parent' | t }}</label>
+            <!-- The list holds the current tab's kind; a new category of the other kind gets no parent picker. -->
+            <select [value]="draft().parent_id" [disabled]="draft().kind !== kind()" (change)="set('parent_id', $any($event.target).value)">
+              <option value="">{{ 'web.categories.no_parent' | t }}</option>
+              @for (p of parentOptions(); track p.id) {
+                <option [value]="p.id" [selected]="draft().parent_id === '' + p.id">{{ name(p) }}</option>
+              }
+            </select>
+            @if (draft().kind !== kind()) { <span class="hint">{{ 'web.categories.parent_other_kind' | t }}</span> }
+            @if (errorFor('parent_id')) { <span class="field-error">{{ errorFor('parent_id')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.categories.sort' | t }}</label>
+            <input type="number" step="1" [value]="draft().sort_order" (input)="set('sort_order', $any($event.target).value)">
+            @if (errorFor('sort_order')) { <span class="field-error">{{ errorFor('sort_order')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'common.status' | t }}</label>
+            <label class="checkbox boxed">
+              <input type="checkbox" [checked]="draft().is_active" (change)="set('is_active', $any($event.target).checked)">
+              {{ 'web.categories.is_active' | t }}
+            </label>
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="locale-switch">
+            <button type="button" [class.active]="locale() === 'en'" (click)="locale.set('en')">
+              {{ 'web.categories.lang_en' | t }}@if (localeHasError('en')) { <span class="err-dot"></span> }
+            </button>
+            <button type="button" [class.active]="locale() === 'ar'" (click)="locale.set('ar')">
+              {{ 'web.categories.lang_ar' | t }}@if (localeHasError('ar')) { <span class="err-dot"></span> }
+            </button>
+          </div>
+
+          @if (locale() === 'en') {
+            <div class="form-grid lang-fields">
+              <div class="form-group">
+                <label>{{ 'web.categories.name_en' | t }} <span class="req">*</span></label>
+                <input type="text" dir="ltr" [value]="draft().name_en" (input)="set('name_en', $any($event.target).value)">
+                @if (errorFor('name_en')) { <span class="field-error">{{ errorFor('name_en')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.categories.slug_en' | t }}</label>
+                <input type="text" dir="ltr" [value]="draft().slug_en" [placeholder]="'web.categories.slug_auto' | t" (input)="set('slug_en', $any($event.target).value)">
+                @if (errorFor('slug_en')) { <span class="field-error">{{ errorFor('slug_en')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.categories.description_en' | t }}</label>
+                <textarea dir="ltr" rows="3" [value]="draft().description_en" (input)="set('description_en', $any($event.target).value)"></textarea>
+                @if (errorFor('description_en')) { <span class="field-error">{{ errorFor('description_en')! | t }}</span> }
+              </div>
+            </div>
+          } @else {
+            <div class="form-grid lang-fields">
+              <div class="form-group">
+                <label>{{ 'web.categories.name_ar' | t }}</label>
+                <input type="text" dir="rtl" [value]="draft().name_ar" (input)="set('name_ar', $any($event.target).value)">
+                @if (errorFor('name_ar')) { <span class="field-error">{{ errorFor('name_ar')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.categories.slug_ar' | t }}</label>
+                <input type="text" dir="ltr" [value]="draft().slug_ar" [placeholder]="'web.categories.slug_auto' | t" (input)="set('slug_ar', $any($event.target).value)">
+                @if (errorFor('slug_ar')) { <span class="field-error">{{ errorFor('slug_ar')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.categories.description_ar' | t }}</label>
+                <textarea dir="rtl" rows="3" [value]="draft().description_ar" (input)="set('description_ar', $any($event.target).value)"></textarea>
+                @if (errorFor('description_ar')) { <span class="field-error">{{ errorFor('description_ar')! | t }}</span> }
+              </div>
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+        @if (canSave()) {
+          <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+            {{ (saving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

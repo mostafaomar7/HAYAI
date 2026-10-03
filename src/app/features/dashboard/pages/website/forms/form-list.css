@@ -1,0 +1,4 @@
+/* Only what this screen adds on top of website.shared.css. */
+
+.chip.system { margin-inline-start: 8px; background: #EDE9FE; color: #6D28D9; }
+a.link-btn { text-decoration: none; }

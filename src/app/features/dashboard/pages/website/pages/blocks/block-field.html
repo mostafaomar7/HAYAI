@@ -1,0 +1,344 @@
+<div class="bf" [class.has-error]="!!error()" [attr.data-path]="path()">
+  @if (kind() !== 'boolean') {
+    <div class="bf-head">
+      <label class="bf-label" [for]="id" [id]="id + '-label'">
+        {{ label() }}
+        @if (field().required) { <span class="req" aria-hidden="true">*</span> }
+      </label>
+      @if ((kind() === 'text' || kind() === 'textarea') && field().max) {
+        <span class="counter" [class.bad]="str().length > field().max!" aria-live="polite">
+          {{ str().length }} / {{ field().max }}
+        </span>
+      }
+    </div>
+  }
+
+  @switch (kind()) {
+    @case ('text') {
+      <input type="text" class="field-input" [id]="id" [value]="str()" [attr.dir]="dir()"
+             [attr.maxlength]="field().max || null" [disabled]="disabled()"
+             [attr.aria-invalid]="!!error() || null" [attr.aria-required]="field().required || null"
+             (input)="onText($event)">
+    }
+
+    @case ('textarea') {
+      <textarea class="field-input" [id]="id" [value]="str()" [attr.dir]="dir()" rows="4"
+                [attr.maxlength]="field().max || null" [disabled]="disabled()"
+                [attr.aria-invalid]="!!error() || null" [attr.aria-required]="field().required || null"
+                (input)="onText($event)"></textarea>
+      @if (isAnswer()) {
+        <div class="answer-meter">
+          <span class="word-count" [class.ok]="wordsOk()" [class.bad]="!wordsOk()" aria-live="polite">
+            {{ 'web.blocks.words' | t: { n: words(), min: wordMin, max: wordMax } }}
+          </span>
+          @if (vague()) {
+            <span class="word-count bad">{{ (locale() === 'ar' ? 'web.blocks.err.answer_vague_ar' : 'web.blocks.err.answer_vague') | t }}</span>
+          }
+        </div>
+      }
+    }
+
+    @case ('html') {
+      <app-html-editor [value]="str()" [dir]="dir()" [disabled]="disabled()" [invalid]="!!error()"
+                       [inputId]="id" [label]="label()" (valueChange)="emit($event)" />
+    }
+
+    @case ('url') {
+      <input type="text" inputmode="url" class="field-input" dir="ltr" [id]="id" [value]="str()"
+             [placeholder]="'web.blocks.url_placeholder' | t" [disabled]="disabled()"
+             [attr.aria-invalid]="!!error() || null" (change)="onUrl($event)">
+    }
+
+    @case ('media') {
+      @if (field()['multiple']) {
+        <app-media-picker [multiple]="true" [values]="$any(arr())" [disabled]="disabled()"
+                          [kind]="$any(field()['kind'] ?? 'image')" (valuesChange)="emit($event)" />
+      } @else {
+        <app-media-picker [value]="$any(value())" [disabled]="disabled()"
+                          [kind]="$any(field()['kind'] ?? 'image')" (valueChange)="emit($event)" />
+      }
+    }
+
+    @case ('cta') {
+      <div class="cta-box">
+        <div class="seg" role="radiogroup" [attr.aria-labelledby]="id + '-label'">
+          <label class="seg-opt" [class.active]="ctaMode() === 'none'">
+            <input type="radio" [name]="id + '-mode'" [checked]="ctaMode() === 'none'" [disabled]="disabled()"
+                   (change)="setCtaMode('none')"> {{ 'web.blocks.cta.none' | t }}
+          </label>
+          <label class="seg-opt" [class.active]="ctaMode() === 'library'">
+            <input type="radio" [name]="id + '-mode'" [checked]="ctaMode() === 'library'" [disabled]="disabled()"
+                   (change)="setCtaMode('library')"> {{ 'web.blocks.cta.library' | t }}
+          </label>
+          <label class="seg-opt" [class.active]="ctaMode() === 'inline'">
+            <input type="radio" [name]="id + '-mode'" [checked]="ctaMode() === 'inline'" [disabled]="disabled()"
+                   (change)="setCtaMode('inline')"> {{ 'web.blocks.cta.inline' | t }}
+          </label>
+        </div>
+
+        @if (ctaMode() === 'library') {
+          <app-ref-picker kind="cta" [locale]="locale()" [value]="obj()['cta_id']" [disabled]="disabled()"
+                          [invalid]="!!ctaErr('cta_id')" [inputId]="id" (valueChange)="setCta('cta_id', $event)" />
+          @if (ctaPreview()) { <p class="hint" dir="ltr">{{ ctaPreview() }}</p> }
+          <p class="hint">{{ 'web.blocks.cta.library_hint' | t }}</p>
+          @if (errorAt('cta_id')) { <p class="field-error">{{ errorAt('cta_id')! | t }}</p> }
+        }
+
+        @if (ctaMode() === 'inline') {
+          <div class="sub-grid">
+            <div class="sub-field">
+              <label [for]="id + '-label-in'">{{ 'web.blocks.cta.label' | t }} <span class="req">*</span></label>
+              <input type="text" class="field-input" [id]="id + '-label-in'" [attr.dir]="dir()"
+                     [value]="obj()['label'] ?? ''" [disabled]="disabled()"
+                     (input)="setCta('label', $any($event.target).value)">
+              @if (errorAt('label')) { <p class="field-error">{{ errorAt('label')! | t }}</p> }
+            </div>
+            <div class="sub-field">
+              <label [for]="id + '-url'">{{ 'web.blocks.cta.url' | t }} <span class="req">*</span></label>
+              <input type="text" inputmode="url" class="field-input" dir="ltr" [id]="id + '-url'"
+                     [placeholder]="'web.blocks.url_placeholder' | t"
+                     [value]="obj()['url'] ?? ''" [disabled]="disabled()"
+                     (change)="setCta('url', $any($event.target).value.trim())">
+              @if (errorAt('url')) { <p class="field-error">{{ errorAt('url')! | t }}</p> }
+            </div>
+            <div class="sub-field">
+              <label [for]="id + '-style'">{{ 'web.blocks.cta.style' | t }}</label>
+              <select class="field-input" [id]="id + '-style'" [disabled]="disabled()"
+                      (change)="setCta('style', $any($event.target).value)">
+                @for (s of ctaStyles; track s) {
+                  <option [value]="s" [selected]="(obj()['style'] ?? 'primary') === s">{{ 'web.blocks.cta.style_' + s | t }}</option>
+                }
+              </select>
+            </div>
+            <div class="sub-field">
+              <label [for]="id + '-target'">{{ 'web.blocks.cta.target' | t }}</label>
+              <select class="field-input" [id]="id + '-target'" [disabled]="disabled()"
+                      (change)="setCta('target', $any($event.target).value)">
+                @for (tg of ctaTargets; track tg) {
+                  <option [value]="tg" [selected]="(obj()['target'] ?? '_self') === tg">{{ 'web.blocks.cta.target' + tg | t }}</option>
+                }
+              </select>
+            </div>
+            <div class="sub-field">
+              <label [for]="id + '-track'">{{ 'web.blocks.cta.tracking_key' | t }}</label>
+              <input type="text" class="field-input mono" dir="ltr" [id]="id + '-track'"
+                     [value]="obj()['tracking_key'] ?? ''" [disabled]="disabled()"
+                     (input)="setCta('tracking_key', $any($event.target).value)">
+              @if (errorAt('tracking_key')) { <p class="field-error">{{ errorAt('tracking_key')! | t }}</p> }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @case ('select') {
+      <select class="field-input" [id]="id" [disabled]="disabled()" [attr.aria-invalid]="!!error() || null" (change)="onSelect($event)">
+        @if (!field().required) {
+          <option value="" [selected]="!str()">{{ 'web.blocks.picker.none' | t }}</option>
+        }
+        @for (o of selectOptions(); track o.value) {
+          <option [value]="o.value" [selected]="str() === o.value">{{ o.label }}</option>
+        }
+      </select>
+    }
+
+    @case ('integer') {
+      <input type="number" step="1" class="field-input num-input" dir="ltr" [id]="id" [value]="str()"
+             [attr.min]="field().min ?? null" [attr.max]="field().max ?? null" [disabled]="disabled()"
+             [attr.aria-invalid]="!!error() || null" (input)="onNumber($event)">
+    }
+
+    @case ('number') {
+      <input type="number" step="any" class="field-input num-input" dir="ltr" [id]="id" [value]="str()"
+             [attr.min]="field().min ?? null" [attr.max]="field().max ?? null" [disabled]="disabled()"
+             [attr.aria-invalid]="!!error() || null" (input)="onNumber($event)">
+    }
+
+    @case ('boolean') {
+      <label class="switch-row" [for]="id">
+        <input type="checkbox" role="switch" [id]="id" [checked]="value() === true" [disabled]="disabled()" (change)="onBool($event)">
+        <span class="switch" aria-hidden="true"></span>
+        <span class="bf-label">{{ label() }}</span>
+      </label>
+    }
+
+    @case ('string_list') {
+      <div class="lines">
+        @for (line of arr(); track trackIndex(i); let i = $index, first = $first, last = $last) {
+          <div class="line">
+            <input type="text" class="field-input" [attr.dir]="dir()" [value]="line ?? ''" [disabled]="disabled()"
+                   [attr.aria-label]="label() + ' ' + (i + 1)" [id]="i === 0 ? id : null"
+                   (input)="setLine(i, $any($event.target).value)">
+            @if (!disabled()) {
+              <button type="button" class="icon-btn" [disabled]="first" (click)="moveAt(i, -1)"
+                      [attr.aria-label]="'web.common.move_up' | t" [title]="'web.common.move_up' | t">↑</button>
+              <button type="button" class="icon-btn" [disabled]="last" (click)="moveAt(i, 1)"
+                      [attr.aria-label]="'web.common.move_down' | t" [title]="'web.common.move_down' | t">↓</button>
+              <button type="button" class="icon-btn danger" (click)="removeAt(i)"
+                      [attr.aria-label]="'common.remove' | t" [title]="'common.remove' | t">×</button>
+            }
+          </div>
+          @if (errorAt('' + i)) { <p class="field-error">{{ errorAt('' + i)! | t }}</p> }
+        }
+        @if (!disabled() && canAddItem()) {
+          <button type="button" class="add-btn" (click)="addLine()">+ {{ 'web.blocks.add_line' | t }}</button>
+        }
+      </div>
+    }
+
+    @case ('cells') {
+      @if (!columns().length) {
+        <p class="notice warn">{{ 'web.blocks.cells_no_columns' | t }}</p>
+      } @else {
+        <div class="cells">
+          @for (col of columns(); track $index; let c = $index) {
+            <div class="cell">
+              <span class="cell-col" [id]="id + '-c' + c">{{ col }}</span>
+              <div class="cell-modes" role="radiogroup" [attr.aria-labelledby]="id + '-c' + c">
+                <button type="button" class="mode" [class.active]="cellMode(c) === 'yes'" [disabled]="disabled()"
+                        role="radio" [attr.aria-checked]="cellMode(c) === 'yes'" (click)="setCellMode(c, 'yes')"
+                        [title]="'web.blocks.cell.yes' | t" [attr.aria-label]="'web.blocks.cell.yes' | t">✓</button>
+                <button type="button" class="mode" [class.active]="cellMode(c) === 'no'" [disabled]="disabled()"
+                        role="radio" [attr.aria-checked]="cellMode(c) === 'no'" (click)="setCellMode(c, 'no')"
+                        [title]="'web.blocks.cell.no' | t" [attr.aria-label]="'web.blocks.cell.no' | t">✗</button>
+                <button type="button" class="mode" [class.active]="cellMode(c) === 'text'" [disabled]="disabled()"
+                        role="radio" [attr.aria-checked]="cellMode(c) === 'text'" (click)="setCellMode(c, 'text')"
+                        [title]="'web.blocks.cell.text' | t" [attr.aria-label]="'web.blocks.cell.text' | t">Aa</button>
+                <button type="button" class="mode" [class.active]="cellMode(c) === 'empty'" [disabled]="disabled()"
+                        role="radio" [attr.aria-checked]="cellMode(c) === 'empty'" (click)="setCellMode(c, 'empty')"
+                        [title]="'web.blocks.cell.empty' | t" [attr.aria-label]="'web.blocks.cell.empty' | t">—</button>
+              </div>
+              @if (cellMode(c) === 'text') {
+                <input type="text" class="field-input" [attr.dir]="dir()" [value]="cellText(c)" [disabled]="disabled()"
+                       [attr.aria-labelledby]="id + '-c' + c" [id]="c === 0 ? id : null"
+                       (input)="setCell(c, $any($event.target).value)">
+              }
+            </div>
+          }
+        </div>
+        @if (cellsMismatch()) {
+          <p class="hint warn-text">{{ 'web.blocks.cells_mismatch' | t: { n: arr().length, m: columns().length } }}</p>
+        }
+      }
+    }
+
+    @case ('matrix') {
+      <div class="matrix-wrap">
+        <table class="matrix">
+          @if (headerCols()) {
+            <thead>
+              <tr>
+                @for (h of headerCols()!; track $index) { <th scope="col" [attr.dir]="dir()">{{ h }}</th> }
+                <th></th>
+              </tr>
+            </thead>
+          } @else if (!disabled() && matrixRows().length) {
+            <thead>
+              <tr>
+                @for (c of colIndexes(); track c) {
+                  <th scope="col">
+                    <button type="button" class="icon-btn danger" [disabled]="matrixCols() <= 1" (click)="removeColumn(c)"
+                            [attr.aria-label]="'web.blocks.remove_column' | t" [title]="'web.blocks.remove_column' | t">×</button>
+                  </th>
+                }
+                <th></th>
+              </tr>
+            </thead>
+          }
+          <tbody>
+            @for (row of matrixRows(); track trackIndex(r); let r = $index, first = $first, last = $last) {
+              <tr>
+                @for (c of colIndexes(); track c) {
+                  <td>
+                    <input type="text" class="field-input" [attr.dir]="dir()" [value]="row[c] || ''" [disabled]="disabled()"
+                           [attr.aria-label]="label() + ' ' + (r + 1) + '×' + (c + 1)"
+                           (input)="setMatrix(r, c, $any($event.target).value)">
+                  </td>
+                }
+                <td class="row-tools">
+                  @if (!disabled()) {
+                    <button type="button" class="icon-btn" [disabled]="first" (click)="moveAt(r, -1)"
+                            [attr.aria-label]="'web.common.move_up' | t" [title]="'web.common.move_up' | t">↑</button>
+                    <button type="button" class="icon-btn" [disabled]="last" (click)="moveAt(r, 1)"
+                            [attr.aria-label]="'web.common.move_down' | t" [title]="'web.common.move_down' | t">↓</button>
+                    <button type="button" class="icon-btn danger" (click)="removeAt(r)"
+                            [attr.aria-label]="'web.blocks.remove_row' | t" [title]="'web.blocks.remove_row' | t">×</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (headerCols() && !headerCols()!.length) {
+        <p class="hint warn-text">{{ 'web.blocks.matrix_no_headers' | t }}</p>
+      }
+      @if (!disabled()) {
+        <div class="row">
+          <button type="button" class="add-btn" (click)="addRow()">+ {{ 'web.blocks.add_row' | t }}</button>
+          @if (!headerCols()) {
+            <button type="button" class="add-btn" (click)="addColumn()">+ {{ 'web.blocks.add_column' | t }}</button>
+          }
+        </div>
+      }
+    }
+
+    @case ('list') {
+      <div class="items">
+        @for (item of arr(); track trackIndex(i); let i = $index, first = $first, last = $last) {
+          <div class="item" [class.has-error]="itemHasError(i)">
+            <div class="item-head">
+              <span class="item-no">{{ i + 1 }}</span>
+              <span class="item-title" [attr.dir]="dir()">{{ itemSummary(item, i) }}</span>
+              @if (!disabled()) {
+                <span class="item-tools">
+                  <button type="button" class="icon-btn" [disabled]="first" (click)="moveAt(i, -1)"
+                          [attr.aria-label]="'web.common.move_up' | t" [title]="'web.common.move_up' | t">↑</button>
+                  <button type="button" class="icon-btn" [disabled]="last" (click)="moveAt(i, 1)"
+                          [attr.aria-label]="'web.common.move_down' | t" [title]="'web.common.move_down' | t">↓</button>
+                  <button type="button" class="icon-btn" [disabled]="!canAddItem()" (click)="duplicateItem(i)"
+                          [attr.aria-label]="'web.blocks.duplicate' | t" [title]="'web.blocks.duplicate' | t">⧉</button>
+                  <button type="button" class="icon-btn danger" (click)="removeAt(i)"
+                          [attr.aria-label]="'common.remove' | t" [title]="'common.remove' | t">×</button>
+                </span>
+              }
+            </div>
+            @if (errorAt('' + i)) { <p class="field-error">{{ errorAt('' + i)! | t }}</p> }
+            <div class="fields">
+              @for (sub of itemFields(); track sub.key) {
+                <app-block-field [field]="sub" [value]="itemValue(item, sub.key)" [locale]="locale()"
+                                 [path]="path() + '.' + i + '.' + sub.key" [errors]="errors()" [root]="root()"
+                                 [blockType]="blockType()" [disabled]="disabled()"
+                                 (valueChange)="setItem(i, sub.key, $event)" />
+              }
+            </div>
+          </div>
+        } @empty {
+          <p class="muted empty-list">{{ 'web.blocks.list_empty' | t }}</p>
+        }
+        @if (!disabled()) {
+          <button type="button" class="add-btn" [disabled]="!canAddItem()" (click)="addItem()">
+            + {{ 'web.blocks.add_item' | t }}
+            @if (field().max) { <span class="muted">({{ arr().length }}/{{ field().max }})</span> }
+          </button>
+        }
+      </div>
+    }
+
+    @case ('json') {
+      <textarea class="field-input mono" dir="ltr" rows="5" spellcheck="false" [id]="id" [value]="json()"
+                [disabled]="disabled()" [attr.aria-invalid]="!!error() || null" (change)="onJson($event)"></textarea>
+      <p class="hint">{{ 'web.blocks.json_hint' | t: { type: field().type } }}</p>
+    }
+
+    @default {
+      @if (ref()) {
+        <app-ref-picker [kind]="refKind()" [multiple]="ref()!.multiple" [locale]="locale()" [value]="value()"
+                        [disabled]="disabled()" [invalid]="!!error()" [inputId]="id" (valueChange)="emit($event)" />
+      }
+    }
+  }
+
+  @if (help()) { <p class="hint">{{ help() }}</p> }
+  @if (error()) { <p class="field-error" role="alert">{{ error()! | t }}</p> }
+</div>

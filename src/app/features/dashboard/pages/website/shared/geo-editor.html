@@ -1,0 +1,104 @@
+@if (loading()) {
+  <p class="table-hint">{{ 'common.loading' | t }}</p>
+} @else {
+  <div class="panel">
+    <p class="notice info">{{ 'web.geo.intro' | t }}</p>
+    @if (required()) { <p class="notice warn">{{ 'web.geo.required_for_articles' | t }}</p> }
+    @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
+
+    <h4 class="sub-title">{{ 'web.geo.direct_answer' | t }}</h4>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>{{ 'web.geo.question' | t }}</label>
+        <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+               [value]="model().direct_answer_question ?? ''"
+               (input)="text('direct_answer_question', $any($event.target).value)"
+               [placeholder]="'web.geo.question_placeholder' | t">
+        @if (errors()['direct_answer_question']) { <span class="field-error">{{ errors()['direct_answer_question'] }}</span> }
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.geo.answer' | t }}</label>
+        <textarea rows="5" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                  [value]="model().direct_answer ?? ''" (input)="text('direct_answer', $any($event.target).value)"></textarea>
+        <span class="word-count" [class.ok]="answerOk()" [class.bad]="!answerOk()">
+          {{ 'web.geo.words' | t: { n: words(), min: min, max: max } }}
+        </span>
+        @if (dangling()) { <span class="field-error">{{ 'web.geo.dangling_start' | t }}</span> }
+        <span class="hint">{{ 'web.geo.answer_hint' | t }}</span>
+        @if (errors()['direct_answer']) { <span class="field-error">{{ errors()['direct_answer'] }}</span> }
+      </div>
+    </div>
+
+    <h4 class="sub-title">{{ 'web.geo.key_facts' | t }}</h4>
+    <div class="list-editor">
+      @for (f of model().key_facts ?? []; track $index; let i = $index) {
+        <div class="list-row">
+          <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                 [placeholder]="'web.geo.fact_label' | t" [value]="f.label" (input)="updateFact(i, 'label', $any($event.target).value)">
+          <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                 [placeholder]="'web.geo.fact_value' | t" [value]="f.value" (input)="updateFact(i, 'value', $any($event.target).value)">
+          <input type="text" dir="ltr" [disabled]="!canEdit()" placeholder="https://…"
+                 [value]="f.source_url ?? ''" (input)="updateFact(i, 'source_url', $any($event.target).value)">
+          @if (canEdit()) {
+            <button type="button" class="link-btn danger" (click)="removeFact(i)">{{ 'common.remove' | t }}</button>
+          }
+        </div>
+        @if (errors()['key_facts.' + i + '.source_url']) {
+          <span class="field-error">{{ errors()['key_facts.' + i + '.source_url'] }}</span>
+        }
+      } @empty {
+        <p class="muted">{{ 'web.geo.no_facts' | t }}</p>
+      }
+      @if (canEdit()) {
+        <div><button type="button" class="btn-secondary btn-sm" (click)="addFact()">+ {{ 'web.geo.add_fact' | t }}</button></div>
+      }
+    </div>
+
+    <h4 class="sub-title">{{ 'web.geo.entity' | t }}</h4>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>{{ 'web.geo.entity_type' | t }}</label>
+        <input type="text" dir="ltr" [disabled]="!canEdit()" [value]="model().entity?.type ?? ''"
+               (input)="entityField('type', $any($event.target).value)" placeholder="MedicalOrganization">
+      </div>
+      <div class="form-group">
+        <label>{{ 'web.geo.entity_name' | t }}</label>
+        <input type="text" [disabled]="!canEdit()" [value]="model().entity?.name ?? ''"
+               (input)="entityField('name', $any($event.target).value)">
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.geo.entity_description' | t }}</label>
+        <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                  [value]="model().entity?.description ?? ''" (input)="entityField('description', $any($event.target).value)"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.geo.same_as' | t }}</label>
+        <textarea rows="3" dir="ltr" [disabled]="!canEdit()" [value]="sameAsText()"
+                  (input)="setSameAs($any($event.target).value)" placeholder="https://…"></textarea>
+        <span class="hint">{{ 'web.common.one_per_line' | t }}</span>
+      </div>
+    </div>
+
+    <h4 class="sub-title">{{ 'web.geo.verification' | t }}</h4>
+    <div class="row">
+      <div class="form-group">
+        <label>{{ 'web.geo.last_verified' | t }}</label>
+        <input type="date" [disabled]="!canEdit()" [value]="model().last_verified_at ?? ''"
+               (input)="text('last_verified_at', $any($event.target).value)">
+      </div>
+      @if (canEdit()) {
+        <button type="button" class="btn-secondary btn-sm verified-btn" (click)="verifiedToday()">{{ 'web.geo.verified_today' | t }}</button>
+      }
+    </div>
+    <span class="hint">{{ 'web.geo.verified_hint' | t }}</span>
+
+    @if (canEdit()) {
+      <div class="panel-foot">
+        @if (dirty()) { <span class="muted">{{ 'web.common.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+          {{ (saving() ? 'common.saving' : 'web.geo.save') | t }}
+        </button>
+      </div>
+    }
+  </div>
+}

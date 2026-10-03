@@ -1,0 +1,85 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'web.forms.title' | t }}</h2>
+        <span class="pill pill-submitted">{{ total() }}</span>
+      </div>
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'web.forms.search' | t" (input)="onSearch($any($event.target).value)">
+        </div>
+        @if (ctx.can('cms.create')) {
+          <button class="btn-primary" (click)="create()">+ {{ 'web.forms.new' | t }}</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'common.name' | t }}</th>
+              <th>{{ 'web.forms.key' | t }}</th>
+              <th>{{ 'common.type' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'web.forms.leads' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="open(row)">
+                <td>
+                  <span class="name-cell">{{ name(row) }}</span>
+                  @if (row.is_system) {
+                    <span class="chip system" [title]="'web.forms.system_hint' | t">{{ 'web.forms.system' | t }}</span>
+                  }
+                </td>
+                <td class="mono text-gray" dir="ltr">{{ row.key }}</td>
+                <td class="text-gray">{{ typeLabel(row) }}</td>
+                <td>
+                  <span [class]="'pill ' + (row.is_active ? 'pill-active' : 'pill-inactive')">
+                    {{ (row.is_active ? 'common.active' : 'common.inactive') | t }}
+                  </span>
+                </td>
+                <td class="num">
+                  @if (row.leads_count) {
+                    <a class="link-btn" [routerLink]="['/dashboard/website/leads']" [queryParams]="{ form_id: row.id }"
+                       (click)="$event.stopPropagation()">{{ row.leads_count }}</a>
+                  } @else {
+                    <span class="text-gray">0</span>
+                  }
+                </td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="open(row); $event.stopPropagation()">
+                      {{ (ctx.can('cms.update') ? 'common.edit' : 'common.view') | t }}
+                    </button>
+                    @if (ctx.can('cms.delete')) {
+                      <button class="link-btn danger" [disabled]="row.is_system"
+                              [title]="row.is_system ? ('web.forms.system_no_delete' | t) : ''"
+                              (click)="remove(row, $event)">{{ 'common.delete' | t }}</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'web.forms.empty' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>

@@ -1,0 +1,30 @@
+.ar-cell { text-align: start; }
+
+.sub-section { border-top: 1px solid #F1F5F9; margin-top: 20px; padding-top: 18px; }
+.sub-section .row { margin-bottom: 14px; }
+.section-title.no-margin { margin: 0; }
+
+.err-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: #DC2626; margin-inline-start: 6px; vertical-align: middle;
+}
+
+.mode-switch { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 14px; }
+
+.preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.preview-card {
+  border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px;
+  display: flex; flex-direction: column; gap: 12px; text-align: start;
+}
+.preview-card details summary { cursor: pointer; font-size: 12px; color: #6B7280; }
+.mock-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.mock-btn {
+  display: inline-block; border-radius: 8px; padding: 10px 20px;
+  font-size: 14px; font-weight: 600; border: 1px solid transparent;
+}
+.mock-primary { background: #2563EB; color: #fff; }
+.mock-secondary { background: #E0E7FF; color: #3730A3; }
+.mock-outline { background: #fff; color: #2563EB; border-color: #2563EB; }
+.mock-link { color: #2563EB; text-decoration: underline; padding-inline: 0; }
+.mock-sub { font-size: 12px; color: #6B7280; }
+.mock-href { color: #6B7280; overflow-wrap: anywhere; }

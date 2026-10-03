@@ -1,0 +1,29 @@
+/* Only what the roles screen adds on top of website.shared.css. */
+
+.role-meta { gap: 6px; margin-top: 4px; }
+.perm-count { display: flex; align-items: center; gap: 10px; min-width: 140px; }
+.perm-count .progress-track { max-width: 120px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.super { background: #FEF3C7; color: #92400E; }
+.you-chip { margin-inline-start: 6px; background: #EFF6FF; color: #2563EB; }
+.small { font-size: 12px; }
+.no-margin { margin: 0; }
+
+.perm-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+.perm-head .section-title { margin: 0 0 10px; }
+.perm-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.perm-group {
+  border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 14px 12px; margin: 0;
+  display: flex; flex-direction: column; gap: 8px; min-width: 0;
+}
+.perm-group legend { padding: 0 6px; }
+.group-check { font-weight: 700; }
+.perm { align-items: flex-start; font-size: 13px; }
+.perm input { margin-top: 2px; flex-shrink: 0; }
+.perm span { display: flex; flex-direction: column; gap: 2px; }
+.perm code { font-size: 11px; }
+.perm-group:disabled .checkbox { cursor: default; opacity: .85; }
+
+.role-option { align-items: flex-start; padding: 10px 12px; border: 1px solid #F1F5F9; border-radius: 8px; }
+.role-option input { margin-top: 2px; flex-shrink: 0; }
+.no-roles { margin: 14px 0 0; }

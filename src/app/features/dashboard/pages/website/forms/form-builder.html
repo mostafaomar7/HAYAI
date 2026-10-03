@@ -1,0 +1,520 @@
+<div class="page-container wide">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card"><p class="table-hint">{{ loadError()! | t }}</p></div>
+  } @else {
+
+    <!-- ===================== header ===================== -->
+    <div class="card sticky-head">
+      <div class="card-head">
+        <div class="title-area">
+          <h2>{{ title() }}</h2>
+          @if (isSystem()) { <span class="chip system" [title]="'web.forms.system_hint' | t">{{ 'web.forms.system' | t }}</span> }
+          @if (!isNew()) {
+            <span [class]="'pill ' + (settings().is_active ? 'pill-active' : 'pill-inactive')">
+              {{ (settings().is_active ? 'common.active' : 'common.inactive') | t }}
+            </span>
+          }
+        </div>
+        <div class="actions-area">
+          <div class="locale-switch" role="group" [attr.aria-label]="'web.forms.editing_language' | t">
+            <button [class.active]="locale() === 'en'" (click)="locale.set('en')">EN</button>
+            <button [class.active]="locale() === 'ar'" (click)="locale.set('ar')">العربية</button>
+          </div>
+          <button class="btn-secondary btn-sm" (click)="previewOpen.set(!previewOpen())">
+            {{ (previewOpen() ? 'web.forms.hide_preview' : 'web.forms.preview') | t }}
+          </button>
+          @if (!isNew() && form()?.leads_count) {
+            <button class="btn-secondary btn-sm" (click)="viewLeads()">
+              {{ 'web.forms.view_leads' | t: { count: form()!.leads_count! } }}
+            </button>
+          }
+          @if (!isNew() && ctx.can('cms.delete')) {
+            <button class="btn-danger btn-sm" [disabled]="isSystem()"
+                    [title]="isSystem() ? ('web.forms.system_no_delete' | t) : ''" (click)="deleteForm()">
+              {{ 'common.delete' | t }}
+            </button>
+          }
+          @if (canEdit()) {
+            <button class="btn-primary btn-sm" [disabled]="saving()" (click)="save()">
+              {{ (saving() ? 'common.saving' : 'common.save') | t }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (!canEdit()) { <p class="notice warn">{{ 'web.forms.read_only' | t }}</p> }
+    @if (formError()) {
+      <div class="form-error">
+        {{ formError()! | t }}
+        @if (generalErrors().length) {
+          <ul class="err-list">
+            @for (g of generalErrors(); track g.path) { <li><span class="mono">{{ g.path }}</span>: {{ g.msg | t }}</li> }
+          </ul>
+        }
+      </div>
+    }
+
+    <div class="builder" [class.with-preview]="previewOpen()">
+      <div class="builder-main">
+
+        <!-- ===================== settings ===================== -->
+        <div class="card">
+          <div class="card-head">
+            <h2>{{ 'web.forms.settings' | t }}</h2>
+            <span class="muted">{{ 'web.forms.editing_in' | t }} {{ locale() === 'ar' ? 'العربية' : 'English' }}</span>
+          </div>
+          <div class="card-body">
+            <fieldset class="plain" [disabled]="!canEdit()">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>{{ 'web.forms.key' | t }} <span class="req">*</span></label>
+                  <input type="text" dir="ltr" class="mono-input" [value]="settings().key" [readOnly]="isSystem()"
+                         (input)="setSetting('key', $any($event.target).value)" placeholder="partner_request">
+                  <span class="hint">{{ (isSystem() ? 'web.forms.system_key_hint' : 'web.forms.key_hint') | t }}</span>
+                  @if (err('key')) { <span class="field-error">{{ err('key')! | t }}</span> }
+                </div>
+                <div class="form-group">
+                  <label>{{ 'common.type' | t }} <span class="req">*</span></label>
+                  @if (isSystem()) {
+                    <input type="text" [value]="formTypeLabel(settings().type)" readonly>
+                  } @else {
+                    <select [value]="settings().type" (change)="setSetting('type', $any($event.target).value)">
+                      @for (ft of formTypes(); track ft) {
+                        <option [value]="ft" [selected]="settings().type === ft">{{ formTypeLabel(ft) }}</option>
+                      }
+                    </select>
+                  }
+                  <span class="hint">{{ 'web.forms.type_hint' | t }}</span>
+                  @if (err('type')) { <span class="field-error">{{ err('type')! | t }}</span> }
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'common.name' | t }} @if (locale() === 'en') { <span class="req">*</span> }</label>
+                  <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="sLoc('name')"
+                         (input)="setSLoc('name', $any($event.target).value)">
+                  @if (locErr('', 'name')) { <span class="field-error">{{ locErr('', 'name')! | t }}</span> }
+                </div>
+                <div class="form-group">
+                  <label>{{ 'web.forms.submit_label' | t }}</label>
+                  <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="sLoc('submit_label')"
+                         [placeholder]="'web.forms.submit_default' | t" (input)="setSLoc('submit_label', $any($event.target).value)">
+                  @if (locErr('', 'submit_label')) { <span class="field-error">{{ locErr('', 'submit_label')! | t }}</span> }
+                </div>
+                <div class="form-group full">
+                  <label>{{ 'common.description' | t }}</label>
+                  <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="sLoc('description')"
+                            (input)="setSLoc('description', $any($event.target).value)"></textarea>
+                  @if (locErr('', 'description')) { <span class="field-error">{{ locErr('', 'description')! | t }}</span> }
+                </div>
+                <div class="form-group full">
+                  <label>{{ 'web.forms.success_message' | t }}</label>
+                  <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="sLoc('success_message')"
+                            (input)="setSLoc('success_message', $any($event.target).value)"></textarea>
+                  @if (locErr('', 'success_message')) { <span class="field-error">{{ locErr('', 'success_message')! | t }}</span> }
+                </div>
+
+                <div class="form-group full">
+                  <label class="checkbox">
+                    <input type="checkbox" [checked]="settings().requires_consent"
+                           (change)="setSetting('requires_consent', $any($event.target).checked)">
+                    {{ 'web.forms.requires_consent' | t }}
+                  </label>
+                </div>
+                @if (settings().requires_consent) {
+                  <div class="form-group full">
+                    <label>{{ 'web.forms.consent_text' | t }}</label>
+                    <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="sLoc('consent_text')"
+                              [placeholder]="'web.forms.consent_default' | t"
+                              (input)="setSLoc('consent_text', $any($event.target).value)"></textarea>
+                    @if (locErr('', 'consent_text')) { <span class="field-error">{{ locErr('', 'consent_text')! | t }}</span> }
+                  </div>
+                }
+
+                <div class="form-group">
+                  <label>{{ 'web.forms.notify_emails' | t }}</label>
+                  <textarea rows="3" dir="ltr" [value]="settings().notify_emails" placeholder="sales@example.com"
+                            (input)="setSetting('notify_emails', $any($event.target).value)"></textarea>
+                  <span class="hint">{{ 'web.forms.notify_hint' | t }}</span>
+                  @if (err('notify_emails')) { <span class="field-error">{{ err('notify_emails')! | t }}</span> }
+                </div>
+                <div class="form-group">
+                  <label>{{ 'common.status' | t }}</label>
+                  <label class="checkbox">
+                    <input type="checkbox" [checked]="settings().is_active"
+                           (change)="setSetting('is_active', $any($event.target).checked)">
+                    {{ 'web.forms.is_active' | t }}
+                  </label>
+                  <span class="hint">{{ 'web.forms.is_active_hint' | t }}</span>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- ===================== fields ===================== -->
+        <div class="card">
+          <div class="card-head">
+            <div class="title-area">
+              <h2>{{ 'web.forms.fields' | t }}</h2>
+              <span class="pill pill-submitted">{{ fields().length }}</span>
+            </div>
+            <div class="actions-area">
+              <button class="link-btn" (click)="expandAll(true)">{{ 'web.forms.expand_all' | t }}</button>
+              <button class="link-btn" (click)="expandAll(false)">{{ 'web.forms.collapse_all' | t }}</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="hint top">{{ 'web.forms.fields_hint' | t }}</p>
+            @if (err('fields')) { <p class="field-error">{{ err('fields')! | t }}</p> }
+
+            <fieldset class="plain" [disabled]="!canEdit()">
+              <ol class="field-list">
+                @for (f of fields(); track f.uid; let i = $index; let first = $first; let last = $last) {
+                  <li class="field-card" [class.open]="f.open" [class.has-error]="cardErrorCount(i) > 0">
+                    <div class="fc-head">
+                      <span class="fc-index">{{ i + 1 }}</span>
+                      <button type="button" class="fc-summary" (click)="toggle(i)" [attr.aria-expanded]="f.open">
+                        <span class="fc-label">{{ pvText(f, 'label') || ('web.forms.untitled_field' | t) }}</span>
+                        <span class="fc-meta">
+                          <span class="mono" dir="ltr">{{ f.key || '—' }}</span>
+                          <span class="chip">{{ typeLabel(f.type) }}</span>
+                          @if (f.is_required) { <span class="chip req-chip">{{ 'common.required' | t }}</span> }
+                          @if (f.maps_to) { <span class="chip map-chip">→ {{ mapsLabel(f.maps_to) }}</span> }
+                          @if (f.vis_on) { <span class="chip">{{ 'web.forms.conditional' | t }}</span> }
+                          @if (cardErrorCount(i)) { <span class="chip err-chip">{{ 'web.forms.n_errors' | t: { count: cardErrorCount(i) } }}</span> }
+                        </span>
+                      </button>
+                      <div class="fc-actions">
+                        <button type="button" class="icon-btn" [disabled]="first" (click)="moveField(i, -1)" [attr.aria-label]="'web.forms.move_up' | t" [title]="'web.forms.move_up' | t">↑</button>
+                        <button type="button" class="icon-btn" [disabled]="last" (click)="moveField(i, 1)" [attr.aria-label]="'web.forms.move_down' | t" [title]="'web.forms.move_down' | t">↓</button>
+                        <button type="button" class="icon-btn danger" (click)="removeField(i)" [attr.aria-label]="'common.remove' | t" [title]="'common.remove' | t">✕</button>
+                      </div>
+                    </div>
+
+                    @if (f.open) {
+                      <div class="fc-body">
+                        @if (cardOtherErrors(i).length) {
+                          <ul class="notice error err-list">
+                            @for (o of cardOtherErrors(i); track o.path) { <li><span class="mono">{{ o.path }}</span>: {{ o.msg | t }}</li> }
+                          </ul>
+                        }
+
+                        <div class="form-grid">
+                          <div class="form-group">
+                            <label>{{ 'web.forms.field_label' | t }} @if (locale() === 'en') { <span class="req">*</span> }</label>
+                            <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="fLoc(f, 'label')"
+                                   (input)="setFLoc(i, 'label', $any($event.target).value)">
+                            @if (locErr('fields.' + i + '.', 'label')) { <span class="field-error">{{ locErr('fields.' + i + '.', 'label')! | t }}</span> }
+                          </div>
+                          <div class="form-group">
+                            <label>{{ 'web.forms.field_key' | t }} <span class="req">*</span></label>
+                            <input type="text" dir="ltr" class="mono-input" [value]="f.key" (input)="setKey(i, $any($event.target).value)">
+                            @if (err('fields.' + i + '.key')) { <span class="field-error">{{ err('fields.' + i + '.key')! | t }}</span> }
+                          </div>
+                          <div class="form-group">
+                            <label>{{ 'common.type' | t }} <span class="req">*</span></label>
+                            <select [value]="f.type" (change)="setType(i, $any($event.target).value)">
+                              @for (ty of fieldTypes(); track ty) {
+                                <option [value]="ty" [selected]="f.type === ty">{{ typeLabel(ty) }}</option>
+                              }
+                            </select>
+                            @if (err('fields.' + i + '.type')) { <span class="field-error">{{ err('fields.' + i + '.type')! | t }}</span> }
+                          </div>
+                          <div class="form-group">
+                            <label>{{ 'web.forms.maps_to' | t }}</label>
+                            <select [value]="f.maps_to" (change)="patch(i, { maps_to: $any($event.target).value })">
+                              <option value="">{{ 'web.forms.maps_none' | t }}</option>
+                              @for (m of mapsToOptions(); track m) {
+                                <option [value]="m" [selected]="f.maps_to === m"
+                                        [disabled]="!mapsToAllowedForType(m, f.type) || !!mapsToTakenBy(m, i)">
+                                  {{ mapsLabel(m) }}@if (mapsToTakenBy(m, i); as other) { ({{ other.key }}) }
+                                </option>
+                              }
+                            </select>
+                            <span class="hint">{{ 'web.forms.maps_hint' | t }}</span>
+                            @if (err('fields.' + i + '.maps_to')) { <span class="field-error">{{ err('fields.' + i + '.maps_to')! | t }}</span> }
+                          </div>
+                          <div class="form-group">
+                            <label>{{ 'web.forms.placeholder' | t }}</label>
+                            <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="fLoc(f, 'placeholder')"
+                                   (input)="setFLoc(i, 'placeholder', $any($event.target).value)">
+                          </div>
+                          <div class="form-group">
+                            <label>{{ 'web.forms.help' | t }}</label>
+                            <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="fLoc(f, 'help')"
+                                   (input)="setFLoc(i, 'help', $any($event.target).value)">
+                          </div>
+                          <div class="form-group full">
+                            <label class="checkbox">
+                              <input type="checkbox" [checked]="f.is_required" (change)="patch(i, { is_required: $any($event.target).checked })">
+                              {{ 'web.forms.is_required' | t }}
+                            </label>
+                          </div>
+                        </div>
+
+                        <!-- options -->
+                        @if (isOptionType(f.type)) {
+                          <div class="sub-section">
+                            <h4>{{ 'web.forms.options' | t }}</h4>
+                            @if (err('fields.' + i + '.options')) { <p class="field-error">{{ err('fields.' + i + '.options')! | t }}</p> }
+                            <div class="opt-table">
+                              <div class="opt-row opt-head">
+                                <span>{{ 'web.forms.option_value' | t }}</span>
+                                <span>{{ 'web.forms.option_label' | t }} (EN)</span>
+                                <span>{{ 'web.forms.option_label' | t }} (AR)</span>
+                                <span></span>
+                              </div>
+                              @for (o of f.options; track $index; let j = $index; let ofirst = $first; let olast = $last) {
+                                <div class="opt-row">
+                                  <div class="form-group">
+                                    <input type="text" dir="ltr" class="mono-input" [value]="o.value" [attr.aria-label]="'web.forms.option_value' | t"
+                                           (input)="setOption(i, j, { value: $any($event.target).value })">
+                                    @if (err('fields.' + i + '.options.' + j + '.value')) { <span class="field-error">{{ err('fields.' + i + '.options.' + j + '.value')! | t }}</span> }
+                                  </div>
+                                  <div class="form-group">
+                                    <input type="text" dir="ltr" [value]="o.label_en" [attr.aria-label]="('web.forms.option_label' | t) + ' EN'"
+                                           (input)="setOption(i, j, { label_en: $any($event.target).value })">
+                                    @if (err('fields.' + i + '.options.' + j + '.label_en')) { <span class="field-error">{{ err('fields.' + i + '.options.' + j + '.label_en')! | t }}</span> }
+                                  </div>
+                                  <div class="form-group">
+                                    <input type="text" dir="rtl" [value]="o.label_ar" [attr.aria-label]="('web.forms.option_label' | t) + ' AR'"
+                                           (input)="setOption(i, j, { label_ar: $any($event.target).value })">
+                                    @if (err('fields.' + i + '.options.' + j + '.label_ar')) { <span class="field-error">{{ err('fields.' + i + '.options.' + j + '.label_ar')! }}</span> }
+                                  </div>
+                                  <div class="opt-actions">
+                                    <button type="button" class="icon-btn" [disabled]="ofirst" (click)="moveOption(i, j, -1)" [title]="'web.forms.move_up' | t">↑</button>
+                                    <button type="button" class="icon-btn" [disabled]="olast" (click)="moveOption(i, j, 1)" [title]="'web.forms.move_down' | t">↓</button>
+                                    <button type="button" class="icon-btn danger" (click)="removeOption(i, j)" [title]="'common.remove' | t">✕</button>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                            <button type="button" class="btn-secondary btn-sm" (click)="addOption(i)">+ {{ 'web.forms.add_option' | t }}</button>
+                          </div>
+                        }
+
+                        <!-- validation -->
+                        @if (isNumberType(f.type) || isLengthType(f.type) || isFileType(f.type)) {
+                          <div class="sub-section">
+                            <h4>{{ 'web.forms.validation' | t }}</h4>
+                            <div class="form-grid compact">
+                              @if (isNumberType(f.type)) {
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.v_min' | t }}</label>
+                                  <input type="number" [value]="f.min" (input)="patch(i, { min: $any($event.target).value })">
+                                  @if (err('fields.' + i + '.validation.min')) { <span class="field-error">{{ err('fields.' + i + '.validation.min')! | t }}</span> }
+                                </div>
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.v_max' | t }}</label>
+                                  <input type="number" [value]="f.max" (input)="patch(i, { max: $any($event.target).value })">
+                                  @if (err('fields.' + i + '.validation.max')) { <span class="field-error">{{ err('fields.' + i + '.validation.max')! | t }}</span> }
+                                </div>
+                              }
+                              @if (isLengthType(f.type)) {
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.v_min_length' | t }}</label>
+                                  <input type="number" min="0" step="1" [value]="f.min_length" (input)="patch(i, { min_length: $any($event.target).value })">
+                                  @if (err('fields.' + i + '.validation.min_length')) { <span class="field-error">{{ err('fields.' + i + '.validation.min_length')! | t }}</span> }
+                                </div>
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.v_max_length' | t }}</label>
+                                  <input type="number" min="1" step="1" [value]="f.max_length" (input)="patch(i, { max_length: $any($event.target).value })">
+                                  @if (err('fields.' + i + '.validation.max_length')) { <span class="field-error">{{ err('fields.' + i + '.validation.max_length')! | t }}</span> }
+                                </div>
+                              }
+                              @if (isFileType(f.type)) {
+                                <div class="form-group full">
+                                  <label>{{ 'web.forms.v_mimes' | t }}</label>
+                                  <div class="mime-grid">
+                                    @for (m of fileMimes; track m) {
+                                      <label class="checkbox mime">
+                                        <input type="checkbox" [checked]="f.mimes.includes(m)" (change)="toggleMime(i, m, $any($event.target).checked)">
+                                        <span class="mono">.{{ m }}</span>
+                                      </label>
+                                    }
+                                  </div>
+                                  @if (err('fields.' + i + '.validation.mimes')) { <span class="field-error">{{ err('fields.' + i + '.validation.mimes')! | t }}</span> }
+                                </div>
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.v_max_kb' | t }}</label>
+                                  <input type="number" min="1" [max]="maxKb" step="1" [value]="f.max_kb" (input)="patch(i, { max_kb: $any($event.target).value })">
+                                  <span class="hint">{{ 'web.forms.v_max_kb_hint' | t: { max: maxKb } }}</span>
+                                  @if (err('fields.' + i + '.validation.max_kb')) { <span class="field-error">{{ err('fields.' + i + '.validation.max_kb')! | t: { max: maxKb } }}</span> }
+                                </div>
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.v_max_files' | t }}</label>
+                                  <input type="number" min="1" [max]="maxFiles" step="1" [value]="f.max_files" (input)="patch(i, { max_files: $any($event.target).value })">
+                                  <span class="hint">{{ 'web.forms.v_max_files_hint' | t: { max: maxFiles } }}</span>
+                                  @if (err('fields.' + i + '.validation.max_files')) { <span class="field-error">{{ err('fields.' + i + '.validation.max_files')! | t: { max: maxFiles } }}</span> }
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
+
+                        <!-- visibility -->
+                        <div class="sub-section">
+                          <label class="checkbox">
+                            <input type="checkbox" [checked]="f.vis_on" [disabled]="!visTargets(i).length && !f.vis_on"
+                                   (change)="patch(i, { vis_on: $any($event.target).checked })">
+                            {{ 'web.forms.vis_toggle' | t }}
+                          </label>
+                          @if (!visTargets(i).length && !f.vis_on) { <span class="hint block">{{ 'web.forms.vis_no_targets' | t }}</span> }
+                          @if (f.vis_on) {
+                            <div class="vis-row">
+                              <div class="form-group">
+                                <label>{{ 'web.forms.vis_field' | t }}</label>
+                                <select [value]="f.vis_field" (change)="patch(i, { vis_field: $any($event.target).value })">
+                                  <option value="">—</option>
+                                  @for (tf of visTargets(i); track tf.uid) {
+                                    <option [value]="tf.key" [selected]="f.vis_field === tf.key">{{ tf.key }} — {{ pvText(tf, 'label') }}</option>
+                                  }
+                                </select>
+                                @if (err('fields.' + i + '.visibility.field')) { <span class="field-error">{{ err('fields.' + i + '.visibility.field')! | t }}</span> }
+                              </div>
+                              <div class="form-group">
+                                <label>{{ 'web.forms.vis_operator' | t }}</label>
+                                <select [value]="f.vis_operator" (change)="patch(i, { vis_operator: $any($event.target).value })">
+                                  @for (op of operators; track op) {
+                                    <option [value]="op" [selected]="f.vis_operator === op">{{ opLabel(op) }}</option>
+                                  }
+                                </select>
+                                @if (err('fields.' + i + '.visibility.operator')) { <span class="field-error">{{ err('fields.' + i + '.visibility.operator')! | t }}</span> }
+                              </div>
+                              @if (needsVisValue(f.vis_operator)) {
+                                <div class="form-group">
+                                  <label>{{ 'web.forms.vis_value' | t }}</label>
+                                  @if ((f.vis_operator === 'equals' || f.vis_operator === 'not_equals') && visTarget(f)?.options?.length && isOptionType(visTarget(f)!.type)) {
+                                    <select [value]="f.vis_value" (change)="patch(i, { vis_value: $any($event.target).value })">
+                                      <option value="">—</option>
+                                      @for (o of visTarget(f)!.options; track $index) {
+                                        <option [value]="o.value" [selected]="f.vis_value === o.value">{{ optLabel(o) }} ({{ o.value }})</option>
+                                      }
+                                    </select>
+                                  } @else {
+                                    <input type="text" dir="ltr" [value]="f.vis_value" (input)="patch(i, { vis_value: $any($event.target).value })">
+                                  }
+                                  @if (f.vis_operator === 'in' || f.vis_operator === 'not_in') {
+                                    <span class="hint">{{ 'web.forms.vis_list_hint' | t }}</span>
+                                  }
+                                  @if (err('fields.' + i + '.visibility.value')) { <span class="field-error">{{ err('fields.' + i + '.visibility.value')! | t }}</span> }
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </li>
+                }
+              </ol>
+
+              <button type="button" class="btn-secondary add-field" (click)="addField()">+ {{ 'web.forms.add_field' | t }}</button>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== preview ===================== -->
+      @if (previewOpen()) {
+        <aside class="builder-preview">
+          <div class="card">
+            <div class="card-head">
+              <h2>{{ 'web.forms.preview' | t }}</h2>
+              <span class="muted">{{ locale() === 'ar' ? 'العربية' : 'English' }}</span>
+            </div>
+            <div class="card-body preview" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [attr.lang]="locale()">
+              <h3 class="pv-title">{{ pvSetting('name') || ('web.forms.untitled_form' | t) }}</h3>
+              @if (pvSetting('description')) { <p class="pv-desc">{{ pvSetting('description') }}</p> }
+
+              @for (f of fields(); track f.uid) {
+                @if (visibleInPreview(f)) {
+                  <div class="pv-field">
+                    @if (f.type !== 'checkbox') {
+                      <label class="pv-label">
+                        {{ pvText(f, 'label') || f.key || '…' }}
+                        @if (f.is_required) { <span class="req">*</span> }
+                      </label>
+                    }
+                    @switch (f.type) {
+                      @case ('textarea') {
+                        <textarea rows="3" [placeholder]="pvText(f, 'placeholder')" [value]="$any(pv(f) ?? '')"
+                                  (input)="setPv(f, $any($event.target).value)"></textarea>
+                      }
+                      @case ('select') {
+                        <select (change)="setPv(f, $any($event.target).value)">
+                          <option value="">{{ pvText(f, 'placeholder') || '—' }}</option>
+                          @for (o of f.options; track $index) {
+                            <option [value]="o.value" [selected]="pv(f) === o.value">{{ optLabel(o) }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('multi_select') {
+                        <div class="pv-choices">
+                          @for (o of f.options; track $index) {
+                            <label class="pv-choice">
+                              <input type="checkbox" [checked]="pvHas(f, o.value)" (change)="togglePvMulti(f, o.value, $any($event.target).checked)">
+                              {{ optLabel(o) }}
+                            </label>
+                          }
+                        </div>
+                      }
+                      @case ('radio') {
+                        <div class="pv-choices">
+                          @for (o of f.options; track $index) {
+                            <label class="pv-choice">
+                              <input type="radio" [name]="'pv-' + f.uid" [checked]="pv(f) === o.value" (change)="setPv(f, o.value)">
+                              {{ optLabel(o) }}
+                            </label>
+                          }
+                        </div>
+                      }
+                      @case ('checkbox') {
+                        <label class="pv-choice">
+                          <input type="checkbox" [checked]="!!pv(f)" (change)="setPv(f, $any($event.target).checked)">
+                          {{ pvText(f, 'label') || f.key || '…' }}
+                          @if (f.is_required) { <span class="req">*</span> }
+                        </label>
+                      }
+                      @case ('file') {
+                        <div class="pv-file">
+                          <span>{{ 'web.forms.pv_choose_file' | t }}</span>
+                          <span class="muted">{{ f.mimes.join(', ') }} · ≤ {{ f.max_kb || '—' }} KB · × {{ f.max_files || 1 }}</span>
+                        </div>
+                      }
+                      @default {
+                        <input [type]="inputType(f.type)" [placeholder]="pvText(f, 'placeholder')"
+                               [attr.dir]="f.type === 'email' || f.type === 'phone' || f.type === 'url' ? 'ltr' : null"
+                               [value]="$any(pv(f) ?? '')" (input)="setPv(f, $any($event.target).value)">
+                      }
+                    }
+                    @if (pvText(f, 'help')) { <span class="pv-help">{{ pvText(f, 'help') }}</span> }
+                  </div>
+                }
+              }
+
+              @if (settings().requires_consent) {
+                <label class="pv-choice pv-consent">
+                  <input type="checkbox">
+                  {{ pvSetting('consent_text') || pvDefault('web.forms.consent_default') }} <span class="req">*</span>
+                </label>
+              }
+              <button type="button" class="pv-submit">{{ pvSetting('submit_label') || pvDefault('web.forms.submit_default') }}</button>
+              <p class="hint">{{ 'web.forms.preview_hint' | t }}</p>
+            </div>
+          </div>
+        </aside>
+      }
+    </div>
+  }
+</div>

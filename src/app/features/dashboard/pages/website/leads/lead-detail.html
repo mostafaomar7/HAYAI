@@ -1,0 +1,228 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading() && !lead()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card"><p class="table-hint">{{ loadError()! | t }}</p></div>
+  } @else if (lead(); as l) {
+
+    <!-- ===================== header + status actions ===================== -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="title-area">
+            <h2 class="mono-title" dir="ltr">{{ l.reference }}</h2>
+            <span [class]="'pill pill-' + l.status">{{ statusLabel(l.status, l.status_label) }}</span>
+            <span class="chip">{{ typeLabel(l) }}</span>
+          </div>
+          <p class="sub">{{ l.name || l.email || '—' }} · {{ date(l.created_at) }}</p>
+        </div>
+        <div class="actions-area">
+          @if (canUpdate()) {
+            @for (s of l.allowed_statuses; track s) {
+              <button [class]="isDanger(s) ? 'btn-danger btn-sm' : 'btn-primary btn-sm'" [disabled]="busy()" (click)="move(s)">
+                {{ (l.status === 'spam' ? 'web.leads.rescue_as' : 'web.leads.mark_as') | t: { status: statusLabel(s) } }}
+              </button>
+            }
+          }
+          @if (ctx.can('leads.delete')) {
+            <button class="btn-danger btn-sm" [disabled]="busy()" (click)="remove()">{{ 'common.delete' | t }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="card-body">
+        @if (l.status === 'spam' && l.spam_reason) {
+          <p class="notice warn"><strong>{{ 'web.leads.spam_reason' | t }}:</strong> {{ l.spam_reason }}</p>
+        }
+
+        <dl class="detail-grid">
+          <div><dt>{{ 'common.name' | t }}</dt><dd>{{ l.name || '—' }}</dd></div>
+          <div><dt>{{ 'web.leads.organization' | t }}</dt><dd>{{ l.organization || '—' }}</dd></div>
+          @if (l.hospital) { <div><dt>{{ 'web.leads.hospital' | t }}</dt><dd>{{ l.hospital }}</dd></div> }
+          <div><dt>{{ 'web.purchases.job_title' | t }}</dt><dd>{{ l.job_title || '—' }}</dd></div>
+          <div><dt>{{ 'common.email' | t }}</dt><dd dir="ltr" class="ltr-cell">
+            @if (l.email) { <a [href]="'mailto:' + l.email">{{ l.email }}</a> } @else { — }
+          </dd></div>
+          <div><dt>{{ 'common.phone' | t }}</dt><dd dir="ltr" class="ltr-cell">
+            @if (l.phone) { <a [href]="'tel:' + l.phone">{{ l.phone }}</a> } @else { — }
+          </dd></div>
+          <div><dt>{{ 'web.purchases.country' | t }}</dt><dd>{{ l.country || '—' }}</dd></div>
+          <div><dt>{{ 'common.city' | t }}</dt><dd>{{ l.city || '—' }}</dd></div>
+          <div><dt>{{ 'web.purchases.locale' | t }}</dt><dd>{{ l.locale === 'ar' ? 'العربية' : 'English' }}</dd></div>
+          <div><dt>{{ 'web.leads.consent' | t }}</dt><dd>
+            @if (l.consent_at) { {{ date(l.consent_at) }} }
+            @else { {{ (l.consent ? 'common.yes' : 'common.no') | t }} }
+          </dd></div>
+          @if (l.contacted_at) { <div><dt>{{ 'web.leads.contacted_at' | t }}</dt><dd>{{ date(l.contacted_at) }}</dd></div> }
+          @if (l.converted_at) { <div><dt>{{ 'web.leads.converted_at' | t }}</dt><dd>{{ date(l.converted_at) }}</dd></div> }
+          @if (l.closed_at) { <div><dt>{{ 'web.leads.closed_at' | t }}</dt><dd>{{ date(l.closed_at) }}</dd></div> }
+          @if (l.message) {
+            <div class="wide"><dt>{{ 'web.leads.message' | t }}</dt><dd class="pre">{{ l.message }}</dd></div>
+          }
+        </dl>
+      </div>
+    </div>
+
+    <!-- ===================== submitted data ===================== -->
+    <div class="card">
+      <div class="card-head">
+        <h2>{{ 'web.leads.submitted_data' | t }}</h2>
+        @if (l.form) {
+          <a class="link-btn" [routerLink]="['/dashboard/website/forms', l.form.id]">{{ l.form.name }} ({{ l.form.key }})</a>
+        }
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.leads.field' | t }}</th>
+              <th>{{ 'web.leads.value' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of dataRows(); track r.key) {
+              <tr>
+                <td class="mono text-gray key-col" dir="ltr">{{ r.key }}</td>
+                <td class="pre">{{ r.value }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="2" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (l.attachments?.length) {
+        <div class="card-body attachments">
+          <h3 class="section-title">{{ 'web.leads.attachments' | t }}</h3>
+          <ul class="files">
+            @for (a of l.attachments; track a.index) {
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                <div class="file-meta">
+                  <span class="name-cell" dir="auto">{{ a.original_name }}</span>
+                  <span class="muted">{{ a.field }} · {{ fmtSize(a.size) }}</span>
+                </div>
+                <button class="btn-secondary btn-sm" [disabled]="downloading() === a.index" (click)="download(a)">
+                  {{ (downloading() === a.index ? 'common.loading' : 'web.leads.download') | t }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+
+    <div class="two-col">
+      <!-- ===================== assignment / notes ===================== -->
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.purchases.handling' | t }}</h2></div>
+        <div class="card-body">
+          @if (metaError()) { <p class="form-error">{{ metaError()! | t }}</p> }
+          <div class="form-group">
+            <label>{{ 'web.purchases.assigned_to' | t }}</label>
+            @if (!adminsDenied()) {
+              <select [value]="assignee()" [disabled]="!canUpdate()" (change)="assignee.set($any($event.target).value)">
+                <option value="">{{ 'web.purchases.unassigned' | t }}</option>
+                @if (l.assigned_to && assigneeMissing()) {
+                  <option [value]="l.assigned_to.id" selected>{{ l.assigned_to.name }}</option>
+                }
+                @for (a of admins(); track a.id) {
+                  <option [value]="a.id" [selected]="assignee() === (a.id + '')">{{ adminLabel(a) }}</option>
+                }
+              </select>
+            } @else {
+              <input type="text" dir="ltr" inputmode="numeric" [value]="assignee()" [readOnly]="!canUpdate()"
+                     [placeholder]="'web.purchases.admin_id' | t" (input)="assignee.set($any($event.target).value)">
+              <span class="hint">
+                {{ 'web.purchases.admin_id_hint' | t }}
+                @if (l.assigned_to) { — {{ l.assigned_to.name }} (#{{ l.assigned_to.id }}) }
+              </span>
+            }
+            @if (canUpdate() && ctx.me()) {
+              <button class="link-btn self" (click)="assignToMe()">{{ 'web.purchases.assign_me' | t }}</button>
+            }
+          </div>
+          <div class="form-group spaced">
+            <label>{{ 'web.purchases.internal_notes' | t }}</label>
+            <textarea rows="5" [value]="notes()" [readOnly]="!canUpdate()" (input)="notes.set($any($event.target).value)"></textarea>
+            <span class="hint">{{ 'web.purchases.internal_notes_hint' | t }}</span>
+          </div>
+          @if (canUpdate()) {
+            <div class="foot">
+              <button class="btn-primary btn-sm" [disabled]="!dirty() || metaSaving()" (click)="saveMeta()">
+                {{ (metaSaving() ? 'common.saving' : 'common.save') | t }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ===================== origin + attribution ===================== -->
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.leads.origin' | t }}</h2></div>
+        <div class="card-body">
+          <dl class="kv">
+            <dt>{{ 'web.leads.page' | t }}</dt>
+            <dd>
+              @if (l.page) { <a class="link-btn" [routerLink]="['/dashboard/website/pages', l.page.id]">{{ l.page.title }}</a> }
+              @else { — }
+            </dd>
+            <dt>{{ 'web.leads.product' | t }}</dt>
+            <dd>
+              @if (l.product) { <a class="link-btn" [routerLink]="['/dashboard/website/products', l.product.id]">{{ l.product.name }}</a> }
+              @else { — }
+            </dd>
+            <dt>{{ 'web.leads.cta' | t }}</dt>
+            <dd dir="ltr" class="ltr-cell">
+              @if (l.cta) { <span class="mono">{{ l.cta.tracking_key || l.cta.key }}</span> } @else { — }
+            </dd>
+            @for (a of attribution(); track a.key) {
+              <dt>{{ attrLabel(a.key) }}</dt>
+              <dd dir="ltr" class="ltr-cell">{{ a.value }}</dd>
+            }
+          </dl>
+          @if (!attribution().length) {
+            <p class="muted spaced-top">{{ 'web.purchases.no_attribution' | t }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== history ===================== -->
+    <div class="card">
+      <div class="card-head"><h2>{{ 'web.purchases.history' | t }}</h2></div>
+      <div class="card-body">
+        @if (history().length) {
+          <ul class="timeline">
+            @for (h of history(); track $index) {
+              <li>
+                <div class="tl-head">
+                  @if (h.from_status) {
+                    <span [class]="'pill pill-' + h.from_status">{{ statusLabel(h.from_status) }}</span>
+                    <span class="arrow">→</span>
+                  }
+                  <span [class]="'pill pill-' + h.to_status">{{ statusLabel(h.to_status) }}</span>
+                  <span class="spacer"></span>
+                  <span class="muted">{{ actorLabel(h) }} · {{ date(h.created_at) }}</span>
+                </div>
+                @if (h.reason) { <p class="tl-reason">{{ h.reason }}</p> }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="muted">{{ 'web.purchases.no_history' | t }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

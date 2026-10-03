@@ -1,0 +1,135 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ (trashed() ? 'web.products.trash_title' : 'web.products.title') | t }}</h2>
+          <span class="pill pill-scheduled">{{ total() }}</span>
+        </div>
+        <p class="sub">{{ 'web.products.subtitle' | t }}</p>
+      </div>
+
+      <div class="actions-area">
+        <button type="button" class="btn-secondary btn-sm" [class.trash-on]="trashed()" (click)="toggleTrash()">
+          {{ (trashed() ? 'web.products.back_to_catalog' : 'web.products.view_trash') | t }}
+        </button>
+        @if (canCreate() && !trashed()) {
+          <button class="btn-primary" (click)="create()">+ {{ 'web.products.add' | t }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [placeholder]="'web.products.search' | t" (input)="onSearch($any($event.target).value)">
+      </div>
+
+      <div class="custom-select">
+        <select [value]="status()" (change)="setFilter('status', $any($event.target).value)">
+          <option value="">{{ 'web.products.all_statuses' | t }}</option>
+          @for (v of statuses(); track v) {
+            <option [value]="v" [selected]="status() === v">{{ label('product_status', v) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="custom-select">
+        <select [value]="categoryId()" (change)="setFilter('categoryId', $any($event.target).value)">
+          <option value="">{{ 'web.products.all_categories' | t }}</option>
+          @for (c of categories(); track c.id) {
+            <option [value]="c.id" [selected]="categoryId() === '' + c.id">{{ (lang() === 'ar' && c.name_ar) ? c.name_ar : c.name_en }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="search-box type-box">
+        <input type="text" dir="ltr" [placeholder]="'web.products.type_filter' | t" (input)="onType($any($event.target).value)">
+      </div>
+    </div>
+
+    @if (trashed()) {
+      <p class="notice warn trash-notice">{{ 'web.products.trash_hint' | t }}</p>
+    }
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="img-col"></th>
+              <th>{{ 'common.name' | t }}</th>
+              <th>{{ 'web.products.sku' | t }}</th>
+              <th>{{ 'web.products.category' | t }}</th>
+              <th>{{ 'common.price' | t }}</th>
+              <th>{{ 'common.availability' | t }}</th>
+              <th>{{ 'web.products.featured' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr [class.clickable]="!row.deleted_at" (click)="open(row)">
+                <td class="img-col">
+                  @if (thumb(row); as src) {
+                    <img class="thumb" [src]="src" alt="" loading="lazy">
+                  } @else {
+                    <span class="thumb thumb-empty"></span>
+                  }
+                </td>
+                <td>
+                  <div class="name-cell">{{ name(row) }}</div>
+                  @if (row.type) { <div class="muted">{{ row.type }}</div> }
+                </td>
+                <td class="mono text-gray" dir="ltr">{{ row.sku || '—' }}</td>
+                <td class="text-gray">{{ category(row) }}</td>
+                <td class="num price-cell">
+                  {{ price(row) }}
+                  @if (isPrivate(row)) {
+                    <span class="badge-private" [title]="'web.products.private_hint' | t">{{ 'web.products.private' | t }}</span>
+                  }
+                </td>
+                <td class="text-gray">{{ label('availability', row.availability, row['availability_label']) }}</td>
+                <td>
+                  @if (row.is_featured) {
+                    <span class="star" [title]="'web.products.featured' | t">★</span>
+                  } @else {
+                    <span class="text-gray">—</span>
+                  }
+                </td>
+                <td>
+                  <span class="pill pill-{{ row.status }}">{{ label('product_status', row.status, row.status_label) }}</span>
+                </td>
+                <td class="action-col" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    @if (row.deleted_at) {
+                      @if (canDelete()) {
+                        <button class="link-btn" (click)="restore(row)">{{ 'web.products.restore' | t }}</button>
+                      }
+                    } @else {
+                      <button class="link-btn" (click)="open(row)">{{ 'common.edit' | t }}</button>
+                      @if (canDelete()) {
+                        <button class="link-btn danger" (click)="remove(row)">{{ 'web.products.trash' | t }}</button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="9" class="table-hint">{{ (trashed() ? 'web.products.trash_empty' : 'common.no_data') | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>

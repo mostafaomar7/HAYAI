@@ -1,0 +1,58 @@
+/* Only what the crawlers screen adds on top of website.shared.css. */
+
+.head-row { margin-bottom: 4px; }
+.head-row .section-title { margin: 0; }
+.grow { flex: 1; min-width: 200px; margin: 0; }
+
+.paths { font-size: 12px; line-height: 1.6; text-align: start; }
+.notes-cell { max-width: 240px; font-size: 13px; }
+.ai-chip { margin-inline-start: 6px; background: #EDE9FE; color: #6D28D9; }
+.row-blocked td { background: #FEF2F2; }
+.res-chip { margin: 2px; }
+
+/* llms */
+.llms-section { border: 1px solid #F1F5F9; border-radius: 10px; margin: 14px 0; overflow: hidden; }
+.llms-section-head { padding: 10px 16px; background: #F8FAFC; }
+.llms-section-head h4 { margin: 0; font-size: 14px; font-weight: 700; color: #111827; }
+.entry-list { list-style: none; margin: 0; padding: 0; }
+.entry-list li {
+  display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
+  padding: 12px 16px; border-top: 1px solid #F1F5F9;
+}
+.entry-main { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 3px; }
+.entry-title { font-weight: 600; font-size: 14px; color: #111827; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.entry-desc { font-size: 13px; color: #4B5563; }
+.order-badge { font-size: 12px; }
+.excluded-box ul { margin: 8px 0 0; padding-inline-start: 18px; }
+.excluded-box li { margin: 4px 0; overflow-wrap: anywhere; }
+
+/* sitemap */
+.index-row { margin-bottom: 16px; }
+.index-row a, .url-line { overflow-wrap: anywhere; }
+.locale-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.locale-card { border: 1px solid #E5E7EB; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.big-num { font-size: 26px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+.big-num .muted { font-size: 13px; font-weight: 500; }
+.by-type { display: flex; flex-wrap: wrap; gap: 6px; }
+.detail-grid.small { grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 0; }
+
+/* checker */
+.checker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.checker-input {
+  flex: 1; min-width: 220px;
+  background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 8px;
+  padding: 9px 14px; font-size: 14px; font-family: inherit; outline: none;
+}
+.checker-input:focus { border-color: #3B82F6; }
+.result-box { margin-bottom: 16px; }
+.detail-grid a { color: #2563EB; overflow-wrap: anywhere; }
+
+/* the "block an AI crawler" warning must not read like any other hint */
+.ai-warning { margin: 10px 0 0; border-width: 2px; }
+.ai-warning p { margin: 6px 0 0; line-height: 1.6; }
+.block-toggle { font-weight: 700; }
+.btn-red, .btn-red:hover { background: #DC2626; }
+
+.form-group textarea.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+.form-group textarea:disabled { opacity: .55; }
+.notice a { color: inherit; font-weight: 700; margin-inline-start: 6px; }

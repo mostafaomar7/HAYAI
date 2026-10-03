@@ -1,0 +1,47 @@
+.editor-head .card-head { align-items: flex-start; }
+.head-main { min-width: 0; flex: 1 1 320px; display: flex; flex-direction: column; gap: 8px; }
+.page-title { overflow-wrap: anywhere; font-size: 20px !important; }
+.title-area { flex-wrap: wrap; }
+.meta-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.live-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.live-link { color: #2563EB; text-decoration: none; overflow-wrap: anywhere; }
+.live-link:hover { text-decoration: underline; }
+.head-actions { justify-content: flex-end; flex: 0 1 auto; }
+.publish-btn:disabled { background: #A7F3D0; cursor: not-allowed; }
+
+.live-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #047857; }
+.live-dot::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%; background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, .18);
+}
+
+.head-notices { padding: 0 24px 4px; }
+.head-notices .notice:first-child { margin-top: 16px; }
+.blockers ul { margin: 8px 0 0; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 6px; }
+.blockers li { line-height: 1.6; }
+.blockers .link-btn { margin-inline-start: 8px; }
+.raw-msg { color: #7F1D1D; opacity: .8; margin-inline-start: 4px; font-size: 12.5px; }
+.lang-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 5px;
+  background: #fff; color: #B91C1C; margin-inline-end: 6px;
+}
+
+.tab-card { margin-bottom: 16px; }
+.tabs { overflow-x: auto; flex-wrap: nowrap; }
+.tab-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #DC2626; margin-inline-start: 6px; vertical-align: middle; }
+.locale-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 24px; }
+.missing-mark { margin-inline-start: 4px; font-size: 11px; opacity: .75; }
+.dirty-note { font-size: 12px; font-weight: 600; color: #B45309; }
+
+.schedule-hint { margin: 0 0 16px; }
+.schedule-warn { margin: 16px 0 0; }
+.form-group input[type="datetime-local"] {
+  background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 8px; padding: 10px 14px;
+  font-size: 14px; font-family: inherit; width: 100%; box-sizing: border-box; color: #111827;
+}
+
+@media (max-width: 640px) {
+  .head-actions { justify-content: flex-start; }
+  .head-notices { padding: 0 16px 4px; }
+  .locale-bar { padding: 12px 16px; }
+}

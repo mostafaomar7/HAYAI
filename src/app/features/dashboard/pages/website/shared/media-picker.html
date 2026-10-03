@@ -1,0 +1,102 @@
+<div class="picker">
+  @if (multiple()) {
+    <div class="selected-list">
+      @for (m of selected(); track m.id; let i = $index; let last = $last) {
+        <div class="selected-item">
+          @if (thumb(m); as src) {
+            <img [src]="src" [alt]="m.alt || ''">
+          } @else {
+            <span class="file-badge">{{ m.extension || m.kind }}</span>
+          }
+          <div class="sel-actions">
+            <button type="button" class="icon-btn" [disabled]="i === 0 || disabled()" (click)="move(m.id, -1)" [title]="'web.common.move_up' | t">↑</button>
+            <button type="button" class="icon-btn" [disabled]="last || disabled()" (click)="move(m.id, 1)" [title]="'web.common.move_down' | t">↓</button>
+            <button type="button" class="icon-btn danger" [disabled]="disabled()" (click)="clear(m.id)" [title]="'common.remove' | t">×</button>
+          </div>
+          @if (!m.alt) { <span class="alt-warn">{{ 'web.media.no_alt' | t }}</span> }
+        </div>
+      }
+      <button type="button" class="add-tile" [disabled]="disabled()" (click)="openDialog()">+ {{ 'web.media.choose' | t }}</button>
+    </div>
+  } @else {
+    <div class="single">
+      @if (selected()[0]; as m) {
+        @if (thumb(m); as src) {
+          <img class="single-thumb" [src]="src" [alt]="m.alt || ''">
+        } @else {
+          <span class="file-badge">{{ m.extension || m.kind }}</span>
+        }
+        <div class="single-meta">
+          <span class="name">{{ m.original_name || m.filename || ('#' + m.id) }}</span>
+          @if (!m.alt && m.kind === 'image') { <span class="alt-warn">{{ 'web.media.no_alt' | t }}</span> }
+        </div>
+        <button type="button" class="link-btn" [disabled]="disabled()" (click)="openDialog()">{{ 'web.media.change' | t }}</button>
+        <button type="button" class="link-btn danger" [disabled]="disabled()" (click)="clear()">{{ 'common.remove' | t }}</button>
+      } @else if (value()) {
+        <span class="muted">#{{ value() }}</span>
+        <button type="button" class="link-btn" [disabled]="disabled()" (click)="openDialog()">{{ 'web.media.change' | t }}</button>
+      } @else {
+        <button type="button" class="btn-secondary btn-sm" [disabled]="disabled()" (click)="openDialog()">{{ 'web.media.choose' | t }}</button>
+      }
+    </div>
+  }
+</div>
+
+@if (open()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ 'web.media.library' | t }}</h3>
+        <button type="button" class="modal-close" (click)="close()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="row lib-toolbar">
+          <div class="search-box">
+            <input type="text" [placeholder]="'common.search_placeholder' | t" (input)="onSearch($any($event.target).value)">
+          </div>
+          @if (canUpload()) {
+            <input class="alt-input" type="text" [placeholder]="'web.media.alt_en' | t" [value]="altEn()" (input)="altEn.set($any($event.target).value)">
+            <input class="alt-input" type="text" [placeholder]="'web.media.alt_ar' | t" dir="rtl" [value]="altAr()" (input)="altAr.set($any($event.target).value)">
+            <label class="btn-primary btn-sm upload-btn">
+              {{ (uploading() ? 'web.media.uploading' : 'web.media.upload') | t }}
+              <input type="file" hidden [disabled]="uploading()" (change)="upload($event)"
+                     accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.mp4,.webm">
+            </label>
+          }
+        </div>
+
+        @if (loading()) {
+          <p class="table-hint">{{ 'common.loading' | t }}</p>
+        } @else {
+          <div class="lib-grid">
+            @for (m of library(); track m.id) {
+              <button type="button" class="lib-item" [class.on]="isSelected(m)" (click)="choose(m)">
+                @if (thumb(m); as src) {
+                  <img [src]="src" [alt]="m.alt || ''" loading="lazy">
+                } @else {
+                  <span class="file-badge big">{{ m.extension || m.kind }}</span>
+                }
+                <span class="lib-name">{{ m.original_name || m.filename }}</span>
+                @if (!m.alt && m.kind === 'image') { <span class="alt-warn">{{ 'web.media.no_alt' | t }}</span> }
+              </button>
+            } @empty {
+              <p class="table-hint">{{ 'web.media.empty' | t }}</p>
+            }
+          </div>
+          @if (lastPage() > 1) {
+            <div class="row lib-pager">
+              <button type="button" class="btn-secondary btn-sm" [disabled]="page() <= 1" (click)="goPage(-1)">{{ 'common.prev' | t }}</button>
+              <span class="muted">{{ page() }} / {{ lastPage() }}</span>
+              <button type="button" class="btn-secondary btn-sm" [disabled]="page() >= lastPage()" (click)="goPage(1)">{{ 'common.next' | t }}</button>
+            </div>
+          }
+        }
+      </div>
+      @if (multiple()) {
+        <div class="modal-foot">
+          <button type="button" class="btn-primary" (click)="close()">{{ 'common.done' | t }}</button>
+        </div>
+      }
+    </div>
+  </div>
+}

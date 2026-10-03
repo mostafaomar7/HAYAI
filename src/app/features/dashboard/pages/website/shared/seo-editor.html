@@ -1,0 +1,140 @@
+@if (loading()) {
+  <p class="table-hint">{{ 'common.loading' | t }}</p>
+} @else {
+  <div class="panel">
+    @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
+
+    <h4 class="sub-title">{{ 'web.seo.search_result' | t }}</h4>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>{{ 'web.seo.meta_title' | t }}</label>
+        <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+               [value]="model().meta_title ?? ''" (input)="text('meta_title', $any($event.target).value)"
+               [placeholder]="fallbackTitle() ? fallbackTitle() + ' | HAYAI' : ''">
+        <span class="word-count" [class.ok]="titleOk()" [class.bad]="!titleOk()">
+          {{ 'web.seo.chars' | t: { n: titleLen(), min: titleRange[0], max: titleRange[1] } }}
+        </span>
+        <span class="hint">{{ 'web.seo.meta_title_hint' | t }}</span>
+        @if (errors()['meta_title']) { <span class="field-error">{{ errors()['meta_title'] }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.seo.meta_description' | t }}</label>
+        <textarea rows="3" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                  [value]="model().meta_description ?? ''" (input)="text('meta_description', $any($event.target).value)"></textarea>
+        <span class="word-count" [class.ok]="descOk()" [class.bad]="!descOk()">
+          {{ 'web.seo.chars' | t: { n: descLen(), min: descRange[0], max: descRange[1] } }}
+        </span>
+        <span class="hint">{{ 'web.seo.meta_description_hint' | t }}</span>
+        @if (errors()['meta_description']) { <span class="field-error">{{ errors()['meta_description'] }}</span> }
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'web.seo.focus_topic' | t }}</label>
+        <input type="text" [disabled]="!canEdit()" [value]="model().focus_topic ?? ''"
+               (input)="text('focus_topic', $any($event.target).value)">
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'web.seo.canonical' | t }}</label>
+        <input type="text" dir="ltr" [disabled]="!canEdit()" [value]="model().canonical_url ?? ''"
+               (input)="text('canonical_url', $any($event.target).value)" placeholder="https://hayaihealthcare.com/…">
+        <span class="hint">{{ 'web.seo.canonical_hint' | t }}</span>
+        @if (errors()['canonical_url']) { <span class="field-error">{{ errors()['canonical_url'] }}</span> }
+      </div>
+    </div>
+
+    <h4 class="sub-title">{{ 'web.seo.indexing' | t }}</h4>
+    <div class="row">
+      <label class="checkbox">
+        <input type="checkbox" [disabled]="!canEdit()" [checked]="model().robots_index !== false"
+               (change)="set('robots_index', $any($event.target).checked)">
+        {{ 'web.seo.robots_index' | t }}
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" [disabled]="!canEdit()" [checked]="model().robots_follow !== false"
+               (change)="set('robots_follow', $any($event.target).checked)">
+        {{ 'web.seo.robots_follow' | t }}
+      </label>
+    </div>
+    @if (model().robots_index === false) {
+      <p class="notice warn">{{ 'web.seo.noindex_warning' | t }}</p>
+    }
+    <div class="form-grid">
+      <div class="form-group">
+        <label>{{ 'web.seo.robots_extra' | t }}</label>
+        <input type="text" dir="ltr" [disabled]="!canEdit()" [value]="model().robots_extra ?? ''"
+               (input)="text('robots_extra', $any($event.target).value)" placeholder="max-snippet:-1">
+      </div>
+    </div>
+
+    <h4 class="sub-title">{{ 'web.seo.social' | t }}</h4>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>{{ 'web.seo.og_title' | t }}</label>
+        <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+               [value]="model().og_title ?? ''" (input)="text('og_title', $any($event.target).value)">
+      </div>
+      <div class="form-group">
+        <label>{{ 'web.seo.og_type' | t }}</label>
+        <select [disabled]="!canEdit()" [value]="model().og_type ?? 'website'" (change)="set('og_type', $any($event.target).value)">
+          <option value="website">website</option>
+          <option value="article">article</option>
+          <option value="product">product</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.seo.og_description' | t }}</label>
+        <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                  [value]="model().og_description ?? ''" (input)="text('og_description', $any($event.target).value)"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.seo.og_image' | t }}</label>
+        <app-media-picker [value]="model().og_image_media_id" [disabled]="!canEdit()"
+                          (valueChange)="set('og_image_media_id', $event)" />
+        <span class="hint">{{ 'web.seo.og_image_hint' | t }}</span>
+      </div>
+      <div class="form-group">
+        <label>{{ 'web.seo.twitter_card' | t }}</label>
+        <select [disabled]="!canEdit()" [value]="model().twitter_card ?? 'summary_large_image'"
+                (change)="set('twitter_card', $any($event.target).value)">
+          <option value="summary_large_image">summary_large_image</option>
+          <option value="summary">summary</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>{{ 'web.seo.twitter_title' | t }}</label>
+        <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+               [value]="model().twitter_title ?? ''" (input)="text('twitter_title', $any($event.target).value)">
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.seo.twitter_description' | t }}</label>
+        <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [disabled]="!canEdit()"
+                  [value]="model().twitter_description ?? ''" (input)="text('twitter_description', $any($event.target).value)"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>{{ 'web.seo.twitter_image' | t }}</label>
+        <app-media-picker [value]="model().twitter_image_media_id" [disabled]="!canEdit()"
+                          (valueChange)="set('twitter_image_media_id', $event)" />
+      </div>
+    </div>
+
+    <h4 class="sub-title">{{ 'web.seo.custom_schema' | t }}</h4>
+    <div class="form-group full">
+      <textarea class="mono" rows="8" dir="ltr" [disabled]="!canEdit()" [value]="schemaText()"
+                (input)="setSchema($any($event.target).value)"
+                placeholder='{ "@type": "MedicalWebPage", "specialty": "Dermatology" }'></textarea>
+      <span class="hint">{{ 'web.seo.custom_schema_hint' | t }}</span>
+      @if (errors()['custom_schema']) { <span class="field-error">{{ errors()['custom_schema'] | t }}</span> }
+    </div>
+
+    @if (canEdit()) {
+      <div class="panel-foot">
+        @if (dirty()) { <span class="muted">{{ 'web.common.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+          {{ (saving() ? 'common.saving' : 'web.seo.save') | t }}
+        </button>
+      </div>
+    }
+  </div>
+}

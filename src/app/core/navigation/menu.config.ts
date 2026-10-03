@@ -82,4 +82,35 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'GroupOrderCompanies', label: 'menu.group_orders.companies', route: '/dashboard/group-orders/shipping-companies' },
     ]
   },
+  // Website CMS (the public site at hayaihealthcare.com). Each entry carries the granular
+  // permission its screen needs; the sidebar hides what the admin cannot open.
+  {
+    id: 'Website', label: 'menu.website', iconName: 'website', route: '', roles: ['admin'], hasDropdown: true,
+    children: [
+      { id: 'WebOverview', label: 'menu.website.overview', route: '/dashboard/website', permission: 'cms.view' },
+      { id: 'WebPages', label: 'menu.website.pages', route: '/dashboard/website/pages', permission: 'cms.view' },
+      { id: 'WebArticles', label: 'menu.website.articles', route: '/dashboard/website/articles', permission: 'cms.view' },
+      { id: 'WebProducts', label: 'menu.website.products', route: '/dashboard/website/products', permission: 'products.view' },
+      { id: 'WebCategories', label: 'menu.website.categories', route: '/dashboard/website/categories', permission: 'cms.view' },
+      { id: 'WebCtas', label: 'menu.website.ctas', route: '/dashboard/website/ctas', permission: 'cms.view' },
+      { id: 'WebForms', label: 'menu.website.forms', route: '/dashboard/website/forms', permission: 'cms.view' },
+      { id: 'WebFaqs', label: 'menu.website.faqs', route: '/dashboard/website/faqs', permission: 'cms.view' },
+      { id: 'WebAuthors', label: 'menu.website.authors', route: '/dashboard/website/authors', permission: 'cms.view' },
+      { id: 'WebMedia', label: 'menu.website.media', route: '/dashboard/website/media', permission: 'media.view' },
+      { id: 'WebMenus', label: 'menu.website.menus', route: '/dashboard/website/menus', permission: 'cms.view' },
+    ]
+  },
+  {
+    id: 'WebsiteGrowth', label: 'menu.website_growth', iconName: 'growth', route: '', roles: ['admin'], hasDropdown: true,
+    children: [
+      { id: 'WebPurchases', label: 'menu.website.purchases', route: '/dashboard/website/purchases', permission: 'orders.view' },
+      { id: 'WebLeads', label: 'menu.website.leads', route: '/dashboard/website/leads', permission: 'leads.view' },
+      { id: 'WebAnalytics', label: 'menu.website.analytics', route: '/dashboard/website/analytics', permission: 'analytics.view' },
+      { id: 'WebCrawlers', label: 'menu.website.crawlers', route: '/dashboard/website/crawlers', permission: 'seo.view' },
+      { id: 'WebRedirects', label: 'menu.website.redirects', route: '/dashboard/website/redirects', permission: 'redirects.view' },
+      { id: 'WebSettings', label: 'menu.website.settings', route: '/dashboard/website/settings', permission: 'settings.view' },
+      { id: 'WebAudit', label: 'menu.website.audit', route: '/dashboard/website/audit', permission: 'audit.view' },
+      { id: 'WebRoles', label: 'menu.website.roles', route: '/dashboard/website/roles', permission: 'roles.manage' },
+    ]
+  },
 ];

@@ -1,0 +1,149 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'web.leads.title' | t }}</h2>
+        <span class="pill pill-submitted">{{ total() }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'web.leads.search' | t" (input)="onSearch($any($event.target).value)">
+        </div>
+        <button class="btn-secondary" (click)="filtersOpen.set(!filtersOpen())">
+          {{ 'common.filter' | t }}
+          @if (activeFilters()) { <span class="badge">{{ activeFilters() }}</span> }
+        </button>
+        <button class="btn-secondary" [disabled]="exporting()" (click)="exportCsv()">
+          {{ (exporting() ? 'web.leads.exporting' : 'web.leads.export_csv') | t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      @for (s of tabs(); track s) {
+        <button class="tab" [class.active]="status() === s" [class.spam-tab]="s === 'spam'" (click)="setStatus(s)">
+          {{ tabLabel(s) }}
+          @if (count(s) !== null) { <span class="count">{{ count(s) }}</span> }
+        </button>
+      }
+    </div>
+
+    @if (filtersOpen()) {
+      <div class="filters">
+        <div class="custom-select">
+          <select [value]="type()" (change)="setFilter('type', $any($event.target).value)">
+            <option value="">{{ 'web.leads.any_type' | t }}</option>
+            @for (ty of types(); track ty) {
+              <option [value]="ty" [selected]="type() === ty">{{ typeLabel(ty) }}</option>
+            }
+          </select>
+        </div>
+        <div class="custom-select">
+          <select [value]="formId()" (change)="setFilter('formId', $any($event.target).value)">
+            <option value="">{{ 'web.leads.any_form' | t }}</option>
+            @for (f of forms(); track f.id) {
+              <option [value]="f.id" [selected]="formId() === (f.id + '')">{{ formName(f) }}</option>
+            }
+          </select>
+        </div>
+        <div class="custom-select">
+          <select [value]="locale()" (change)="setFilter('locale', $any($event.target).value)">
+            <option value="">{{ 'web.leads.any_language' | t }}</option>
+            @for (l of locales(); track l.code) {
+              <option [value]="l.code" [selected]="locale() === l.code">{{ l.native || l.name }}</option>
+            }
+          </select>
+        </div>
+        <input class="text-filter" type="text" dir="ltr" [value]="utmSource()"
+               [placeholder]="'web.purchases.attr.utm_source' | t" (input)="onUtm('utmSource', $any($event.target).value)">
+        <input class="text-filter" type="text" dir="ltr" [value]="utmCampaign()"
+               [placeholder]="'web.purchases.attr.utm_campaign' | t" (input)="onUtm('utmCampaign', $any($event.target).value)">
+        <label class="filter">
+          <span>{{ 'common.from' | t }}</span>
+          <input type="date" [value]="from()" (change)="setFilter('from', $any($event.target).value)">
+        </label>
+        <label class="filter">
+          <span>{{ 'common.to' | t }}</span>
+          <input type="date" [value]="to()" (change)="setFilter('to', $any($event.target).value)">
+        </label>
+        @if (activeFilters()) {
+          <button class="link-btn" (click)="clearFilters()">{{ 'common.reset' | t }}</button>
+        }
+      </div>
+    }
+
+    @if (status() === 'spam') {
+      <p class="notice warn inset">{{ 'web.leads.spam_hint' | t }}</p>
+    }
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.leads.reference' | t }}</th>
+              <th>{{ 'common.type' | t }}</th>
+              <th>{{ 'web.leads.who' | t }}</th>
+              <th>{{ 'web.leads.contact' | t }}</th>
+              <th>{{ 'common.source' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'common.created_at' | t }}</th>
+              @if (ctx.can('leads.delete')) { <th class="action-col"></th> }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="open(row)">
+                <td class="name-cell mono" dir="ltr">{{ row.reference }}</td>
+                <td>
+                  <div>{{ typeLabel(row.type, row.type_label) }}</div>
+                  @if (row.form) { <div class="muted">{{ row.form.name }}</div> }
+                </td>
+                <td>
+                  <div class="name-cell">{{ row.name || '—' }}</div>
+                  @if (row.organization || row.hospital) {
+                    <div class="muted">{{ row.organization || row.hospital }}</div>
+                  }
+                </td>
+                <td>
+                  @if (row.email) { <div dir="ltr" class="ltr-cell">{{ row.email }}</div> }
+                  @if (row.phone) { <div dir="ltr" class="ltr-cell muted">{{ row.phone }}</div> }
+                  @if (!row.email && !row.phone) { — }
+                </td>
+                <td>
+                  @if (row.attribution?.utm_source || row.attribution?.utm_campaign) {
+                    <div dir="ltr" class="ltr-cell">{{ row.attribution?.utm_source || '—' }}</div>
+                    @if (row.attribution?.utm_campaign) {
+                      <div dir="ltr" class="ltr-cell muted">{{ row.attribution?.utm_campaign }}</div>
+                    }
+                  } @else {
+                    <span class="muted">{{ 'web.leads.direct' | t }}</span>
+                  }
+                </td>
+                <td><span [class]="'pill pill-' + row.status">{{ statusLabel(row) }}</span></td>
+                <td class="text-gray nowrap">{{ date(row.created_at) }}</td>
+                @if (ctx.can('leads.delete')) {
+                  <td class="action-col">
+                    <button class="link-btn danger" (click)="remove(row, $event)">{{ 'common.delete' | t }}</button>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr><td [attr.colspan]="ctx.can('leads.delete') ? 8 : 7" class="table-hint">{{ 'web.leads.empty' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>

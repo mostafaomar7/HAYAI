@@ -1,0 +1,19 @@
+.start { text-align: start; }
+
+.person { display: flex; align-items: center; gap: 12px; }
+.person-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #F1F5F9; flex-shrink: 0; }
+.avatar.initials {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #E0E7FF; color: #3730A3; font-weight: 700; font-size: 15px; text-transform: uppercase;
+}
+
+.sub-section { border-top: 1px solid #F1F5F9; margin-top: 20px; padding-top: 18px; }
+.head-row { margin-bottom: 14px; }
+.section-title.no-margin { margin: 0; }
+.err-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: #DC2626; margin-inline-start: 6px; vertical-align: middle;
+}
+.soft-warn { font-size: 12px; color: #B45309; margin-top: 6px; }
+.form-group .checkbox { font-weight: 400; margin-bottom: 0; }

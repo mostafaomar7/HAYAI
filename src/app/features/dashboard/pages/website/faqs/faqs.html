@@ -1,0 +1,196 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ 'web.faqs.title' | t }}</h2>
+          <span class="pill pill-scheduled">{{ total() }}</span>
+        </div>
+        <p class="sub">{{ 'web.faqs.subtitle' | t }}</p>
+      </div>
+      @if (canCreate()) {
+        <button class="btn-primary" (click)="create()">+ {{ 'web.faqs.add' | t }}</button>
+      }
+    </div>
+
+    <div class="filters">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [placeholder]="'web.faqs.search' | t" (input)="onSearch($any($event.target).value)">
+      </div>
+
+      <div class="custom-select">
+        <select [value]="locale()" (change)="setFilter('locale', $any($event.target).value)">
+          <option value="">{{ 'web.faqs.all_languages' | t }}</option>
+          @for (l of locales(); track l.code) {
+            <option [value]="l.code" [selected]="locale() === l.code">{{ l.native }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="custom-select">
+        <select [value]="status()" (change)="setFilter('status', $any($event.target).value)">
+          <option value="">{{ 'web.faqs.all_statuses' | t }}</option>
+          @for (s of statuses; track s) {
+            <option [value]="s" [selected]="status() === s">{{ ('web.faqs.status_' + s) | t }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="custom-select">
+        <select [value]="global()" (change)="setFilter('global', $any($event.target).value)">
+          <option value="">{{ 'web.faqs.global_any' | t }}</option>
+          <option value="1" [selected]="global() === '1'">{{ 'web.faqs.global_only' | t }}</option>
+          <option value="0" [selected]="global() === '0'">{{ 'web.faqs.not_global' | t }}</option>
+        </select>
+      </div>
+
+      <div class="search-box group-box">
+        <input type="text" dir="ltr" [placeholder]="'web.faqs.group_key' | t" (input)="onGroup($any($event.target).value)">
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.faqs.question' | t }}</th>
+              <th>{{ 'web.faqs.language' | t }}</th>
+              <th>{{ 'web.faqs.group' | t }}</th>
+              <th>{{ 'web.faqs.global' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'web.faqs.used_by' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="edit(row)">
+                <td class="q-cell" [attr.dir]="row.locale === 'ar' ? 'rtl' : 'ltr'">
+                  <span class="name-cell">{{ row.question }}</span>
+                  <span class="answer-snippet">{{ plain(row.answer) }}</span>
+                </td>
+                <td><span class="chip">{{ row.locale | uppercase }}</span></td>
+                <td class="mono text-gray" dir="ltr">{{ row.group_key || '—' }}</td>
+                <td>{{ (row.is_global ? 'common.yes' : 'common.no') | t }}</td>
+                <td><span [class]="'pill pill-' + row.status">{{ statusLabel(row) }}</span></td>
+                <td class="text-gray used-cell">
+                  {{ 'web.faqs.used_counts' | t: { pages: usedCount(row.used_by_pages), products: usedCount(row.used_by_products) } }}
+                </td>
+                <td class="action-col" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="edit(row)">{{ (canUpdate() ? 'common.edit' : 'common.view') | t }}</button>
+                    @if (canDelete()) {
+                      <button class="link-btn danger" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+@if (open()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'web.faqs.edit_title' : 'web.faqs.new_title') | t }}</h3>
+        <button type="button" class="modal-close" (click)="close()">×</button>
+      </div>
+
+      <div class="modal-body">
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'web.faqs.language' | t }} <span class="req">*</span></label>
+            <select [value]="draft().locale" (change)="set('locale', $any($event.target).value)">
+              @for (l of locales(); track l.code) {
+                <option [value]="l.code" [selected]="draft().locale === l.code">{{ l.native }}</option>
+              }
+            </select>
+            <span class="hint">{{ 'web.faqs.language_hint' | t }}</span>
+            @if (errorFor('locale')) { <span class="field-error">{{ errorFor('locale')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'common.status' | t }}</label>
+            <select [value]="draft().status" (change)="set('status', $any($event.target).value)">
+              @for (s of statuses; track s) {
+                <option [value]="s" [selected]="draft().status === s">{{ ('web.faqs.status_' + s) | t }}</option>
+              }
+            </select>
+            <span class="hint">{{ 'web.faqs.status_hint' | t }}</span>
+            @if (errorFor('status')) { <span class="field-error">{{ errorFor('status')! | t }}</span> }
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'web.faqs.question' | t }} <span class="req">*</span></label>
+            <input type="text" [attr.dir]="draftDir()" [value]="draft().question" (input)="set('question', $any($event.target).value)">
+            @if (errorFor('question')) { <span class="field-error">{{ errorFor('question')! | t }}</span> }
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'web.faqs.answer' | t }} <span class="req">*</span></label>
+            <textarea rows="7" [attr.dir]="draftDir()" [value]="draft().answer" (input)="set('answer', $any($event.target).value)"></textarea>
+            <span class="hint">{{ 'web.faqs.answer_hint' | t }}</span>
+            @if (errorFor('answer')) { <span class="field-error">{{ errorFor('answer')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.faqs.group_key' | t }}</label>
+            <input type="text" dir="ltr" [value]="draft().group_key" (input)="set('group_key', $any($event.target).value)"
+                   placeholder="billing">
+            <span class="hint">{{ 'web.faqs.group_hint' | t }}</span>
+            @if (errorFor('group_key')) { <span class="field-error">{{ errorFor('group_key')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.faqs.sort_order' | t }}</label>
+            <input type="number" dir="ltr" [value]="draft().sort_order" (input)="set('sort_order', $any($event.target).value)">
+            @if (errorFor('sort_order')) { <span class="field-error">{{ errorFor('sort_order')! | t }}</span> }
+          </div>
+
+          <div class="form-group full">
+            <label class="checkbox">
+              <input type="checkbox" [checked]="draft().is_global" (change)="set('is_global', $any($event.target).checked)">
+              {{ 'web.faqs.is_global' | t }}
+            </label>
+            <span class="hint">{{ 'web.faqs.global_hint' | t }}</span>
+          </div>
+        </div>
+
+        @if (editing(); as e) {
+          <p class="muted used-note">
+            {{ 'web.faqs.used_counts' | t: { pages: usedCount(e.used_by_pages), products: usedCount(e.used_by_products) } }}
+            — {{ 'web.faqs.edit_everywhere' | t }}
+          </p>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+        @if (canSave()) {
+          <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+            {{ (saving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

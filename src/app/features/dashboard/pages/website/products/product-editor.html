@@ -1,0 +1,787 @@
+<div class="page-container">
+
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'web.products.back' | t }}
+  </button>
+
+  @if (loading() && !product()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card">
+      <p class="table-hint">{{ loadError()! | t }}</p>
+      <div class="card-body"><button class="btn-secondary btn-sm" (click)="load()">{{ 'web.products.retry' | t }}</button></div>
+    </div>
+  } @else {
+
+  <!-- ============================ header ============================ -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ isNew() ? ('web.products.new_title' | t) : (title() || ('web.products.untitled' | t)) }}</h2>
+          @if (product(); as p) {
+            <span class="pill pill-{{ p.status }}">{{ label('product_status', p.status, p.status_label) }}</span>
+          }
+          @if (!isNew() && dirty()) {
+            <span class="chip unsaved">{{ 'web.products.unsaved' | t }}</span>
+          }
+        </div>
+        <p class="sub">
+          @if (product(); as p) {
+            <span class="mono" dir="ltr">#{{ p.id }}@if (p.sku) { · {{ p.sku }} }</span>
+            · {{ 'web.products.live_edit_hint' | t }}
+          } @else {
+            {{ 'web.products.new_hint' | t }}
+          }
+        </p>
+      </div>
+      <div class="actions-area">
+        @if (canEdit()) {
+          <button class="btn-primary" [disabled]="saving() || (!isNew() && !dirty())" (click)="save()">
+            {{ (saving() ? 'common.saving' : (isNew() ? 'web.products.create' : 'common.save')) | t }}
+          </button>
+        } @else {
+          <span class="chip">{{ 'web.products.read_only' | t }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="tabs">
+      @for (t of ['general', 'pricing', 'content']; track t) {
+        <button type="button" class="tab" [class.active]="tab() === t" (click)="openTab($any(t))">
+          {{ 'web.products.tab_' + t | t }}
+          @if (tabHasError($any(t))) { <span class="err-dot"></span> }
+        </button>
+      }
+      @for (t of ['seo', 'geo', 'relations', 'versions', 'preview']; track t) {
+        <button type="button" class="tab" [class.active]="tab() === t" (click)="openTab($any(t))">
+          {{ 'web.products.tab_' + t | t }}
+          @if (tabHasError($any(t))) { <span class="err-dot"></span> }
+        </button>
+      }
+    </div>
+
+    @if (formError() && ['general', 'pricing', 'content'].includes(tab())) {
+      <div class="card-body no-bottom">
+        <div class="form-error">
+          {{ formError()! | t }}
+          @if (otherErrors().length) {
+            <ul class="err-list">
+              @for (e of otherErrors(); track e.key) { <li><span class="mono" dir="ltr">{{ e.key }}</span>: {{ e.msg | t }}</li> }
+            </ul>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ============================ general ============================ -->
+    @if (tab() === 'general') {
+      <fieldset class="plain card-body" [disabled]="!canEdit()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'common.type' | t }} <span class="req">*</span></label>
+            <input type="text" dir="ltr" [value]="general().type" (input)="setG('type', $any($event.target).value)" placeholder="service">
+            <span class="hint">{{ 'web.products.type_hint' | t }}</span>
+            @if (errorFor('type')) { <span class="field-error">{{ errorFor('type')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.products.sku' | t }}</label>
+            <input type="text" dir="ltr" [value]="general().sku" (input)="setG('sku', $any($event.target).value)" placeholder="HAYAI-CARE-001">
+            @if (errorFor('sku')) { <span class="field-error">{{ errorFor('sku')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'common.status' | t }}</label>
+            <select [value]="general().status" (change)="setG('status', $any($event.target).value)">
+              @for (v of statuses(); track v) {
+                <option [value]="v" [selected]="general().status === v">{{ label('product_status', v) }}</option>
+              }
+            </select>
+            <span class="hint">{{ 'web.products.status_hint' | t }}</span>
+            @if (errorFor('status')) { <span class="field-error">{{ errorFor('status')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.products.category' | t }}</label>
+            <select [value]="general().category_id" (change)="setG('category_id', $any($event.target).value)">
+              <option value="">{{ 'web.products.no_category' | t }}</option>
+              @for (c of categories(); track c.id) {
+                <option [value]="c.id" [selected]="general().category_id === '' + c.id">
+                  {{ (lang() === 'ar' && c.name_ar) ? c.name_ar : c.name_en }}@if (c.is_active === false) { ({{ 'common.inactive' | t }}) }
+                </option>
+              }
+            </select>
+            @if (errorFor('category_id')) { <span class="field-error">{{ errorFor('category_id')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'common.availability' | t }} <span class="req">*</span></label>
+            <select [value]="general().availability" (change)="setG('availability', $any($event.target).value)">
+              <option value="">—</option>
+              @for (v of availabilities(); track v) {
+                <option [value]="v" [selected]="general().availability === v">{{ label('availability', v) }}</option>
+              }
+            </select>
+            @if (errorFor('availability')) { <span class="field-error">{{ errorFor('availability')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.products.sort_order' | t }}</label>
+            <input type="number" step="1" [value]="general().sort_order" (input)="setG('sort_order', $any($event.target).value)">
+            <span class="hint">{{ 'web.products.sort_order_hint' | t }}</span>
+            @if (errorFor('sort_order')) { <span class="field-error">{{ errorFor('sort_order')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.products.min_quantity' | t }}</label>
+            <input type="number" min="1" [max]="maxPerOrder" step="1" [value]="general().min_quantity" (input)="setG('min_quantity', $any($event.target).value)">
+            @if (errorFor('min_quantity')) { <span class="field-error">{{ errorFor('min_quantity')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.products.max_quantity' | t }}</label>
+            <input type="number" min="1" [max]="maxPerOrder" step="1" [value]="general().max_quantity" (input)="setG('max_quantity', $any($event.target).value)">
+            <span class="hint">{{ 'web.products.max_quantity_hint' | t: { max: maxPerOrder } }}</span>
+            @if (errorFor('max_quantity')) { <span class="field-error">{{ errorFor('max_quantity')! | t: { max: maxPerOrder } }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.products.subscription_plan_id' | t }}</label>
+            <input type="number" min="1" step="1" [value]="general().subscription_plan_id" (input)="setG('subscription_plan_id', $any($event.target).value)">
+            <span class="hint">{{ 'web.products.subscription_plan_hint' | t }}</span>
+            @if (errorFor('subscription_plan_id')) { <span class="field-error">{{ errorFor('subscription_plan_id')! | t }}</span> }
+          </div>
+
+          <div class="form-group full">
+            <div class="row toggles">
+              <label class="checkbox">
+                <input type="checkbox" [checked]="general().is_featured" (change)="setG('is_featured', $any($event.target).checked)">
+                {{ 'web.products.is_featured' | t }}
+              </label>
+              <label class="checkbox">
+                <input type="checkbox" [checked]="general().is_purchasable" (change)="setG('is_purchasable', $any($event.target).checked)">
+                {{ 'web.products.is_purchasable' | t }}
+              </label>
+            </div>
+            <span class="hint">{{ 'web.products.is_purchasable_hint' | t }}</span>
+          </div>
+        </div>
+
+        @if (general().subscription_plan_id.trim()) {
+          <p class="notice warn top-gap">{{ 'web.products.plan_not_activated' | t }}</p>
+        }
+
+        <div class="sub-section">
+          <h3 class="section-title">{{ 'web.products.images' | t }}</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'web.products.featured_image' | t }}</label>
+              <app-media-picker [value]="general().featured_media_id" [disabled]="!canEdit()"
+                                (valueChange)="setG('featured_media_id', $event)" />
+              @if (errorFor('featured_media_id')) { <span class="field-error">{{ errorFor('featured_media_id')! | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.products.gallery' | t }}</label>
+              <app-media-picker [multiple]="true" [values]="gallery()" [disabled]="!canEdit()"
+                                (valuesChange)="gallery.set($event)" />
+              <span class="hint">{{ 'web.products.gallery_hint' | t }}</span>
+              @if (errorFor('gallery')) { <span class="field-error">{{ errorFor('gallery')! | t }}</span> }
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    }
+
+    <!-- ============================ pricing ============================ -->
+    @if (tab() === 'pricing') {
+      <div class="card-body pricing-layout">
+        <fieldset class="plain" [disabled]="!canEdit()">
+          <div class="notice info price-rules">
+            <strong>{{ 'web.products.price_rules_title' | t }}</strong>
+            <ul>
+              <li>{{ 'web.products.price_rule_private' | t }}</li>
+              <li>{{ 'web.products.price_rule_contact' | t }}</li>
+              <li>{{ 'web.products.price_rule_live' | t }}</li>
+              <li>{{ 'web.products.price_rule_audit' | t }}</li>
+            </ul>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'web.products.pricing_type' | t }} <span class="req">*</span></label>
+              <select [value]="general().pricing_type" (change)="setG('pricing_type', $any($event.target).value)">
+                <option value="">—</option>
+                @for (v of pricingTypes(); track v) {
+                  <option [value]="v" [selected]="general().pricing_type === v">{{ label('pricing_type', v) }}</option>
+                }
+              </select>
+              @if (errorFor('pricing_type')) { <span class="field-error">{{ errorFor('pricing_type')! | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'common.currency' | t }}</label>
+              <input type="text" dir="ltr" maxlength="3" [value]="general().currency" (input)="setG('currency', $any($event.target).value)" placeholder="EGP">
+              @if (errorFor('currency')) { <span class="field-error">{{ errorFor('currency')! | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'common.price' | t }}</label>
+              <input type="number" min="0" step="0.01" [value]="general().price" (input)="setG('price', $any($event.target).value)">
+              @if (general().pricing_type && !priceShown()) {
+                <span class="hint">{{ 'web.products.price_not_shown' | t }}</span>
+              }
+              @if (errorFor('price')) { <span class="field-error">{{ errorFor('price')! | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'web.products.compare_at_price' | t }}</label>
+              <input type="number" min="0" step="0.01" [value]="general().compare_at_price" (input)="setG('compare_at_price', $any($event.target).value)">
+              <span class="hint">{{ 'web.products.compare_at_hint' | t }}</span>
+              @if (errorFor('compare_at_price')) { <span class="field-error">{{ errorFor('compare_at_price')! | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'web.products.billing_period' | t }}</label>
+              <select [value]="general().billing_period" (change)="setG('billing_period', $any($event.target).value)">
+                <option value="">—</option>
+                @for (v of billingPeriods(); track v) {
+                  <option [value]="v" [selected]="general().billing_period === v">{{ label('billing_period', v) }}</option>
+                }
+              </select>
+              @if (errorFor('billing_period')) { <span class="field-error">{{ errorFor('billing_period')! | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'web.products.visibility' | t }}</label>
+              <label class="checkbox boxed">
+                <input type="checkbox" [checked]="general().is_price_public" (change)="setG('is_price_public', $any($event.target).checked)">
+                {{ 'web.products.is_price_public' | t }}
+              </label>
+              <span class="hint" [class.ok-text]="priceShown()">
+                {{ (priceShown() ? 'web.products.price_is_public' : 'web.products.price_is_private') | t }}
+              </span>
+            </div>
+          </div>
+
+          <!-- tiers -->
+          <div class="sub-section">
+            <div class="row">
+              <h3 class="section-title no-margin">{{ 'web.products.tiers' | t }}</h3>
+              <span class="spacer"></span>
+              <button type="button" class="btn-secondary btn-sm" (click)="addTier()">+ {{ 'web.products.add_tier' | t }}</button>
+            </div>
+            <p class="muted">{{ 'web.products.tiers_hint' | t }}</p>
+
+            @for (tier of tiers(); track $index; let i = $index) {
+              <div class="tier-card" [class.recommended]="tier.is_recommended" [class.inactive]="!tier.is_active">
+                <div class="row tier-head">
+                  <span class="tier-num">{{ i + 1 }}</span>
+                  <strong>{{ tier.name_en || ('web.products.new_tier' | t) }}</strong>
+                  @if (tier.is_recommended) { <span class="chip rec-chip">{{ 'web.products.recommended' | t }}</span> }
+                  <span class="spacer"></span>
+                  <button type="button" class="icon-btn" [disabled]="i === 0" (click)="moveTier(i, -1)" [title]="'web.products.move_up' | t">↑</button>
+                  <button type="button" class="icon-btn" [disabled]="i === tiers().length - 1" (click)="moveTier(i, 1)" [title]="'web.products.move_down' | t">↓</button>
+                  <button type="button" class="link-btn danger" (click)="removeTier(i)">{{ 'common.remove' | t }}</button>
+                </div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>{{ 'web.products.tier_name_en' | t }} <span class="req">*</span></label>
+                    <input type="text" dir="ltr" [value]="tier.name_en" (input)="setTier(i, 'name_en', $any($event.target).value)">
+                    @if (errorFor('tiers.' + i + '.name_en')) { <span class="field-error">{{ errorFor('tiers.' + i + '.name_en')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.tier_name_ar' | t }}</label>
+                    <input type="text" dir="rtl" [value]="tier.name_ar" (input)="setTier(i, 'name_ar', $any($event.target).value)">
+                    @if (errorFor('tiers.' + i + '.name_ar')) { <span class="field-error">{{ errorFor('tiers.' + i + '.name_ar')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'common.price' | t }}</label>
+                    <input type="number" min="0" step="0.01" [value]="tier.price" (input)="setTier(i, 'price', $any($event.target).value)">
+                    @if (errorFor('tiers.' + i + '.price')) { <span class="field-error">{{ errorFor('tiers.' + i + '.price')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.billing_period' | t }}</label>
+                    <select [value]="tier.billing_period" (change)="setTier(i, 'billing_period', $any($event.target).value)">
+                      <option value="">{{ 'web.products.same_as_product' | t }}</option>
+                      @for (v of billingPeriods(); track v) {
+                        <option [value]="v" [selected]="tier.billing_period === v">{{ label('billing_period', v) }}</option>
+                      }
+                    </select>
+                    @if (errorFor('tiers.' + i + '.billing_period')) { <span class="field-error">{{ errorFor('tiers.' + i + '.billing_period')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.tier_features_en' | t }}</label>
+                    <textarea dir="ltr" rows="4" [value]="tier.features_en" (input)="setTier(i, 'features_en', $any($event.target).value)"></textarea>
+                    <span class="hint">{{ 'web.products.one_per_line' | t }}</span>
+                    @if (errorFor('tiers.' + i + '.features_en')) { <span class="field-error">{{ errorFor('tiers.' + i + '.features_en')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.tier_features_ar' | t }}</label>
+                    <textarea dir="rtl" rows="4" [value]="tier.features_ar" (input)="setTier(i, 'features_ar', $any($event.target).value)"></textarea>
+                    <span class="hint">{{ 'web.products.one_per_line' | t }}</span>
+                    @if (errorFor('tiers.' + i + '.features_ar')) { <span class="field-error">{{ errorFor('tiers.' + i + '.features_ar')! | t }}</span> }
+                  </div>
+                </div>
+                <div class="row toggles">
+                  <label class="checkbox">
+                    <input type="checkbox" [checked]="tier.is_recommended" (change)="setTier(i, 'is_recommended', $any($event.target).checked)">
+                    {{ 'web.products.is_recommended' | t }}
+                  </label>
+                  <label class="checkbox">
+                    <input type="checkbox" [checked]="tier.is_active" (change)="setTier(i, 'is_active', $any($event.target).checked)">
+                    {{ 'web.products.tier_active' | t }}
+                  </label>
+                </div>
+              </div>
+            } @empty {
+              <p class="empty-box">{{ 'web.products.no_tiers' | t }}</p>
+            }
+          </div>
+        </fieldset>
+
+        <!-- buy-box mock: how the price block reads on the product page -->
+        <aside class="buybox-wrap">
+          <div class="row buybox-title">
+            <h3 class="section-title no-margin">{{ 'web.products.buybox_title' | t }}</h3>
+            <span class="spacer"></span>
+            <div class="locale-switch">
+              @for (l of locales; track l) {
+                <button type="button" [class.active]="locale() === l" (click)="locale.set(l)">{{ 'web.products.lang_' + l | t }}</button>
+              }
+            </div>
+          </div>
+          <div class="buybox" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
+            <div class="bb-name">{{ mockName() }}</div>
+            <div class="bb-avail" [class.bb-ok]="general().availability === 'available'">{{ label('availability', general().availability || null) }}</div>
+
+            <div class="bb-price-row">
+              <span class="bb-price" [class.bb-muted]="!priceShown()">{{ mockPrice() }}</span>
+              @if (mockCompare()) { <span class="bb-compare">{{ mockCompare() }}</span> }
+            </div>
+            @if (!priceShown() && general().price.trim() && general().is_price_public === false) {
+              <p class="bb-admin-note">{{ 'web.products.mock_admin_only' | t }}</p>
+            }
+
+            @if (activeTiers().length) {
+              <div class="bb-tiers">
+                @for (x of activeTiers(); track x.i) {
+                  <label class="bb-tier" [class.selected]="mockTier() === x.i" [class.rec]="x.t.is_recommended">
+                    <input type="radio" name="mock-tier" [checked]="mockTier() === x.i" (change)="mockTier.set(x.i)">
+                    <span class="bb-tier-body">
+                      <span class="bb-tier-top">
+                        <span class="bb-tier-name">{{ tierName(x.t) }}</span>
+                        @if (x.t.is_recommended) { <span class="bb-rec">{{ 'web.products.recommended' | t }}</span> }
+                      </span>
+                      @if (tierPrice(x.t)) { <span class="bb-tier-price">{{ tierPrice(x.t) }}</span> }
+                      @if (tierFeatures(x.t).length) {
+                        <ul class="bb-tier-features">
+                          @for (f of tierFeatures(x.t); track $index) { <li>{{ f }}</li> }
+                        </ul>
+                      }
+                    </span>
+                  </label>
+                }
+              </div>
+            }
+
+            @if (mockCanBuy()) {
+              <div class="bb-qty">
+                <span>{{ 'common.quantity' | t }}</span>
+                <div class="bb-stepper">
+                  <button type="button" (click)="stepQty(-1)" [disabled]="mockQty() <= mockMin()">−</button>
+                  <span class="num">{{ mockQty() }}</span>
+                  <button type="button" (click)="stepQty(1)" [disabled]="mockQty() >= mockMax()">+</button>
+                </div>
+              </div>
+              <button type="button" class="bb-btn bb-buy">{{ 'web.products.mock_purchase' | t }}</button>
+            }
+            <button type="button" class="bb-btn bb-contact">{{ 'web.products.mock_contact' | t }}</button>
+          </div>
+          <p class="muted bb-foot">{{ 'web.products.buybox_hint' | t }}</p>
+        </aside>
+      </div>
+    }
+
+    <!-- ============================ content ============================ -->
+    @if (tab() === 'content') {
+      <div class="card-body">
+        <div class="row lang-bar">
+          <div class="locale-switch">
+            @for (l of locales; track l) {
+              <button type="button" [class.active]="locale() === l" (click)="locale.set(l)">
+                {{ 'web.products.lang_' + l | t }}
+                @if (!trans()[l]) { <span class="lang-missing">+</span> }
+                @if (localeHasError(l)) { <span class="err-dot"></span> }
+              </button>
+            }
+          </div>
+          <span class="spacer"></span>
+          @if (current() && canEdit()) {
+            <button type="button" class="link-btn danger" [disabled]="presentLocales().length < 2" (click)="deleteLanguage()"
+                    [title]="(presentLocales().length < 2 ? 'web.products.last_lang_hint' : '') | t">
+              {{ 'web.products.delete_lang' | t }}
+            </button>
+          }
+        </div>
+        @if (errorFor('translations')) { <p class="field-error">{{ errorFor('translations')! | t }}</p> }
+
+        @if (current(); as t) {
+          <fieldset class="plain" [disabled]="!canEdit()">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'common.name' | t }} <span class="req">*</span></label>
+                <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="t.name" (input)="setT('name', $any($event.target).value)">
+                @if (tErr('name')) { <span class="field-error">{{ tErr('name')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.products.slug' | t }}</label>
+                <input type="text" dir="ltr" [value]="t.slug" (input)="setT('slug', $any($event.target).value)" [placeholder]="'web.products.slug_auto' | t">
+                @if (publicUrl(); as url) {
+                  <span class="hint url-hint" dir="ltr">{{ url }}</span>
+                } @else {
+                  <span class="hint">{{ 'web.products.slug_hint' | t }}</span>
+                }
+                @if (tErr('slug')) { <span class="field-error">{{ tErr('slug')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.products.short_description' | t }}</label>
+                <textarea rows="2" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="t.short_description" (input)="setT('short_description', $any($event.target).value)"></textarea>
+                @if (tErr('short_description')) { <span class="field-error">{{ tErr('short_description')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.products.description' | t }}</label>
+                <textarea rows="10" class="code-area" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="t.description" (input)="setT('description', $any($event.target).value)"></textarea>
+                <span class="hint">{{ 'web.products.description_hint' | t }}</span>
+                @if (tErr('description')) { <span class="field-error">{{ tErr('description')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label class="checkbox">
+                  <input type="checkbox" [checked]="t.is_enabled" (change)="setT('is_enabled', $any($event.target).checked)">
+                  {{ 'web.products.lang_enabled' | t }}
+                </label>
+                <span class="hint">{{ 'web.products.lang_enabled_hint' | t }}</span>
+              </div>
+            </div>
+
+            <!-- features -->
+            <div class="sub-section">
+              <div class="row">
+                <h3 class="section-title no-margin">{{ 'web.products.features' | t }}</h3>
+                <span class="spacer"></span>
+                <button type="button" class="btn-secondary btn-sm" (click)="addFeature()">+ {{ 'web.products.add_feature' | t }}</button>
+              </div>
+              @for (f of t.features; track $index; let i = $index) {
+                <div class="list-row">
+                  <div class="list-fields">
+                    <div class="form-group">
+                      <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="f.title" [placeholder]="'web.products.feature_title' | t"
+                             (input)="setFeature(i, 'title', $any($event.target).value)">
+                      @if (tErr('features.' + i + '.title')) { <span class="field-error">{{ tErr('features.' + i + '.title')! | t }}</span> }
+                    </div>
+                    <div class="form-group">
+                      <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="f.description" [placeholder]="'web.products.feature_description' | t"
+                             (input)="setFeature(i, 'description', $any($event.target).value)">
+                      @if (tErr('features.' + i + '.description')) { <span class="field-error">{{ tErr('features.' + i + '.description')! | t }}</span> }
+                    </div>
+                  </div>
+                  <div class="list-actions">
+                    <button type="button" class="icon-btn" [disabled]="i === 0" (click)="moveFeature(i, -1)">↑</button>
+                    <button type="button" class="icon-btn" [disabled]="i === t.features.length - 1" (click)="moveFeature(i, 1)">↓</button>
+                    <button type="button" class="icon-btn danger" (click)="removeFeature(i)" [title]="'common.remove' | t">×</button>
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-box">{{ 'web.products.no_features' | t }}</p>
+              }
+            </div>
+
+            <!-- specifications -->
+            <div class="sub-section">
+              <div class="row">
+                <h3 class="section-title no-margin">{{ 'web.products.specifications' | t }}</h3>
+                <span class="spacer"></span>
+                <button type="button" class="btn-secondary btn-sm" (click)="addSpec()">+ {{ 'web.products.add_spec' | t }}</button>
+              </div>
+              @for (x of t.specifications; track $index; let i = $index) {
+                <div class="list-row">
+                  <div class="list-fields">
+                    <div class="form-group">
+                      <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="x.label" [placeholder]="'web.products.spec_label' | t"
+                             (input)="setSpec(i, 'label', $any($event.target).value)">
+                      @if (tErr('specifications.' + i + '.label')) { <span class="field-error">{{ tErr('specifications.' + i + '.label')! | t }}</span> }
+                    </div>
+                    <div class="form-group">
+                      <input type="text" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'" [value]="x.value" [placeholder]="'web.products.spec_value' | t"
+                             (input)="setSpec(i, 'value', $any($event.target).value)">
+                      @if (tErr('specifications.' + i + '.value')) { <span class="field-error">{{ tErr('specifications.' + i + '.value')! | t }}</span> }
+                    </div>
+                  </div>
+                  <div class="list-actions">
+                    <button type="button" class="icon-btn danger" (click)="removeSpec(i)" [title]="'common.remove' | t">×</button>
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-box">{{ 'web.products.no_specs' | t }}</p>
+              }
+            </div>
+          </fieldset>
+        } @else {
+          <div class="empty-lang">
+            <p class="muted">{{ 'web.products.lang_missing' | t: { lang: ('web.products.lang_' + locale() | t) } }}</p>
+            @if (canEdit()) {
+              <button type="button" class="btn-primary btn-sm" (click)="addLanguage(locale())">
+                + {{ 'web.products.add_lang' | t: { lang: ('web.products.lang_' + locale() | t) } }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- tabs that need a saved product -->
+    @if (isNew() && ['seo', 'geo', 'relations', 'versions', 'preview'].includes(tab())) {
+      <div class="card-body">
+        <p class="notice info">{{ 'web.products.save_first' | t }}</p>
+      </div>
+    }
+
+    @if (id(); as pid) {
+      <!-- ============================ SEO / GEO ============================ -->
+      @if (tab() === 'seo' || tab() === 'geo') {
+        <div class="card-body">
+          <div class="row lang-bar">
+            <div class="locale-switch">
+              @for (l of locales; track l) {
+                <button type="button" [class.active]="locale() === l" (click)="locale.set(l)">{{ 'web.products.lang_' + l | t }}</button>
+              }
+            </div>
+          </div>
+          @if (!trans()[locale()]?.saved) {
+            <p class="notice warn">{{ 'web.products.seo_lang_missing' | t }}</p>
+          } @else if (tab() === 'seo') {
+            <app-seo-editor entity="products" [entityId]="pid" [locale]="locale()" [fallbackTitle]="trans()[locale()]?.name ?? ''" />
+          } @else {
+            <app-geo-editor entity="products" [entityId]="pid" [locale]="locale()" [initial]="geoFor(locale())"
+                            (saved)="onGeoSaved(locale(), $event)" />
+          }
+        </div>
+      }
+
+      <!-- ============================ relations ============================ -->
+      @if (tab() === 'relations') {
+        <fieldset class="plain card-body" [disabled]="!canUpdate()">
+          @if (relError()) { <div class="form-error">{{ relError()! | t }}</div> }
+
+          <!-- sources -->
+          <div class="rel-section">
+            <div class="row">
+              <h3 class="section-title no-margin">{{ 'web.products.sources' | t }}</h3>
+              @if (relDirty().sources) { <span class="chip unsaved">{{ 'web.products.unsaved' | t }}</span> }
+              <span class="spacer"></span>
+              <button type="button" class="btn-secondary btn-sm" (click)="addSource()">+ {{ 'web.products.add_source' | t }}</button>
+            </div>
+            <p class="muted">{{ 'web.products.sources_hint' | t }}</p>
+            @for (src of sources(); track $index; let i = $index) {
+              <div class="source-card">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>{{ 'web.products.source_locale' | t }}</label>
+                    <select [value]="src.locale" (change)="setSource(i, 'locale', $any($event.target).value)">
+                      <option value="" [selected]="src.locale === ''">{{ 'web.products.all_languages' | t }}</option>
+                      @for (l of locales; track l) {
+                        <option [value]="l" [selected]="src.locale === l">{{ 'web.products.lang_' + l | t }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'common.title' | t }} <span class="req">*</span></label>
+                    <input type="text" [value]="src.title" (input)="setSource(i, 'title', $any($event.target).value)">
+                    @if (errorFor('sources.' + i + '.title')) { <span class="field-error">{{ errorFor('sources.' + i + '.title')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.source_url' | t }} <span class="req">*</span></label>
+                    <input type="text" dir="ltr" [value]="src.url" placeholder="https://" (input)="setSource(i, 'url', $any($event.target).value)">
+                    @if (errorFor('sources.' + i + '.url')) { <span class="field-error">{{ errorFor('sources.' + i + '.url')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.organization' | t }}</label>
+                    <input type="text" [value]="src.organization" (input)="setSource(i, 'organization', $any($event.target).value)">
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.published_on' | t }}</label>
+                    <input type="date" [value]="src.published_on" (input)="setSource(i, 'published_on', $any($event.target).value)">
+                    @if (errorFor('sources.' + i + '.published_on')) { <span class="field-error">{{ errorFor('sources.' + i + '.published_on')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.products.verified_on' | t }}</label>
+                    <input type="date" [value]="src.verified_on" (input)="setSource(i, 'verified_on', $any($event.target).value)">
+                    @if (errorFor('sources.' + i + '.verified_on')) { <span class="field-error">{{ errorFor('sources.' + i + '.verified_on')! | t }}</span> }
+                  </div>
+                </div>
+                <div class="row end"><button type="button" class="link-btn danger" (click)="removeSource(i)">{{ 'common.remove' | t }}</button></div>
+              </div>
+            } @empty {
+              <p class="empty-box">{{ 'web.products.no_sources' | t }}</p>
+            }
+          </div>
+
+          <!-- FAQs -->
+          <div class="rel-section">
+            <div class="row">
+              <h3 class="section-title no-margin">{{ 'web.products.faqs' | t }}</h3>
+              @if (relDirty().faqs) { <span class="chip unsaved">{{ 'web.products.unsaved' | t }}</span> }
+            </div>
+            <p class="muted">{{ 'web.products.faqs_hint' | t }}</p>
+            <div class="faq-grid">
+              <div>
+                <h4 class="mini-title">{{ 'web.products.attached' | t }} ({{ faqs().length }})</h4>
+                @for (f of faqs(); track f.id; let i = $index) {
+                  <div class="faq-row">
+                    <span class="chip">{{ f.locale | uppercase }}</span>
+                    <span class="faq-q" [attr.dir]="f.locale === 'ar' ? 'rtl' : 'ltr'">{{ f.question }}</span>
+                    <div class="list-actions">
+                      <button type="button" class="icon-btn" [disabled]="i === 0" (click)="moveFaq(i, -1)">↑</button>
+                      <button type="button" class="icon-btn" [disabled]="i === faqs().length - 1" (click)="moveFaq(i, 1)">↓</button>
+                      <button type="button" class="icon-btn danger" (click)="detachFaq(i)" [title]="'common.remove' | t">×</button>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="empty-box">{{ 'web.products.no_faqs' | t }}</p>
+                }
+              </div>
+              <div>
+                <h4 class="mini-title">{{ 'web.products.faq_library' | t }}</h4>
+                <div class="search-box full-search">
+                  <input type="text" [placeholder]="'web.products.faq_search' | t" (input)="onFaqSearch($any($event.target).value)">
+                </div>
+                @if (faqSearching()) {
+                  <p class="muted">{{ 'common.loading' | t }}</p>
+                } @else {
+                  @for (f of faqResults(); track f.id) {
+                    <div class="faq-row">
+                      <span class="chip">{{ f.locale | uppercase }}</span>
+                      <span class="faq-q" [attr.dir]="f.locale === 'ar' ? 'rtl' : 'ltr'">{{ f.question }}</span>
+                      <button type="button" class="link-btn" [disabled]="isAttached(f)" (click)="attachFaq(f)">
+                        {{ (isAttached(f) ? 'web.products.attached_short' : 'web.products.attach') | t }}
+                      </button>
+                    </div>
+                  } @empty {
+                    <p class="empty-box">{{ 'common.no_data' | t }}</p>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- CTAs -->
+          <div class="rel-section">
+            <div class="row">
+              <h3 class="section-title no-margin">{{ 'web.products.ctas' | t }}</h3>
+              @if (relDirty().ctas) { <span class="chip unsaved">{{ 'web.products.unsaved' | t }}</span> }
+              <span class="spacer"></span>
+              <button type="button" class="btn-secondary btn-sm" (click)="addCta()">+ {{ 'web.products.add_cta' | t }}</button>
+            </div>
+            <p class="muted">{{ 'web.products.ctas_hint' | t }}</p>
+            @for (c of ctaRows(); track $index; let i = $index) {
+              <div class="cta-row">
+                <div class="form-group grow">
+                  <select [value]="c.cta_id" (change)="setCta(i, 'cta_id', $any($event.target).value)">
+                    <option value="">{{ 'web.products.pick_cta' | t }}</option>
+                    @for (o of ctaOptions(); track o.id) {
+                      <option [value]="o.id" [selected]="c.cta_id === '' + o.id">{{ ctaLabel(o) }}@if (!o.is_enabled) { ({{ 'common.inactive' | t }}) }</option>
+                    }
+                  </select>
+                  @if (errorFor('ctas.' + i + '.cta_id')) { <span class="field-error">{{ errorFor('ctas.' + i + '.cta_id')! | t }}</span> }
+                </div>
+                <div class="form-group">
+                  <select [value]="c.placement" (change)="setCta(i, 'placement', $any($event.target).value)">
+                    <option value="">{{ 'web.products.placement' | t }}</option>
+                    @for (p of placements(); track p) {
+                      <option [value]="p" [selected]="c.placement === p">{{ label('cta_placement', p) }}</option>
+                    }
+                  </select>
+                  @if (errorFor('ctas.' + i + '.placement')) { <span class="field-error">{{ errorFor('ctas.' + i + '.placement')! | t }}</span> }
+                </div>
+                <label class="checkbox">
+                  <input type="checkbox" [checked]="c.is_enabled" (change)="setCta(i, 'is_enabled', $any($event.target).checked)">
+                  {{ 'web.products.enabled' | t }}
+                </label>
+                <button type="button" class="icon-btn danger" (click)="removeCta(i)" [title]="'common.remove' | t">×</button>
+              </div>
+            } @empty {
+              <p class="empty-box">{{ 'web.products.no_ctas' | t }}</p>
+            }
+          </div>
+
+          @if (canUpdate()) {
+            <div class="row end">
+              <button type="button" class="btn-primary"
+                      [disabled]="relSaving() || !(relDirty().sources || relDirty().faqs || relDirty().ctas)"
+                      (click)="saveRelations()">
+                {{ (relSaving() ? 'common.saving' : 'web.products.save_relations') | t }}
+              </button>
+            </div>
+          }
+        </fieldset>
+      }
+
+      <!-- ============================ versions ============================ -->
+      @if (tab() === 'versions') {
+        <div class="card-body">
+          <p class="notice info">{{ 'web.products.versions_hint' | t }}</p>
+          <app-versions-panel entity="products" [entityId]="pid" (restored)="onRestored()" />
+        </div>
+      }
+
+      <!-- ============================ preview ============================ -->
+      @if (tab() === 'preview') {
+        <div class="card-body">
+          <div class="row lang-bar">
+            <div class="locale-switch">
+              @for (l of locales; track l) {
+                <button type="button" [class.active]="previewLocale() === l" (click)="setPreviewLocale(l)">{{ 'web.products.lang_' + l | t }}</button>
+              }
+            </div>
+            <span class="spacer"></span>
+            <button type="button" class="btn-secondary btn-sm" [disabled]="previewLoading()" (click)="loadPreview()">{{ 'web.products.refresh' | t }}</button>
+          </div>
+          @if (dirty()) { <p class="notice warn">{{ 'web.products.preview_unsaved' | t }}</p> }
+
+          @if (previewLoading()) {
+            <p class="table-hint">{{ 'common.loading' | t }}</p>
+          } @else if (previewError()) {
+            <p class="notice error">{{ previewError()! | t }}</p>
+          } @else if (pv(); as v) {
+            <div class="preview-card" [attr.dir]="previewLocale() === 'ar' ? 'rtl' : 'ltr'">
+              <div class="pv-name">{{ v.name || '—' }}</div>
+              @if (v.shortDescription) { <p class="pv-short">{{ v.shortDescription }}</p> }
+              <dl class="detail-grid">
+                <div><dt>{{ 'common.price' | t }}</dt><dd>{{ v.price || '—' }}</dd></div>
+                <div><dt>{{ 'common.availability' | t }}</dt><dd>{{ v.availability || '—' }}</dd></div>
+                @if (v.url) { <div><dt>{{ 'web.products.public_url' | t }}</dt><dd class="mono" dir="ltr">{{ v.url }}</dd></div> }
+                @if (v.tiers.length) { <div><dt>{{ 'web.products.tiers' | t }}</dt><dd>{{ v.tiers.length }}</dd></div> }
+              </dl>
+            </div>
+
+            <h3 class="section-title top-gap">{{ 'web.products.schema' | t }}</h3>
+            @if (v.schema) {
+              <pre class="code-preview">{{ json(v.schema) }}</pre>
+            } @else {
+              <p class="muted">{{ 'web.products.no_schema' | t }}</p>
+            }
+
+            <details class="raw">
+              <summary>{{ 'web.products.raw_payload' | t }}</summary>
+              <pre class="code-preview">{{ json(preview()) }}</pre>
+            </details>
+          }
+        </div>
+      }
+    }
+  </div>
+  }
+</div>

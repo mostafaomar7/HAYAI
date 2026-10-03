@@ -1,4 +1,5 @@
-import { Injectable, signal, computed, inject, DOCUMENT } from '@angular/core';
+import { Injectable, signal, computed, inject, DOCUMENT, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 
 export type Lang = 'en' | 'ar';
@@ -17,7 +18,11 @@ export function readStoredLang(): Lang {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'en' || stored === 'ar') return stored;
   } catch {}
-  return (navigator?.language ?? 'en').toLowerCase().startsWith('ar') ? 'ar' : 'en';
+  // `typeof` rather than `navigator?.`: on the SSR server (Node 20) the global
+  // does not exist at all, and optional chaining does not guard an undeclared
+  // identifier — it would throw a ReferenceError while rendering.
+  const browserLang = typeof navigator !== 'undefined' ? navigator.language : undefined;
+  return (browserLang ?? 'en').toLowerCase().startsWith('ar') ? 'ar' : 'en';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,6 +37,11 @@ export class I18nService {
   readonly dir = computed<'ltr' | 'rtl'>(() => (this.isRtl() ? 'rtl' : 'ltr'));
 
   constructor() {
+    // Dashboard-only service. The SSR server renders just the public website,
+    // whose language comes from the URL — never from storage — so on the
+    // server this must neither stamp `<html lang dir>` nor fetch dictionaries
+    // by a relative URL (which has no origin to resolve against in Node).
+    if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
     this.applyDocumentAttrs(this.lang());
     this.load(this.lang());
   }

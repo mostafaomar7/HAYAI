@@ -1,0 +1,77 @@
+<div class="ref" [class.invalid]="invalid()">
+  @if (multiple() && selectedIds().length) {
+    <ol class="ref-list">
+      @for (id of selectedIds(); track id; let i = $index, first = $first, last = $last) {
+        <li class="ref-item">
+          <span class="ref-order">{{ i + 1 }}</span>
+          <span class="ref-text">
+            <span class="ref-label">{{ labelOf(id) }}</span>
+            @if (subOf(id)) { <span class="ref-sub">{{ subOf(id) }}</span> }
+          </span>
+          @if (!disabled()) {
+            <span class="ref-actions">
+              <button type="button" class="icon-btn" [disabled]="first" (click)="move(i, -1)"
+                      [attr.aria-label]="'web.common.move_up' | t" [title]="'web.common.move_up' | t">↑</button>
+              <button type="button" class="icon-btn" [disabled]="last" (click)="move(i, 1)"
+                      [attr.aria-label]="'web.common.move_down' | t" [title]="'web.common.move_down' | t">↓</button>
+              <button type="button" class="icon-btn danger" (click)="remove(id)"
+                      [attr.aria-label]="'common.remove' | t" [title]="'common.remove' | t">×</button>
+            </span>
+          }
+        </li>
+      }
+    </ol>
+  }
+
+  @if (!isPage()) {
+    <select class="field-input" [id]="inputId()" [disabled]="disabled()" (change)="pickFromSelect($event)"
+            [attr.aria-invalid]="invalid() || null">
+      @if (multiple()) {
+        <option value="" selected>{{ (loading() ? 'common.loading' : 'web.blocks.picker.add_item') | t }}</option>
+      } @else {
+        <option value="" [selected]="!selectedIds().length">{{ (loading() ? 'common.loading' : 'web.blocks.picker.none') | t }}</option>
+      }
+      @for (o of available(); track o.value) {
+        <option [value]="o.value" [selected]="!multiple() && isChosen(o)">{{ o.label }}{{ o.sub ? '  —  ' + o.sub : '' }}</option>
+      }
+    </select>
+    @if (!loading() && !options().length) {
+      <p class="hint">{{ 'web.blocks.picker.empty' | t }}</p>
+    }
+  } @else {
+    @if (!multiple() && selectedIds().length) {
+      <div class="ref-item single">
+        <span class="ref-text"><span class="ref-label">{{ labelOf(selectedIds()[0]) }}</span></span>
+        @if (!disabled()) {
+          <button type="button" class="icon-btn danger" (click)="remove(selectedIds()[0])"
+                  [attr.aria-label]="'common.remove' | t" [title]="'common.remove' | t">×</button>
+        }
+      </div>
+    }
+    @if (!disabled()) {
+      <div class="ref-search">
+        <input type="search" class="field-input" [id]="inputId()" [value]="q()"
+               [placeholder]="(multiple() || !selectedIds().length ? 'web.blocks.picker.search_pages' : 'web.blocks.picker.replace_page') | t"
+               (input)="onSearch($any($event.target).value)" autocomplete="off"
+               role="combobox" aria-autocomplete="list" [attr.aria-expanded]="results().length > 0">
+        @if (searching()) {
+          <p class="hint">{{ 'common.loading' | t }}</p>
+        } @else if (q() && !results().length) {
+          <p class="hint">{{ 'web.blocks.picker.no_results' | t }}</p>
+        }
+        @if (results().length) {
+          <ul class="ref-results" role="listbox">
+            @for (o of results(); track o.value) {
+              <li role="option" [attr.aria-selected]="isChosen(o)">
+                <button type="button" [disabled]="isChosen(o)" (click)="choose(o)">
+                  <span class="ref-label">{{ o.label }}</span>
+                  @if (o.sub) { <span class="ref-sub" dir="ltr">{{ o.sub }}</span> }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  }
+</div>

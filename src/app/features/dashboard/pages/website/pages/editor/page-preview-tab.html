@@ -1,0 +1,120 @@
+<!-- ===================== shareable link ===================== -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.pages.share_preview' | t }}</h2>
+      <p class="sub">{{ 'web.pages.share_preview_hint' | t }}</p>
+    </div>
+    <div class="actions-area">
+      <button type="button" class="btn-secondary btn-sm" [disabled]="loading()" (click)="refresh()">↻ {{ 'web.pages.refresh_preview' | t }}</button>
+      <button type="button" class="btn-primary btn-sm" [disabled]="tokenLoading()" (click)="makeLink()">
+        {{ (tokenLoading() ? 'common.loading' : token() ? 'web.pages.new_link' : 'web.pages.create_link') | t }}
+      </button>
+    </div>
+  </div>
+  @if (token(); as tk) {
+    <div class="card-body">
+      <div class="share-row">
+        <input type="text" class="share-input mono" dir="ltr" readonly [value]="tk.preview_url" (focus)="$any($event.target).select()">
+        <button type="button" class="btn-secondary btn-sm" (click)="copyLink()">{{ (copied() ? 'common.copied' : 'common.copy') | t }}</button>
+        <a class="btn-secondary btn-sm open-link" [href]="tk.preview_url" target="_blank" rel="noopener">{{ 'web.pages.open' | t }} ↗</a>
+      </div>
+      <p class="hint">{{ 'web.pages.link_expires' | t: { date: expiry() } }}</p>
+    </div>
+  }
+</div>
+
+@if (loading() && !data()) {
+  <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+} @else if (error()) {
+  <div class="card"><div class="card-body"><p class="form-error">{{ error()! | t }}</p></div></div>
+} @else if (data(); as d) {
+  <div class="card" [class.stale]="loading()">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.pages.preview_title' | t }}</h2>
+        <p class="sub">{{ 'web.pages.preview_hint' | t }}</p>
+      </div>
+      @if (d.is_preview) { <span class="pill pill-scheduled">{{ 'web.pages.preview_badge' | t }}</span> }
+    </div>
+
+    <div class="card-body">
+      <!-- What a search result would look like -->
+      <h3 class="sub-title">{{ 'web.pages.serp' | t }}</h3>
+      <div class="serp" [attr.dir]="dir()">
+        <div class="serp-url" dir="ltr">{{ d.url || d.seo?.canonical }}</div>
+        <div class="serp-title">{{ d.seo?.title || d.title }}</div>
+        <div class="serp-desc">{{ d.seo?.description || ('web.pages.no_description' | t) }}</div>
+      </div>
+
+      <h3 class="sub-title">{{ 'web.pages.page_head' | t }}</h3>
+      <div class="pv-page" [attr.dir]="dir()" [attr.lang]="d.lang">
+        @if (d.breadcrumbs?.length) {
+          <div class="crumbs">
+            @for (b of d.breadcrumbs; track $index; let last = $last) {
+              <span>{{ b.name }}</span>@if (!last) { <span class="sep">›</span> }
+            }
+          </div>
+        }
+        <h1 class="pv-h1">{{ d.h1?.text || d.title }}</h1>
+        @if (d.h1?.source) { <p class="muted" dir="auto">{{ 'web.pages.h1_source' | t: { source: d.h1.source } }}</p> }
+        @if (d.subtitle) { <p class="pv-sub">{{ d.subtitle }}</p> }
+
+        @if (d.geo?.direct_answer?.answer) {
+          <section class="pv-answer" aria-label="direct-answer">
+            @if (d.geo.direct_answer.question) { <strong>{{ d.geo.direct_answer.question }}</strong> }
+            <p>{{ d.geo.direct_answer.answer }}</p>
+            <span class="muted">{{ 'web.pages.words' | t: { count: d.geo.direct_answer.word_count ?? '—' } }}</span>
+          </section>
+        } @else {
+          <p class="notice warn">{{ 'web.pages.no_direct_answer' | t }}</p>
+        }
+
+        <div class="pv-meta">
+          @if (d.dates?.display_modified) { <span>{{ d.dates.display_modified }}</span> }
+          @if (d.dates?.display_published) { <span>{{ d.dates.display_published }}</span> }
+          @if (d.author?.name) { <span>{{ d.author.name }}</span> }
+          @if (d.reading_time_minutes) { <span>{{ 'web.pages.reading_time' | t: { min: d.reading_time_minutes } }}</span> }
+          @if (d.word_count) { <span>{{ 'web.pages.words' | t: { count: d.word_count } }}</span> }
+        </div>
+      </div>
+
+      <h3 class="sub-title">{{ 'web.pages.outline' | t }}</h3>
+      <ol class="outline">
+        @for (s of sections(); track $index) {
+          <li>
+            <span class="chip">{{ blockName(s.type) }}</span>
+            @if (s.anchor) { <span class="mono text-gray" dir="ltr">#{{ s.anchor }}</span> }
+            <span class="outline-text" [attr.dir]="dir()">{{ s.text }}</span>
+          </li>
+        } @empty {
+          <li class="muted">{{ 'web.pages.no_sections' | t }}</li>
+        }
+      </ol>
+
+      <h3 class="sub-title">{{ 'web.pages.indexing' | t }}</h3>
+      <dl class="detail-grid">
+        <div><dt>{{ 'web.pages.robots' | t }}</dt><dd class="mono" dir="ltr">{{ d.seo?.robots || '—' }}</dd></div>
+        <div><dt>{{ 'web.pages.canonical' | t }}</dt><dd class="mono" dir="ltr">{{ d.seo?.canonical || '—' }}</dd></div>
+        <div><dt>{{ 'web.pages.modified' | t }}</dt><dd>{{ date(d.dates?.modified_at) }}</dd></div>
+      </dl>
+      @if (alternates().length) {
+        <table class="data-table alt-table">
+          <thead><tr><th>hreflang</th><th>URL</th></tr></thead>
+          <tbody>
+            @for (a of alternates(); track a.hreflang) {
+              <tr><td class="mono">{{ a.hreflang }}</td><td class="mono" dir="ltr">{{ a.href }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <h3 class="sub-title">{{ 'web.pages.json_ld' | t }}</h3>
+      @if (schemaPretty()) {
+        <pre class="code-preview">{{ schemaPretty() }}</pre>
+      } @else {
+        <p class="muted">{{ 'common.no_data' | t }}</p>
+      }
+    </div>
+  </div>
+}

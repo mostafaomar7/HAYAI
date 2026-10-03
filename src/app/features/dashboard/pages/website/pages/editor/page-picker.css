@@ -1,0 +1,25 @@
+.picker { position: relative; }
+.picked {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 8px; padding: 9px 14px;
+}
+.picked-text, .result { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.name { font-size: 14px; font-weight: 600; color: #111827; }
+.mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-wrap { position: relative; }
+.picker-input {
+  background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 8px;
+  padding: 11px 14px; font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box;
+}
+.picker-input:focus { border-color: #3B82F6; }
+.results {
+  position: absolute; inset-inline: 0; top: calc(100% + 4px); z-index: 20;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12); max-height: 280px; overflow-y: auto;
+}
+.result {
+  width: 100%; background: none; border: none; text-align: start; cursor: pointer;
+  padding: 9px 14px; font-family: inherit; border-top: 1px solid #F8FAFC;
+}
+button.result:hover { background: #F8FAFC; }
+.result.muted { cursor: default; font-size: 13px; }

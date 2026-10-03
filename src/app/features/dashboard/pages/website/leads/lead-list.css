@@ -1,0 +1,28 @@
+/* Only what this screen adds on top of website.shared.css. */
+
+:where(.pill) { background: #F3F4F6; color: #4B5563; }
+.filters {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 14px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;
+}
+.filters .custom-select select { min-width: 160px; }
+.filter { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #6B7280; }
+.filter input, .text-filter {
+  padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px;
+  font-size: 14px; font-family: inherit; color: #374151; background: #fff;
+}
+.text-filter { width: 160px; }
+.badge {
+  display: inline-block; min-width: 18px; margin-inline-start: 6px; padding: 1px 6px;
+  border-radius: 999px; background: #2563EB; color: #fff; font-size: 11px; line-height: 16px; text-align: center;
+}
+.tab.spam-tab { margin-inline-start: auto; }
+.notice.inset { margin: 14px 24px 0; }
+.nowrap { white-space: nowrap; }
+.ltr-cell { text-align: start; unicode-bidi: plaintext; }
+
+@media (max-width: 640px) {
+  .filters { padding: 12px 16px; }
+  .filter, .filter input, .text-filter { width: 100%; }
+  .tab.spam-tab { margin-inline-start: 0; }
+}
