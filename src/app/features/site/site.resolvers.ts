@@ -58,6 +58,31 @@ const LISTING_ENDPOINTS: Record<string, string> = {
 };
 
 /**
+ * A listing facet the API expresses as a path rather than a query. The API
+ * answers `/doctors?specialty=critical-care` with the canonical
+ * `/en/doctors/critical-care`, so that path is the specialty page and the
+ * segment is the filter — but the listing endpoint itself only takes the
+ * query form, and resolve does not say which parameter the segment is. Until
+ * it does, the mapping lives here; without it a specialty URL fetched the
+ * whole directory and shipped as a duplicate of `/en/doctors`.
+ */
+const PATH_FACETS: Record<string, string> = { doctors: 'specialty' };
+
+/**
+ * The query to fetch a listing with: the URL's own query, plus the path facet
+ * if this listing has one and the URL carries a segment for it.
+ */
+function listingQuery(listingName: string, path: string, qs: string): string {
+  const facet = PATH_FACETS[listingName];
+  const segments = path.split('/').filter(Boolean);
+  if (!facet || segments.length < 2) return qs;
+  const params = new URLSearchParams(qs);
+  // An explicit `?specialty=` in the URL wins: it is what the visitor asked for.
+  if (!params.has(facet)) params.set(facet, segments[segments.length - 1]);
+  return params.toString();
+}
+
+/**
  * The catch-all page resolver: ONE `resolve` call per URL tells us what the
  * path is (page / product / author / listing / redirect / not found), and a
  * listing additionally fetches its items — all before the server serialises
@@ -110,7 +135,8 @@ export const siteViewResolver: ResolveFn<ResolvedView | RedirectCommand> = async
       const listingName = str(result.data?.listing);
       const endpoint = LISTING_ENDPOINTS[listingName];
       if (endpoint) {
-        const res = await firstValueFrom(api.listing(locale, endpoint, qs));
+        const query = listingQuery(listingName, path, qs);
+        const res = await firstValueFrom(api.listing(locale, endpoint, query));
         if (!res) {
           setServerResponse(responseInit, 503, { 'Retry-After': '120' });
           view.result = { ...result, kind: 'error', status: 503 };
@@ -122,7 +148,7 @@ export const siteViewResolver: ResolveFn<ResolvedView | RedirectCommand> = async
           items: data,
           meta: res.meta ?? null,
           seo: res.meta?.['seo'] ?? data?.seo ?? null,
-          query: parseQuery(qs)
+          query: parseQuery(query)
         };
       } else {
         view.listing = { kind: listingName, items: [], meta: null, seo: null, query: parseQuery(qs) };

@@ -66,6 +66,10 @@ const DEFAULT_TARGETS = [
   // live and must keep holding: every profile without real content stays
   // noindex, and no profile may ship a seeded aggregateRating.
   { label: 'doctor listing', path: '/en/doctors', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
+  // A specialty is a path facet, not a page of its own in the CMS. It used to
+  // fetch the whole directory and ship as a duplicate of /en/doctors, so its
+  // own h1, canonical and breadcrumb are checked here.
+  { label: 'doctor specialty facet', path: '/en/doctors/critical-care', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
   { label: 'doctor profile (thin)', path: '/en/doctors/critical-care/samaa-saeed-abdelfattah', required: ['Physician', 'BreadcrumbList'], expectNoindex: true, softMissing: true },
 ];
 

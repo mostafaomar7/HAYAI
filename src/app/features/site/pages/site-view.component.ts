@@ -157,7 +157,7 @@ export class SiteViewComponent {
         alternates: d['is_preview'] ? [] : seo.alternates,
         openGraph: seo.open_graph,
         twitter: seo.twitter,
-        jsonLd: d['is_preview'] ? null : buildJsonLd(d['schema_script'], siteSchema, arr<Dict>(d['schema'])),
+        jsonLd: d['is_preview'] ? null : buildJsonLd(d['schema_script'], siteSchema),
         preloadImage: img(firstHero?.['data'], 'image') ?? img(d, 'featured_image')
       });
       return;
@@ -165,11 +165,14 @@ export class SiteViewComponent {
 
     if (result.kind === 'listing') {
       const seo: SeoData = v.listing?.seo ?? {};
-      // The resolve payload behind a listing carries its own schema — a
-      // CollectionPage and the BreadcrumbList for the section. Until the
-      // 4 October API release it was empty here, so this branch used to emit
-      // the site graph alone and the listings shipped with no page schema.
-      const ld = (result.data ?? {}) as Dict;
+      // Two sources carry a listing's schema, and they are not equivalent.
+      // The listing call knows the rows on this page, so its CollectionPage
+      // holds a `mainEntity: ItemList` numbered across pages; resolve never
+      // loads the rows, so its copy has the CollectionPage and breadcrumb
+      // only. Prefer the listing call and keep resolve as the fallback, so a
+      // listing whose items endpoint failed still ships JSON-LD.
+      const listingScript = str(v.listing?.meta?.['schema_script'])
+        || str((result.data as Dict | null)?.['schema_script']);
       this.state.alternates.set(arr(seo.alternates));
       this.seo.apply({
         locale,
@@ -180,7 +183,7 @@ export class SiteViewComponent {
         alternates: seo.alternates,
         openGraph: seo.open_graph,
         twitter: seo.twitter,
-        jsonLd: buildJsonLd(ld['schema_script'], siteSchema, arr<Dict>(ld['schema']))
+        jsonLd: buildJsonLd(listingScript, siteSchema)
       });
       return;
     }

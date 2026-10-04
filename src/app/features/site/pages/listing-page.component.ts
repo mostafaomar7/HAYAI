@@ -174,6 +174,13 @@ export class ListingPageComponent {
       doctors: 'doctors',
       hospitals: 'hospitals'
     };
+    // The API's own title is localised and knows the facet — "Critical Care
+    // Medicine doctors", "أطباء العناية المركزة" — where the map below only
+    // ever says "Doctors". A facet page with the section's h1 is the same
+    // page to a crawler as the section itself, so the API title wins and the
+    // map stays as the fallback for when it is absent.
+    const apiTitle = str(this.view().result?.data?.['title']);
+    if (apiTitle) return apiTitle;
     return map[k] ? this.state.t(map[k]) : str(this.view().listing?.seo?.title) || this.state.t('products');
   });
   protected searchGroups = computed(() => {
