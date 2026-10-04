@@ -31,6 +31,11 @@ Why this and not the alternatives:
 - Raise the Huawei bandwidth anyway if you can. Cloudflare covers the static
   files, not the first byte of the page.
 
+**Cloudflare comes after go-live, not with it.** Nothing in the steps below
+touches it. Go live with the A records pointing straight at the server,
+confirm the acceptance list passes, and only then move the nameservers — two
+changes at once means a failure has two possible causes.
+
 Supervisor over PM2, as you proposed — it is already there, deploy can restart
 it without root, and a second process manager buys nothing. The doc now
 documents Supervisor as the default.
