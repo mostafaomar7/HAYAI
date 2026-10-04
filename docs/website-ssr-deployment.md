@@ -99,12 +99,43 @@ node dist/BAREEQ/server/server.mjs
 # or: npm run serve:ssr:BAREEQ
 ```
 
-Keep it running with a process manager, e.g. PM2:
+Keep it running with a process manager. **Supervisor is preferred where it is
+already running** (the Laravel host runs the queue workers under it, and
+`deploy` may call `supervisorctl` without a password, so the site can be
+restarted without root):
+
+```ini
+; /etc/supervisor/conf.d/hayai-web.conf
+[program:hayai-web]
+command=/usr/bin/node /var/www/hayai-web/server/server.mjs
+directory=/var/www/hayai-web
+environment=PORT="4000",API_BASE_URL="https://api.hayaihealthcare.com/api/v1",SITE_URL="https://hayaihealthcare.com",WEBSITE_SERVER_KEY="…"
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+stdout_logfile=/var/log/hayai-web.log
+redirect_stderr=true
+```
+
+PM2 is equivalent and is what a host without Supervisor should use:
 
 ```bash
 pm2 start dist/BAREEQ/server/server.mjs --name hayai-web
 pm2 save
 ```
+
+Only one of the two — a second process manager on the same host buys nothing.
+
+**`browser/` must sit next to `server/`.** The server resolves the static
+files as `../browser` from its own directory ([src/server.ts](../src/server.ts)),
+so deploy the whole `dist/BAREEQ/` tree, not `server.mjs` alone.
+
+**If the API is on this same host**, add `127.0.0.1 api.hayaihealthcare.com`
+to `/etc/hosts` (or point `API_BASE_URL` at the internal address). Every
+rendered page makes an API call; keeping it on the loopback removes a
+round trip from each one.
 
 ## 4. Environment variables
 
@@ -140,6 +171,63 @@ server { listen 80; server_name hayaihealthcare.com www.hayaihealthcare.com; ret
 - Keep the `Host` header (the server only renders allowed hosts).
 - Redirect `http://` and `www.` to `https://hayaihealthcare.com` (one canonical origin; do not hardcode `www` anywhere).
 - A CDN (Cloudflare etc.) in front is recommended: it respects the cache headers below.
+
+## 5b. Two contract points the backend asked about
+
+Both were raised in the backend review of 4 October. Both are already done;
+the measurements are here so nobody has to take it on trust.
+
+### The real HTTP status, not the API's 200
+
+`resolve` answers `200` with `data.kind: "not_found"` and `data.status: 404`.
+This server sends `data.status` as the HTTP status, so a crawler sees a real
+404 and drops the URL instead of indexing a soft-404. Measured against this
+build:
+
+| URL | HTTP status |
+|---|---|
+| `/en` | 200 |
+| `/en/faq` | 200 |
+| `/en/this-page-does-not-exist` | **404** |
+| `/ar/<unknown arabic slug>` | **404** |
+| `/en/doctors/internal-medicine/no-such-doctor` | **404** |
+| `/en/products/no-such-product` | **404** |
+| `/` | 302 → `/en` |
+
+A CMS redirect is sent as a real `301`/`302` with `Location`, and a listing
+whose items endpoint is unreachable is a `503` with `Retry-After: 120` —
+"come back later" rather than letting Google drop the URL.
+
+### What this server POSTs to `/public/crawler-hits`
+
+Hits from known crawlers are counted in memory and flushed every 60 s, or as
+soon as 50 hits have accumulated — so a batch is at most 50 rows, well inside
+the backend's limit of 200. Identical `(user_agent, path, resource)` triples
+are merged into one row with `count`.
+
+```http
+POST /api/v1/public/crawler-hits
+Content-Type: application/json
+X-Website-Key: <WEBSITE_SERVER_KEY>
+
+{ "hits": [
+  { "user_agent": "Mozilla/5.0 (compatible; Googlebot/2.1; …)",
+    "path": "/en/products",
+    "resource": "page",
+    "count": 3 }
+] }
+```
+
+`resource` is one of `page`, `robots`, `llms`, `sitemap` — a subset of what
+the API accepts (it also allows `asset`, which this server never sends).
+`user_agent` and `path` are both truncated to 500 characters. The call is
+best-effort: any failure is swallowed, because visibility statistics must
+never affect serving.
+
+**Not yet verifiable end to end.** Without the key the endpoint answers `403`
+before it validates the body, so a `202` cannot be confirmed until
+`WEBSITE_SERVER_KEY` exists on both sides. That is the first thing to check
+after it is set.
 
 ## 6. Cache headers sent by the server
 
