@@ -1,0 +1,105 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.overview.title' | t }}</h2>
+        <p class="sub">{{ 'web.overview.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        @if (data()?.website_url; as url) {
+          <a class="btn-secondary open-site" [href]="url" target="_blank" rel="noopener">
+            {{ 'web.overview.open_website' | t }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 4h6v6m0-6L10 14M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
+            </svg>
+          </a>
+        }
+      </div>
+    </div>
+    <div class="card-body me-row">
+      <span class="muted">{{ 'web.overview.signed_in_as' | t }}</span>
+      <strong>{{ ctx.me()?.name ?? '—' }}</strong>
+      <span class="muted">·</span>
+      <span class="muted">{{ 'web.overview.your_roles' | t }}</span>
+      @for (r of roles(); track r) {
+        <span class="chip">{{ roleLabel(r) }}</span>
+      } @empty {
+        <span class="muted">{{ 'web.overview.no_roles' | t }}</span>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card">
+      <p class="table-hint">{{ loadError()! | t }}</p>
+      <div class="card-body"><button class="btn-secondary btn-sm" (click)="load()">{{ 'web.overview.retry' | t }}</button></div>
+    </div>
+  } @else if (data(); as d) {
+    <div class="tiles">
+      <div class="tile">
+        <p class="tile-label">{{ 'web.overview.pages_published' | t }}</p>
+        <div class="tile-value green">{{ count(d.pages, 'published') }}</div>
+        <p class="tile-sub">{{ 'web.overview.pages_draft' | t: { n: count(d.pages, 'draft') } }}</p>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'web.overview.products_published' | t }}</p>
+        <div class="tile-value blue">{{ count(d.products, 'published') }}</div>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'web.overview.new_leads' | t }}</p>
+        <div class="tile-value amber">{{ count(d.leads, 'new') }}</div>
+        <p class="tile-sub">{{ 'web.overview.leads_7d' | t: { n: d.leads_new_7d || 0 } }}</p>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'web.overview.open_purchases' | t }}</p>
+        <div class="tile-value">{{ d.purchases_open || 0 }}</div>
+        <p class="tile-sub">{{ 'web.overview.purchases_submitted' | t: { n: count(d.purchases, 'submitted') } }}</p>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="card">
+        <div class="card-head">
+          <h2>{{ 'web.overview.scheduled' | t }}</h2>
+          <span class="pill pill-scheduled">{{ d.scheduled.length }}</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'common.title' | t }}</th>
+                <th>{{ 'web.overview.publish_at' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of d.scheduled; track s.id) {
+                <tr class="clickable" (click)="openPage(s.id)">
+                  <td class="name-cell">{{ s.title || ('#' + s.id) }}</td>
+                  <td class="text-gray num">{{ date(s.publish_at) }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="2" class="table-hint">{{ 'web.overview.no_scheduled' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.overview.quick_links' | t }}</h2></div>
+        <div class="quick-links">
+          @for (l of links(); track l.route) {
+            <a class="quick-link" [routerLink]="l.route">
+              <span class="ql-title">{{ l.label | t }}</span>
+              <span class="ql-hint">{{ l.hint | t }}</span>
+            </a>
+          } @empty {
+            <p class="table-hint">{{ 'web.overview.no_links' | t }}</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,313 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ 'web.medialib.title' | t }}</h2>
+          <span class="pill pill-scheduled">{{ total() }}</span>
+        </div>
+        <p class="sub">{{ 'web.medialib.subtitle' | t }}</p>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'web.medialib.search' | t" (input)="onSearch($any($event.target).value)">
+        </div>
+
+        <div class="custom-select">
+          <select [value]="kind()" (change)="setKind($any($event.target).value)">
+            <option value="">{{ 'web.medialib.all_kinds' | t }}</option>
+            @for (k of kinds(); track k) {
+              <option [value]="k" [selected]="kind() === k">{{ kindLabel(k) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- upload -->
+    @if (canUpload()) {
+      <div class="card-body upload-area">
+        <label class="dropzone" [class.over]="dragOver()"
+               (dragover)="onDragOver($event)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+          <input type="file" multiple [accept]="accept" (change)="onPick($event)" hidden>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4-4 4M12 4v12" />
+          </svg>
+          <strong>{{ 'web.medialib.drop_here' | t }}</strong>
+          <span class="muted">{{ 'web.medialib.limits' | t }}</span>
+        </label>
+
+        @if (queue().length) {
+          <div class="queue">
+            <div class="row queue-head">
+              <span class="section-title no-margin">{{ 'web.medialib.queue' | t }}</span>
+              <span class="spacer"></span>
+              <button type="button" class="btn-secondary btn-sm" [disabled]="uploading()" (click)="clearFinished()">
+                {{ 'web.medialib.clear_finished' | t }}
+              </button>
+              <button type="button" class="btn-primary btn-sm" [disabled]="uploading() || !readyCount()" (click)="uploadAll()">
+                {{ (uploading() ? 'web.medialib.uploading' : 'web.medialib.upload_n') | t: { count: readyCount() } }}
+              </button>
+            </div>
+
+            @for (i of queue(); track i.uid) {
+              <div [class]="'queue-item st-' + i.status">
+                <div class="q-thumb">
+                  @if (i.previewUrl) { <img [src]="i.previewUrl" alt=""> }
+                  @else { <span class="file-badge">{{ i.file.name.split('.').pop() }}</span> }
+                </div>
+                <div class="q-main">
+                  <div class="row">
+                    <span class="q-name" dir="ltr">{{ i.file.name }}</span>
+                    <span class="muted">{{ size(i.file.size) }}</span>
+                    <span class="spacer"></span>
+                    <span [class]="'pill pill-' + (i.status === 'invalid' ? 'error' : i.status === 'duplicate' ? 'warning' : i.status === 'done' ? 'ready' : i.status === 'failed' ? 'error' : 'draft')">
+                      {{ ('web.medialib.q_' + i.status) | t }}
+                    </span>
+                    @if (i.status !== 'uploading') {
+                      <button type="button" class="link-btn danger" (click)="dropQueued(i.uid)">{{ 'common.remove' | t }}</button>
+                    }
+                  </div>
+                  @if (i.message) {
+                    <div class="q-msg" [class.err]="i.status === 'invalid' || i.status === 'failed'">{{ i.message | t: i.params }}</div>
+                  }
+                  @if (i.status === 'ready' && i.kind === 'image') {
+                    <div class="q-alts">
+                      <input type="text" dir="ltr" [placeholder]="'web.medialib.alt_en' | t" [value]="i.altEn"
+                             (input)="setQueueAlt(i.uid, 'altEn', $any($event.target).value)">
+                      <input type="text" dir="rtl" [placeholder]="'web.medialib.alt_ar' | t" [value]="i.altAr"
+                             (input)="setQueueAlt(i.uid, 'altAr', $any($event.target).value)">
+                    </div>
+                    @if (queuedMissingAlt(i)) { <span class="alt-warn">⚠ {{ 'web.medialib.alt_required' | t }}</span> }
+                  }
+                  @if (i.result && (i.status === 'done' || i.status === 'duplicate')) {
+                    <button type="button" class="link-btn" (click)="openDetail(i.result)">{{ 'common.view' | t }}</button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (missingAltOnPage()) {
+      <div class="notice warn alt-banner">
+        ⚠ {{ 'web.medialib.missing_alt_banner' | t: { count: missingAltOnPage() } }}
+      </div>
+    }
+
+    <!-- grid -->
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="grid">
+        @for (m of items(); track m.id) {
+          <button type="button" class="tile-item" [class.no-alt]="missingAlt(m).length" (click)="openDetail(m)">
+            <div class="tile-media">
+              @if (thumb(m); as src) {
+                <img [src]="src" [alt]="m.alt || ''" loading="lazy">
+              } @else {
+                <span class="file-badge big">{{ m.extension || m.kind }}</span>
+              }
+              @if (missingAlt(m).length) {
+                <span class="badge-alt">{{ 'web.medialib.no_alt' | t }} ({{ missingAlt(m).join('/') | uppercase }})</span>
+              }
+              @if (m.variants_status === 'pending') {
+                <span class="badge-variants">{{ 'web.medialib.processing' | t }}</span>
+              } @else if (m.variants_status === 'failed') {
+                <span class="badge-variants failed">{{ 'web.medialib.variants_failed' | t }}</span>
+              }
+            </div>
+            <div class="tile-meta">
+              <span class="tile-name" dir="ltr">{{ name(m) }}</span>
+              <span class="muted">
+                {{ kindLabel(m.kind) }}
+                @if (m.width && m.height) { · {{ m.width }}×{{ m.height }} }
+                @if (m.size) { · {{ size(m.size) }} }
+              </span>
+            </div>
+          </button>
+        } @empty {
+          <p class="table-hint">{{ 'common.no_data' | t }}</p>
+        }
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+<!-- detail -->
+@if (selected(); as m) {
+  <div class="modal-backdrop" (click)="closeDetail()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3 dir="ltr" class="detail-title">{{ name(m) }}</h3>
+        <button type="button" class="modal-close" (click)="closeDetail()">×</button>
+      </div>
+
+      <div class="modal-body detail-layout">
+        <div class="detail-preview">
+          @if (m.kind === 'image') {
+            <div class="focal-box" [class.editable]="canUpload()" (click)="pickFocal($event)">
+              <img [src]="m.url" [alt]="m.alt || ''">
+              @if (focal(); as f) {
+                <span class="focal-dot" [style.left.%]="f.x" [style.top.%]="f.y"></span>
+              }
+            </div>
+            @if (canUpload()) { <p class="hint">{{ 'web.medialib.focal_click' | t }}</p> }
+          } @else if (m.kind === 'video') {
+            <video [src]="m.url" controls preload="metadata" class="video"></video>
+          } @else {
+            <div class="doc-box">
+              <span class="file-badge big">{{ m.extension || 'pdf' }}</span>
+              <a [href]="m.url" target="_blank" rel="noopener" class="link-btn">{{ 'web.medialib.open_file' | t }}</a>
+            </div>
+          }
+
+          <dl class="detail-grid info">
+            <div><dt>{{ 'common.type' | t }}</dt><dd>{{ kindLabel(m.kind) }} · <span class="mono">{{ m.mime_type }}</span></dd></div>
+            <div><dt>{{ 'web.medialib.dimensions' | t }}</dt><dd>{{ m.width && m.height ? (m.width + '×' + m.height) : '—' }}</dd></div>
+            <div><dt>{{ 'web.medialib.size' | t }}</dt><dd>{{ size(m.size) }}</dd></div>
+            <div><dt>{{ 'common.created_at' | t }}</dt><dd>{{ date(m.created_at) }}</dd></div>
+            @if (m.kind === 'image') {
+              <div>
+                <dt>{{ 'web.medialib.variants' | t }}</dt>
+                <dd>
+                  <span [class]="'pill pill-' + (m.variants_status || 'pending')">
+                    {{ ('web.medialib.variants_' + (m.variants_status || 'pending')) | t }}
+                  </span>
+                </dd>
+              </div>
+            }
+          </dl>
+
+          <div class="url-row">
+            <input type="text" readonly dir="ltr" [value]="m.url" class="url-input">
+            <button type="button" class="btn-secondary btn-sm" (click)="copy(m.url)">{{ 'web.medialib.copy_url' | t }}</button>
+          </div>
+
+          @if (m.kind === 'image') {
+            @if (m.variants?.length) {
+              <details class="variants">
+                <summary>{{ 'web.medialib.variants_list' | t: { count: m.variants!.length } }}</summary>
+                <ul>
+                  @for (v of m.variants; track v.url) {
+                    <li>
+                      <span class="mono">{{ v.width }}×{{ v.height }}</span>
+                      <span class="muted">{{ v.mime_type }}</span>
+                      <button type="button" class="link-btn" (click)="copy(v.url)">{{ 'web.medialib.copy_url' | t }}</button>
+                    </li>
+                  }
+                </ul>
+              </details>
+            } @else if (m.variants_status === 'pending') {
+              <p class="hint">{{ 'web.medialib.variants_pending_hint' | t }}</p>
+            } @else if (m.variants_status === 'failed') {
+              <div class="notice warn">{{ 'web.medialib.variants_failed_hint' | t }}</div>
+            }
+            @if (m.srcset) {
+              <details class="variants">
+                <summary>srcset</summary>
+                <pre class="code-preview">{{ m.srcset }}</pre>
+                <button type="button" class="link-btn" (click)="copy(m.srcset)">{{ 'common.copy' | t }}</button>
+              </details>
+            }
+          }
+        </div>
+
+        <div class="detail-side">
+          @if (detailLoading()) { <p class="muted">{{ 'common.loading' | t }}</p> }
+          @if (detailError()) { <div class="form-error">{{ detailError()! | t }}</div> }
+
+          @if (missingAlt(m).length) {
+            <div class="notice warn">⚠ {{ 'web.medialib.alt_required' | t }}</div>
+          }
+
+          <div class="form-grid one-col">
+            <div class="form-group">
+              <label>{{ 'web.medialib.alt_en' | t }} @if (m.kind === 'image') { <span class="req">*</span> }</label>
+              <input type="text" dir="ltr" [readonly]="!canUpload()" [value]="detail().alt_en" (input)="setDetail('alt_en', $any($event.target).value)">
+              @if (detailErrorFor('alt_en')) { <span class="field-error">{{ detailErrorFor('alt_en')! | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.medialib.alt_ar' | t }} @if (m.kind === 'image') { <span class="req">*</span> }</label>
+              <input type="text" dir="rtl" [readonly]="!canUpload()" [value]="detail().alt_ar" (input)="setDetail('alt_ar', $any($event.target).value)">
+              @if (detailErrorFor('alt_ar')) { <span class="field-error">{{ detailErrorFor('alt_ar')! | t }}</span> }
+            </div>
+            <span class="hint alt-hint">{{ 'web.medialib.alt_hint' | t }}</span>
+            <div class="form-group">
+              <label>{{ 'web.medialib.caption_en' | t }}</label>
+              <input type="text" dir="ltr" [readonly]="!canUpload()" [value]="detail().caption_en" (input)="setDetail('caption_en', $any($event.target).value)">
+              @if (detailErrorFor('caption_en')) { <span class="field-error">{{ detailErrorFor('caption_en')! | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.medialib.caption_ar' | t }}</label>
+              <input type="text" dir="rtl" [readonly]="!canUpload()" [value]="detail().caption_ar" (input)="setDetail('caption_ar', $any($event.target).value)">
+              @if (detailErrorFor('caption_ar')) { <span class="field-error">{{ detailErrorFor('caption_ar')! | t }}</span> }
+            </div>
+            @if (m.kind === 'image') {
+              <div class="form-group">
+                <label>{{ 'web.medialib.focal_point' | t }}</label>
+                <div class="focal-inputs">
+                  <span>X</span>
+                  <input type="number" min="0" max="100" dir="ltr" [readonly]="!canUpload()" [value]="detail().focal_x" (input)="setDetail('focal_x', $any($event.target).value)">
+                  <span>Y</span>
+                  <input type="number" min="0" max="100" dir="ltr" [readonly]="!canUpload()" [value]="detail().focal_y" (input)="setDetail('focal_y', $any($event.target).value)">
+                  @if (canUpload() && focal()) {
+                    <button type="button" class="link-btn" (click)="clearFocal()">{{ 'common.reset' | t }}</button>
+                  }
+                </div>
+                <span class="hint">{{ 'web.medialib.focal_hint' | t }}</span>
+                @if (detailErrorFor('focal_x') || detailErrorFor('focal_y')) {
+                  <span class="field-error">{{ (detailErrorFor('focal_x') || detailErrorFor('focal_y'))! | t }}</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="usage">
+            <h4 class="section-title">{{ 'web.medialib.where_used' | t }}</h4>
+            @if (usageLoading()) {
+              <p class="muted">{{ 'common.loading' | t }}</p>
+            } @else if (usage() === null) {
+              <p class="muted">{{ 'web.medialib.usage_failed' | t }}</p>
+            } @else {
+              <ul class="timeline">
+                @for (u of usage(); track $index) {
+                  <li>
+                    <span class="chip">{{ u.type }}</span>
+                    <span>{{ usageTitle(u) }}</span>
+                    @for (x of usageExtra(u); track $index) { <span class="muted"> · {{ x }}</span> }
+                  </li>
+                } @empty {
+                  <li class="muted">{{ 'web.medialib.not_used' | t }}</li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        @if (canDelete()) {
+          <button type="button" class="btn-danger" (click)="remove(m)">{{ 'common.delete' | t }}</button>
+        }
+        <span class="spacer"></span>
+        <button type="button" class="btn-secondary" (click)="closeDetail()">{{ 'common.close' | t }}</button>
+        @if (canUpload()) {
+          <button type="button" class="btn-primary" [disabled]="detailSaving()" (click)="saveDetail()">
+            {{ (detailSaving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,147 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'web.audit.title' | t }}</h2>
+        <span class="pill pill-in_progress">{{ total() }}</span>
+      </div>
+      <div class="actions-area">
+        @if (hasFilters()) {
+          <button class="link-btn" (click)="clearFilters()">{{ 'web.audit.clear_filters' | t }}</button>
+        }
+        <div class="custom-select per-page">
+          <select [value]="perPage()" (change)="setPerPage($any($event.target).value)">
+            @for (n of perPageOptions; track n) {
+              <option [value]="n" [selected]="perPage() === n">{{ 'web.audit.per_page' | t: { n: n } }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body filters">
+      <div class="custom-select">
+        <select [value]="filters().entity_type" (change)="setFilter('entity_type', $any($event.target).value)">
+          <option value="">{{ 'web.audit.all_entities' | t }}</option>
+          @for (e of entityTypes; track e) {
+            <option [value]="e" [selected]="filters().entity_type === e">{{ entityLabel(e) }}</option>
+          }
+        </select>
+      </div>
+      <input class="filter-input narrow" type="number" min="1" dir="ltr" [placeholder]="'web.audit.entity_id' | t"
+             [value]="filters().entity_id" (input)="onText('entity_id', $any($event.target).value)">
+      <input class="filter-input" type="text" dir="ltr" [placeholder]="'web.audit.action_ph' | t"
+             [value]="filters().action" (input)="onText('action', $any($event.target).value)">
+      <input class="filter-input narrow" type="number" min="1" dir="ltr" [placeholder]="'web.audit.admin_id' | t"
+             [value]="filters().admin_id" (input)="onText('admin_id', $any($event.target).value)">
+      <div class="custom-select">
+        <select [value]="filters().method" (change)="setFilter('method', $any($event.target).value)">
+          <option value="">{{ 'web.audit.any_method' | t }}</option>
+          @for (m of methods; track m) {
+            <option [value]="m" [selected]="filters().method === m">{{ m }}</option>
+          }
+        </select>
+      </div>
+      <label class="date-field">
+        <span>{{ 'common.from' | t }}</span>
+        <input type="date" [value]="filters().from" (change)="setFilter('from', $any($event.target).value)">
+      </label>
+      <label class="date-field">
+        <span>{{ 'common.to' | t }}</span>
+        <input type="date" [value]="filters().to" (change)="setFilter('to', $any($event.target).value)">
+      </label>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.audit.time' | t }}</th>
+              <th>{{ 'web.audit.admin' | t }}</th>
+              <th>{{ 'web.audit.action' | t }}</th>
+              <th>{{ 'web.audit.entity' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th class="action-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr [class.clickable]="hasDiff(row)" (click)="hasDiff(row) && toggle(row.id)">
+                <td class="text-gray num nowrap">{{ date(row.created_at) }}</td>
+                <td>
+                  @if (row.admin; as a) {
+                    <button class="link-btn plain" (click)="$event.stopPropagation(); filterAdmin(row)" [title]="'web.audit.filter_admin' | t">
+                      <span class="name-cell">{{ a.name }}</span>
+                    </button>
+                    <div class="text-gray small" dir="ltr">{{ a.email }}</div>
+                  } @else {
+                    <span class="text-gray">{{ 'web.audit.system' | t }}</span>
+                  }
+                </td>
+                <td>
+                  @if (row.action) {
+                    <code class="mono action" dir="ltr">{{ row.action }}</code>
+                  } @else {
+                    <span class="mono" dir="ltr"><b>{{ row.method }}</b> <span class="text-gray path">{{ row.path }}</span></span>
+                  }
+                </td>
+                <td>
+                  @if (row.entity_type) {
+                    <button class="link-btn" (click)="$event.stopPropagation(); filterEntity(row)" [title]="'web.audit.filter_entity' | t">
+                      {{ entityLabel(row.entity_type) }}@if (row.entity_id) { #{{ row.entity_id }} }
+                    </button>
+                    @if (entityRoute(row); as link) {
+                      <a class="open-link" [routerLink]="link" (click)="$event.stopPropagation()">{{ 'web.audit.open' | t }}</a>
+                    }
+                  } @else { <span class="text-gray">—</span> }
+                </td>
+                <td><span [class]="'pill ' + statusClass(row.status)">{{ row.status || '—' }}</span></td>
+                <td class="action-col text-gray">
+                  @if (hasDiff(row)) { {{ isOpen(row.id) ? '▴' : '▾' }} }
+                </td>
+              </tr>
+              @if (isOpen(row.id)) {
+                <tr class="diff-row">
+                  <td colspan="6">
+                    <div class="diff-meta text-gray small">
+                      <span class="mono" dir="ltr">{{ row.method }} {{ row.path }}</span>
+                      @if (row.ip) { <span>· IP <span class="mono" dir="ltr">{{ row.ip }}</span></span> }
+                    </div>
+                    <div class="table-responsive">
+                      <table class="diff-table">
+                        <thead>
+                          <tr>
+                            <th>{{ 'web.audit.field' | t }}</th>
+                            <th>{{ 'web.audit.old' | t }}</th>
+                            <th>{{ 'web.audit.new' | t }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (d of diff(row); track d.key) {
+                            <tr [class.same]="!d.changed">
+                              <td class="mono key" dir="ltr">{{ d.key }}</td>
+                              <td class="old"><pre dir="auto">{{ d.removed || d.old ? d.old : '—' }}</pre></td>
+                              <td class="new"><pre dir="auto">{{ d.added || d.new ? d.new : '—' }}</pre></td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'web.audit.empty' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage()" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>

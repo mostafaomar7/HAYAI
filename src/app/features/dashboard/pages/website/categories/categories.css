@@ -1,0 +1,13 @@
+fieldset.plain { border: none; margin: 0; min-width: 0; }
+.ar-cell { text-align: start; }
+.slug-cell div + div { margin-top: 2px; }
+.indent { display: inline-flex; align-items: center; gap: 6px; }
+.branch { color: #CBD5E1; font-weight: 400; }
+
+.sub-section { border-top: 1px solid #F1F5F9; margin-top: 20px; padding-top: 18px; }
+.lang-fields { margin-top: 16px; }
+.checkbox.boxed { background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 8px; padding: 10px 14px; }
+.err-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: #DC2626; margin-inline-start: 6px; vertical-align: middle;
+}

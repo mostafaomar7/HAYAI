@@ -1,0 +1,100 @@
+<div class="panel">
+  <p class="notice info">{{ 'web.versions.intro' | t }}</p>
+
+  <div class="row">
+    <h4 class="sub-title flush">{{ 'web.versions.history' | t }}</h4>
+    <span class="spacer"></span>
+    @if (canEdit()) {
+      <button type="button" class="btn-secondary btn-sm" (click)="saveNamed()">+ {{ 'web.versions.save_named' | t }}</button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="table-hint">{{ 'common.loading' | t }}</p>
+  } @else {
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'web.versions.version' | t }}</th>
+            <th>{{ 'web.versions.event_col' | t }}</th>
+            <th>{{ 'web.versions.label' | t }}</th>
+            <th>{{ 'web.versions.by' | t }}</th>
+            <th>{{ 'common.created_at' | t }}</th>
+            <th class="action-col">{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of versions(); track v.id) {
+            <tr class="version-row">
+              <td class="num">v{{ v.version }}
+                @if (v.is_published) { <span class="pill pill-published">{{ 'web.versions.live' | t }}</span> }
+              </td>
+              <td>{{ eventLabel(v.event) }}</td>
+              <td>{{ v.label || '—' }}</td>
+              <td class="text-gray">{{ v.created_by?.name || '—' }}</td>
+              <td class="text-gray">{{ date(v.created_at) }}</td>
+              <td class="action-col">
+                @if (canEdit()) {
+                  <button type="button" class="link-btn" (click)="restore(v)">{{ 'web.versions.restore' | t }}</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="table-hint">{{ 'web.versions.none' | t }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (versions().length) {
+      <h4 class="sub-title">{{ 'web.versions.compare' | t }}</h4>
+      <div class="row">
+        <div class="custom-select">
+          <select [value]="compareFrom()" (change)="compareFrom.set(+$any($event.target).value)">
+            @for (v of versions(); track v.id) {
+              <option [value]="v.version" [selected]="compareFrom() === v.version">v{{ v.version }}</option>
+            }
+          </select>
+        </div>
+        <span class="muted">→</span>
+        <div class="custom-select">
+          <select (change)="setTo($any($event.target).value)">
+            <option value="current" [selected]="compareTo() === 'current'">{{ 'web.versions.working_copy' | t }}</option>
+            @for (v of versions(); track v.id) {
+              <option [value]="v.version" [selected]="compareTo() === v.version">v{{ v.version }}</option>
+            }
+          </select>
+        </div>
+        <button type="button" class="btn-secondary btn-sm" [disabled]="diffLoading()" (click)="compare()">{{ 'web.versions.compare_btn' | t }}</button>
+      </div>
+
+      @if (diff(); as rows) {
+        @if (rows.length) {
+          <div class="table-responsive">
+            <table class="diff-table">
+              <thead>
+                <tr>
+                  <th>{{ 'web.versions.field' | t }}</th>
+                  <th>{{ 'web.versions.before' | t }}</th>
+                  <th>{{ 'web.versions.after' | t }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of rows; track r.path + r.kind) {
+                  <tr>
+                    <td class="mono">{{ r.path }}</td>
+                    <td [class.diff-del]="r.kind !== 'added'">{{ r.from }}</td>
+                    <td [class.diff-add]="r.kind !== 'removed'">{{ r.to }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="muted">{{ 'web.versions.no_diff' | t }}</p>
+        }
+      }
+    }
+  }
+</div>

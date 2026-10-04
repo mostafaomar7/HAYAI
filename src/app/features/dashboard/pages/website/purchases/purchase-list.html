@@ -1,0 +1,238 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'web.purchases.title' | t }}</h2>
+        <span class="pill pill-submitted">{{ total() }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'web.purchases.search' | t"
+                 (input)="onSearch($any($event.target).value)">
+        </div>
+        @if (ctx.can('orders.create')) {
+          <button class="btn-primary" (click)="openManual()">+ {{ 'web.purchases.manual_order' | t }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="tabs">
+      @for (s of tabs(); track s) {
+        <button class="tab" [class.active]="status() === s" (click)="setStatus(s)">
+          {{ tabLabel(s) }}
+          @if (count(s) !== null) { <span class="count">{{ count(s) }}</span> }
+        </button>
+      }
+    </div>
+
+    <div class="filters">
+      <label class="filter">
+        <span>{{ 'common.from' | t }}</span>
+        <input type="date" [value]="from()" (change)="setFilter('from', $any($event.target).value)">
+      </label>
+      <label class="filter">
+        <span>{{ 'common.to' | t }}</span>
+        <input type="date" [value]="to()" (change)="setFilter('to', $any($event.target).value)">
+      </label>
+      @if (admins().length) {
+        <div class="custom-select">
+          <select [value]="assignedTo()" (change)="setFilter('assignedTo', $any($event.target).value)">
+            <option value="">{{ 'web.purchases.any_assignee' | t }}</option>
+            @for (a of admins(); track a.id) {
+              <option [value]="a.id" [selected]="assignedTo() === (a.id + '')">{{ a.name }}</option>
+            }
+          </select>
+        </div>
+      }
+      @if (from() || to() || assignedTo()) {
+        <button class="link-btn" (click)="clearFilters()">{{ 'common.reset' | t }}</button>
+      }
+    </div>
+
+    @if (status() === 'draft') {
+      <p class="notice info inset">{{ 'web.purchases.drafts_hint' | t }}</p>
+    }
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.purchases.reference' | t }}</th>
+              <th>{{ 'web.purchases.organization' | t }}</th>
+              <th>{{ 'web.purchases.contact' | t }}</th>
+              <th>{{ 'web.purchases.items' | t }}</th>
+              <th>{{ 'web.purchases.estimated_total' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'web.purchases.submitted' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="open(row)">
+                <td class="name-cell mono" dir="ltr">{{ row.reference }}</td>
+                <td>
+                  <div class="name-cell">{{ row.organization_name }}</div>
+                  @if (row.organization_type) { <div class="muted">{{ row.organization_type }}</div> }
+                </td>
+                <td>
+                  <div>{{ row.contact_name }}</div>
+                  <div class="muted" dir="ltr">{{ row.email }}</div>
+                </td>
+                <td class="num">{{ itemsCount(row) }}</td>
+                <td class="num">
+                  <!-- Priced lines still add up, but a quote-only line means the
+                       real total is not known until sales prices it. -->
+                  @if (row.has_unpriced_items) {
+                    @if (row.estimated_total) { <div>{{ money(row) }} +</div> }
+                    <span class="quote-tag">{{ 'web.purchases.to_be_quoted' | t }}</span>
+                  } @else {
+                    {{ money(row) }}
+                  }
+                </td>
+                <td><span [class]="'pill pill-' + row.status">{{ statusLabel(row) }}</span></td>
+                <td class="text-gray nowrap">{{ date(row.submitted_at || row.created_at) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="table-hint">{{ 'web.purchases.empty' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeManual()">
+    <div class="modal wide" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h3>{{ 'web.purchases.manual_order' | t }}</h3>
+        <button class="modal-close" (click)="closeManual()" [attr.aria-label]="'common.close' | t">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="notice info">{{ 'web.purchases.manual_hint' | t }}</p>
+        @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
+
+        <h4 class="section-title">{{ 'web.purchases.items' | t }}</h4>
+        @if (productsLoading()) { <p class="muted">{{ 'common.loading' | t }}</p> }
+        @if (err('items')) { <p class="field-error">{{ err('items')! | t }}</p> }
+
+        <div class="items-editor">
+          @for (it of draft().items; track $index; let i = $index) {
+            <div class="item-row">
+              <div class="form-group grow">
+                <label>{{ 'web.purchases.product' | t }} <span class="req">*</span></label>
+                <select [value]="it.product_id" (change)="pickProduct(i, $any($event.target).value)">
+                  <option value="">{{ 'web.purchases.pick_product' | t }}</option>
+                  @for (p of products(); track p.id) {
+                    <option [value]="p.id" [selected]="it.product_id === (p.id + '')">{{ productName(p) }}</option>
+                  }
+                </select>
+                @if (err('items.' + i + '.product_id')) { <span class="field-error">{{ err('items.' + i + '.product_id')! | t }}</span> }
+              </div>
+              <div class="form-group grow">
+                <label>{{ 'web.purchases.tier' | t }}</label>
+                <select [value]="it.price_tier_id" [disabled]="!tiersFor(it.product_id).length"
+                        (change)="setItem(i, { price_tier_id: $any($event.target).value })">
+                  <option value="">{{ 'web.purchases.no_tier' | t }}</option>
+                  @for (tr of tiersFor(it.product_id); track tr.id) {
+                    <option [value]="tr.id" [selected]="it.price_tier_id === (tr.id + '')">{{ tierName(tr) }}</option>
+                  }
+                </select>
+                @if (err('items.' + i + '.price_tier_id')) { <span class="field-error">{{ err('items.' + i + '.price_tier_id')! }}</span> }
+              </div>
+              <div class="form-group qty">
+                <label>{{ 'common.quantity' | t }} <span class="req">*</span></label>
+                <input type="number" min="1" step="1" [value]="it.quantity"
+                       (input)="setItem(i, { quantity: +$any($event.target).value })">
+                @if (err('items.' + i + '.quantity')) { <span class="field-error">{{ err('items.' + i + '.quantity')! | t }}</span> }
+              </div>
+              <button class="link-btn danger remove" [disabled]="draft().items.length === 1" (click)="removeItem(i)">
+                {{ 'common.remove' | t }}
+              </button>
+            </div>
+          }
+          <button class="btn-secondary btn-sm" (click)="addItem()">+ {{ 'web.purchases.add_item' | t }}</button>
+        </div>
+
+        <h4 class="section-title spaced">{{ 'web.purchases.customer' | t }}</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'web.purchases.organization_name' | t }} <span class="req">*</span></label>
+            <input type="text" [value]="draft().organization_name" (input)="set('organization_name', $any($event.target).value)">
+            @if (err('organization_name')) { <span class="field-error">{{ err('organization_name')! | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'web.purchases.organization_type' | t }}</label>
+            <input type="text" [value]="draft().organization_type" (input)="set('organization_type', $any($event.target).value)">
+            @if (err('organization_type')) { <span class="field-error">{{ err('organization_type')! }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'web.purchases.contact_name' | t }} <span class="req">*</span></label>
+            <input type="text" [value]="draft().contact_name" (input)="set('contact_name', $any($event.target).value)">
+            @if (err('contact_name')) { <span class="field-error">{{ err('contact_name')! | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'web.purchases.job_title' | t }}</label>
+            <input type="text" [value]="draft().job_title" (input)="set('job_title', $any($event.target).value)">
+          </div>
+          <div class="form-group">
+            <label>{{ 'common.email' | t }} <span class="req">*</span></label>
+            <input type="email" dir="ltr" [value]="draft().email" (input)="set('email', $any($event.target).value)">
+            @if (err('email')) { <span class="field-error">{{ err('email')! | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'common.phone' | t }}</label>
+            <input type="text" dir="ltr" [value]="draft().phone" (input)="set('phone', $any($event.target).value)">
+            @if (err('phone')) { <span class="field-error">{{ err('phone')! }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'web.purchases.country' | t }}</label>
+            <input type="text" [value]="draft().country" (input)="set('country', $any($event.target).value)">
+          </div>
+          <div class="form-group">
+            <label>{{ 'common.city' | t }}</label>
+            <input type="text" [value]="draft().city" (input)="set('city', $any($event.target).value)">
+          </div>
+          <div class="form-group">
+            <label>{{ 'web.purchases.locale' | t }}</label>
+            <select [value]="draft().locale" (change)="set('locale', $any($event.target).value)">
+              <option value="en" [selected]="draft().locale === 'en'">English</option>
+              <option value="ar" [selected]="draft().locale === 'ar'">العربية</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>{{ 'web.purchases.customer_notes' | t }}</label>
+            <textarea rows="3" [value]="draft().notes" (input)="set('notes', $any($event.target).value)"></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="checkbox">
+              <input type="checkbox" [checked]="draft().consent" (change)="set('consent', $any($event.target).checked)">
+              {{ 'web.purchases.consent_label' | t }} <span class="req">*</span>
+            </label>
+            @if (err('consent')) { <span class="field-error">{{ err('consent')! | t }}</span> }
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-secondary" [disabled]="saving()" (click)="closeManual()">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="submitManual()">
+          {{ (saving() ? 'common.saving' : 'web.purchases.create_order') | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

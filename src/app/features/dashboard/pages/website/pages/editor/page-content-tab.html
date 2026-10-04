@@ -1,0 +1,244 @@
+<!-- ===================== language content ===================== -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.pages.language_content' | t: { lang: localeName() } }}</h2>
+      <p class="sub">{{ 'web.pages.language_content_hint' | t }}</p>
+    </div>
+    @if (canUpdate() && canDeleteLang()) {
+      <div class="actions-area">
+        <button type="button" class="btn-danger btn-sm" (click)="deleteLanguage()">{{ 'web.pages.delete_language' | t: { lang: localeName() } }}</button>
+      </div>
+    }
+  </div>
+
+  <div class="card-body">
+    @if (!exists()) {
+      <div class="notice warn row">
+        <span>{{ 'web.pages.language_missing' | t: { lang: localeName() } }}</span>
+        @if (canUpdate() && otherLocale()) {
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" (click)="copyFromOther()">{{ 'web.pages.copy_from' | t: { lang: nameOf(otherLocale()) } }}</button>
+        }
+      </div>
+    }
+
+    @if (trError()) {
+      <p class="form-error">{{ trError()! | t }}</p>
+    }
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>{{ 'web.pages.field_title' | t }} <span class="req">*</span></label>
+        <input type="text" [attr.dir]="dir()" [readonly]="!canUpdate()" [value]="tr().title"
+               (input)="setTr('title', $any($event.target).value)">
+        <span class="hint">{{ 'web.pages.title_is_h1' | t }}</span>
+        @if (trErrorFor('title')) { <span class="field-error">{{ trErrorFor('title')! | t }}</span> }
+      </div>
+
+      @if (page().type !== 'home') {
+        <div class="form-group full">
+          <label>{{ 'web.pages.slug' | t }}</label>
+          <input type="text" dir="ltr" [readonly]="!canUpdate()" [value]="tr().slug" [placeholder]="effectiveSlug()"
+                 (input)="setTr('slug', $any($event.target).value)">
+          <span class="hint">{{ 'web.pages.slug_hint' | t }}</span>
+          @if (slugInvalid()) { <span class="field-error">{{ 'web.pages.slug_invalid' | t }}</span> }
+          @if (reservedHit()) { <span class="field-error">{{ 'web.pages.slug_reserved' | t: { segment: reservedHit()! } }}</span> }
+          @if (trErrorFor('slug')) { <span class="field-error">{{ trErrorFor('slug')! | t }}</span> }
+          @if (trErrorFor('path')) { <span class="field-error">{{ trErrorFor('path')! | t }}</span> }
+          @if (liveSlugChange()) {
+            <p class="notice warn slug-note">{{ 'web.pages.slug_redirect_warning' | t: { old: '/' + locale() + '/' + current()!.published_path } }}</p>
+          }
+        </div>
+      }
+
+      <div class="form-group full">
+        <div class="url-preview">
+          <span class="muted">{{ 'web.pages.url_preview' | t }}</span>
+          <code dir="ltr">{{ preview() }}</code>
+          @if (current()?.live_url && page().is_live) {
+            <a class="link-btn" [href]="current()!.live_url" target="_blank" rel="noopener">{{ 'web.pages.open_live' | t }} ↗</a>
+          }
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.subtitle' | t }}</label>
+        <input type="text" [attr.dir]="dir()" [readonly]="!canUpdate()" [value]="tr().subtitle"
+               (input)="setTr('subtitle', $any($event.target).value)">
+        @if (trErrorFor('subtitle')) { <span class="field-error">{{ trErrorFor('subtitle')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.excerpt' | t }}</label>
+        <textarea rows="3" [attr.dir]="dir()" [readonly]="!canUpdate()" [value]="tr().excerpt"
+                  (input)="setTr('excerpt', $any($event.target).value)"></textarea>
+        <span class="hint">{{ 'web.pages.excerpt_hint' | t }}</span>
+        @if (trErrorFor('excerpt')) { <span class="field-error">{{ trErrorFor('excerpt')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.body' | t }}</label>
+        <textarea class="mono body-input" rows="12" [attr.dir]="dir()" [readonly]="!canUpdate()" [value]="tr().body"
+                  (input)="setTr('body', $any($event.target).value)"></textarea>
+        <span class="hint">{{ 'web.pages.body_hint' | t }} · {{ 'web.pages.words' | t: { count: bodyWords() } }}</span>
+        @if (bodyH1()) { <span class="field-error">{{ 'web.pages.body_no_h1' | t }}</span> }
+        @else if (trErrorFor('body')) { <span class="field-error">{{ trErrorFor('body')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.tags' | t }}</label>
+        <div class="tag-box" [class.readonly]="!canUpdate()">
+          @for (tag of tr().tags; track tag; let i = $index) {
+            <span class="chip" [attr.dir]="dir()">
+              {{ tag }}
+              @if (canUpdate()) { <button type="button" (click)="removeTag(i)" [attr.aria-label]="'common.remove' | t">×</button> }
+            </span>
+          }
+          @if (canUpdate()) {
+            <input type="text" [attr.dir]="dir()" [value]="tagInput()" [placeholder]="'web.pages.tags_placeholder' | t"
+                   (input)="onTagInput($any($event.target).value)" (keydown.enter)="commitTag($event)"
+                   (blur)="addTag(tagInput()); tagInput.set('')">
+          }
+        </div>
+        @if (trErrorFor('tags')) { <span class="field-error">{{ trErrorFor('tags')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label class="checkbox">
+          <input type="checkbox" [disabled]="!canUpdate()" [checked]="tr().is_enabled"
+                 (change)="setTr('is_enabled', $any($event.target).checked)">
+          {{ 'web.pages.is_enabled' | t: { lang: localeName() } }}
+        </label>
+        <span class="hint">{{ 'web.pages.is_enabled_hint' | t }}</span>
+      </div>
+    </div>
+
+    @if (canUpdate()) {
+      <div class="panel-foot">
+        @if (trDirty()) { <span class="muted">{{ 'web.pages.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="trSaving() || (!trDirty() && exists())" (click)="saveTranslation()">
+          {{ (trSaving() ? 'common.saving' : exists() ? 'web.pages.save_content' : 'web.pages.add_language') | t: { lang: localeName() } }}
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ===================== page-level fields ===================== -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.pages.page_settings' | t }}</h2>
+      <p class="sub">{{ 'web.pages.page_settings_hint' | t }}</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+    @if (pageError()) {
+      <p class="form-error">{{ pageError()! | t }}</p>
+    }
+
+    @if (missingAuthor()) {
+      <p class="notice warn">{{ 'web.articles.author_missing' | t }}</p>
+    }
+
+    <div class="form-grid">
+      @if (!isArticle()) {
+        <div class="form-group">
+          <label>{{ 'common.type' | t }}</label>
+          <select [disabled]="!canUpdate()" (change)="setPage('type', $any($event.target).value)">
+            @for (ty of pageTypes(); track ty) {
+              <option [value]="ty" [selected]="pd().type === ty">{{ typeLabel(ty) }}</option>
+            }
+          </select>
+          @if (pageErrorFor('type')) { <span class="field-error">{{ pageErrorFor('type')! | t }}</span> }
+        </div>
+      }
+
+      <div class="form-group">
+        <label>{{ 'web.pages.template' | t }}</label>
+        <input type="text" dir="ltr" [readonly]="!canUpdate()" [value]="pd().template"
+               (input)="setPage('template', $any($event.target).value)">
+        <span class="hint">{{ 'web.pages.template_hint' | t }}</span>
+        @if (pageErrorFor('template')) { <span class="field-error">{{ pageErrorFor('template')! | t }}</span> }
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'web.pages.sort_order' | t }}</label>
+        <input type="number" step="1" [readonly]="!canUpdate()" [value]="pd().sort_order"
+               (input)="setPage('sort_order', $any($event.target).value)">
+        @if (pageErrorFor('sort_order')) { <span class="field-error">{{ pageErrorFor('sort_order')! | t }}</span> }
+      </div>
+
+      @if (page().type !== 'home') {
+        <div class="form-group full">
+          <label>{{ 'web.pages.parent' | t }}</label>
+          <app-page-picker [value]="pd().parent_id" [locale]="locale()" [excludeId]="page().id"
+                           [disabled]="!canUpdate()" (picked)="pickParent($event)" />
+          @if (pd().parent_id !== page().parent_id) {
+            <span class="hint warn-text">{{ 'web.pages.parent_move_hint' | t }}</span>
+          }
+          @if (pageErrorFor('parent_id')) { <span class="field-error">{{ pageErrorFor('parent_id')! | t }}</span> }
+        </div>
+      }
+
+      @if (isArticle()) {
+        <div class="form-group">
+          <label>{{ 'web.articles.author' | t }} <span class="req">*</span></label>
+          <select [disabled]="!canUpdate()" (change)="setPage('author_id', $any($event.target).value)">
+            <option value="">{{ 'web.articles.choose_author' | t }}</option>
+            @for (a of authors(); track a.id) {
+              <option [value]="a.id" [selected]="pd().author_id === (a.id + '')">{{ authorName(a) }}</option>
+            }
+          </select>
+          <span class="hint">{{ 'web.articles.author_required_hint' | t }}</span>
+          @if (pageErrorFor('author_id')) { <span class="field-error">{{ pageErrorFor('author_id')! | t }}</span> }
+        </div>
+        <div class="form-group">
+          <label>{{ 'web.articles.category' | t }}</label>
+          <select [disabled]="!canUpdate()" (change)="setPage('category_id', $any($event.target).value)">
+            <option value="">{{ 'web.articles.no_category' | t }}</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id" [selected]="pd().category_id === (c.id + '')">{{ categoryName(c) }}</option>
+            }
+          </select>
+          @if (pageErrorFor('category_id')) { <span class="field-error">{{ pageErrorFor('category_id')! | t }}</span> }
+        </div>
+      }
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.featured_image' | t }}</label>
+        <app-media-picker [value]="pd().featured_media_id" [disabled]="!canUpdate()"
+                          (valueChange)="setPage('featured_media_id', $event)" />
+        @if (isArticle()) { <span class="hint">{{ 'web.articles.featured_image_hint' | t }}</span> }
+        @if (pageErrorFor('featured_media_id')) { <span class="field-error">{{ pageErrorFor('featured_media_id')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label class="checkbox">
+          <input type="checkbox" [disabled]="!canUpdate()" [checked]="pd().is_featured"
+                 (change)="setPage('is_featured', $any($event.target).checked)">
+          {{ 'web.pages.is_featured' | t }}
+        </label>
+      </div>
+
+      <details class="form-group full advanced" [open]="!!pd().settings || !!pageErrorFor('settings')">
+        <summary>{{ 'web.pages.settings_json' | t }}</summary>
+        <textarea class="mono" rows="6" dir="ltr" [readonly]="!canUpdate()" [value]="pd().settings"
+                  placeholder='{ "theme": "brand" }' (input)="setPage('settings', $any($event.target).value)"></textarea>
+        <span class="hint">{{ 'web.pages.settings_hint' | t: { size: settingsBytes() } }}</span>
+        @if (pageErrorFor('settings')) { <span class="field-error">{{ pageErrorFor('settings')! | t }}</span> }
+      </details>
+    </div>
+
+    @if (canUpdate()) {
+      <div class="panel-foot">
+        @if (pageDirty()) { <span class="muted">{{ 'web.pages.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="pageSaving() || !pageDirty()" (click)="savePage()">
+          {{ (pageSaving() ? 'common.saving' : 'web.pages.save_page_settings') | t }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

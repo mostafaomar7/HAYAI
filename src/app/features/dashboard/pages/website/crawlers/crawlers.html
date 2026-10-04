@@ -1,0 +1,438 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.crawlers.title' | t }}</h2>
+        <p class="sub">{{ 'web.crawlers.subtitle' | t }}</p>
+      </div>
+    </div>
+    <div class="tabs">
+      @for (t of tabs(); track t) {
+        <button class="tab" [class.active]="tab() === t" (click)="selectTab(t)">{{ ('web.crawlers.tab_' + t) | t }}</button>
+      }
+    </div>
+
+    <!-- ═══════════════ robots.txt ═══════════════ -->
+    @if (tab() === 'robots') {
+      <div class="card-body">
+        <div class="notice info">{{ 'web.crawlers.robots_private_note' | t }}</div>
+        <div class="row head-row">
+          <h3 class="section-title">{{ 'web.crawlers.robots_groups' | t }}</h3>
+          <span class="spacer"></span>
+          @if (canEdit()) {
+            <button class="btn-primary btn-sm" (click)="openRule(null)">+ {{ 'web.crawlers.add_group' | t }}</button>
+          }
+        </div>
+      </div>
+      @if (rulesLoading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      } @else if (rulesError()) {
+        <p class="table-hint">{{ rulesError()! | t }}</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'web.crawlers.user_agent' | t }}</th>
+                <th>{{ 'web.crawlers.allow' | t }}</th>
+                <th>{{ 'web.crawlers.disallow' | t }}</th>
+                <th>{{ 'web.crawlers.crawl_delay' | t }}</th>
+                <th>{{ 'common.status' | t }}</th>
+                <th>{{ 'web.crawlers.notes' | t }}</th>
+                @if (canEdit()) { <th class="action-col">{{ 'common.actions' | t }}</th> }
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of rules(); track r.id) {
+                <tr [class.row-blocked]="r.block_all">
+                  <td>
+                    <span class="mono name-cell" dir="ltr">{{ r.user_agent }}</span>
+                    @if (isAiCrawler(r.user_agent)) { <span class="chip ai-chip">{{ 'web.crawlers.ai_badge' | t }}</span> }
+                  </td>
+                  <td class="mono paths" dir="ltr">
+                    @for (p of r.allow; track $index) { <div>{{ p }}</div> } @empty { <span class="text-gray">—</span> }
+                  </td>
+                  <td class="mono paths" dir="ltr">
+                    @for (p of r.disallow; track $index) { <div>{{ p }}</div> } @empty { <span class="text-gray">—</span> }
+                  </td>
+                  <td class="num">{{ r.crawl_delay ?? '—' }}</td>
+                  <td>
+                    @if (r.block_all) {
+                      <span class="pill pill-blocked">{{ 'web.crawlers.blocked_all' | t }}</span>
+                    } @else if (r.is_enabled === false) {
+                      <span class="pill pill-inactive">{{ 'web.crawlers.disabled' | t }}</span>
+                    } @else {
+                      <span class="pill pill-active">{{ 'web.crawlers.allowed' | t }}</span>
+                    }
+                  </td>
+                  <td class="text-gray notes-cell">{{ r.notes || '—' }}</td>
+                  @if (canEdit()) {
+                    <td class="action-col">
+                      <div class="row-actions">
+                        <button class="link-btn" (click)="openRule(r)">{{ 'common.edit' | t }}</button>
+                        <button class="link-btn danger" (click)="deleteRule(r)">{{ 'common.delete' | t }}</button>
+                      </div>
+                    </td>
+                  }
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <div class="card-body">
+        <h3 class="section-title">{{ 'web.crawlers.file_preview' | t: { file: 'robots.txt' } }}</h3>
+        @if (robotsPreview(); as p) {
+          @if (p.private_paths.length) {
+            <p class="muted">{{ 'web.crawlers.private_paths' | t }}
+              @for (pp of p.private_paths; track pp) { <code class="chip mono" dir="ltr">{{ pp }}</code> }
+            </p>
+          }
+          <pre class="code-preview">{{ p.content }}</pre>
+        } @else {
+          <p class="muted">{{ 'web.crawlers.preview_unavailable' | t }}</p>
+        }
+      </div>
+    }
+
+    <!-- ═══════════════ llms.txt ═══════════════ -->
+    @if (tab() === 'llms') {
+      <div class="card-body">
+        <div class="notice info">
+          {{ 'web.crawlers.llms_note' | t }}
+          @if (ctx.can('settings.view')) {
+            <a routerLink="/dashboard/website/settings" [queryParams]="{ group: 'llms' }">{{ 'web.crawlers.llms_open_settings' | t }}</a>
+          }
+        </div>
+        <div class="row head-row">
+          <h3 class="section-title">{{ 'web.crawlers.llms_entries' | t }}</h3>
+          <span class="spacer"></span>
+          @if (canEdit()) {
+            <button class="btn-primary btn-sm" (click)="openEntry(null)">+ {{ 'web.crawlers.add_entry' | t }}</button>
+          }
+        </div>
+
+        @if (llmsLoading()) {
+          <p class="muted">{{ 'common.loading' | t }}</p>
+        } @else if (llmsError()) {
+          <p class="muted">{{ llmsError()! | t }}</p>
+        } @else {
+          @for (s of sections(); track s.name) {
+            <div class="llms-section">
+              <div class="row llms-section-head">
+                <h4>{{ s.name }}</h4>
+                <span class="pill pill-in_progress">{{ s.items.length }}</span>
+                <span class="spacer"></span>
+                @if (canEdit()) {
+                  <button class="link-btn" (click)="openEntry(null, s.name)">+ {{ 'web.crawlers.add_here' | t }}</button>
+                }
+              </div>
+              <ul class="entry-list">
+                @for (e of s.items; track e.id) {
+                  <li>
+                    <div class="entry-main">
+                      <div class="entry-title">
+                        {{ e.title }}
+                        @if (isExcluded(e); as reason) {
+                          <span class="pill pill-warning" [title]="reason">{{ 'web.crawlers.excluded' | t }}</span>
+                        }
+                      </div>
+                      <div class="mono text-gray" dir="ltr">{{ e.url }}</div>
+                      @if (e.description) { <div class="entry-desc">{{ e.description }}</div> }
+                    </div>
+                    <span class="num text-gray order-badge">#{{ e.sort_order }}</span>
+                    @if (canEdit()) {
+                      <div class="row-actions">
+                        <button class="link-btn" (click)="openEntry(e)">{{ 'common.edit' | t }}</button>
+                        <button class="link-btn danger" (click)="deleteEntry(e)">{{ 'common.delete' | t }}</button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+          } @empty {
+            <p class="muted">{{ 'common.no_data' | t }}</p>
+          }
+        }
+
+        @if (llmsPreview(); as p) {
+          @if (p.excluded.length) {
+            <div class="notice warn excluded-box">
+              <strong>{{ 'web.crawlers.excluded_title' | t }}</strong>
+              <ul>
+                @for (x of p.excluded; track x.id) {
+                  <li><b>{{ x.title }}</b> — <span class="mono" dir="ltr">{{ x.url }}</span> — {{ reasonLabel(x.reason) }}</li>
+                }
+              </ul>
+            </div>
+          }
+          <h3 class="section-title">{{ 'web.crawlers.file_preview' | t: { file: 'llms.txt' } }}</h3>
+          <pre class="code-preview">{{ p.content }}</pre>
+        }
+      </div>
+    }
+
+    <!-- ═══════════════ sitemap ═══════════════ -->
+    @if (tab() === 'sitemap') {
+      <div class="card-body">
+        <div class="notice info">{{ 'web.crawlers.sitemap_note' | t }}</div>
+        @if (sitemapLoading()) {
+          <p class="muted">{{ 'common.loading' | t }}</p>
+        } @else if (sitemapError()) {
+          <p class="muted">{{ sitemapError()! | t }}</p>
+        } @else if (sitemap(); as s) {
+          <div class="row index-row">
+            <span class="muted">{{ 'web.crawlers.sitemap_index' | t }}</span>
+            <a class="mono" dir="ltr" [href]="s.index_url" target="_blank" rel="noopener">{{ s.index_url }}</a>
+          </div>
+          <div class="locale-cards">
+            @for (l of s.locales; track l.locale) {
+              <div class="locale-card">
+                <div class="row">
+                  <span class="chip">{{ l.locale.toUpperCase() }}</span>
+                  <span class="spacer"></span>
+                  <a class="link-btn" [href]="l.url" target="_blank" rel="noopener">{{ 'web.crawlers.open' | t }}</a>
+                </div>
+                <div class="mono text-gray url-line" dir="ltr">{{ l.url }}</div>
+                <div class="big-num">{{ l.total }} <span class="muted">{{ 'web.crawlers.urls' | t }}</span></div>
+                <div class="by-type">
+                  @for (bt of entriesOf(l.by_type); track bt.key) {
+                    <span class="chip">{{ ('web.crawlers.type_' + bt.key) | t }}: {{ bt.value }}</span>
+                  }
+                </div>
+                <dl class="detail-grid small">
+                  <div><dt>{{ 'web.crawlers.files' | t }}</dt><dd>{{ l.files }}</dd></div>
+                  <div><dt>{{ 'web.crawlers.lastmod' | t }}</dt><dd>{{ date(l.lastmod) }}</dd></div>
+                </dl>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ═══════════════ AI crawler visibility ═══════════════ -->
+    @if (tab() === 'ai') {
+      <div class="card-body">
+        <div class="row head-row">
+          <p class="muted grow">{{ 'web.crawlers.ai_intro' | t }}</p>
+          <div class="custom-select">
+            <select [value]="days()" (change)="setDays($any($event.target).value)">
+              @for (w of windows; track w) {
+                <option [value]="w" [selected]="days() === w">{{ 'web.crawlers.last_days' | t: { n: w } }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="notice info">{{ 'web.crawlers.google_extended_note' | t }}</div>
+      </div>
+      @if (visLoading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      } @else if (visError()) {
+        <p class="table-hint">{{ visError()! | t }}</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'web.crawlers.crawler' | t }}</th>
+                <th>{{ 'web.crawlers.allowed_col' | t }}</th>
+                <th>{{ 'web.crawlers.last_seen' | t }}</th>
+                <th>{{ 'web.crawlers.hits' | t }}</th>
+                <th>{{ 'web.crawlers.by_resource' | t }}</th>
+                <th>{{ 'common.status' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of visibility()?.crawlers ?? []; track c.crawler) {
+                <tr>
+                  <td class="mono name-cell" dir="ltr">{{ c.crawler }}</td>
+                  <td>{{ (c.allowed ? 'common.yes' : 'common.no') | t }}</td>
+                  <td class="text-gray num">{{ date(c.last_seen_at) }}</td>
+                  <td class="num">{{ c.hits_in_window }}</td>
+                  <td>
+                    @for (r of entriesOf(c.by_resource); track r.key) {
+                      <span class="chip res-chip">{{ r.key }}: {{ r.value }}</span>
+                    } @empty { <span class="text-gray">—</span> }
+                  </td>
+                  <td>
+                    @if (isTokenOnly(c.crawler) && c.status !== 'blocked') {
+                      <span class="pill pill-inactive" [title]="'web.crawlers.google_extended_note' | t">{{ 'web.crawlers.status.token_only' | t }}</span>
+                    } @else {
+                      <span [class]="'pill pill-' + c.status">{{ ('web.crawlers.status.' + c.status) | t }}</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ═══════════════ URL checker ═══════════════ -->
+    @if (tab() === 'checker') {
+      <div class="card-body">
+        <p class="muted">{{ 'web.crawlers.checker_intro' | t }}</p>
+        <form class="checker" (ngSubmit)="check()">
+          <input type="text" dir="ltr" name="checkUrl" class="checker-input"
+                 placeholder="/en/doctors?spec=dermatology&sort=price"
+                 [ngModel]="checkUrl()" (ngModelChange)="checkUrl.set($event)">
+          <button type="submit" class="btn-primary btn-sm" [disabled]="checking() || !checkUrl().trim()">
+            {{ (checking() ? 'web.crawlers.checking' : 'web.crawlers.check') | t }}
+          </button>
+        </form>
+        @if (resolved(); as r) {
+          <div class="notice result-box" [class.success]="r.is_indexable" [class.warn]="!r.is_indexable">
+            <strong>{{ (r.is_indexable ? 'web.crawlers.indexable' : 'web.crawlers.not_indexable') | t }}</strong>
+          </div>
+          <dl class="detail-grid">
+            <div><dt>{{ 'web.crawlers.canonical' | t }}</dt><dd class="mono" dir="ltr">
+              @if (r.canonical) { <a [href]="r.canonical" target="_blank" rel="noopener">{{ r.canonical }}</a> } @else { — }
+            </dd></div>
+            <div><dt>{{ 'web.crawlers.robots_meta' | t }}</dt><dd class="mono" dir="ltr">{{ r.robots || '—' }}</dd></div>
+            <div><dt>{{ 'web.crawlers.reason_label' | t }}</dt><dd>{{ reasonLabel(r.reason) }}</dd></div>
+            <div><dt>{{ 'web.crawlers.clean_path' | t }}</dt><dd class="mono" dir="ltr">{{ r.clean_path || '—' }}</dd></div>
+            <div><dt>{{ 'web.crawlers.locale' | t }}</dt><dd>{{ r.locale || '—' }}</dd></div>
+            <div><dt>{{ 'web.crawlers.page_no' | t }}</dt><dd>{{ r.page ?? '—' }}</dd></div>
+          </dl>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ═══════════════ robots group editor ═══════════════ -->
+@if (ruleModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editingRule() ? 'web.crawlers.edit_group' : 'web.crawlers.add_group') | t }}</h3>
+        <button class="modal-close" (click)="closeModals()">×</button>
+      </div>
+      <form (ngSubmit)="saveRule()">
+        <div class="modal-body">
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'web.crawlers.user_agent' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" name="user_agent" placeholder="Bingbot"
+                     [ngModel]="ruleDraft().user_agent" (ngModelChange)="patchRule('user_agent', $event)">
+              @if (errors()['user_agent']) { <span class="field-error">{{ errors()['user_agent'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.crawlers.crawl_delay' | t }}</label>
+              <input type="number" min="0" name="crawl_delay"
+                     [ngModel]="ruleDraft().crawl_delay" (ngModelChange)="patchRule('crawl_delay', $event === null ? '' : '' + $event)">
+              <span class="hint">{{ 'web.crawlers.crawl_delay_hint' | t }}</span>
+              @if (errors()['crawl_delay']) { <span class="field-error">{{ errors()['crawl_delay'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.crawlers.allow' | t }}</label>
+              <textarea dir="ltr" name="allow" rows="4" class="mono" [disabled]="ruleDraft().block_all"
+                        [ngModel]="ruleDraft().allow" (ngModelChange)="patchRule('allow', $event)"></textarea>
+              <span class="hint">{{ 'web.crawlers.one_per_line' | t }}</span>
+              @if (listError('allow'); as e) { <span class="field-error">{{ e }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.crawlers.disallow' | t }}</label>
+              <textarea dir="ltr" name="disallow" rows="4" class="mono" [disabled]="ruleDraft().block_all"
+                        [ngModel]="ruleDraft().disallow" (ngModelChange)="patchRule('disallow', $event)"></textarea>
+              <span class="hint">{{ 'web.crawlers.one_per_line' | t }}</span>
+              @if (listError('disallow'); as e) { <span class="field-error">{{ e }}</span> }
+            </div>
+            <div class="form-group full">
+              <label class="checkbox">
+                <input type="checkbox" name="is_enabled" [ngModel]="ruleDraft().is_enabled" (ngModelChange)="patchRule('is_enabled', $event)">
+                {{ 'web.crawlers.enabled' | t }}
+              </label>
+            </div>
+            <div class="form-group full">
+              <label class="checkbox block-toggle">
+                <input type="checkbox" name="block_all" [ngModel]="ruleDraft().block_all" (ngModelChange)="patchRule('block_all', $event)">
+                {{ 'web.crawlers.block_all' | t }}
+              </label>
+              @if (ruleDraft().block_all && isAiCrawler(ruleDraft().user_agent)) {
+                <div class="notice error ai-warning">
+                  <strong>{{ 'web.crawlers.block_ai_title' | t }}</strong>
+                  <p>{{ 'web.crawlers.block_ai_text' | t: { agent: ruleDraft().user_agent } }}</p>
+                </div>
+              } @else {
+                <span class="hint">{{ 'web.crawlers.block_all_hint' | t }}</span>
+              }
+            </div>
+            <div class="form-group full">
+              <label>{{ 'web.crawlers.notes' | t }}</label>
+              <textarea name="notes" rows="2" [ngModel]="ruleDraft().notes" (ngModelChange)="patchRule('notes', $event)"></textarea>
+            </div>
+          </div>
+          <p class="muted">{{ 'web.crawlers.robots_private_note' | t }}</p>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" (click)="closeModals()">{{ 'common.cancel' | t }}</button>
+          <button type="submit" class="btn-primary" [class.btn-red]="ruleDraft().block_all && isAiCrawler(ruleDraft().user_agent)" [disabled]="saving()">
+            {{ (saving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════ llms entry editor ═══════════════ -->
+@if (entryModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editingEntry() ? 'web.crawlers.edit_entry' : 'web.crawlers.add_entry') | t }}</h3>
+        <button class="modal-close" (click)="closeModals()">×</button>
+      </div>
+      <form (ngSubmit)="saveEntry()">
+        <div class="modal-body">
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'web.crawlers.section' | t }} <span class="req">*</span></label>
+              <input type="text" name="section" list="llms-sections" placeholder="Core"
+                     [ngModel]="entryDraft().section" (ngModelChange)="patchEntry('section', $event)">
+              <datalist id="llms-sections">
+                @for (n of sectionNames(); track n) { <option [value]="n"></option> }
+              </datalist>
+              @if (errors()['section']) { <span class="field-error">{{ errors()['section'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.crawlers.sort_order' | t }}</label>
+              <input type="number" name="sort_order" [ngModel]="entryDraft().sort_order" (ngModelChange)="patchEntry('sort_order', $event)">
+            </div>
+            <div class="form-group full">
+              <label>{{ 'common.title' | t }} <span class="req">*</span></label>
+              <input type="text" name="title" [ngModel]="entryDraft().title" (ngModelChange)="patchEntry('title', $event)">
+              @if (errors()['title']) { <span class="field-error">{{ errors()['title'] }}</span> }
+            </div>
+            <div class="form-group full">
+              <label>{{ 'web.crawlers.url' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" name="url" placeholder="/en/coverage"
+                     [ngModel]="entryDraft().url" (ngModelChange)="patchEntry('url', $event)">
+              <span class="hint">{{ 'web.crawlers.url_hint' | t }}</span>
+              @if (errors()['url']) { <span class="field-error">{{ errors()['url'] }}</span> }
+            </div>
+            <div class="form-group full">
+              <label>{{ 'common.description' | t }}</label>
+              <textarea name="description" rows="3" [ngModel]="entryDraft().description" (ngModelChange)="patchEntry('description', $event)"></textarea>
+              @if (errors()['description']) { <span class="field-error">{{ errors()['description'] }}</span> }
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" (click)="closeModals()">{{ 'common.cancel' | t }}</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">{{ (saving() ? 'common.saving' : 'common.save') | t }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

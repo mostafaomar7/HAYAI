@@ -1,0 +1,259 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.roles.title' | t }}</h2>
+        <p class="sub">{{ 'web.roles.subtitle' | t }}</p>
+      </div>
+      @if (tab() === 'roles') {
+        <div class="actions-area">
+          <button class="btn-primary" (click)="openRole(null)" [disabled]="!catalog()">+ {{ 'web.roles.add_role' | t }}</button>
+        </div>
+      } @else {
+        <div class="actions-area">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" [placeholder]="'common.search_placeholder' | t" [value]="adminSearch()"
+                   (input)="adminSearch.set($any($event.target).value)">
+          </div>
+        </div>
+      }
+    </div>
+    <div class="tabs">
+      <button class="tab" [class.active]="tab() === 'roles'" (click)="selectTab('roles')">
+        {{ 'web.roles.tab_roles' | t }}<span class="count">{{ roles().length }}</span>
+      </button>
+      <button class="tab" [class.active]="tab() === 'admins'" (click)="selectTab('admins')">
+        {{ 'web.roles.tab_admins' | t }}
+        @if (admins().length) { <span class="count">{{ admins().length }}</span> }
+      </button>
+    </div>
+
+    <!-- ═══════════════ roles ═══════════════ -->
+    @if (tab() === 'roles') {
+      @if (rolesLoading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      } @else if (rolesError()) {
+        <p class="table-hint">{{ rolesError()! | t }}</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'web.roles.role' | t }}</th>
+                <th>{{ 'web.roles.permissions' | t }}</th>
+                <th>{{ 'web.roles.admins_count' | t }}</th>
+                <th class="action-col">{{ 'common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of roles(); track r.id) {
+                <tr>
+                  <td>
+                    <div class="name-cell">{{ roleLabel(r.name) }}</div>
+                    <div class="row role-meta">
+                      <code class="mono text-gray" dir="ltr">{{ r.name }}</code>
+                      @if (r.is_system) { <span class="chip">{{ 'web.roles.system' | t }}</span> }
+                    </div>
+                  </td>
+                  <td>
+                    @if (r.name === superAdmin) {
+                      <span class="pill pill-active">{{ 'web.roles.all_permissions' | t }}</span>
+                    } @else {
+                      <div class="perm-count">
+                        <span class="num">{{ r.permissions.length }}@if (totalPerms()) { / {{ totalPerms() }} }</span>
+                        @if (totalPerms()) {
+                          <div class="progress-track"><div class="progress-fill" [style.width.%]="(r.permissions.length / totalPerms()) * 100"></div></div>
+                        }
+                      </div>
+                    }
+                  </td>
+                  <td class="num">{{ r.admins_count }}</td>
+                  <td class="action-col">
+                    <div class="row-actions">
+                      <button class="link-btn" (click)="openRole(r)" [disabled]="!catalog()">
+                        {{ (r.name === superAdmin ? 'common.view' : 'common.edit') | t }}
+                      </button>
+                      @if (!r.is_system) {
+                        <button class="link-btn danger" (click)="deleteRole(r)"
+                                [title]="r.admins_count ? ('web.roles.delete_held_hint' | t) : ''">{{ 'common.delete' | t }}</button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ═══════════════ admins ═══════════════ -->
+    @if (tab() === 'admins') {
+      <div class="card-body"><div class="notice info no-margin">{{ 'web.roles.admins_note' | t }}</div></div>
+      @if (adminsLoading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      } @else if (adminsError()) {
+        <p class="table-hint">{{ adminsError()! | t }}</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'common.name' | t }}</th>
+                <th>{{ 'common.email' | t }}</th>
+                <th>{{ 'common.status' | t }}</th>
+                <th>{{ 'web.roles.roles_col' | t }}</th>
+                <th class="action-col">{{ 'common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of filteredAdmins(); track a.id) {
+                <tr>
+                  <td class="name-cell">
+                    {{ a.name }}
+                    @if (a.id === myId()) { <span class="chip you-chip">{{ 'web.roles.you' | t }}</span> }
+                  </td>
+                  <td class="text-gray" dir="ltr">{{ a.email }}</td>
+                  <td><span [class]="'pill ' + statusClass(a.status)">{{ $any(a)['status_label'] || a.status || '—' }}</span></td>
+                  <td>
+                    <div class="chips">
+                      @for (r of a.roles; track r) {
+                        <span class="chip" [class.super]="r === superAdmin">{{ roleLabel(r) }}</span>
+                      } @empty {
+                        <span class="text-gray small">{{ 'web.roles.no_access' | t }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="action-col">
+                    <button class="link-btn" (click)="openAdmin(a)">{{ 'web.roles.edit_roles' | t }}</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- ═══════════════ role editor ═══════════════ -->
+@if (roleModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>
+          @if (roleReadOnly()) { {{ roleLabel(superAdmin) }} }
+          @else { {{ (editingRole() ? 'web.roles.edit_role' : 'web.roles.add_role') | t }} }
+        </h3>
+        <button class="modal-close" (click)="closeModals()">×</button>
+      </div>
+      <form (ngSubmit)="saveRole()">
+        <div class="modal-body">
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+          @if (roleReadOnly()) {
+            <div class="notice info">{{ 'web.roles.super_admin_note' | t }}</div>
+          }
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'web.roles.role_name' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" name="roleName" placeholder="blog-writer"
+                     [readonly]="!!editingRole()?.is_system || roleReadOnly()"
+                     [ngModel]="roleName()" (ngModelChange)="roleName.set($event)">
+              <span class="hint">{{ (editingRole()?.is_system ? 'web.roles.system_name_hint' : 'web.roles.name_hint') | t }}</span>
+              @if (errors()['name']) { <span class="field-error">{{ errors()['name'] }}</span> }
+            </div>
+          </div>
+
+          <div class="perm-head">
+            <h4 class="section-title">{{ 'web.roles.permissions' | t }}</h4>
+            <span class="muted">{{ 'web.roles.n_selected' | t: { n: rolePerms().size, total: totalPerms() } }}</span>
+          </div>
+          @if (errors()['permissions']) { <span class="field-error">{{ errors()['permissions'] }}</span> }
+          <div class="perm-groups">
+            @for (g of groups(); track g.name) {
+              <fieldset class="perm-group" [disabled]="roleReadOnly()">
+                <legend>
+                  <label class="checkbox group-check">
+                    <input type="checkbox" [checked]="groupState(g.perms) === 'all'"
+                           [indeterminate]="groupState(g.perms) === 'some'"
+                           (change)="toggleGroup(g.perms, $any($event.target).checked)">
+                    {{ groupLabel(g.name) }}
+                  </label>
+                </legend>
+                @for (p of g.perms; track p) {
+                  <label class="checkbox perm">
+                    <input type="checkbox" [checked]="hasPerm(p)" (change)="togglePerm(p, $any($event.target).checked)">
+                    <span>
+                      {{ permLabel(p) }}
+                      <code class="mono text-gray" dir="ltr">{{ p }}</code>
+                    </span>
+                  </label>
+                }
+              </fieldset>
+            }
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" (click)="closeModals()">{{ (roleReadOnly() ? 'common.close' : 'common.cancel') | t }}</button>
+          @if (!roleReadOnly()) {
+            <button type="submit" class="btn-primary" [disabled]="saving() || !roleName().trim()">
+              {{ (saving() ? 'common.saving' : 'common.save') | t }}
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════ admin roles editor ═══════════════ -->
+@if (adminModal()) {
+  <div class="modal-backdrop" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ 'web.roles.roles_of' | t: { name: editingAdmin()?.name ?? '' } }}</h3>
+        <button class="modal-close" (click)="closeModals()">×</button>
+      </div>
+      <div class="modal-body">
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+        @if (editingAdmin()?.id === myId()) {
+          <div class="notice warn">{{ 'web.roles.editing_self' | t }}</div>
+        }
+        <div class="stack">
+          @for (r of roles(); track r.id) {
+            <label class="checkbox role-option">
+              <input type="checkbox" [checked]="hasAdminRole(r.name)" (change)="toggleAdminRole(r.name, $any($event.target).checked)">
+              <span>
+                <strong>{{ roleLabel(r.name) }}</strong>
+                <span class="muted">
+                  — @if (r.name === superAdmin) { {{ 'web.roles.all_permissions' | t }} }
+                  @else { {{ 'web.roles.n_permissions' | t: { n: r.permissions.length } }} }
+                </span>
+              </span>
+            </label>
+          } @empty {
+            <p class="muted">{{ 'common.loading' | t }}</p>
+          }
+        </div>
+        @if (errors()['roles']) { <span class="field-error">{{ errors()['roles'] }}</span> }
+        @if (!adminRoles().size) {
+          <p class="notice warn no-roles">{{ 'web.roles.no_roles_warning' | t }}</p>
+        }
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="closeModals()">{{ 'common.cancel' | t }}</button>
+        <button type="button" class="btn-primary" (click)="saveAdmin()" [disabled]="saving()">
+          {{ (saving() ? 'common.saving' : 'common.save') | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

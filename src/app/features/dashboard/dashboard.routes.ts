@@ -382,6 +382,11 @@ export const DASHBOARD_ROUTES: Routes = [
     data: { title: config.titleKey, listKey: config.key },
     loadComponent: () => import('./pages/option-lists/option-lists').then(m => m.OptionLists)
   })),
+  // Website CMS — its own route file, guarded per screen by website permission.
+  {
+    path: 'website',
+    loadChildren: () => import('./pages/website/website.routes').then(m => m.WEBSITE_ROUTES)
+  },
   {
     path: 'notfication/history',
     data: { title: 'menu.notification_history' },

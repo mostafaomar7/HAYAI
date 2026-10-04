@@ -1,0 +1,135 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.settings.title' | t }}</h2>
+        <p class="sub">{{ 'web.settings.subtitle' | t }}</p>
+      </div>
+      @if (canEdit()) {
+        <div class="actions-area">
+          <button class="btn-secondary" (click)="flush()" [disabled]="flushing()">
+            {{ (flushing() ? 'web.settings.flushing' : 'web.settings.flush') | t }}
+          </button>
+        </div>
+      }
+    </div>
+    @if (groups().length > 1) {
+      <div class="tabs">
+        <button class="tab" [class.active]="activeGroup() === 'all'" (click)="selectGroup('all')">{{ 'common.all' | t }}</button>
+        @for (g of groups(); track g.name) {
+          <button class="tab" [class.active]="activeGroup() === g.name" (click)="selectGroup(g.name)">
+            {{ groupLabel(g.name) }}<span class="count">{{ g.items.length }}</span>
+          </button>
+        }
+      </div>
+    }
+    @if (!canEdit()) {
+      <div class="card-body"><div class="notice info read-only">{{ 'web.settings.read_only' | t }}</div></div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card"><p class="table-hint">{{ loadError()! | t }}</p></div>
+  } @else {
+    @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+    @for (g of visibleGroups(); track g.name) {
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>{{ groupLabel(g.name) }}</h2>
+            @if (groupHint(g.name); as hint) { <p class="sub">{{ hint }}</p> }
+          </div>
+        </div>
+        <div class="card-body settings-list">
+          @for (row of g.items; track row.key) {
+            <div class="setting" [class.changed]="isChanged(row.key)" [class.danger-zone]="isDirectory(row.key)">
+              <div class="setting-head">
+                <label class="setting-label" [attr.for]="'s-' + row.key">{{ label(row.key) }}</label>
+                <code class="mono key" dir="ltr">{{ row.key }}</code>
+                @if (row.is_default && !isChanged(row.key)) {
+                  <span class="chip default-chip">{{ 'web.settings.default_badge' | t }}</span>
+                }
+                @if (isChanged(row.key)) {
+                  <span class="chip changed-chip">{{ 'web.settings.unsaved' | t }}</span>
+                }
+                <span class="spacer"></span>
+                @if (canEdit()) {
+                  @if (isChanged(row.key)) {
+                    <button class="link-btn" (click)="undo(row)">{{ 'web.settings.undo' | t }}</button>
+                  }
+                  @if (!isAtDefault(row)) {
+                    <button class="link-btn" (click)="resetToDefault(row)">{{ 'web.settings.reset_default' | t }}</button>
+                  }
+                }
+              </div>
+              @if (row.description) { <p class="setting-desc">{{ row.description }}</p> }
+
+              @if (isDirectory(row.key)) {
+                <div class="notice error directory-warning">
+                  <strong>{{ 'web.settings.directory_warning_title' | t }}</strong>
+                  <p>{{ 'web.settings.directory_warning' | t }}</p>
+                </div>
+              }
+
+              @switch (widget(row)) {
+                @case ('bool') {
+                  <label class="switch">
+                    <input type="checkbox" [id]="'s-' + row.key" [disabled]="!canEdit()"
+                           [checked]="value(row.key) === true" (change)="toggle(row, $any($event.target))">
+                    <span class="slider"></span>
+                    <span class="switch-text">{{ (value(row.key) === true ? 'web.settings.on' : 'web.settings.off') | t }}</span>
+                  </label>
+                }
+                @case ('text') {
+                  <textarea class="field" rows="3" [id]="'s-' + row.key" [attr.dir]="dir(row.key)" [disabled]="!canEdit()"
+                            [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)"></textarea>
+                }
+                @case ('number') {
+                  <input class="field narrow" type="number" [id]="'s-' + row.key" [disabled]="!canEdit()"
+                         [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)">
+                }
+                @case ('list') {
+                  <textarea class="field mono" rows="4" [id]="'s-' + row.key" [attr.dir]="dir(row.key) ?? 'ltr'" [disabled]="!canEdit()"
+                            [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)"></textarea>
+                  <span class="hint">{{ 'web.settings.one_per_line' | t }}</span>
+                }
+                @case ('json') {
+                  <textarea class="field mono" rows="6" dir="ltr" [id]="'s-' + row.key" [disabled]="!canEdit()"
+                            [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)"></textarea>
+                  <span class="hint">{{ 'web.settings.json_hint' | t }}</span>
+                }
+                @default {
+                  <input class="field" type="text" [id]="'s-' + row.key" [attr.dir]="dir(row.key)" [disabled]="!canEdit()"
+                         [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)">
+                }
+              }
+              @if (errors()[row.key]) { <span class="field-error">{{ errors()[row.key] | t }}</span> }
+              <div class="setting-meta">
+                <span>{{ 'web.settings.default_is' | t }} <span class="mono" dir="auto">{{ defaultText(row) }}</span></span>
+                @if (row.updated_at) {
+                  <span>· {{ 'web.settings.updated' | t: { date: date(row.updated_at) } }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="card"><p class="table-hint">{{ 'common.no_data' | t }}</p></div>
+    }
+  }
+</div>
+
+@if (canEdit() && changedKeys().length) {
+  <div class="save-bar">
+    <span>{{ 'web.settings.n_changed' | t: { n: changedKeys().length } }}</span>
+    <span class="spacer"></span>
+    <button class="btn-secondary btn-sm" (click)="discard()" [disabled]="saving()">{{ 'web.settings.discard' | t }}</button>
+    <button class="btn-primary btn-sm" (click)="save()" [disabled]="saving()">
+      {{ (saving() ? 'common.saving' : 'common.save') | t }}
+    </button>
+  </div>
+}

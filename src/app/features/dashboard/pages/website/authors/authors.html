@@ -1,0 +1,245 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ 'web.authors.title' | t }}</h2>
+          <span class="pill pill-scheduled">{{ total() }}</span>
+        </div>
+        <p class="sub">{{ 'web.authors.subtitle' | t }}</p>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'common.search_placeholder' | t" (input)="onSearch($any($event.target).value)">
+        </div>
+
+        <div class="custom-select">
+          <select [value]="active()" (change)="setActive($any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            <option value="1" [selected]="active() === '1'">{{ 'common.active' | t }}</option>
+            <option value="0" [selected]="active() === '0'">{{ 'common.inactive' | t }}</option>
+          </select>
+        </div>
+
+        @if (canCreate()) {
+          <button class="btn-primary" (click)="create()">+ {{ 'web.authors.add' | t }}</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.authors.name_en' | t }}</th>
+              <th>{{ 'web.authors.name_ar' | t }}</th>
+              <th>{{ 'web.authors.job_title' | t }}</th>
+              <th>{{ 'web.authors.articles' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="edit(row)">
+                <td>
+                  <div class="person">
+                    @if (photoUrl(row); as src) {
+                      <img class="avatar" [src]="src" [alt]="row.name_en">
+                    } @else {
+                      <span class="avatar initials">{{ (row.name_en || '?').charAt(0) }}</span>
+                    }
+                    <div class="person-meta">
+                      <span class="name-cell">{{ row.name_en }}</span>
+                      <span class="mono text-gray" dir="ltr">{{ row.slug }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td dir="rtl" class="start">{{ row.name_ar || '—' }}</td>
+                <td class="text-gray">{{ (lang() === 'ar' ? (row.job_title_ar || row.job_title_en) : (row.job_title_en || row.job_title_ar)) || '—' }}</td>
+                <td class="num">{{ row.articles_count ?? 0 }}</td>
+                <td>
+                  <span class="pill" [class.pill-active]="row.is_active" [class.pill-inactive]="!row.is_active">
+                    {{ (row.is_active ? 'common.active' : 'common.inactive') | t }}
+                  </span>
+                </td>
+                <td class="action-col" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="edit(row)">{{ (canUpdate() ? 'common.edit' : 'common.view') | t }}</button>
+                    @if (canUpdate()) {
+                      <button class="link-btn" (click)="setActiveFlag(row, !row.is_active)">
+                        {{ (row.is_active ? 'web.authors.deactivate' : 'web.authors.activate') | t }}
+                      </button>
+                    }
+                    @if (canDelete()) {
+                      <button class="link-btn danger" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+@if (open()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'web.authors.edit_title' : 'web.authors.new_title') | t }}</h3>
+        <button type="button" class="modal-close" (click)="close()">×</button>
+      </div>
+
+      <div class="modal-body">
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+        <div class="notice info">{{ 'web.authors.eeat_notice' | t }}</div>
+        @if (looksLikeTeam()) {
+          <div class="notice warn">{{ 'web.authors.team_warning' | t }}</div>
+        }
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'web.authors.slug' | t }} <span class="req">*</span></label>
+            <input type="text" dir="ltr" [value]="draft().slug" (input)="set('slug', $any($event.target).value)"
+                   placeholder="dr-sara-ahmed">
+            <span class="hint">
+              {{ 'web.authors.public_url' | t }}
+              <span class="mono" dir="ltr">{{ publicPath('en', draft().slug) }}</span> ·
+              <span class="mono" dir="ltr">{{ publicPath('ar', draft().slug) }}</span>
+            </span>
+            @if (errorFor('slug')) { <span class="field-error">{{ errorFor('slug')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.authors.photo' | t }}</label>
+            <app-media-picker [value]="draft().photo_media_id" (valueChange)="set('photo_media_id', $event)" />
+            <span class="hint">{{ 'web.authors.photo_hint' | t }}</span>
+            @if (errorFor('photo_media_id')) { <span class="field-error">{{ errorFor('photo_media_id')! | t }}</span> }
+          </div>
+        </div>
+
+        <div class="sub-section">
+          <div class="row head-row">
+            <h4 class="section-title no-margin">{{ 'web.authors.profile' | t }}</h4>
+            <span class="spacer"></span>
+            <div class="locale-switch">
+              <button type="button" [class.active]="locale() === 'en'" (click)="locale.set('en')">
+                EN @if (localeHasError('en')) { <span class="err-dot"></span> }
+              </button>
+              <button type="button" [class.active]="locale() === 'ar'" (click)="locale.set('ar')">
+                العربية @if (localeHasError('ar')) { <span class="err-dot"></span> }
+              </button>
+            </div>
+          </div>
+
+          @if (locale() === 'en') {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'common.name' | t }} (EN) <span class="req">*</span></label>
+                <input type="text" dir="ltr" [value]="draft().name_en" (input)="set('name_en', $any($event.target).value)"
+                       placeholder="Dr. Sara Ahmed">
+                @if (errorFor('name_en')) { <span class="field-error">{{ errorFor('name_en')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.authors.job_title' | t }} (EN)</label>
+                <input type="text" dir="ltr" [value]="draft().job_title_en" (input)="set('job_title_en', $any($event.target).value)"
+                       placeholder="Consultant Dermatologist">
+                @if (errorFor('job_title_en')) { <span class="field-error">{{ errorFor('job_title_en')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.authors.credentials' | t }} (EN)</label>
+                <input type="text" dir="ltr" [value]="draft().credentials_en" (input)="set('credentials_en', $any($event.target).value)"
+                       placeholder="MD, MSc Dermatology — Cairo University">
+                <span class="hint">{{ 'web.authors.credentials_hint' | t }}</span>
+                @if (errorFor('credentials_en')) { <span class="field-error">{{ errorFor('credentials_en')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.authors.bio' | t }} (EN)</label>
+                <textarea dir="ltr" rows="5" [value]="draft().bio_en" (input)="set('bio_en', $any($event.target).value)"></textarea>
+                @if (errorFor('bio_en')) { <span class="field-error">{{ errorFor('bio_en')! | t }}</span> }
+              </div>
+            </div>
+          } @else {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'common.name' | t }} (AR)</label>
+                <input type="text" dir="rtl" [value]="draft().name_ar" (input)="set('name_ar', $any($event.target).value)">
+                @if (errorFor('name_ar')) { <span class="field-error">{{ errorFor('name_ar')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.authors.job_title' | t }} (AR)</label>
+                <input type="text" dir="rtl" [value]="draft().job_title_ar" (input)="set('job_title_ar', $any($event.target).value)">
+                @if (errorFor('job_title_ar')) { <span class="field-error">{{ errorFor('job_title_ar')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.authors.credentials' | t }} (AR)</label>
+                <input type="text" dir="rtl" [value]="draft().credentials_ar" (input)="set('credentials_ar', $any($event.target).value)">
+                @if (errorFor('credentials_ar')) { <span class="field-error">{{ errorFor('credentials_ar')! | t }}</span> }
+              </div>
+              <div class="form-group full">
+                <label>{{ 'web.authors.bio' | t }} (AR)</label>
+                <textarea dir="rtl" rows="5" [value]="draft().bio_ar" (input)="set('bio_ar', $any($event.target).value)"></textarea>
+                @if (errorFor('bio_ar')) { <span class="field-error">{{ errorFor('bio_ar')! | t }}</span> }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="sub-section">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>{{ 'web.authors.same_as' | t }} <span class="muted">({{ sameAsCount() }})</span></label>
+              <textarea dir="ltr" rows="4" [value]="draft().same_as" (input)="set('same_as', $any($event.target).value)"
+                        placeholder="https://www.linkedin.com/in/...&#10;https://scholar.google.com/citations?user=..."></textarea>
+              <span class="hint">{{ 'web.authors.same_as_hint' | t }}</span>
+              @if (!sameAsCount()) { <span class="soft-warn">{{ 'web.authors.same_as_empty' | t }}</span> }
+              @for (e of sameAsErrors(); track $index) { <span class="field-error">{{ e | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'common.email' | t }}</label>
+              <input type="email" dir="ltr" [value]="draft().email" (input)="set('email', $any($event.target).value)">
+              <span class="hint">{{ 'web.authors.email_hint' | t }}</span>
+              @if (errorFor('email')) { <span class="field-error">{{ errorFor('email')! | t }}</span> }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'common.status' | t }}</label>
+              <label class="checkbox">
+                <input type="checkbox" [checked]="draft().is_active" (change)="set('is_active', $any($event.target).checked)">
+                {{ 'common.active' | t }}
+              </label>
+              <span class="hint">{{ 'web.authors.active_hint' | t }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+        @if (canSave()) {
+          <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+            {{ (saving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

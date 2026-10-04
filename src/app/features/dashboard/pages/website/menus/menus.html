@@ -1,0 +1,234 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.menus.title' | t }}</h2>
+        <p class="sub">{{ 'web.menus.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        <div class="search-box key-box">
+          <input #keyInput type="text" dir="ltr" [placeholder]="'web.menus.other_key' | t"
+                 (keydown.enter)="openKey(keyInput.value); keyInput.value = ''">
+        </div>
+        <button type="button" class="btn-secondary btn-sm" (click)="openKey(keyInput.value); keyInput.value = ''">
+          {{ 'web.menus.open' | t }}
+        </button>
+      </div>
+    </div>
+
+    @if (listLoading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (listError()) {
+      <p class="table-hint">{{ listError()! | t }}</p>
+    } @else {
+      <div class="tabs">
+        @for (m of menus(); track m.key) {
+          <button type="button" class="tab" [class.active]="activeKey() === m.key" (click)="select(m.key)">
+            {{ menuName(m) }} <span class="count mono">{{ m.key }}</span>
+          </button>
+        }
+        @if (activeIsNew()) {
+          <button type="button" class="tab active">{{ activeKey() }} <span class="count">{{ 'web.menus.new' | t }}</span></button>
+        }
+      </div>
+      @if (!menus().length && !activeKey()) {
+        <p class="table-hint">{{ 'web.menus.none' | t }}</p>
+      }
+    }
+  </div>
+
+  @if (activeKey()) {
+    @if (menuLoading()) {
+      <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+    } @else if (menuError()) {
+      <div class="card"><p class="table-hint">{{ menuError()! | t }}</p></div>
+    } @else if (menu()) {
+      <!-- items -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>{{ 'web.menus.items' | t }}</h2>
+            <p class="sub">{{ 'web.menus.items_hint' | t }}</p>
+          </div>
+          <div class="actions-area">
+            <div class="locale-switch">
+              <button type="button" [class.active]="locale() === 'en'" (click)="setLocale('en')">
+                EN @if (dirty().en) { <span class="dirty-dot"></span> }
+              </button>
+              <button type="button" [class.active]="locale() === 'ar'" (click)="setLocale('ar')">
+                العربية @if (dirty().ar) { <span class="dirty-dot"></span> }
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="notice info">{{ 'web.menus.page_link_notice' | t }}</div>
+          @if (itemsError()) { <div class="form-error">{{ itemsError()! | t }}</div> }
+
+          <ol class="tree" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
+            @for (n of tree(); track n.uid; let i = $index; let first = $first; let last = $last) {
+              <li class="node">
+                <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: n, path: 'items.' + i, first: first, last: last, parent: null }" />
+
+                @if (n.children.length) {
+                  <ol class="children">
+                    @for (c of n.children; track c.uid; let j = $index; let cf = $first; let cl = $last) {
+                      <li class="node child">
+                        <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: c, path: 'items.' + i + '.children.' + j, first: cf, last: cl, parent: n }" />
+                      </li>
+                    }
+                  </ol>
+                }
+                @if (canUpdate()) {
+                  <button type="button" class="link-btn add-child" (click)="addChild(n)">+ {{ 'web.menus.add_child' | t }}</button>
+                }
+              </li>
+            } @empty {
+              <li class="muted empty">{{ 'web.menus.empty_locale' | t }}</li>
+            }
+          </ol>
+
+          @if (canUpdate()) {
+            <div class="row tree-actions">
+              <button type="button" class="btn-secondary btn-sm" (click)="addTop()">+ {{ 'web.menus.add_item' | t }}</button>
+              <button type="button" class="link-btn" (click)="copyFromOther()">
+                {{ (locale() === 'en' ? 'web.menus.copy_from_ar' : 'web.menus.copy_from_en') | t }}
+              </button>
+              <span class="spacer"></span>
+              <button type="button" class="btn-primary" [disabled]="savingItems() || !dirty()[locale()]" (click)="saveItems()">
+                {{ (savingItems() ? 'common.saving' : 'web.menus.save_items') | t: { lang: locale() | uppercase } }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- sitewide CTAs -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>{{ 'web.menus.ctas' | t }}</h2>
+            <p class="sub">{{ 'web.menus.ctas_hint' | t }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (ctasError()) { <div class="form-error">{{ ctasError()! | t }}</div> }
+
+          <div class="cta-rows">
+            @for (r of ctaRows(); track r.uid; let i = $index; let first = $first; let last = $last) {
+              <div class="cta-row">
+                <div class="form-group cta-pick">
+                  <label>{{ 'web.menus.cta' | t }}</label>
+                  <select [value]="r.cta_id" [disabled]="!canUpdate()" (change)="patchCta(r, { cta_id: $any($event.target).value })">
+                    <option value="">—</option>
+                    @for (c of ctaLibrary(); track c.id) {
+                      <option [value]="c.id" [selected]="r.cta_id === (c.id + '')">{{ ctaOption(c) }}</option>
+                    }
+                  </select>
+                  @if (ctaFor(r); as c) {
+                    <span class="hint">
+                      {{ enumLabel('cta_type', c.type) }}
+                      @if (!c.is_enabled) { · <span class="warn-text">{{ 'web.menus.cta_disabled' | t }}</span> }
+                    </span>
+                  }
+                  @if (ctaError(i, 'cta_id')) { <span class="field-error">{{ ctaError(i, 'cta_id')! | t }}</span> }
+                </div>
+                <div class="form-group">
+                  <label>{{ 'web.ctas.placement' | t }}</label>
+                  <select [value]="r.placement" [disabled]="!canUpdate()" (change)="patchCta(r, { placement: $any($event.target).value })">
+                    <option value="">—</option>
+                    @for (p of placements(); track p) {
+                      <option [value]="p" [selected]="r.placement === p">{{ enumLabel('cta_placement', p) }}</option>
+                    }
+                  </select>
+                  @if (ctaError(i, 'placement')) { <span class="field-error">{{ ctaError(i, 'placement')! | t }}</span> }
+                </div>
+                <label class="checkbox cta-enabled">
+                  <input type="checkbox" [checked]="r.is_enabled" [disabled]="!canUpdate()" (change)="patchCta(r, { is_enabled: $any($event.target).checked })">
+                  {{ 'web.ctas.enabled' | t }}
+                </label>
+                @if (canUpdate()) {
+                  <div class="node-tools">
+                    <button type="button" class="icon-btn" [disabled]="first" (click)="moveCta(r, -1)" [title]="'web.menus.up' | t">↑</button>
+                    <button type="button" class="icon-btn" [disabled]="last" (click)="moveCta(r, 1)" [title]="'web.menus.down' | t">↓</button>
+                    <button type="button" class="icon-btn danger" (click)="removeCta(r)" [title]="'common.remove' | t">×</button>
+                  </div>
+                }
+              </div>
+            } @empty {
+              <p class="muted">{{ 'web.menus.no_ctas' | t }}</p>
+            }
+          </div>
+
+          @if (canUpdate()) {
+            <div class="row tree-actions">
+              <button type="button" class="btn-secondary btn-sm" (click)="addCta()">+ {{ 'web.menus.add_cta' | t }}</button>
+              <span class="spacer"></span>
+              <button type="button" class="btn-primary" [disabled]="savingCtas() || !ctasDirty()" (click)="saveCtas()">
+                {{ (savingCtas() ? 'common.saving' : 'web.menus.save_ctas') | t }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>
+
+<!-- one menu item row (top level or nested) -->
+<ng-template #nodeTpl let-n let-path="path" let-first="first" let-last="last" let-parent="parent">
+  <div class="node-row" [class.has-error]="errorAt(path + '.label') || errorAt(path + '.page_id') || errorAt(path + '.url')">
+    <div class="node-fields">
+      <div class="form-group">
+        <input type="text" [placeholder]="'web.menus.label' | t" [value]="n.label" [readonly]="!canUpdate()"
+               [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'"
+               (input)="patch(n, { label: $any($event.target).value })">
+        @if (errorAt(path + '.label')) { <span class="field-error">{{ errorAt(path + '.label')! | t }}</span> }
+      </div>
+
+      <div class="form-group mode">
+        <select [value]="n.mode" [disabled]="!canUpdate()" (change)="patch(n, { mode: $any($event.target).value })">
+          <option value="page" [selected]="n.mode === 'page'">{{ 'web.menus.mode_page' | t }}</option>
+          <option value="url" [selected]="n.mode === 'url'">{{ 'web.menus.mode_url' | t }}</option>
+        </select>
+      </div>
+
+      <div class="form-group target">
+        @if (n.mode === 'page') {
+          <select [value]="n.page_id" [disabled]="!canUpdate()" (change)="patch(n, { page_id: $any($event.target).value })">
+            <option value="">{{ 'web.menus.choose_page' | t }}</option>
+            @for (p of pages(); track p.id) {
+              <option [value]="p.id" [selected]="n.page_id === (p.id + '')">{{ pageTitle(p) }}{{ p.is_live ? '' : ' (' + ('web.menus.not_live' | t) + ')' }}</option>
+            }
+          </select>
+          @if (n.page_id) {
+            @if (!pageLive(n)) {
+              <span class="warn-text small">⚠ {{ 'web.menus.hidden_not_live' | t }}</span>
+            } @else if (pagePath(n); as pth) {
+              <span class="hint mono" dir="ltr">{{ pth }}</span>
+            }
+          }
+          @if (errorAt(path + '.page_id')) { <span class="field-error">{{ errorAt(path + '.page_id')! | t }}</span> }
+        } @else {
+          <input type="text" dir="ltr" placeholder="/en/contact · https://…" [value]="n.url" [readonly]="!canUpdate()"
+                 (input)="patch(n, { url: $any($event.target).value })">
+          @if (errorAt(path + '.url')) { <span class="field-error">{{ errorAt(path + '.url')! | t }}</span> }
+        }
+      </div>
+    </div>
+
+    @if (canUpdate()) {
+      <div class="node-tools">
+        <button type="button" class="icon-btn" [disabled]="first" (click)="move(n, -1, parent ?? undefined)" [title]="'web.menus.up' | t">↑</button>
+        <button type="button" class="icon-btn" [disabled]="last" (click)="move(n, 1, parent ?? undefined)" [title]="'web.menus.down' | t">↓</button>
+        @if (parent) {
+          <button type="button" class="icon-btn" (click)="outdent(n, parent)" [title]="'web.menus.outdent' | t">⇤</button>
+        } @else if (!first && !n.children.length) {
+          <button type="button" class="icon-btn" (click)="indent(n)" [title]="'web.menus.indent' | t">⇥</button>
+        }
+        <button type="button" class="icon-btn danger" (click)="remove(n, parent ?? undefined)" [title]="'common.remove' | t">×</button>
+      </div>
+    }
+  </div>
+</ng-template>

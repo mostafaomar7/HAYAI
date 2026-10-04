@@ -1,0 +1,31 @@
+/* Only what this screen adds on top of website.shared.css. */
+
+.filters {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 14px 24px; border-bottom: 1px solid #F1F5F9;
+}
+.filter { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #6B7280; }
+.filter input {
+  padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px;
+  font-size: 14px; font-family: inherit; color: #374151; background: #fff;
+}
+.notice.inset { margin: 14px 24px 0; }
+.nowrap { white-space: nowrap; }
+.quote-tag { display: inline-block; font-size: 12px; font-weight: 600; color: #B45309; }
+:where(.pill) { background: #F3F4F6; color: #4B5563; }
+
+.items-editor { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.item-row {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; width: 100%;
+  padding: 12px; border: 1px solid #F1F5F9; border-radius: 10px; box-sizing: border-box;
+}
+.item-row .grow { flex: 1 1 220px; min-width: 0; }
+.item-row .qty { flex: 0 0 110px; }
+.item-row .remove { margin-bottom: 12px; }
+.section-title.spaced { margin-top: 24px; }
+
+@media (max-width: 640px) {
+  .filters { padding: 12px 16px; }
+  .filter, .filter input { width: 100%; }
+  .item-row .qty { flex: 1 1 100%; }
+}

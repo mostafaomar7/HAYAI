@@ -1,0 +1,36 @@
+<div class="picker">
+  @if (selected(); as s) {
+    <div class="picked">
+      <div class="picked-text">
+        <span class="name">{{ title(s) }}</span>
+        <span class="mono text-gray" dir="ltr">{{ path(s) }}</span>
+      </div>
+      @if (!disabled()) {
+        <button type="button" class="link-btn" (click)="clear()">{{ 'common.remove' | t }}</button>
+      }
+    </div>
+  } @else {
+    <div class="search-wrap">
+      <input type="text" class="picker-input" [disabled]="disabled()"
+             [placeholder]="'web.pages.parent_search' | t"
+             (focus)="focus()" (blur)="close()" (input)="onSearch($any($event.target).value)">
+      @if (open()) {
+        <div class="results">
+          @if (searching()) {
+            <div class="result muted">{{ 'common.loading' | t }}</div>
+          } @else {
+            @for (r of results(); track r.id) {
+              <button type="button" class="result" (mousedown)="choose(r)">
+                <span class="name">{{ title(r) }}</span>
+                <span class="mono text-gray" dir="ltr">{{ path(r) }}</span>
+              </button>
+            } @empty {
+              <div class="result muted">{{ 'common.no_data' | t }}</div>
+            }
+          }
+        </div>
+      }
+    </div>
+    <span class="hint">{{ 'web.pages.parent_none' | t }}</span>
+  }
+</div>

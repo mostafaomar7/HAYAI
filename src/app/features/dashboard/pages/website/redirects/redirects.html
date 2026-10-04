@@ -1,0 +1,195 @@
+<div class="page-container">
+  <!-- URL tester first: "where does this old link go?" is the question most
+       people open this screen with. -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.redirects.test_title' | t }}</h2>
+        <p class="sub">{{ 'web.redirects.test_sub' | t }}</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <form class="tester" (ngSubmit)="test()">
+        <input type="text" dir="ltr" name="testPath" class="tester-input"
+               [ngModel]="testPath()" (ngModelChange)="testPath.set($event)"
+               placeholder="/en/old-page">
+        <button type="submit" class="btn-primary btn-sm" [disabled]="testing() || !testPath().trim()">
+          {{ (testing() ? 'web.redirects.testing' : 'web.redirects.test') | t }}
+        </button>
+      </form>
+      @if (testResult() !== undefined) {
+        @if (testResult(); as r) {
+          <div class="notice success test-result">
+            <span class="mono" dir="ltr">{{ testedPath() }}</span>
+            <span class="arrow">→</span>
+            <span class="pill pill-active">{{ r.status_code }}</span>
+            <a class="mono" dir="ltr" [href]="r.location" target="_blank" rel="noopener">{{ r.location }}</a>
+          </div>
+        } @else {
+          <div class="notice info test-result">
+            {{ 'web.redirects.no_redirect' | t: { path: testedPath() } }}
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="title-area">
+        <h2>{{ 'web.redirects.title' | t }}</h2>
+        <span class="pill pill-in_progress">{{ total() }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" dir="ltr" [placeholder]="'web.redirects.search' | t"
+                 (input)="onSearch($any($event.target).value)">
+        </div>
+        <div class="custom-select">
+          <select [value]="isActive()" (change)="setFilter('active', $any($event.target).value)">
+            <option value="">{{ 'web.redirects.any_state' | t }}</option>
+            <option value="1">{{ 'common.active' | t }}</option>
+            <option value="0">{{ 'common.inactive' | t }}</option>
+          </select>
+        </div>
+        <div class="custom-select">
+          <select [value]="isAutomatic()" (change)="setFilter('automatic', $any($event.target).value)">
+            <option value="">{{ 'web.redirects.any_origin' | t }}</option>
+            <option value="1">{{ 'web.redirects.automatic' | t }}</option>
+            <option value="0">{{ 'web.redirects.manual' | t }}</option>
+          </select>
+        </div>
+        @if (ctx.can('redirects.create')) {
+          <button class="btn-primary" (click)="openCreate()">+ {{ 'web.redirects.add' | t }}</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.redirects.source' | t }}</th>
+              <th>{{ 'web.redirects.destination' | t }}</th>
+              <th>{{ 'web.redirects.code' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'web.redirects.hits' | t }}</th>
+              <th>{{ 'web.redirects.last_hit' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr>
+                <td>
+                  <div class="path-cell mono" dir="ltr">{{ row.source_path }}</div>
+                  @if (row.is_automatic) {
+                    <span class="chip auto-chip" [title]="'web.redirects.automatic_hint' | t">{{ 'web.redirects.automatic' | t }}</span>
+                  }
+                  @if (row.notes) { <div class="hint">{{ row.notes }}</div> }
+                </td>
+                <td><div class="path-cell mono" dir="ltr">{{ row.destination }}</div></td>
+                <td class="num">{{ row.status_code }}</td>
+                <td>
+                  <span [class]="'pill ' + (row.is_active ? 'pill-active' : 'pill-inactive')">
+                    {{ (row.is_active ? 'common.active' : 'common.inactive') | t }}
+                  </span>
+                </td>
+                <td class="num">{{ row.hits || 0 }}</td>
+                <td class="text-gray num">{{ date(row.last_hit_at) }}</td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    @if (ctx.can('redirects.update')) {
+                      <button class="link-btn" (click)="openEdit(row)">{{ 'common.edit' | t }}</button>
+                      <button class="link-btn" (click)="toggleActive(row)">
+                        {{ (row.is_active ? 'web.redirects.disable' : 'web.redirects.enable') | t }}
+                      </button>
+                    }
+                    @if (ctx.can('redirects.delete')) {
+                      <button class="link-btn danger" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="table-hint">{{ 'web.redirects.empty' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'web.redirects.edit_title' : 'web.redirects.add_title') | t }}</h3>
+        <button class="modal-close" (click)="closeModal()">×</button>
+      </div>
+      <form (ngSubmit)="save()">
+        <div class="modal-body">
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+          @if (editing()?.is_automatic) {
+            <div class="notice info">{{ 'web.redirects.automatic_hint' | t }}</div>
+          }
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>{{ 'web.redirects.source' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" name="source_path" placeholder="/en/old-page"
+                     [ngModel]="draft().source_path" (ngModelChange)="patch('source_path', $event)">
+              <span class="hint">{{ 'web.redirects.source_hint' | t }}</span>
+              @if (errors()['source_path']) { <span class="field-error">{{ errors()['source_path'] }}</span> }
+            </div>
+            <div class="form-group full">
+              <label>{{ 'web.redirects.destination' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" name="destination" placeholder="/en/new-page"
+                     [ngModel]="draft().destination" (ngModelChange)="patch('destination', $event)">
+              <span class="hint">{{ 'web.redirects.destination_hint' | t }}</span>
+              @if (errors()['destination']) { <span class="field-error">{{ errors()['destination'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.redirects.code' | t }}</label>
+              <select name="status_code" [ngModel]="draft().status_code" (ngModelChange)="patch('status_code', +$event)">
+                @for (c of statusCodes; track c) {
+                  <option [ngValue]="c">{{ c }} — {{ ('web.redirects.code_' + c) | t }}</option>
+                }
+              </select>
+              @if (errors()['status_code']) { <span class="field-error">{{ errors()['status_code'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'common.status' | t }}</label>
+              <label class="checkbox toggle-line">
+                <input type="checkbox" name="is_active" [ngModel]="draft().is_active" (ngModelChange)="patch('is_active', $event)">
+                {{ 'common.active' | t }}
+              </label>
+            </div>
+            <div class="form-group full">
+              <label>{{ 'web.redirects.notes' | t }}</label>
+              <textarea name="notes" rows="2" [ngModel]="draft().notes" (ngModelChange)="patch('notes', $event)"></textarea>
+              @if (errors()['notes']) { <span class="field-error">{{ errors()['notes'] }}</span> }
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" (click)="closeModal()">{{ 'common.cancel' | t }}</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ (saving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

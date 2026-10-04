@@ -1,0 +1,46 @@
+<div class="rte" [class.invalid]="invalid()" [class.disabled]="disabled()">
+  @if (!disabled()) {
+    <div class="rte-toolbar" role="toolbar" [attr.aria-label]="'web.blocks.html.toolbar' | t">
+      @if (!source()) {
+        <button type="button" (mousedown)="keepFocus($event)" (click)="exec('bold')"
+                [title]="'web.blocks.html.bold' | t" [attr.aria-label]="'web.blocks.html.bold' | t"><b>B</b></button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="exec('italic')"
+                [title]="'web.blocks.html.italic' | t" [attr.aria-label]="'web.blocks.html.italic' | t"><i>I</i></button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="link()"
+                [title]="'web.blocks.html.link' | t" [attr.aria-label]="'web.blocks.html.link' | t">🔗</button>
+        <span class="rte-sep" aria-hidden="true"></span>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="block('h2')"
+                [title]="'web.blocks.html.h2' | t" [attr.aria-label]="'web.blocks.html.h2' | t">H2</button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="block('h3')"
+                [title]="'web.blocks.html.h3' | t" [attr.aria-label]="'web.blocks.html.h3' | t">H3</button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="block('p')"
+                [title]="'web.blocks.html.paragraph' | t" [attr.aria-label]="'web.blocks.html.paragraph' | t">¶</button>
+        <span class="rte-sep" aria-hidden="true"></span>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="exec('insertUnorderedList')"
+                [title]="'web.blocks.html.ul' | t" [attr.aria-label]="'web.blocks.html.ul' | t">•≡</button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="exec('insertOrderedList')"
+                [title]="'web.blocks.html.ol' | t" [attr.aria-label]="'web.blocks.html.ol' | t">1≡</button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="insertTable()"
+                [title]="'web.blocks.html.table' | t" [attr.aria-label]="'web.blocks.html.table' | t">▦</button>
+        <button type="button" (mousedown)="keepFocus($event)" (click)="exec('removeFormat')"
+                [title]="'web.blocks.html.clear' | t" [attr.aria-label]="'web.blocks.html.clear' | t">⌫</button>
+      }
+      <span class="spacer"></span>
+      <button type="button" class="rte-source" [class.active]="source()" (click)="toggleSource()" [attr.aria-pressed]="source()">
+        {{ (source() ? 'web.blocks.html.visual' : 'web.blocks.html.source') | t }}
+      </button>
+    </div>
+  }
+
+  <div #editor class="rte-area" [hidden]="source()" [attr.id]="source() ? null : inputId()"
+       [attr.contenteditable]="disabled() ? 'false' : 'true'" [attr.dir]="dir()"
+       role="textbox" aria-multiline="true" [attr.aria-label]="label()" [attr.aria-invalid]="invalid() || null"
+       [attr.data-placeholder]="'web.blocks.html.placeholder' | t"
+       (input)="onInput()" (blur)="onBlur()" (paste)="onPaste($event)"></div>
+
+  @if (source()) {
+    <textarea class="rte-code" dir="ltr" spellcheck="false" [id]="inputId()" [value]="value() ?? ''"
+              [disabled]="disabled()" (change)="onSource($event)"></textarea>
+    <p class="hint">{{ 'web.blocks.html.source_hint' | t }}</p>
+  }
+</div>

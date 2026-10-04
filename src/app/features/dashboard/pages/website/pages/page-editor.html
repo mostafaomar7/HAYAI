@@ -1,0 +1,254 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ (kind === 'articles' ? 'web.articles.back' : 'web.pages.back') | t }}
+  </button>
+
+  @if (isNew()) {
+    <app-page-create [kind]="kind" />
+  } @else if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (loadError()) {
+    <div class="card"><div class="card-body"><p class="form-error">{{ loadError()! | t }}</p></div></div>
+  } @else if (page(); as p) {
+
+    <!-- ===================== header ===================== -->
+    <div class="card editor-head">
+      <div class="card-head">
+        <div class="head-main">
+          <div class="title-area">
+            <h2 class="page-title">{{ title() }}</h2>
+            <span [class]="'pill pill-' + p.status">{{ statusLabel(p) }}</span>
+            @if (p.is_live) { <span class="live-dot">{{ 'web.pages.live' | t }}</span> }
+            @if (refreshing()) { <span class="muted">{{ 'common.loading' | t }}</span> }
+          </div>
+          <div class="meta-line">
+            <span class="chip">{{ typeLabel(p.type) }}</span>
+            <span class="muted">#{{ p.id }}</span>
+            @if (p.last_published_at) {
+              <span class="muted">{{ 'web.pages.last_published' | t: { date: date(p.last_published_at) } }}</span>
+            } @else {
+              <span class="muted">{{ 'web.pages.never_published' | t }}</span>
+            }
+            <span class="muted">{{ 'web.pages.updated' | t: { date: date(p.updated_at) } }}</span>
+          </div>
+          @if (liveLinks().length) {
+            <div class="live-links">
+              @for (l of liveLinks(); track l.locale) {
+                <a class="live-link mono" dir="ltr" [href]="l.url" target="_blank" rel="noopener">{{ l.path || '/' }} ↗</a>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="actions-area head-actions">
+          <button type="button" class="btn-secondary btn-sm" (click)="selectTab('preview')">{{ 'web.pages.preview' | t }}</button>
+          @if (canCreate()) {
+            <button type="button" class="btn-secondary btn-sm" [disabled]="!!acting()" (click)="duplicate()">{{ 'web.pages.duplicate' | t }}</button>
+          }
+          @if (canPublish()) {
+            <button type="button" class="btn-secondary btn-sm" [disabled]="!!acting()" (click)="openSchedule()">{{ 'web.pages.schedule' | t }}</button>
+            @if (p.is_live || p.status === 'published') {
+              <button type="button" class="btn-secondary btn-sm" [disabled]="!!acting()" (click)="unpublish()">{{ 'web.pages.unpublish' | t }}</button>
+            }
+            @if (p.status !== 'archived') {
+              <button type="button" class="btn-secondary btn-sm" [disabled]="!!acting()" (click)="archive()">{{ 'web.pages.archive' | t }}</button>
+            }
+          }
+          @if (canDelete()) {
+            <button type="button" class="btn-danger btn-sm" [disabled]="!!acting()" (click)="remove()">{{ 'common.delete' | t }}</button>
+          }
+          @if (canPublish()) {
+            <button type="button" class="btn-success btn-sm publish-btn" [disabled]="!publishable() || !!acting()"
+                    [title]="(publishable() ? '' : 'web.pages.publish_blocked') | t" (click)="publish()">
+              {{ (acting() === 'publish' ? 'web.pages.publishing' : p.is_live ? 'web.pages.publish_changes' : 'web.pages.publish') | t }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="head-notices">
+        @if (p.has_unpublished_changes && p.is_live) {
+          <p class="notice warn">{{ 'web.pages.unpublished_changes' | t }}</p>
+        } @else if (p.has_unpublished_changes) {
+          <p class="notice info">{{ 'web.pages.never_live_hint' | t }}</p>
+        }
+
+        @if (hasSchedule()) {
+          <div class="notice info row">
+            @if (p.publish_at) { <span>{{ 'web.pages.publishes_at' | t: { date: date(p.publish_at) } }}</span> }
+            @if (p.unpublish_at) { <span>{{ 'web.pages.unpublishes_at' | t: { date: date(p.unpublish_at) } }}</span> }
+            @if (canPublish()) {
+              <span class="spacer"></span>
+              <button type="button" class="link-btn" [disabled]="!!acting()" (click)="cancelSchedule()">{{ 'web.pages.cancel_schedule' | t }}</button>
+            }
+          </div>
+        }
+
+        @if (disabledLocales().length) {
+          <p class="notice info">
+            @for (l of disabledLocales(); track l) {
+              {{ 'web.pages.locale_disabled_note' | t: { lang: localeLabel(l) } }}
+            }
+          </p>
+        }
+
+        @if (blockers().length) {
+          <div class="notice error blockers">
+            <strong>{{ 'web.pages.blockers_title' | t }}</strong>
+            <ul>
+              @for (b of blockers(); track b.key) {
+                <li>
+                  @if (b.locale) { <span class="lang-tag">{{ b.locale | uppercase }}</span> }
+                  <span>{{ b.text | t }}</span>
+                  @for (m of b.messages; track $index) { <span class="raw-msg">— {{ m }}</span> }
+                  @if (b.tab) {
+                    <button type="button" class="link-btn" (click)="selectTab(b.tab, b.locale)">{{ 'web.pages.fix' | t }}</button>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ===================== tabs ===================== -->
+    <div class="card tab-card">
+      <div class="tabs" role="tablist">
+        @for (t of tabs; track t) {
+          @if ((t !== 'seo' && t !== 'audit') || canSeo()) {
+            <button type="button" role="tab" class="tab" [class.active]="tab() === t" (click)="selectTab(t)">
+              {{ ('web.pages.tab_' + t) | t }}
+              @if (t === 'audit' && blockers().length) { <span class="tab-dot"></span> }
+            </button>
+          }
+        }
+      </div>
+
+      @if (showLocaleSwitch()) {
+        <div class="locale-bar">
+          <div class="locale-switch">
+            @for (l of localeInfos(); track l.code) {
+              <button type="button" [class.active]="locale() === l.code" (click)="selectLocale(l.code)"
+                      [title]="(!hasTranslation(l.code) ? 'web.pages.lang_missing' : isDisabledLocale(l.code) ? 'web.pages.lang_disabled' : 'web.pages.lang_enabled') | t">
+                {{ l.native }}
+                @if (!hasTranslation(l.code)) { <span class="missing-mark">+</span> }
+                @else if (isDisabledLocale(l.code)) { <span class="missing-mark">⏸</span> }
+              </button>
+            }
+          </div>
+          @if (dirty()) { <span class="dirty-note">{{ 'web.pages.unsaved' | t }}</span> }
+        </div>
+      }
+    </div>
+
+    <div class="tab-body">
+      @switch (tab()) {
+        @case ('content') {
+          <app-page-content-tab [page]="p" [locale]="locale()" (saved)="reload()" (dirtyChange)="setDirty('content', $event)" />
+        }
+        @case ('blocks') {
+          @if (hasLocale()) {
+            <app-page-blocks [pageId]="p.id" [locale]="locale()" [readonly]="!canUpdate()"
+                             (saved)="reload()" (dirtyChange)="setDirty('blocks', $event)" />
+          } @else {
+            <ng-container *ngTemplateOutlet="missingLang" />
+          }
+        }
+        @case ('seo') {
+          @if (hasLocale()) {
+            <div class="card"><div class="card-body">
+              <app-seo-editor entity="pages" [entityId]="p.id" [locale]="locale()" [fallbackTitle]="title()" (saved)="reload()" />
+            </div></div>
+          } @else {
+            <ng-container *ngTemplateOutlet="missingLang" />
+          }
+        }
+        @case ('geo') {
+          @if (hasLocale()) {
+            @if (isArticle()) {
+              <p class="notice warn">{{ 'web.articles.geo_required' | t }}</p>
+            }
+            <div class="card"><div class="card-body">
+              <app-geo-editor entity="pages" [entityId]="p.id" [locale]="locale()" [required]="isArticle()" (saved)="reload()" />
+            </div></div>
+          } @else {
+            <ng-container *ngTemplateOutlet="missingLang" />
+          }
+        }
+        @case ('relations') {
+          <app-page-relations-tab [page]="p" (saved)="reload()" (dirtyChange)="setDirty('relations', $event)" />
+        }
+        @case ('audit') {
+          @if (hasLocale()) {
+            <app-page-audit-tab [pageId]="p.id" [locale]="locale()" />
+          } @else {
+            <ng-container *ngTemplateOutlet="missingLang" />
+          }
+        }
+        @case ('versions') {
+          <div class="card"><div class="card-body">
+            <app-versions-panel entity="pages" [entityId]="p.id" (restored)="reload()" />
+          </div></div>
+        }
+        @case ('preview') {
+          @if (hasLocale()) {
+            <app-page-preview-tab [pageId]="p.id" [locale]="locale()" />
+          } @else {
+            <ng-container *ngTemplateOutlet="missingLang" />
+          }
+        }
+      }
+    </div>
+
+    <ng-template #missingLang>
+      <div class="card"><div class="card-body">
+        <div class="notice warn row">
+          <span>{{ 'web.pages.language_missing_tab' | t: { lang: localeName() } }}</span>
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" (click)="selectTab('content')">{{ 'web.pages.go_to_content' | t }}</button>
+        </div>
+      </div></div>
+    </ng-template>
+
+    <!-- ===================== schedule dialog ===================== -->
+    @if (scheduleOpen()) {
+      <div class="modal-backdrop" (click)="scheduleOpen.set(false)">
+        <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+          <div class="modal-head">
+            <h3>{{ 'web.pages.schedule_title' | t }}</h3>
+            <button type="button" class="modal-close" (click)="scheduleOpen.set(false)" [attr.aria-label]="'common.close' | t">×</button>
+          </div>
+          <div class="modal-body">
+            <p class="muted schedule-hint">{{ (p.is_live ? 'web.pages.schedule_hint_live' : 'web.pages.schedule_hint') | t }}</p>
+            @if (scheduleError()) { <p class="form-error">{{ scheduleError()! | t }}</p> }
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'web.pages.publish_at' | t }}</label>
+                <input type="datetime-local" [value]="publishAt()" (input)="publishAt.set($any($event.target).value)">
+                @if (scheduleErrors()['publish_at']) { <span class="field-error">{{ scheduleErrors()['publish_at'] | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.pages.unpublish_at' | t }}</label>
+                <input type="datetime-local" [value]="unpublishAt()" (input)="unpublishAt.set($any($event.target).value)">
+                @if (scheduleErrors()['unpublish_at']) { <span class="field-error">{{ scheduleErrors()['unpublish_at'] | t }}</span> }
+              </div>
+            </div>
+            @if (!publishable() && publishAt()) {
+              <p class="notice warn schedule-warn">{{ 'web.pages.schedule_blockers' | t }}</p>
+            }
+          </div>
+          <div class="modal-foot">
+            <button type="button" class="btn-secondary" (click)="scheduleOpen.set(false)">{{ 'common.cancel' | t }}</button>
+            <button type="button" class="btn-primary" [disabled]="acting() === 'schedule'" (click)="saveSchedule()">
+              {{ (acting() === 'schedule' ? 'common.saving' : 'web.pages.save_schedule') | t }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

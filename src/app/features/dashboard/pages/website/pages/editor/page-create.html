@@ -1,0 +1,120 @@
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ (isArticle() ? 'web.articles.new' : 'web.pages.new') | t }}</h2>
+      <p class="sub">{{ 'web.pages.create_hint' | t }}</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+    @if (formError()) {
+      <p class="form-error">{{ formError()! | t }}</p>
+    }
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>{{ 'common.type' | t }} <span class="req">*</span></label>
+        @if (isArticle()) {
+          <input type="text" [value]="typeLabel('article')" readonly>
+        } @else {
+          <select (change)="set('type', $any($event.target).value)">
+            @for (ty of pageTypes(); track ty) {
+              <option [value]="ty" [selected]="draft().type === ty" [disabled]="ty === 'home' && homeExists()">
+                {{ typeLabel(ty) }}
+              </option>
+            }
+          </select>
+          @if (homeExists()) { <span class="hint">{{ 'web.pages.home_exists' | t }}</span> }
+        }
+        @if (errorFor('type')) { <span class="field-error">{{ errorFor('type')! | t }}</span> }
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'web.pages.template' | t }}</label>
+        <input type="text" dir="ltr" [value]="draft().template" (input)="set('template', $any($event.target).value)">
+        <span class="hint">{{ 'web.pages.template_hint' | t }}</span>
+        @if (errorFor('template')) { <span class="field-error">{{ errorFor('template')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.parent' | t }}</label>
+        <app-page-picker [value]="parent()?.id ?? null" [locale]="draft().locale" (picked)="parent.set($event)" />
+        @if (isArticle()) { <span class="hint">{{ 'web.articles.parent_hint' | t }}</span> }
+        @if (parentMissingLocale()) { <span class="field-error">{{ 'web.pages.parent_missing_locale' | t }}</span> }
+        @if (errorFor('parent_id')) { <span class="field-error">{{ errorFor('parent_id')! | t }}</span> }
+      </div>
+
+      @if (isArticle()) {
+        <div class="form-group">
+          <label>{{ 'web.articles.author' | t }}</label>
+          <select (change)="set('author_id', $any($event.target).value)">
+            <option value="">{{ 'web.articles.choose_author' | t }}</option>
+            @for (a of authors(); track a.id) {
+              <option [value]="a.id" [selected]="draft().author_id === (a.id + '')">{{ authorName(a) }}</option>
+            }
+          </select>
+          <span class="hint">{{ 'web.articles.author_required_hint' | t }}</span>
+          @if (errorFor('author_id')) { <span class="field-error">{{ errorFor('author_id')! | t }}</span> }
+        </div>
+        <div class="form-group">
+          <label>{{ 'web.articles.category' | t }}</label>
+          <select (change)="set('category_id', $any($event.target).value)">
+            <option value="">{{ 'web.articles.no_category' | t }}</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id" [selected]="draft().category_id === (c.id + '')">{{ categoryName(c) }}</option>
+            }
+          </select>
+          @if (errorFor('category_id')) { <span class="field-error">{{ errorFor('category_id')! | t }}</span> }
+        </div>
+      }
+    </div>
+
+    <div class="row lang-row">
+      <h3 class="sub-title flush">{{ 'web.pages.first_language' | t }}</h3>
+      <span class="spacer"></span>
+      <div class="locale-switch">
+        @for (l of locales(); track l.code) {
+          <button type="button" [class.active]="draft().locale === l.code" (click)="set('locale', l.code)">{{ l.native }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>{{ 'web.pages.field_title' | t }} <span class="req">*</span></label>
+        <input type="text" [attr.dir]="localeDir()" [value]="draft().title" (input)="set('title', $any($event.target).value)">
+        <span class="hint">{{ 'web.pages.title_is_h1' | t }}</span>
+        @if (errorFor('title')) { <span class="field-error">{{ errorFor('title')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.slug' | t }}</label>
+        <input type="text" dir="ltr" [value]="draft().slug" [placeholder]="effectiveSlug()"
+               (input)="set('slug', $any($event.target).value)">
+        <span class="hint">{{ 'web.pages.slug_hint' | t }}</span>
+        <div class="url-preview">
+          <span class="muted">{{ 'web.pages.url_preview' | t }}</span>
+          <code dir="ltr">{{ preview() }}</code>
+        </div>
+        @if (slugInvalid()) { <span class="field-error">{{ 'web.pages.slug_invalid' | t }}</span> }
+        @if (reservedHit()) {
+          <span class="field-error">{{ 'web.pages.slug_reserved' | t: { segment: reservedHit()! } }}</span>
+        }
+        @if (errorFor('slug')) { <span class="field-error">{{ errorFor('slug')! | t }}</span> }
+      </div>
+
+      <div class="form-group full">
+        <label>{{ 'web.pages.excerpt' | t }}</label>
+        <textarea rows="3" [attr.dir]="localeDir()" [value]="draft().excerpt" (input)="set('excerpt', $any($event.target).value)"></textarea>
+        @if (errorFor('excerpt')) { <span class="field-error">{{ errorFor('excerpt')! | t }}</span> }
+      </div>
+    </div>
+
+    <div class="panel-foot">
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+      <button type="button" class="btn-primary" [disabled]="saving()" (click)="submit()">
+        {{ (saving() ? 'common.saving' : 'web.pages.create_draft') | t }}
+      </button>
+    </div>
+  </div>
+</div>

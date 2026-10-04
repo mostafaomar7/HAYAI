@@ -1,0 +1,199 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ (isArticles ? 'web.articles.title' : 'web.pages.title') | t }}</h2>
+          <span class="pill pill-scheduled">{{ total() }}</span>
+        </div>
+        <p class="sub">{{ (isArticles ? 'web.articles.list_subtitle' : 'web.pages.list_subtitle') | t }}</p>
+      </div>
+
+      <div class="actions-area">
+        @if (canCreate() && !trash()) {
+          <button class="btn-primary" (click)="create()">+ {{ (isArticles ? 'web.articles.new' : 'web.pages.new') | t }}</button>
+        }
+      </div>
+    </div>
+
+    <!-- Live list vs trash: the trash is a different question ("what can I
+         bring back"), so it is a tab rather than one more filter. -->
+    <div class="tabs">
+      <button class="tab" [class.active]="!trash()" (click)="toggleTrash(false)">{{ 'web.pages.tab_all' | t }}</button>
+      <button class="tab" [class.active]="trash()" (click)="toggleTrash(true)">{{ 'web.pages.tab_trash' | t }}</button>
+    </div>
+
+    <div class="filters">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [placeholder]="'web.pages.search_placeholder' | t" (input)="onSearch($any($event.target).value)">
+      </div>
+
+      @if (!isArticles) {
+        <div class="custom-select">
+          <select (change)="setFilter('type', $any($event.target).value)">
+            <option value="">{{ 'web.pages.all_types' | t }}</option>
+            @for (ty of pageTypes(); track ty) {
+              <option [value]="ty" [selected]="type() === ty">{{ typeLabel(ty) }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="custom-select">
+        <select (change)="setFilter('status', $any($event.target).value)">
+          <option value="">{{ 'web.pages.all_statuses' | t }}</option>
+          @for (s of statuses(); track s) {
+            <option [value]="s" [selected]="status() === s">{{ enumText('content_status', s) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="custom-select">
+        <select (change)="setFilter('locale', $any($event.target).value)">
+          <option value="">{{ 'web.pages.all_languages' | t }}</option>
+          @for (l of locales(); track l.code) {
+            <option [value]="l.code" [selected]="locale() === l.code">{{ 'web.pages.has_language' | t: { lang: l.native } }}</option>
+          }
+        </select>
+      </div>
+
+      @if (isArticles) {
+        <div class="custom-select">
+          <select (change)="setFilter('authorId', $any($event.target).value)">
+            <option value="">{{ 'web.articles.all_authors' | t }}</option>
+            @for (a of authors(); track a.id) {
+              <option [value]="a.id" [selected]="authorId() === (a.id + '')">{{ authorName(a) }}</option>
+            }
+          </select>
+        </div>
+        <div class="custom-select">
+          <select (change)="setFilter('categoryId', $any($event.target).value)">
+            <option value="">{{ 'web.articles.all_categories' | t }}</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id" [selected]="categoryId() === (c.id + '')">{{ categoryName(c) }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="custom-select">
+        <select (change)="setSort($any($event.target).value)" [attr.aria-label]="'web.pages.sort' | t">
+          @for (s of sorts; track s) {
+            <option [value]="s" [selected]="sort() === s">{{ ('web.pages.sort_' + s) | t }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (trash()) {
+      <p class="notice info trash-note">{{ 'web.pages.trash_hint' | t }}</p>
+    }
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'common.title' | t }}</th>
+              <th>{{ 'web.pages.col_url' | t }}</th>
+              @if (!isArticles) { <th>{{ 'common.type' | t }}</th> }
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'web.pages.col_languages' | t }}</th>
+              <th>{{ (trash() ? 'web.pages.col_deleted' : 'web.pages.col_updated') | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr [class.clickable]="!trash()" (click)="edit(row)">
+                <td class="title-cell">
+                  <span class="name-cell">{{ title(row) }}</span>
+                  @if (row.is_featured) { <span class="chip featured">{{ 'web.pages.featured' | t }}</span> }
+                </td>
+
+                <td class="path-cell">
+                  @for (tr of langs(row); track tr.locale) {
+                    <div class="path-line" [class.dim]="tr.is_enabled === false">
+                      @if (tr.live_url && row.is_live) {
+                        <!-- The live link points at the PUBLISHED path, which can differ
+                             from the working one until the next publish. -->
+                        <a class="mono path-link" dir="ltr" [href]="tr.live_url" target="_blank" rel="noopener"
+                           (click)="$event.stopPropagation()" [title]="'web.pages.open_live' | t">{{ pathOf(tr) }} ↗</a>
+                      } @else {
+                        <span class="mono text-gray" dir="ltr">{{ pathOf(tr) }}</span>
+                      }
+                    </div>
+                  }
+                </td>
+
+                @if (!isArticles) {
+                  <td class="text-gray">{{ typeLabel(row.type) }}</td>
+                }
+
+                <td>
+                  <div class="status-cell">
+                    <span [class]="'pill pill-' + row.status">{{ statusLabel(row) }}</span>
+                    @if (row.is_live) {
+                      <span class="live-dot" [title]="'web.pages.live_hint' | t">{{ 'web.pages.live' | t }}</span>
+                    }
+                  </div>
+                  @if (row.publish_at) {
+                    <div class="sched">{{ 'web.pages.publishes_at' | t: { date: date(row.publish_at, true) } }}</div>
+                  }
+                  @if (row.unpublish_at) {
+                    <div class="sched">{{ 'web.pages.unpublishes_at' | t: { date: date(row.unpublish_at, true) } }}</div>
+                  }
+                </td>
+
+                <td>
+                  <div class="lang-badges">
+                    @for (l of allLocales; track l) {
+                      @let tr = trOf(row, l);
+                      <span class="lang-badge" [class.missing]="!tr" [class.disabled]="tr && tr.is_enabled === false"
+                            [title]="(!tr ? 'web.pages.lang_missing' : tr.is_enabled === false ? 'web.pages.lang_disabled' : 'web.pages.lang_enabled') | t">
+                        {{ l | uppercase }}
+                      </span>
+                    }
+                  </div>
+                </td>
+
+                <td class="text-gray nowrap">{{ date(trash() ? row.deleted_at : row.updated_at) }}</td>
+
+                <td class="action-col" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    @if (trash()) {
+                      @if (canDelete()) {
+                        <button class="link-btn" [disabled]="isBusy(row)" (click)="restore(row)">{{ 'web.pages.restore' | t }}</button>
+                      }
+                    } @else {
+                      <button class="link-btn" (click)="edit(row)">{{ 'common.edit' | t }}</button>
+                      @if (canCreate()) {
+                        <button class="link-btn" [disabled]="isBusy(row)" (click)="duplicate(row)">{{ 'web.pages.duplicate' | t }}</button>
+                      }
+                      @if (canDelete()) {
+                        <button class="link-btn danger" [disabled]="isBusy(row)" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td [attr.colspan]="isArticles ? 6 : 7" class="table-hint">
+                {{ (trash() ? 'web.pages.trash_empty' : 'common.no_data') | t }}
+              </td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>

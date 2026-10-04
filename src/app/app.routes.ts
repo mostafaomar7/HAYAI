@@ -1,8 +1,9 @@
 import { inject } from '@angular/core';
-import { Routes } from '@angular/router';
+import { Route, Routes, UrlSegment } from '@angular/router';
 import { dashboardShellGuard } from './core/guards/auth.guard';
 import { TokenService } from './core/services/token.service';
 import { DashboardShellComponent } from './core/layouts/dashboard-shell/dashboard-shell.component/dashboard-shell.component';
+import { isSiteLocale } from './features/site/site-paths';
 
 /**
  * Route order matters here. The domain root is the public marketing page, and
@@ -38,6 +39,31 @@ export const routes: Routes = [
   // `/landing` was the marketing page's old address. It stays pointed at the
   // root so an old link cannot slip past the holding page.
   { path: 'landing', pathMatch: 'full', redirectTo: '' },
+  // ---------------------------------------------------------------------
+  // Public website (server-rendered, see app.routes.server.ts). Every URL is
+  // `/{locale}/…` with locale `en` or `ar`; anything else under a first
+  // segment falls through to the routes below exactly as before.
+  //
+  // The bare domain `/` is answered by server.ts with a 302 to `/en` (or
+  // `/ar` for Arabic browsers) before Angular runs, so the empty-path
+  // holding page above is now only reached in two cases: the legacy static
+  // (Apache) hosting, which cannot run the site anyway, and an in-app
+  // navigation to `/` (e.g. the signed-out wildcard redirect at the bottom).
+  // Keeping it there means a static deploy never shows an empty CMS site.
+  // ---------------------------------------------------------------------
+  {
+    path: 'preview',
+    loadChildren: () => import('./features/site/site.routes').then(m => m.PREVIEW_ROUTES)
+  },
+  {
+    // `canMatch` (not a guard): a first segment other than en/ar does not
+    // match at all, so it keeps falling through to login / dashboard /
+    // wildcard exactly as before. (A custom `matcher` would be simpler but
+    // the SSR route extraction cannot map matchers to server render modes.)
+    path: ':locale',
+    canMatch: [(_route: Route, segments: UrlSegment[]) => isSiteLocale(segments[0]?.path)],
+    loadChildren: () => import('./features/site/site.routes').then(m => m.SITE_ROUTES)
+  },
   {
     path: 'login',
     loadComponent: () =>

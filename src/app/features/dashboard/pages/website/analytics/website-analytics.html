@@ -1,0 +1,343 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'web.analytics.title' | t }}</h2>
+        <p class="sub">{{ 'web.analytics.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area range">
+        <div class="presets">
+          <button class="btn-secondary btn-sm" (click)="preset(7)">{{ 'web.analytics.days' | t: { n: 7 } }}</button>
+          <button class="btn-secondary btn-sm" (click)="preset(30)">{{ 'web.analytics.days' | t: { n: 30 } }}</button>
+          <button class="btn-secondary btn-sm" (click)="preset(90)">{{ 'web.analytics.days' | t: { n: 90 } }}</button>
+        </div>
+        <label class="date-field">
+          <span>{{ 'common.from' | t }}</span>
+          <input type="date" [value]="from()" [max]="to()" (change)="setRange('from', $any($event.target).value)">
+        </label>
+        <label class="date-field">
+          <span>{{ 'common.to' | t }}</span>
+          <input type="date" [value]="to()" [min]="from()" (change)="setRange('to', $any($event.target).value)">
+        </label>
+      </div>
+    </div>
+    <div class="tabs">
+      @for (t of tabs; track t) {
+        <button class="tab" [class.active]="tab() === t" (click)="selectTab(t)">{{ ('web.analytics.tab_' + t) | t }}</button>
+      }
+    </div>
+  </div>
+
+  @if (tab() !== 'events') {
+    @if (loading()) {
+      <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+    } @else if (loadError()) {
+      <div class="card">
+        <p class="table-hint">{{ loadError()! | t }}</p>
+        <div class="card-body"><button class="btn-secondary btn-sm" (click)="reload()">{{ 'web.analytics.retry' | t }}</button></div>
+      </div>
+    }
+  }
+
+  <!-- ═══════════════ overview ═══════════════ -->
+  @if (tab() === 'overview' && !loading() && !loadError()) {
+    @if (summary(); as s) {
+      <div class="tiles">
+        <div class="tile"><p class="tile-label">{{ 'web.analytics.sessions' | t }}</p><div class="tile-value">{{ num(s.sessions) }}</div></div>
+        <div class="tile"><p class="tile-label">{{ 'web.analytics.conversions' | t }}</p><div class="tile-value green">{{ num(s.conversions) }}</div></div>
+        <div class="tile"><p class="tile-label">{{ 'web.analytics.conversion_rate' | t }}</p><div class="tile-value blue">{{ pct(s.conversion_rate) }}</div></div>
+        <div class="tile"><p class="tile-label">{{ 'web.analytics.leads' | t }}</p><div class="tile-value amber">{{ num(s.leads) }}</div></div>
+        <div class="tile"><p class="tile-label">{{ 'web.analytics.purchases' | t }}</p><div class="tile-value">{{ num(s.purchases) }}</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.analytics.funnel' | t }}</h2></div>
+        <div class="card-body">
+          @for (f of funnel(); track f.step; let i = $index) {
+            <div class="funnel-row">
+              <div class="funnel-label">
+                <span class="step-no">{{ i + 1 }}</span>
+                {{ eventLabel(f.step) }}
+              </div>
+              <div class="funnel-bar-wrap">
+                <div class="funnel-bar" [style.width.%]="f.width"></div>
+              </div>
+              <div class="funnel-nums">
+                <strong class="num">{{ num(f.count) }}</strong>
+                @if (f.dropOff !== null) {
+                  <span class="drop" [class.bad]="f.dropOff > 50">↓ {{ f.dropOff }}%</span>
+                }
+              </div>
+            </div>
+          } @empty {
+            <p class="muted">{{ 'common.no_data' | t }}</p>
+          }
+          @if (funnel().length) { <p class="hint">{{ 'web.analytics.funnel_hint' | t }}</p> }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>{{ 'web.analytics.daily' | t }}</h2></div>
+        <div class="card-body charts">
+          @for (c of charts(); track c.key) {
+            <div class="chart">
+              <div class="chart-head">
+                <span class="swatch" [style.background]="c.color"></span>
+                <strong>{{ eventLabel(c.key) }}</strong>
+                <span class="muted">{{ 'web.analytics.total_n' | t: { n: num(c.total) } }}</span>
+              </div>
+              @if (c.points.length) {
+                <svg [attr.viewBox]="'0 0 ' + chartW + ' ' + chartH" class="chart-svg" role="img"
+                     [attr.aria-label]="eventLabel(c.key)">
+                  @for (g of c.gridlines; track $index) {
+                    <line [attr.x1]="pad.left" [attr.x2]="chartW - pad.right" [attr.y1]="g.y" [attr.y2]="g.y" class="grid" />
+                    <text [attr.x]="pad.left - 6" [attr.y]="g.y + 4" class="axis" text-anchor="end">{{ g.value }}</text>
+                  }
+                  <path [attr.d]="c.area" [attr.fill]="c.color" fill-opacity="0.08" stroke="none" />
+                  <path [attr.d]="c.line" [attr.stroke]="c.color" fill="none" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" />
+                  @for (p of c.points; track $index) {
+                    <circle [attr.cx]="p.x" [attr.cy]="p.y" r="3" [attr.fill]="c.color" class="dot">
+                      <title>{{ p.day }}: {{ p.value }}</title>
+                    </circle>
+                  }
+                  @for (l of xLabels(); track $index) {
+                    <text [attr.x]="l.x" [attr.y]="chartH - 6" class="axis" text-anchor="middle">{{ l.label }}</text>
+                  }
+                </svg>
+              } @else {
+                <p class="muted">{{ 'common.no_data' | t }}</p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><h2>{{ 'web.analytics.events_breakdown' | t }}</h2></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <tbody>
+                @for (e of eventCounts(); track e.key) {
+                  <tr>
+                    <td>{{ eventLabel(e.key) }} @if (conversionEvents.includes(e.key)) { <span class="chip conv-chip">{{ 'web.analytics.conversion' | t }}</span> }</td>
+                    <td class="num end">{{ num(e.value) }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>{{ 'web.analytics.what_counts' | t }}</h2></div>
+          <div class="card-body">
+            <p class="muted">{{ 'web.analytics.conversions_note' | t }}</p>
+            <div class="conv-list">
+              @for (e of conversionEvents; track e) { <span class="chip conv-chip">{{ eventLabel(e) }}</span> }
+            </div>
+            <p class="muted">{{ 'web.analytics.purchase_completed_note' | t }}</p>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ═══════════════ CTAs ═══════════════ -->
+  @if (tab() === 'ctas' && !loading() && !loadError()) {
+    <div class="card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.analytics.tracking_key' | t }}</th>
+              <th>{{ 'web.analytics.placement' | t }}</th>
+              <th>{{ 'web.analytics.clicks' | t }}</th>
+              <th>{{ 'web.analytics.conversions' | t }}</th>
+              <th>{{ 'web.analytics.conversion_rate' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of ctas(); track r.tracking_key + (r.placement ?? '')) {
+              <tr>
+                <td class="mono name-cell" dir="ltr">{{ r.tracking_key }}</td>
+                <td class="text-gray">{{ r.placement || '—' }}</td>
+                <td class="num">{{ num(r.clicks) }}</td>
+                <td class="num">{{ num(r.conversions) }}</td>
+                <td class="num">{{ pct(r.conversion_rate) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════════════ pages ═══════════════ -->
+  @if (tab() === 'pages' && !loading() && !loadError()) {
+    <div class="card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.analytics.path' | t }}</th>
+              <th>{{ 'web.analytics.views' | t }}</th>
+              <th>{{ 'web.analytics.cta_clicks' | t }}</th>
+              <th>{{ 'web.analytics.conversions' | t }}</th>
+              <th>{{ 'web.analytics.conversion_rate' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of pages(); track r.path) {
+              <tr>
+                <td class="mono path-cell" dir="ltr">
+                  @if (r.page_id) {
+                    <a [routerLink]="['/dashboard/website/pages', r.page_id]">{{ r.path }}</a>
+                  } @else { {{ r.path }} }
+                </td>
+                <td class="num">{{ num(r.views) }}</td>
+                <td class="num">{{ num(r.cta_clicks) }}</td>
+                <td class="num">{{ num(r.conversions) }}</td>
+                <td class="num">{{ pct(r.conversion_rate) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════════════ campaigns ═══════════════ -->
+  @if (tab() === 'campaigns' && !loading() && !loadError()) {
+    <div class="card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.analytics.utm_source' | t }}</th>
+              <th>{{ 'web.analytics.utm_medium' | t }}</th>
+              <th>{{ 'web.analytics.utm_campaign' | t }}</th>
+              <th>{{ 'web.analytics.views' | t }}</th>
+              <th>{{ 'web.analytics.conversions' | t }}</th>
+              <th>{{ 'web.analytics.purchases_completed' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of campaigns(); track $index) {
+              <tr>
+                <td dir="ltr" class="start">{{ r.source || ('web.analytics.direct' | t) }}</td>
+                <td dir="ltr" class="start text-gray">{{ r.medium || '—' }}</td>
+                <td dir="ltr" class="start name-cell">{{ r.campaign || '—' }}</td>
+                <td class="num">{{ num(r.views) }}</td>
+                <td class="num">{{ num(r.conversions) }}</td>
+                <td class="num">{{ num(r.purchases_completed) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════════════ raw events ═══════════════ -->
+  @if (tab() === 'events') {
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area">
+          <h2>{{ 'web.analytics.tab_events' | t }}</h2>
+          <span class="pill pill-in_progress">{{ eventsTotal() }}</span>
+        </div>
+        <div class="actions-area">
+          <div class="custom-select">
+            @if (eventTypes().length) {
+              <select [value]="eventFilter()" (change)="setEventFilter($any($event.target).value)">
+                <option value="">{{ 'web.analytics.all_events' | t }}</option>
+                @for (e of eventTypes(); track e) {
+                  <option [value]="e" [selected]="eventFilter() === e">{{ eventLabel(e) }}</option>
+                }
+              </select>
+            }
+          </div>
+          @if (!eventTypes().length) {
+            <div class="search-box">
+              <input type="text" dir="ltr" [placeholder]="'web.analytics.event' | t" [value]="eventFilter()"
+                     (change)="setEventFilter($any($event.target).value.trim())">
+            </div>
+          }
+          <div class="search-box">
+            <input type="text" dir="ltr" [placeholder]="'web.analytics.session_id' | t" [value]="sessionFilter()"
+                   (input)="onSessionFilter($any($event.target).value)">
+          </div>
+          <div class="search-box">
+            <input type="text" dir="ltr" [placeholder]="'web.analytics.tracking_key' | t" [value]="ctaFilter()"
+                   (input)="onCtaFilter($any($event.target).value)">
+          </div>
+          @if (eventFilter() || sessionFilter() || ctaFilter()) {
+            <button class="link-btn" (click)="clearEventFilters()">{{ 'web.analytics.clear_filters' | t }}</button>
+          }
+        </div>
+      </div>
+      @if (eventsLoading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      } @else if (eventsError()) {
+        <p class="table-hint">{{ eventsError()! | t }}</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'web.analytics.time' | t }}</th>
+                <th>{{ 'web.analytics.event' | t }}</th>
+                <th>{{ 'web.analytics.path' | t }}</th>
+                <th>{{ 'web.analytics.session_id' | t }}</th>
+                <th>{{ 'web.analytics.tracking_key' | t }}</th>
+                <th class="action-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of events(); track e.id) {
+                <tr class="clickable" (click)="toggleEvent(e.id)">
+                  <td class="text-gray num nowrap">{{ date(e.created_at) }}</td>
+                  <td>
+                    <span class="name-cell">{{ $any(e)['event_label'] || eventLabel(e.event) }}</span>
+                    @if (conversionEvents.includes(e.event)) { <span class="chip conv-chip">{{ 'web.analytics.conversion' | t }}</span> }
+                  </td>
+                  <td class="mono path-cell" dir="ltr">{{ e.path || '—' }}</td>
+                  <td class="mono" dir="ltr">
+                    @if (e.session_id) {
+                      <button class="link-btn mono" (click)="$event.stopPropagation(); filterSession(e.session_id)"
+                              [title]="'web.analytics.filter_session' | t">{{ e.session_id.slice(0, 12) }}…</button>
+                    } @else { — }
+                  </td>
+                  <td class="mono" dir="ltr">{{ e.cta_tracking_key || '—' }}</td>
+                  <td class="action-col text-gray">{{ expanded() === e.id ? '▴' : '▾' }}</td>
+                </tr>
+                @if (expanded() === e.id) {
+                  <tr class="detail-row">
+                    <td colspan="6">
+                      <dl class="detail-grid">
+                        @for (d of eventDetails(e); track d.key) {
+                          <div><dt class="mono">{{ d.key }}</dt><dd class="mono" dir="ltr">{{ d.value }}</dd></div>
+                        }
+                      </dl>
+                    </td>
+                  </tr>
+                }
+              } @empty {
+                <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <app-pagination [page]="eventsPage()" [total]="eventsTotal()" [perPage]="eventsPerPage" (pageChange)="goToEventsPage($event)" />
+      }
+    </div>
+  }
+</div>

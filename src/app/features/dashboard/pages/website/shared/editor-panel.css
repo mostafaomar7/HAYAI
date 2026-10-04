@@ -1,0 +1,30 @@
+/* Shared by the SEO / GEO / versions panels that sit inside page and product editors. */
+:host { display: block; padding: 0; min-height: 0; background: transparent; }
+
+.sub-title { font-size: 14px; font-weight: 700; color: #111827; margin: 22px 0 12px; }
+.sub-title:first-child, .form-error + .sub-title { margin-top: 0; }
+.panel-foot {
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+  margin-top: 22px; padding-top: 16px; border-top: 1px solid #F1F5F9;
+}
+.panel .row { margin-bottom: 12px; }
+
+.list-editor { display: flex; flex-direction: column; gap: 10px; }
+.list-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: start;
+  background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 8px; padding: 10px;
+}
+.list-row input {
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 6px; padding: 8px 10px;
+  font-size: 13px; font-family: inherit; width: 100%; min-width: 0;
+}
+@media (max-width: 720px) { .list-row { grid-template-columns: 1fr; } }
+
+.version-row td { vertical-align: top; }
+.diff-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.diff-table th, .diff-table td { padding: 8px 10px; border-top: 1px solid #F1F5F9; text-align: start; vertical-align: top; }
+.diff-table td { overflow-wrap: anywhere; }
+.diff-add { color: #047857; }
+.diff-del { color: #B91C1C; text-decoration: line-through; }
+.verified-btn { align-self: flex-end; }
+.sub-title.flush { margin: 0; }

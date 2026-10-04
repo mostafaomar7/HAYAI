@@ -1,0 +1,17 @@
+/* Layout rules come from ../purchases/purchase-detail.css; only lead-specific bits here. */
+
+.key-col { width: 30%; white-space: nowrap; }
+.attachments { border-top: 1px solid #F1F5F9; }
+.files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.files li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border: 1px solid #F1F5F9; border-radius: 10px;
+}
+.file-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.spaced-top { margin-top: 12px; }
+a.link-btn { text-decoration: none; }
+
+@media (max-width: 640px) {
+  .key-col { width: auto; white-space: normal; }
+  .files li { flex-wrap: wrap; }
+}

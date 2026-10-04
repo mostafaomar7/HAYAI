@@ -1,0 +1,18 @@
+/* Only what the redirects screen adds on top of website.shared.css. */
+
+.tester { display: flex; gap: 10px; flex-wrap: wrap; }
+.tester-input {
+  flex: 1; min-width: 220px;
+  background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 8px;
+  padding: 9px 14px; font-size: 14px; font-family: inherit; outline: none;
+}
+.tester-input:focus { border-color: #3B82F6; }
+.test-result { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 0; }
+.test-result a { color: inherit; overflow-wrap: anywhere; }
+.arrow { font-weight: 700; }
+:host-context([dir="rtl"]) .arrow { transform: scaleX(-1); display: inline-block; }
+
+/* Paths are long and unbreakable; let them wrap instead of widening the table. */
+.path-cell { max-width: 320px; overflow-wrap: anywhere; text-align: start; }
+.auto-chip { margin-top: 6px; background: #EDE9FE; color: #6D28D9; }
+.toggle-line { margin-top: 10px; }

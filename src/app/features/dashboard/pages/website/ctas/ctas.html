@@ -1,0 +1,385 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="title-area">
+          <h2>{{ 'web.ctas.title' | t }}</h2>
+          <span class="pill pill-scheduled">{{ total() }}</span>
+        </div>
+        <p class="sub">{{ 'web.ctas.subtitle' | t }}</p>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'web.ctas.search' | t" (input)="onSearch($any($event.target).value)">
+        </div>
+
+        <div class="custom-select">
+          <select [value]="type()" (change)="setFilter('type', $any($event.target).value)">
+            <option value="">{{ 'web.ctas.all_types' | t }}</option>
+            @for (v of ctaTypes(); track v) {
+              <option [value]="v" [selected]="type() === v">{{ enumLabel('cta_type', v) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="custom-select">
+          <select [value]="placement()" (change)="setFilter('placement', $any($event.target).value)">
+            <option value="">{{ 'web.ctas.all_placements' | t }}</option>
+            @for (v of placements(); track v) {
+              <option [value]="v" [selected]="placement() === v">{{ enumLabel('cta_placement', v) }}</option>
+            }
+          </select>
+        </div>
+
+        @if (canCreate()) {
+          <button class="btn-primary" (click)="create()">+ {{ 'web.ctas.add' | t }}</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'web.ctas.key' | t }}</th>
+              <th>{{ 'common.type' | t }}</th>
+              <th>{{ 'web.ctas.label_en' | t }}</th>
+              <th>{{ 'web.ctas.label_ar' | t }}</th>
+              <th>{{ 'web.ctas.placement' | t }}</th>
+              <th>{{ 'web.ctas.tracking_key' | t }}</th>
+              <th>{{ 'web.ctas.enabled' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="clickable" (click)="edit(row)">
+                <td class="mono name-cell" dir="ltr">{{ row.key }}</td>
+                <td><span class="chip">{{ enumLabel('cta_type', row.type, row.type_label) }}</span></td>
+                <td>{{ row.label_en }}</td>
+                <td dir="rtl" class="ar-cell">{{ row.label_ar || '—' }}</td>
+                <td class="text-gray">{{ enumLabel('cta_placement', row.placement, row['placement_label']) }}</td>
+                <td class="mono text-gray" dir="ltr">{{ row.tracking_key || ('cta.' + row.key) }}</td>
+                <td>
+                  <span class="pill" [class.pill-active]="row.is_enabled" [class.pill-inactive]="!row.is_enabled">
+                    {{ (row.is_enabled ? 'web.ctas.on' : 'web.ctas.off') | t }}
+                  </span>
+                </td>
+                <td class="action-col" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="edit(row)">{{ (canUpdate() ? 'common.edit' : 'common.view') | t }}</button>
+                    @if (canUpdate()) {
+                      <button class="link-btn" (click)="toggle(row, !row.is_enabled)">
+                        {{ (row.is_enabled ? 'web.ctas.disable' : 'web.ctas.enable') | t }}
+                      </button>
+                    }
+                    @if (canDelete()) {
+                      <button class="link-btn danger" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+@if (open()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'web.ctas.edit_title' : 'web.ctas.new_title') | t }}</h3>
+        <button type="button" class="modal-close" (click)="close()">×</button>
+      </div>
+
+      <div class="modal-body">
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+        <!-- identity -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'web.ctas.key' | t }} <span class="req">*</span></label>
+            <input type="text" dir="ltr" [value]="draft().key" (input)="set('key', $any($event.target).value)"
+                   placeholder="whatsapp_sales">
+            <span class="hint">{{ 'web.ctas.key_hint' | t }}</span>
+            @if (errorFor('key')) { <span class="field-error">{{ errorFor('key')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'common.type' | t }} <span class="req">*</span></label>
+            <select [value]="draft().type" (change)="set('type', $any($event.target).value)">
+              <option value="">—</option>
+              @for (v of ctaTypes(); track v) {
+                <option [value]="v" [selected]="draft().type === v">{{ enumLabel('cta_type', v) }}</option>
+              }
+            </select>
+            @if (errorFor('type')) { <span class="field-error">{{ errorFor('type')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.ctas.placement' | t }}</label>
+            <select [value]="draft().placement" (change)="set('placement', $any($event.target).value)">
+              <option value="">—</option>
+              @for (v of placements(); track v) {
+                <option [value]="v" [selected]="draft().placement === v">{{ enumLabel('cta_placement', v) }}</option>
+              }
+            </select>
+            <span class="hint">{{ 'web.ctas.placement_hint' | t }}</span>
+            @if (errorFor('placement')) { <span class="field-error">{{ errorFor('placement')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.ctas.style' | t }}</label>
+            <select [value]="draft().style" (change)="set('style', $any($event.target).value)">
+              @for (v of styles; track v) {
+                <option [value]="v" [selected]="draft().style === v">{{ enumLabel('cta_style', v) }}</option>
+              }
+            </select>
+            @if (errorFor('style')) { <span class="field-error">{{ errorFor('style')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.ctas.icon' | t }}</label>
+            <input type="text" dir="ltr" [value]="draft().icon" (input)="set('icon', $any($event.target).value)"
+                   placeholder="whatsapp">
+            <span class="hint">{{ 'web.ctas.icon_hint' | t }}</span>
+            @if (errorFor('icon')) { <span class="field-error">{{ errorFor('icon')! | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'web.ctas.tracking_key' | t }}</label>
+            <input type="text" dir="ltr" [value]="draft().tracking_key" (input)="set('tracking_key', $any($event.target).value)"
+                   [placeholder]="'cta.' + (draft().key || '{key}')">
+            <span class="hint">{{ 'web.ctas.tracking_hint' | t }}</span>
+            @if (errorFor('tracking_key')) { <span class="field-error">{{ errorFor('tracking_key')! | t }}</span> }
+          </div>
+        </div>
+
+        <!-- texts per language -->
+        <div class="sub-section">
+          <div class="row">
+            <h4 class="section-title no-margin">{{ 'web.ctas.texts' | t }}</h4>
+            <span class="spacer"></span>
+            <div class="locale-switch">
+              <button type="button" [class.active]="locale() === 'en'" (click)="locale.set('en')">
+                EN @if (localeHasError('en')) { <span class="err-dot"></span> }
+              </button>
+              <button type="button" [class.active]="locale() === 'ar'" (click)="locale.set('ar')">
+                العربية @if (localeHasError('ar')) { <span class="err-dot"></span> }
+              </button>
+            </div>
+          </div>
+
+          @if (locale() === 'en') {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'web.ctas.label' | t }} (EN) <span class="req">*</span></label>
+                <input type="text" dir="ltr" [value]="draft().label_en" (input)="set('label_en', $any($event.target).value)">
+                @if (errorFor('label_en')) { <span class="field-error">{{ errorFor('label_en')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.ctas.sublabel' | t }} (EN)</label>
+                <input type="text" dir="ltr" [value]="draft().sublabel_en" (input)="set('sublabel_en', $any($event.target).value)">
+                @if (errorFor('sublabel_en')) { <span class="field-error">{{ errorFor('sublabel_en')! | t }}</span> }
+              </div>
+            </div>
+          } @else {
+            <div class="form-grid">
+              <div class="form-group">
+                <label>{{ 'web.ctas.label' | t }} (AR)</label>
+                <input type="text" dir="rtl" [value]="draft().label_ar" (input)="set('label_ar', $any($event.target).value)">
+                <span class="hint">{{ 'web.ctas.label_ar_hint' | t }}</span>
+                @if (errorFor('label_ar')) { <span class="field-error">{{ errorFor('label_ar')! | t }}</span> }
+              </div>
+              <div class="form-group">
+                <label>{{ 'web.ctas.sublabel' | t }} (AR)</label>
+                <input type="text" dir="rtl" [value]="draft().sublabel_ar" (input)="set('sublabel_ar', $any($event.target).value)">
+                @if (errorFor('sublabel_ar')) { <span class="field-error">{{ errorFor('sublabel_ar')! | t }}</span> }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- target: depends on the type -->
+        <div class="sub-section">
+          <h4 class="section-title">{{ 'web.ctas.target' | t }}</h4>
+
+          @if (!draft().type) {
+            <p class="muted">{{ 'web.ctas.pick_type_first' | t }}</p>
+          } @else {
+            @switch (target()) {
+              @case ('phone') {
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>{{ 'common.phone' | t }} <span class="req">*</span></label>
+                    <input type="text" dir="ltr" [value]="draft().phone" (input)="set('phone', $any($event.target).value)"
+                           placeholder="+201000000000">
+                    <span class="hint">{{ 'web.ctas.phone_hint' | t }}</span>
+                    @if (errorFor('phone')) { <span class="field-error">{{ errorFor('phone')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.ctas.message' | t }} (EN)</label>
+                    <textarea dir="ltr" rows="2" [value]="draft().message_en" (input)="set('message_en', $any($event.target).value)"></textarea>
+                    @if (errorFor('message_en')) { <span class="field-error">{{ errorFor('message_en')! | t }}</span> }
+                  </div>
+                  <div class="form-group">
+                    <label>{{ 'web.ctas.message' | t }} (AR)</label>
+                    <textarea dir="rtl" rows="2" [value]="draft().message_ar" (input)="set('message_ar', $any($event.target).value)"></textarea>
+                    @if (errorFor('message_ar')) { <span class="field-error">{{ errorFor('message_ar')! | t }}</span> }
+                  </div>
+                </div>
+                <p class="hint">{{ 'web.ctas.message_hint' | t }}</p>
+              }
+
+              @case ('url') {
+                <div class="form-group">
+                  <label>{{ 'web.ctas.url' | t }} <span class="req">*</span></label>
+                  <input type="text" dir="ltr" [value]="draft().url" (input)="set('url', $any($event.target).value)"
+                         placeholder="https://">
+                  <span class="hint">{{ 'web.ctas.url_https' | t }}</span>
+                  @if (errorFor('url')) { <span class="field-error">{{ errorFor('url')! | t }}</span> }
+                </div>
+              }
+
+              @case ('form') {
+                <div class="form-group">
+                  <label>{{ 'web.ctas.form' | t }} <span class="req">*</span></label>
+                  <select [value]="draft().form_id" (change)="set('form_id', $any($event.target).value)">
+                    <option value="">—</option>
+                    @for (f of forms(); track f.id) {
+                      <option [value]="f.id" [selected]="draft().form_id === (f.id + '')">{{ formName(f) }}</option>
+                    }
+                  </select>
+                  @if (errorFor('form_id')) { <span class="field-error">{{ errorFor('form_id')! | t }}</span> }
+                </div>
+              }
+
+              @case ('optional_form') {
+                <div class="form-group">
+                  <label>{{ 'web.ctas.form' | t }} ({{ 'common.optional' | t }})</label>
+                  <select [value]="draft().form_id" (change)="set('form_id', $any($event.target).value)">
+                    <option value="">{{ 'web.ctas.default_form' | t }}</option>
+                    @for (f of forms(); track f.id) {
+                      <option [value]="f.id" [selected]="draft().form_id === (f.id + '')">{{ formName(f) }}</option>
+                    }
+                  </select>
+                  <span class="hint">{{ 'web.ctas.optional_form_hint' | t }}</span>
+                  @if (errorFor('form_id')) { <span class="field-error">{{ errorFor('form_id')! | t }}</span> }
+                </div>
+              }
+
+              @default {
+                <!-- page_or_url / product_or_url -->
+                <div class="mode-switch">
+                  <label class="checkbox">
+                    <input type="radio" name="cta-target" [checked]="targetMode() === 'entity'" (change)="targetMode.set('entity')">
+                    {{ (target() === 'product_or_url' ? 'web.ctas.link_product' : 'web.ctas.link_page') | t }}
+                  </label>
+                  <label class="checkbox">
+                    <input type="radio" name="cta-target" [checked]="targetMode() === 'url'" (change)="targetMode.set('url')">
+                    {{ 'web.ctas.link_url' | t }}
+                  </label>
+                </div>
+
+                @if (targetMode() === 'url') {
+                  <div class="form-group">
+                    <label>{{ 'web.ctas.url' | t }} <span class="req">*</span></label>
+                    <input type="text" dir="ltr" [value]="draft().url" (input)="set('url', $any($event.target).value)"
+                           placeholder="/en/pricing">
+                    @if (errorFor('url')) { <span class="field-error">{{ errorFor('url')! | t }}</span> }
+                  </div>
+                } @else if (target() === 'product_or_url') {
+                  <div class="form-group">
+                    <label>{{ 'web.ctas.product' | t }} <span class="req">*</span></label>
+                    <select [value]="draft().product_id" (change)="set('product_id', $any($event.target).value)">
+                      <option value="">—</option>
+                      @for (p of products(); track p.id) {
+                        <option [value]="p.id" [selected]="draft().product_id === (p.id + '')">{{ productName(p) }}</option>
+                      }
+                    </select>
+                    @if (errorFor('product_id')) { <span class="field-error">{{ errorFor('product_id')! | t }}</span> }
+                  </div>
+                } @else {
+                  <div class="form-group">
+                    <label>{{ 'web.ctas.page' | t }} <span class="req">*</span></label>
+                    <select [value]="draft().page_id" (change)="set('page_id', $any($event.target).value)">
+                      <option value="">—</option>
+                      @for (p of pages(); track p.id) {
+                        <option [value]="p.id" [selected]="draft().page_id === (p.id + '')">{{ pageTitle(p) }}</option>
+                      }
+                    </select>
+                    <span class="hint">{{ 'web.ctas.page_hint' | t }}</span>
+                    @if (errorFor('page_id')) { <span class="field-error">{{ errorFor('page_id')! | t }}</span> }
+                  </div>
+                }
+              }
+            }
+          }
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" [checked]="draft().is_enabled" (change)="set('is_enabled', $any($event.target).checked)">
+          {{ 'web.ctas.is_enabled' | t }}
+        </label>
+        <p class="hint">{{ 'web.ctas.is_enabled_hint' | t }}</p>
+
+        <!-- render preview (edit only) -->
+        @if (editing()) {
+          <div class="sub-section">
+            <h4 class="section-title">{{ 'web.ctas.preview' | t }}</h4>
+            @if (previewLoading()) {
+              <p class="muted">{{ 'common.loading' | t }}</p>
+            } @else if (!previewLocales().length) {
+              <p class="muted">{{ 'web.ctas.no_preview' | t }}</p>
+            } @else {
+              <p class="hint">{{ 'web.ctas.preview_hint' | t }}</p>
+              <div class="preview-grid">
+                @for (l of previewLocales(); track l) {
+                  <div class="preview-card" [attr.dir]="l === 'ar' ? 'rtl' : 'ltr'">
+                    <span class="chip">{{ l | uppercase }}</span>
+                    @if (mock(l); as m) {
+                      <div class="mock-wrap">
+                        <span [class]="'mock-btn mock-' + m.style">{{ m.label }}</span>
+                        @if (m.sublabel) { <span class="mock-sub">{{ m.sublabel }}</span> }
+                        @if (m.href) { <span class="mono mock-href" dir="ltr">{{ m.href }}</span> }
+                      </div>
+                    }
+                    <details>
+                      <summary>{{ 'web.ctas.raw_json' | t }}</summary>
+                      <pre class="code-preview">{{ json(preview()![l]) }}</pre>
+                    </details>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+        @if (canSave()) {
+          <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+            {{ (saving() ? 'common.saving' : 'common.save') | t }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

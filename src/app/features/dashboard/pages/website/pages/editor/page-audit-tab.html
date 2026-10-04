@@ -1,0 +1,49 @@
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.audit_check.title' | t }}</h2>
+      <p class="sub">{{ 'web.audit_check.subtitle' | t }}</p>
+    </div>
+    <div class="actions-area">
+      <button type="button" class="btn-secondary btn-sm" [disabled]="loading()" (click)="refresh()">↻ {{ 'web.audit_check.refresh' | t }}</button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    @if (loading() && !result()) {
+      <p class="muted">{{ 'common.loading' | t }}</p>
+    } @else if (error()) {
+      <p class="form-error">{{ error()! | t }}</p>
+    } @else if (result(); as r) {
+      <div class="score-row" [class.stale]="loading()">
+        <div [class]="'score ' + scoreClass()">
+          <span class="score-num">{{ r.score }}</span><span class="score-of">/100</span>
+        </div>
+        <div class="score-summary">
+          <span class="sum err">{{ 'web.audit_check.errors' | t: { count: failedErrors() } }}</span>
+          <span class="sum warn">{{ 'web.audit_check.warnings' | t: { count: failedWarnings() } }}</span>
+          <span class="sum ok">{{ 'web.audit_check.passed' | t: { count: passed() } }}</span>
+        </div>
+      </div>
+
+      <ul class="checks">
+        @for (c of checks(); track c.key) {
+          <li class="check" [class.ok]="c.passed" [class.err]="!c.passed && c.level === 'error'" [class.warn]="!c.passed && c.level === 'warning'">
+            <span class="check-icon" aria-hidden="true">{{ c.passed ? '✓' : c.level === 'error' ? '✕' : '!' }}</span>
+            <div class="check-text">
+              <span class="check-name">{{ checkName(c.key) }}</span>
+              <span class="check-msg">{{ c.message }}</span>
+            </div>
+            @if (!c.passed) {
+              <span [class]="'pill pill-' + (c.level === 'error' ? 'error' : 'warning')">
+                {{ (c.level === 'error' ? 'web.audit_check.level_error' : 'web.audit_check.level_warning') | t }}
+              </span>
+            }
+          </li>
+        } @empty {
+          <li class="muted">{{ 'common.no_data' | t }}</li>
+        }
+      </ul>
+    }
+  </div>
+</div>

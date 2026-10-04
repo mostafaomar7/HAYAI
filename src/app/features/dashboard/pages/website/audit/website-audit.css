@@ -1,0 +1,41 @@
+/* Only what the audit screen adds on top of website.shared.css. */
+
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; border-bottom: 1px solid #F1F5F9; }
+.filters .custom-select select { min-width: 160px; }
+.filter-input {
+  padding: 9px 12px; border: 1px solid #E5E7EB; border-radius: 8px;
+  font-size: 14px; font-family: inherit; color: #374151; background: #fff; outline: none; width: 200px;
+}
+.filter-input.narrow { width: 120px; }
+.filter-input:focus { border-color: #2563EB; }
+.date-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B7280; font-weight: 600; }
+.date-field input {
+  padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px;
+  font-size: 13px; font-family: inherit; color: #374151; background: #fff;
+}
+.per-page select { min-width: 120px; }
+
+.nowrap { white-space: nowrap; }
+.small { font-size: 12px; }
+.action { background: #F1F5F9; border-radius: 6px; padding: 2px 8px; color: #334155; }
+.path { overflow-wrap: anywhere; }
+.link-btn.plain { color: inherit; text-align: start; }
+.open-link { margin-inline-start: 10px; font-size: 12px; color: #6B7280; }
+
+.diff-row > td { background: #F8FAFC; padding-top: 6px; }
+.diff-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; overflow-wrap: anywhere; }
+.diff-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
+.diff-table th { text-align: start; font-size: 12px; color: #6B7280; padding: 8px 12px; background: #F1F5F9; }
+.diff-table td { padding: 8px 12px; border-top: 1px solid #F1F5F9; vertical-align: top; font-size: 13px; }
+.diff-table .key { width: 1%; white-space: nowrap; color: #334155; text-align: start; }
+.diff-table pre {
+  margin: 0; white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px; max-height: 240px; overflow: auto;
+}
+.diff-table td.old { background: #FEF2F2; color: #991B1B; }
+.diff-table td.new { background: #ECFDF5; color: #065F46; }
+.diff-table tr.same td.old, .diff-table tr.same td.new { background: transparent; color: #6B7280; }
+
+@media (max-width: 640px) {
+  .filter-input, .filter-input.narrow, .date-field, .date-field input { width: 100%; box-sizing: border-box; }
+}

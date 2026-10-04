@@ -1,0 +1,244 @@
+<div class="builder">
+  <div class="builder-bar">
+    <div class="title-area">
+      <h3 class="builder-title">{{ 'web.blocks.title' | t }}</h3>
+      <span class="chip">{{ blocks().length }}</span>
+      @if (dirty()) { <span class="pill pill-warning">{{ 'web.common.unsaved' | t }}</span> }
+    </div>
+    <div class="actions-area">
+      @if (blocks().length > 1) {
+        <button type="button" class="link-btn" (click)="setAllOpen(true)">{{ 'web.blocks.expand_all' | t }}</button>
+        <button type="button" class="link-btn" (click)="setAllOpen(false)">{{ 'web.blocks.collapse_all' | t }}</button>
+      }
+      @if (!locked()) {
+        <button type="button" class="btn-secondary btn-sm" (click)="openPicker()" [disabled]="loading() || !!loadError()">
+          + {{ 'web.blocks.add' | t }}
+        </button>
+        @if (dirty()) {
+          <button type="button" class="btn-secondary btn-sm" (click)="discard()" [disabled]="saving()">{{ 'web.blocks.discard' | t }}</button>
+        }
+        <button type="button" class="btn-primary btn-sm" (click)="save()" [disabled]="saving() || loading() || !dirty()">
+          {{ (saving() ? 'common.saving' : 'common.save') | t }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (locked() && !loading()) {
+    <p class="notice info">{{ 'web.blocks.readonly' | t }}</p>
+  }
+
+  @if (formError()) {
+    <div class="form-error" role="alert">
+      {{ formError()! | t }}
+      @if (errorCount()) { <span class="err-count">({{ 'web.blocks.error_count' | t: { n: errorCount() } }})</span> }
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="table-hint">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <div class="notice error">
+      {{ loadError()! | t }}
+      <button type="button" class="link-btn" (click)="load()">{{ 'web.blocks.retry' | t }}</button>
+    </div>
+  } @else {
+    <ol class="block-list" [class.dragging]="dragUid() !== null" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
+      @for (b of blocks(); track b.uid; let i = $index, first = $first, last = $last) {
+        <li class="block-card" [id]="'blk-' + b.uid"
+            [class.open]="b.open" [class.selected]="selectedUid() === b.uid" [class.disabled-block]="b.section.is_enabled === false"
+            [class.has-error]="blockErrorCount(i) > 0" [class.drag-src]="dragUid() === b.uid"
+            [class.drop-before]="dropIndex() === i && dragUid() !== b.uid"
+            [class.drop-after]="last && dropIndex() === i + 1 && dragUid() !== b.uid"
+            [attr.draggable]="armedUid() === b.uid ? 'true' : null"
+            (dragstart)="onDragStart($event, b)" (dragend)="onDragEnd()" (dragover)="onDragOver($event, i)"
+            (focusin)="selectedUid.set(b.uid)">
+
+          <div class="block-head">
+            @if (!locked()) {
+              <span class="drag-handle" (mousedown)="arm(b)" (mouseup)="disarm()" (touchstart)="arm(b)"
+                    [title]="'web.blocks.drag' | t" aria-hidden="true">⋮⋮</span>
+            }
+            <button type="button" class="head-toggle" (click)="toggleOpen(b)" [attr.aria-expanded]="b.open"
+                    [attr.aria-controls]="'blk-body-' + b.uid">
+              <span class="chev" aria-hidden="true">▸</span>
+              <span class="block-no">{{ i + 1 }}</span>
+              <span class="head-text">
+                <span class="block-name">{{ blockLabel(b.section.type) }}</span>
+                @if (summary(b)) {
+                  <span class="block-summary" [attr.dir]="dir()">{{ summary(b) }}</span>
+                } @else {
+                  <span class="block-summary empty">{{ 'web.blocks.no_summary' | t }}</span>
+                }
+              </span>
+            </button>
+
+            <span class="badges">
+              @if (b.section.anchor) { <span class="chip mono" dir="ltr">#{{ b.section.anchor }}</span> }
+              @if (b.section.type === 'hero' && b.section.data['is_h1']) { <span class="chip chip-h1">H1</span> }
+              @for (d of b.section.settings?.hide_on ?? []; track d) {
+                <span class="chip chip-hide">{{ 'web.blocks.hidden_on_' + d | t }}</span>
+              }
+              @if (blockErrorCount(i)) {
+                <span class="pill pill-error">{{ 'web.blocks.error_count' | t: { n: blockErrorCount(i) } }}</span>
+              }
+            </span>
+
+            <label class="mini-switch" [title]="(b.section.is_enabled === false ? 'web.blocks.disabled' : 'web.blocks.enabled') | t">
+              <input type="checkbox" role="switch" [checked]="b.section.is_enabled !== false" [disabled]="locked()"
+                     [attr.aria-label]="'web.blocks.enabled' | t" (change)="setEnabled(b, $any($event.target).checked)">
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            @if (!locked()) {
+              <span class="block-tools">
+                <button type="button" class="icon-btn" [disabled]="first" (click)="move(b, -1)"
+                        [attr.aria-label]="'web.common.move_up' | t" [title]="'web.common.move_up' | t">↑</button>
+                <button type="button" class="icon-btn" [disabled]="last" (click)="move(b, 1)"
+                        [attr.aria-label]="'web.common.move_down' | t" [title]="'web.common.move_down' | t">↓</button>
+                <button type="button" class="icon-btn" (click)="duplicate(b)"
+                        [attr.aria-label]="'web.blocks.duplicate' | t" [title]="'web.blocks.duplicate' | t">⧉</button>
+                <button type="button" class="icon-btn danger" (click)="remove(b)"
+                        [attr.aria-label]="'common.delete' | t" [title]="'common.delete' | t">🗑</button>
+              </span>
+            }
+          </div>
+
+          @if (b.open) {
+            <div class="block-body" [id]="'blk-body-' + b.uid">
+              @if (b.section.is_enabled === false) {
+                <p class="notice warn">{{ 'web.blocks.disabled_hint' | t }}</p>
+              }
+              @if (isUnknownType(b)) {
+                <p class="notice warn">{{ 'web.blocks.unknown_type' | t: { type: b.section.type } }}</p>
+              }
+              @if (pricingFromProduct(b)) {
+                <p class="notice info">{{ 'web.blocks.pricing_live' | t }}</p>
+              }
+              @for (msg of orphanErrors(b, i); track $index) {
+                <p class="field-error block-error" role="alert">{{ msg | t }}</p>
+              }
+
+              <div class="fields-grid">
+                @for (f of fieldsOf(b); track f.key) {
+                  <app-block-field [field]="f" [value]="b.section.data[f.key]" [locale]="locale()"
+                                   [path]="'sections.' + i + '.data.' + f.key" [errors]="errors()"
+                                   [root]="b.section.data" [blockType]="b.section.type" [disabled]="locked()"
+                                   (valueChange)="setField(b, f.key, $event)" />
+                }
+              </div>
+
+              <div class="advanced">
+                <button type="button" class="link-btn adv-toggle" (click)="toggleAdvanced(b)"
+                        [attr.aria-expanded]="advancedOpen().has(b.uid)" [attr.aria-controls]="'blk-adv-' + b.uid">
+                  {{ (advancedOpen().has(b.uid) ? 'web.blocks.advanced_hide' : 'web.blocks.advanced') | t }}
+                  @if (errorAt(i, 'anchor')) { <span class="dot" aria-hidden="true"></span> }
+                </button>
+                @if (advancedOpen().has(b.uid)) {
+                  <div class="adv-grid" [id]="'blk-adv-' + b.uid">
+                    <div class="form-group">
+                      <label [for]="'anchor-' + b.uid">{{ 'web.blocks.anchor' | t }}</label>
+                      <input type="text" class="mono" dir="ltr" [id]="'anchor-' + b.uid" [value]="b.section.anchor ?? ''"
+                             [disabled]="locked()" [attr.aria-invalid]="!!errorAt(i, 'anchor') || null"
+                             placeholder="pricing" (change)="setAnchor(b, $any($event.target).value)">
+                      <p class="hint">{{ 'web.blocks.anchor_hint' | t }}</p>
+                      @if (errorAt(i, 'anchor')) { <p class="field-error">{{ errorAt(i, 'anchor')! | t }}</p> }
+                    </div>
+
+                    <div class="form-group">
+                      <span class="group-label" [id]="'hide-' + b.uid">{{ 'web.blocks.hide_on' | t }}</span>
+                      <div class="row" role="group" [attr.aria-labelledby]="'hide-' + b.uid">
+                        @for (d of hideOn; track d) {
+                          <label class="checkbox">
+                            <input type="checkbox" [checked]="hidden(b, d)" [disabled]="locked()"
+                                   (change)="toggleHideOn(b, d, $any($event.target).checked)">
+                            {{ 'web.blocks.device.' + d | t }}
+                          </label>
+                        }
+                      </div>
+                      @if (errorAt(i, 'settings.hide_on')) { <p class="field-error">{{ errorAt(i, 'settings.hide_on')! | t }}</p> }
+                    </div>
+
+                    <div class="form-group">
+                      <label [for]="'theme-' + b.uid">{{ 'web.blocks.theme' | t }}</label>
+                      <select [id]="'theme-' + b.uid" [disabled]="locked()" (change)="setSetting(b, 'theme', $any($event.target).value)">
+                        @for (th of themes; track th) {
+                          <option [value]="th" [selected]="themeOf(b) === th">{{ 'web.blocks.theme_' + th | t }}</option>
+                        }
+                      </select>
+                      @if (errorAt(i, 'settings.theme')) { <p class="field-error">{{ errorAt(i, 'settings.theme')! | t }}</p> }
+                    </div>
+
+                    <div class="form-group">
+                      <label [for]="'spacing-' + b.uid">{{ 'web.blocks.spacing' | t }}</label>
+                      <select [id]="'spacing-' + b.uid" [disabled]="locked()" (change)="setSetting(b, 'spacing', $any($event.target).value)">
+                        @for (sp of spacings; track sp) {
+                          <option [value]="sp" [selected]="spacingOf(b) === sp">{{ 'web.blocks.spacing_' + sp | t }}</option>
+                        }
+                      </select>
+                      @if (errorAt(i, 'settings.spacing')) { <p class="field-error">{{ errorAt(i, 'settings.spacing')! | t }}</p> }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (!locked()) {
+                <div class="insert-below">
+                  <button type="button" class="add-below" (click)="openPicker(i)">+ {{ 'web.blocks.insert_below' | t }}</button>
+                </div>
+              }
+            </div>
+          }
+        </li>
+      } @empty {
+        <li class="empty-state">
+          <p class="empty-title">{{ 'web.blocks.empty_title' | t }}</p>
+          <p class="muted">{{ 'web.blocks.empty_text' | t }}</p>
+          @if (!locked()) {
+            <button type="button" class="btn-primary btn-sm" (click)="openPicker()">+ {{ 'web.blocks.add_first' | t }}</button>
+          }
+        </li>
+      }
+    </ol>
+
+    @if (blocks().length && !locked()) {
+      <button type="button" class="add-end" (click)="openPicker(blocks().length - 1)">+ {{ 'web.blocks.add_end' | t }}</button>
+    }
+  }
+</div>
+
+@if (pickerOpen()) {
+  <div class="modal-backdrop" (click)="closePicker()">
+    <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="blk-picker-title" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3 id="blk-picker-title">{{ 'web.blocks.picker_title' | t }}</h3>
+        <button type="button" class="modal-close" (click)="closePicker()" [attr.aria-label]="'common.close' | t">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box picker-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="search" class="picker-search" [value]="pickerQuery()" [placeholder]="'web.blocks.picker_search' | t"
+                 [attr.aria-label]="'web.blocks.picker_search' | t" (input)="pickerQuery.set($any($event.target).value)">
+        </div>
+        @for (g of groups(); track g.category) {
+          <section class="picker-group">
+            <h4>{{ categoryLabel(g.category) }}</h4>
+            <div class="picker-grid">
+              @for (d of g.items; track d.type) {
+                <button type="button" class="picker-item" (click)="addBlock(d)">
+                  <span class="picker-name">{{ blockLabel(d.type) }}</span>
+                  @if (blockDescription(d)) { <span class="picker-desc">{{ blockDescription(d) }}</span> }
+                  <span class="picker-meta mono" dir="ltr">{{ d.type }} · {{ d.fields.length }} {{ 'web.blocks.fields' | t }}</span>
+                </button>
+              }
+            </div>
+          </section>
+        } @empty {
+          <p class="muted">{{ 'web.blocks.picker_none' | t }}</p>
+        }
+      </div>
+    </div>
+  </div>
+}

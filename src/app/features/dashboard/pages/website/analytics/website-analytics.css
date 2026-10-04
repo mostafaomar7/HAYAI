@@ -1,0 +1,60 @@
+/* Only what the analytics screen adds on top of website.shared.css. */
+
+.range { align-items: flex-end; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.date-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B7280; font-weight: 600; }
+.date-field input {
+  padding: 7px 10px; border: 1px solid #E5E7EB; border-radius: 8px;
+  font-size: 13px; font-family: inherit; color: #374151; background: #fff;
+}
+
+.tiles { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+/* funnel */
+.funnel-row { display: grid; grid-template-columns: minmax(140px, 220px) 1fr auto; align-items: center; gap: 14px; padding: 8px 0; }
+.funnel-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #111827; }
+.step-no {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; background: #EFF6FF; color: #2563EB;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.funnel-bar-wrap { height: 22px; background: #F1F5F9; border-radius: 6px; overflow: hidden; }
+.funnel-bar { height: 100%; background: linear-gradient(90deg, #2563EB, #60A5FA); border-radius: 6px; transition: width .3s; }
+:host-context([dir="rtl"]) .funnel-bar { background: linear-gradient(270deg, #2563EB, #60A5FA); }
+.funnel-nums { display: flex; align-items: baseline; gap: 10px; min-width: 120px; justify-content: flex-end; }
+.drop { font-size: 12px; color: #6B7280; font-variant-numeric: tabular-nums; }
+.drop.bad { color: #B45309; }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.chart-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; flex-wrap: wrap; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; }
+.chart-svg { width: 100%; height: auto; display: block; overflow: visible; direction: ltr; }
+.chart-svg .grid { stroke: #E5E7EB; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart-svg .axis { font-size: 11px; fill: #94A3B8; font-family: inherit; }
+.chart-svg .dot { opacity: 0; transition: opacity .15s; }
+.chart-svg .dot:hover { opacity: 1; }
+
+.two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.two-col .card { margin-bottom: 20px; }
+.conv-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.conv-chip { background: #ECFDF5; color: #047857; margin-inline-start: 6px; }
+.conv-list .conv-chip { margin-inline-start: 0; }
+.end { text-align: end; }
+.start { text-align: start; }
+.nowrap { white-space: nowrap; }
+
+.path-cell { max-width: 360px; overflow-wrap: anywhere; text-align: start; }
+.path-cell a { color: #2563EB; text-decoration: none; }
+.path-cell a:hover { text-decoration: underline; }
+.search-box { width: 180px; }
+.detail-row td { background: #F8FAFC; }
+
+@media (max-width: 900px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .funnel-row { grid-template-columns: 1fr auto; }
+  .funnel-bar-wrap { grid-column: 1 / -1; grid-row: 2; }
+  .search-box { width: 100%; }
+}

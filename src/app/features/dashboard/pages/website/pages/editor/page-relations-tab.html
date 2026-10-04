@@ -1,0 +1,218 @@
+<!-- ===================== sources ===================== -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.pages.sources' | t }}</h2>
+      <p class="sub">{{ 'web.pages.sources_hint' | t }}</p>
+    </div>
+    @if (canUpdate()) {
+      <div class="actions-area">
+        <button type="button" class="btn-secondary btn-sm" (click)="addSource()">+ {{ 'web.pages.add_source' | t }}</button>
+      </div>
+    }
+  </div>
+  <div class="card-body">
+    @if (sourcesError()) { <p class="form-error">{{ sourcesError()! | t }}</p> }
+
+    <div class="stack">
+      @for (s of sources(); track $index; let i = $index) {
+        <div class="item-card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'web.pages.source_language' | t }}</label>
+              <select [disabled]="!canUpdate()" (change)="setSource(i, 'locale', $any($event.target).value)">
+                <option value="" [selected]="!s.locale">{{ 'web.pages.all_languages_short' | t }}</option>
+                @for (l of locales; track l) {
+                  <option [value]="l" [selected]="s.locale === l">{{ l | uppercase }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>{{ 'common.title' | t }} <span class="req">*</span></label>
+              <input type="text" [readonly]="!canUpdate()" [value]="s.title" (input)="setSource(i, 'title', $any($event.target).value)">
+              @if (sourceError(i, 'title')) { <span class="field-error">{{ sourceError(i, 'title')! | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.pages.source_url' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" placeholder="https://" [readonly]="!canUpdate()" [value]="s.url"
+                     (input)="setSource(i, 'url', $any($event.target).value)">
+              @if (sourceError(i, 'url')) { <span class="field-error">{{ sourceError(i, 'url')! | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.pages.source_org' | t }}</label>
+              <input type="text" [readonly]="!canUpdate()" [value]="s.organization" (input)="setSource(i, 'organization', $any($event.target).value)">
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.pages.source_published' | t }}</label>
+              <input type="date" [readonly]="!canUpdate()" [value]="s.published_on" (change)="setSource(i, 'published_on', $any($event.target).value)">
+              @if (sourceError(i, 'published_on')) { <span class="field-error">{{ sourceError(i, 'published_on')! | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'web.pages.source_verified' | t }}</label>
+              <input type="date" [readonly]="!canUpdate()" [value]="s.verified_on" (change)="setSource(i, 'verified_on', $any($event.target).value)">
+              @if (sourceError(i, 'verified_on')) { <span class="field-error">{{ sourceError(i, 'verified_on')! | t }}</span> }
+            </div>
+          </div>
+          @if (canUpdate()) {
+            <div class="item-foot">
+              <button type="button" class="link-btn danger" (click)="removeSource(i)">{{ 'common.remove' | t }}</button>
+            </div>
+          }
+        </div>
+      } @empty {
+        <p class="muted">{{ 'web.pages.no_sources' | t }}</p>
+      }
+    </div>
+
+    @if (canUpdate()) {
+      <div class="panel-foot">
+        @if (sourcesDirty()) { <span class="muted">{{ 'web.pages.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="sourcesSaving() || !sourcesDirty()" (click)="saveSources()">
+          {{ (sourcesSaving() ? 'common.saving' : 'web.pages.save_sources') | t }}
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ===================== FAQs ===================== -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.pages.faqs' | t }}</h2>
+      <p class="sub">{{ 'web.pages.faqs_hint' | t }}</p>
+    </div>
+  </div>
+  <div class="card-body">
+    @if (faqsError()) { <p class="form-error">{{ faqsError()! | t }}</p> }
+
+    <ol class="ordered-list">
+      @for (f of faqs(); track f.id; let i = $index; let first = $first; let last = $last) {
+        <li class="ordered-item">
+          <div class="ordered-text">
+            <div class="row">
+              <span class="lang-tag">{{ f.locale | uppercase }}</span>
+              <span class="name-cell" [attr.dir]="f.locale === 'ar' ? 'rtl' : 'ltr'">{{ f.question }}</span>
+            </div>
+            <span class="muted" [attr.dir]="f.locale === 'ar' ? 'rtl' : 'ltr'">{{ plain(f.answer) }}</span>
+          </div>
+          @if (canUpdate()) {
+            <div class="order-actions">
+              <button type="button" class="icon-btn" [disabled]="first" (click)="moveFaq(i, -1)" [attr.aria-label]="'web.pages.move_up' | t">↑</button>
+              <button type="button" class="icon-btn" [disabled]="last" (click)="moveFaq(i, 1)" [attr.aria-label]="'web.pages.move_down' | t">↓</button>
+              <button type="button" class="link-btn danger" (click)="detachFaq(i)">{{ 'common.remove' | t }}</button>
+            </div>
+          }
+        </li>
+      } @empty {
+        <p class="muted">{{ 'web.pages.no_faqs' | t }}</p>
+      }
+    </ol>
+
+    @if (canUpdate()) {
+      <h3 class="sub-title">{{ 'web.pages.attach_faq' | t }}</h3>
+      <div class="row">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'web.pages.faq_search' | t" (focus)="!faqResults().length && searchFaqs()"
+                 (input)="onFaqSearch($any($event.target).value)">
+        </div>
+        <div class="custom-select">
+          <select (change)="setFaqLocale($any($event.target).value)">
+            <option value="">{{ 'web.pages.all_languages_short' | t }}</option>
+            @for (l of locales; track l) { <option [value]="l" [selected]="faqLocale() === l">{{ l | uppercase }}</option> }
+          </select>
+        </div>
+      </div>
+      @if (faqSearching()) {
+        <p class="muted">{{ 'common.loading' | t }}</p>
+      } @else if (faqResults().length) {
+        <ul class="result-list">
+          @for (f of faqResults(); track f.id) {
+            <li>
+              <span class="lang-tag">{{ f.locale | uppercase }}</span>
+              <span class="result-q" [attr.dir]="f.locale === 'ar' ? 'rtl' : 'ltr'">{{ f.question }}</span>
+              @if (attachedIds().has(f.id)) {
+                <span class="muted">{{ 'web.pages.attached' | t }}</span>
+              } @else {
+                <button type="button" class="link-btn" (click)="attachFaq(f)">+ {{ 'web.pages.attach' | t }}</button>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="panel-foot">
+        @if (faqsDirty()) { <span class="muted">{{ 'web.pages.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="faqsSaving() || !faqsDirty()" (click)="saveFaqs()">
+          {{ (faqsSaving() ? 'common.saving' : 'web.pages.save_faqs') | t }}
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ===================== CTAs ===================== -->
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ 'web.pages.ctas' | t }}</h2>
+      <p class="sub">{{ 'web.pages.ctas_hint' | t }}</p>
+    </div>
+    @if (canUpdate()) {
+      <div class="actions-area">
+        <button type="button" class="btn-secondary btn-sm" (click)="addCta()">+ {{ 'web.pages.add_cta' | t }}</button>
+      </div>
+    }
+  </div>
+  <div class="card-body">
+    @if (ctasError()) { <p class="form-error">{{ ctasError()! | t }}</p> }
+
+    <div class="stack">
+      @for (c of ctas(); track $index; let i = $index) {
+        <div class="cta-row">
+          <div class="form-group">
+            <label>{{ 'web.pages.cta' | t }}</label>
+            <select [disabled]="!canUpdate()" (change)="setCta(i, 'cta_id', $any($event.target).value)">
+              <option value="">{{ 'web.pages.choose_cta' | t }}</option>
+              @for (o of ctaOptions(); track o.id) {
+                <option [value]="o.id" [selected]="c.cta_id === (o.id + '')">{{ ctaLabel(o) }}</option>
+              }
+            </select>
+            @if (ctaError(i, 'cta_id')) { <span class="field-error">{{ ctaError(i, 'cta_id')! | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'web.pages.placement' | t }}</label>
+            <select [disabled]="!canUpdate()" (change)="setCta(i, 'placement', $any($event.target).value)">
+              <option value="">{{ 'web.pages.choose_placement' | t }}</option>
+              @for (p of placements(); track p) {
+                <option [value]="p" [selected]="c.placement === p">{{ placementLabel(p) }}</option>
+              }
+            </select>
+            @if (ctaError(i, 'placement')) { <span class="field-error">{{ ctaError(i, 'placement')! | t }}</span> }
+          </div>
+          <label class="checkbox cta-enabled">
+            <input type="checkbox" [disabled]="!canUpdate()" [checked]="c.is_enabled" (change)="setCta(i, 'is_enabled', $any($event.target).checked)">
+            {{ 'common.active' | t }}
+          </label>
+          @if (canUpdate()) {
+            <button type="button" class="link-btn danger cta-remove" (click)="removeCta(i)">{{ 'common.remove' | t }}</button>
+          }
+        </div>
+      } @empty {
+        <p class="muted">{{ 'web.pages.no_ctas' | t }}</p>
+      }
+    </div>
+
+    @if (canUpdate()) {
+      <div class="panel-foot">
+        @if (ctasDirty()) { <span class="muted">{{ 'web.pages.unsaved' | t }}</span> }
+        <button type="button" class="btn-primary" [disabled]="ctasSaving() || !ctasDirty()" (click)="saveCtas()">
+          {{ (ctasSaving() ? 'common.saving' : 'web.pages.save_ctas') | t }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,185 @@
+<div class="site" [class.has-sticky]="stickyMobile().length">
+  <a class="skip-link" href="#main">{{ state.t('skipToContent') }}</a>
+
+  <!-- ================= header ================= -->
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" [attr.href]="'/' + state.locale()">
+        <img [attr.src]="logo()" [attr.alt]="orgName()" width="179" height="64" />
+      </a>
+
+      <nav id="site-nav" class="main-nav" [class.is-open]="menuOpen()" [attr.aria-label]="state.t('menu')">
+        <ul class="nav-list">
+          @for (item of headerMenu(); track $index) {
+            <li [class.has-sub]="item.children?.length">
+              <a [attr.href]="href(item)" [attr.target]="item.target || null">{{ item.label }}</a>
+              @if (item.children?.length) {
+                <ul class="sub-list">
+                  @for (child of item.children; track $index) {
+                    <li><a [attr.href]="href(child)" [attr.target]="child.target || null">{{ child.label }}</a></li>
+                  }
+                </ul>
+              }
+            </li>
+          }
+        </ul>
+        @if (headerCta()) {
+          <div class="nav-cta-mobile">
+            <site-cta [cta]="headerCta()" placement="header" size="block" />
+          </div>
+        }
+      </nav>
+
+      <div class="header-end">
+        <a
+          class="lang-link"
+          [attr.href]="switchHref()"
+          [attr.hreflang]="state.otherLocale()"
+          [attr.lang]="state.otherLocale()"
+          [attr.aria-label]="state.t('switchLanguageLabel')"
+        >{{ state.t('switchLanguage') }}</a>
+        @if (headerCta()) {
+          <span class="header-cta"><site-cta [cta]="headerCta()" placement="header" /></span>
+        }
+        @if (headerMenu().length || headerCta()) {
+          <button
+            type="button"
+            class="menu-toggle"
+            aria-controls="site-nav"
+            [attr.aria-expanded]="menuOpen()"
+            [attr.aria-label]="menuOpen() ? state.t('closeMenu') : state.t('menu')"
+            (click)="toggleMenu()"
+          >
+            <span class="burger" aria-hidden="true"></span>
+          </button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="site-main" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <!-- ================= footer ================= -->
+  <footer class="site-footer">
+    <div class="wrap footer-grid">
+      <div class="footer-brand">
+        <p class="footer-name">{{ orgName() }}</p>
+        @if (org().description) {
+          <p class="muted">{{ org().description }}</p>
+        }
+        @if (footerCtas().length) {
+          <div class="cta-row">
+            @for (c of footerCtas(); track $index) {
+              <site-cta [cta]="c" placement="footer" />
+            }
+          </div>
+        }
+      </div>
+
+      @if (footerMenu().length) {
+        <nav class="footer-nav" [attr.aria-label]="orgName()">
+          <ul>
+            @for (item of footerMenu(); track $index) {
+              <li>
+                <a [attr.href]="href(item)" [attr.target]="item.target || null">{{ item.label }}</a>
+                @if (item.children?.length) {
+                  <ul>
+                    @for (child of item.children; track $index) {
+                      <li><a [attr.href]="href(child)" [attr.target]="child.target || null">{{ child.label }}</a></li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+        </nav>
+      }
+
+      @if (org().phone || org().email || whatsappHref()) {
+        <div class="footer-contact">
+          <p class="footer-h">{{ state.t('contact') }}</p>
+          <ul>
+            @if (org().phone) {
+              <li><a [attr.href]="'tel:' + org().phone" dir="ltr">{{ org().phone }}</a></li>
+            }
+            @if (org().email) {
+              <li><a [attr.href]="'mailto:' + org().email">{{ org().email }}</a></li>
+            }
+            @if (whatsappHref()) {
+              <li><a [attr.href]="whatsappHref()" target="_blank" rel="noopener">{{ state.t('whatsappUs') }}</a></li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (sameAs().length) {
+        <div class="footer-social">
+          <p class="footer-h">{{ state.t('followUs') }}</p>
+          <ul>
+            @for (url of sameAs(); track url) {
+              <li><a [attr.href]="url" target="_blank" rel="me noopener">{{ url.replace('https://', '').replace('www.', '') }}</a></li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+    <div class="wrap footer-bottom">
+      <p>© {{ year }} {{ orgName() }}. {{ state.t('rights') }}</p>
+      @if (state.privacyUrl()) {
+        <a [attr.href]="state.privacyUrl()">{{ state.t('privacyPolicy') }}</a>
+      }
+    </div>
+  </footer>
+
+  <!-- Sticky CTA bars. Their height is reserved by `.has-sticky` padding so
+       they never cover content or shift layout. -->
+  @if (stickyMobile().length) {
+    <div class="sticky-cta sticky-mobile">
+      @for (c of stickyMobile(); track $index) {
+        <site-cta [cta]="c" placement="sticky_mobile" size="block" />
+      }
+    </div>
+  }
+  @if (stickyDesktop().length) {
+    <div class="sticky-cta sticky-desktop">
+      @for (c of stickyDesktop(); track $index) {
+        <site-cta [cta]="c" placement="sticky_desktop" />
+      }
+    </div>
+  }
+
+  <!-- Dialog for CTA-opened forms / purchase requests. Client-only state, so
+       it is never part of the server HTML. -->
+  @if (state.modal(); as m) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        tabindex="-1"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="modal-head">
+          <h2 id="modal-title" class="modal-title">{{ modalTitle() }}</h2>
+          <button type="button" class="modal-close" (click)="closeModal()" [attr.aria-label]="state.t('close')">×</button>
+        </div>
+        <div class="modal-body" [attr.data-cta]="m.trackingKey || null">
+          @if (m.kind === 'form') {
+            <site-form [form]="state.form(m.formKey)" [ctaTrackingKey]="m.trackingKey ?? null" idPrefix="m" />
+          } @else {
+            <site-purchase-form
+              [product]="m.product"
+              [purchase]="m.purchase"
+              [tierId]="m.tierId"
+              [quantity]="m.quantity"
+              [trackingKey]="m.trackingKey ?? null"
+            />
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
