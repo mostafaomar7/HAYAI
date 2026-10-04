@@ -109,7 +109,7 @@ restarted without root):
 [program:hayai-web]
 command=/usr/bin/node /var/www/hayai-web/server/server.mjs
 directory=/var/www/hayai-web
-environment=PORT="4000",API_BASE_URL="https://api.hayaihealthcare.com/api/v1",SITE_URL="https://hayaihealthcare.com",WEBSITE_SERVER_KEY="…"
+environment=NODE_ENV="production",PORT="4000",API_BASE_URL="https://api.hayaihealthcare.com/api/v1",SITE_URL="https://hayaihealthcare.com",WEBSITE_SERVER_KEY="…"
 autostart=true
 autorestart=true
 stopasgroup=true

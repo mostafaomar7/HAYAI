@@ -227,6 +227,20 @@ app.use((req, res, next) => {
 });
 
 /**
+ * The last word on errors. Express's built-in handler prints the stack trace
+ * into the response unless `NODE_ENV=production`, which makes "did someone
+ * remember an environment variable" the thing standing between a crash and
+ * our source code on a public page. It should not be. This answers a plain
+ * 500 whatever the environment, and the detail goes to the log where it
+ * belongs.
+ */
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  console.error(`[error] ${req.method} ${req.originalUrl}`, err);
+  if (res.headersSent) return;
+  res.status(500).type('text/plain').send('Internal Server Error');
+});
+
+/**
  * Start the server if this module is the main entry point, or it is run via PM2.
  */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {

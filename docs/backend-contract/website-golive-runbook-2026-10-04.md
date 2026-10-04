@@ -110,7 +110,7 @@ is worth doing before the DNS moves rather than after.
 [program:hayai-web]
 command=/usr/bin/node /var/www/hayai-web/server/server.mjs
 directory=/var/www/hayai-web
-environment=PORT="4000",API_BASE_URL="https://api.hayaihealthcare.com/api/v1",SITE_URL="https://hayaihealthcare.com",WEBSITE_SERVER_KEY="<the key from step 3>"
+environment=NODE_ENV="production",PORT="4000",API_BASE_URL="https://api.hayaihealthcare.com/api/v1",SITE_URL="https://hayaihealthcare.com",WEBSITE_SERVER_KEY="<the key from step 3>"
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -125,6 +125,13 @@ sudo supervisorctl reread && sudo supervisorctl update
 sudo supervisorctl status hayai-web
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4000/en   # expect 200
 ```
+
+`NODE_ENV=production` matters: without it Express's built-in error handler
+writes the stack trace into the response. The build now also installs its own
+error handler that answers a plain 500 in every environment, so a forgotten
+variable is no longer the thing standing between a crash and our source code
+— but set it anyway, it also turns off Express's development-mode work on
+every request.
 
 Port 4000 stays closed in the firewall, as you said — nginx reaches it on the
 loopback.
