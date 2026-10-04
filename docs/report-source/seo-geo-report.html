@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>تقرير تنفيذ متطلبات SEO و GEO — HAYAI</title>
+<style>
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:400;src:url('fonts/Cairo-400.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:600;src:url('fonts/Cairo-600.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:700;src:url('fonts/Cairo-700.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:900;src:url('fonts/Cairo-900.ttf') format('truetype');font-display:block}
+  :root{
+    --ink:#0F172A; --body:#334155; --muted:#64748B; --line:#E2E8F0;
+    --brand:#0E7490; --brand-soft:#ECFEFF; --ok:#047857; --ok-soft:#ECFDF5;
+    --warn:#92400E; --warn-soft:#FFFBEB; --panel:#F8FAFC;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{ size:A4; margin:18mm 15mm 16mm; }
+  html{font-family:'Cairo',system-ui,sans-serif;font-size:10pt}
+  body{color:var(--body);line-height:1.65;background:#fff}
+  h1,h2,h3,h4{color:var(--ink);line-height:1.5}
+
+  /* ---------- cover ---------- */
+  .cover{height:252mm;display:flex;flex-direction:column;justify-content:center;page-break-after:always}
+  .cover .eyebrow{color:var(--brand);font-weight:700;letter-spacing:.04em;font-size:11pt;margin-bottom:10mm}
+  .cover h1{font-size:30pt;font-weight:900;line-height:1.35;margin-bottom:6mm}
+  .cover .sub{font-size:13pt;color:var(--muted);margin-bottom:14mm;max-width:135mm}
+  .cover .rule{height:4px;width:70mm;background:var(--brand);border-radius:2px;margin-bottom:14mm}
+  .cover dl{display:grid;grid-template-columns:34mm 1fr;gap:3mm 6mm;font-size:10.5pt}
+  .cover dt{color:var(--muted);font-weight:600}
+  .cover dd{color:var(--ink);font-weight:600}
+
+  /* ---------- sections ---------- */
+  section{margin-bottom:5mm}
+  h2.part{font-size:14pt;font-weight:900;margin:0 0 4mm;padding-bottom:2.5mm;border-bottom:2px solid var(--line);page-break-after:avoid}
+  .req{border:1px solid var(--line);border-radius:10px;margin-bottom:5mm}
+  .req > header{background:var(--panel);padding:3mm 4mm;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:4mm;border-radius:9px 9px 0 0;page-break-after:avoid}
+  .num{flex:0 0 auto;width:9mm;height:9mm;border-radius:50%;background:var(--brand);color:#fff;
+       font-weight:900;font-size:11pt;display:flex;align-items:center;justify-content:center}
+  .req h3{font-size:11.5pt;font-weight:700;flex:1}
+  .badge{flex:0 0 auto;font-size:8.5pt;font-weight:700;padding:1mm 3mm;border-radius:20px;white-space:nowrap}
+  .badge.done{background:var(--ok-soft);color:var(--ok)}
+  .badge.pending{background:var(--warn-soft);color:var(--warn)}
+  .req > .body{padding:3.5mm 4mm}
+  .lbl{font-size:8.5pt;font-weight:700;color:var(--muted);letter-spacing:.03em;margin:2.5mm 0 1mm}
+  .lbl:first-child{margin-top:0}
+  p{margin-bottom:1.5mm}
+  ul{margin:0 5mm 2mm 0;padding-right:4mm}
+  li{margin-bottom:.8mm}
+
+  .how{background:var(--brand-soft);border-right:3px solid var(--brand);border-radius:0 7px 7px 0;padding:3mm 3.5mm;margin-top:2.5mm;page-break-inside:avoid}
+  .how .lbl{color:var(--brand);margin-top:0}
+  .how ol{margin:0 5mm 0 0;padding-right:4mm}
+  .how li{margin-bottom:1mm}
+
+  /* `isolate`, not `bidi-override`: the box reads left-to-right, but Arabic
+     inside a URL still renders right-to-left. An override reverses it into
+     nonsense. */
+  code,.path{font-family:'Consolas','Courier New','Cairo',monospace;direction:ltr;unicode-bidi:isolate;
+       display:inline-block;background:#fff;border:1px solid var(--line);border-radius:4px;
+       padding:0 1.5mm;font-size:9pt;color:var(--ink)}
+  .how code{background:#fff}
+
+  table.sum{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:4mm}
+  table.sum th,table.sum td{border:1px solid var(--line);padding:2mm 2.5mm;text-align:right;vertical-align:top}
+  table.sum th{background:var(--panel);font-weight:700;color:var(--ink)}
+  table.sum td.st{white-space:nowrap;font-weight:700;color:var(--ok)}
+
+  .note{border:1px solid var(--line);border-right:3px solid var(--warn);background:var(--warn-soft);
+        border-radius:0 7px 7px 0;padding:3.5mm 4mm;margin-bottom:5mm}
+  .note strong{color:var(--warn)}
+
+  .intro{background:var(--panel);border-radius:10px;padding:4mm;margin-bottom:5mm}
+  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin-top:3mm}
+  .legend div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:3mm}
+  .legend b{display:block;color:var(--ink);font-size:10pt;margin-bottom:1mm}
+  .legend span{font-size:9pt;color:var(--muted)}
+
+  footer.end{margin-top:8mm;padding-top:4mm;border-top:1px solid var(--line);
+             font-size:9pt;color:var(--muted);text-align:center}
+  .pagebreak{page-break-before:always}
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="eyebrow">HAYAI — تقرير تنفيذ</div>
+  <h1>متطلبات SEO و GEO<br>وكيفية التحقق من كل بند</h1>
+  <div class="rule"></div>
+  <p class="sub">مستند مرجعي يشرح كل بند من مواصفات العميل التقنية، وما تم تنفيذه مقابله،
+     وخطوات التحقق منه بنفسك — من لوحة التحكم أو من المتصفح مباشرة.</p>
+  <dl>
+    <dt>المشروع</dt><dd>HAYAI — الموقع العام ولوحة التحكم</dd>
+    <dt>المرجع</dt><dd>HAYAI Technical SEO &amp; GEO Specification</dd>
+    <dt>النطاق</dt><dd>hayaihealthcare.com</dd>
+    <dt>التاريخ</dt><dd>٤ أكتوبر ٢٠٢٦</dd>
+  </dl>
+</div>
+
+<!-- ================= INTRO ================= -->
+<h2 class="part">كيف تقرأ هذا المستند</h2>
+
+<div class="intro">
+  <p>كل بند في المواصفات له بطاقة مستقلة تحتوي على ثلاثة أجزاء:</p>
+  <div class="legend">
+    <div><b>المطلوب</b><span>نص المتطلب كما ورد في مواصفات العميل، بصياغة مبسطة.</span></div>
+    <div><b>المنفَّذ</b><span>ما تم بناؤه فعليًا، وما يمكن قياسه منه.</span></div>
+    <div><b>التحقق</b><span>خطوات عملية للتأكد بنفسك، بدون خلفية تقنية.</span></div>
+  </div>
+</div>
+
+<div class="note">
+  <p><strong>ملاحظة عن حالة النشر:</strong> كل ما في هذا المستند مُنفَّذ ومُختبر على نسخة
+  البناء الحالية، وجرى قياسه فعليًا على واجهة البيانات الحقيقية — لا على بيانات تجريبية.</p>
+  <p style="margin-top:2mm">الموقع يعمل حاليًا من استضافة قديمة لا تدعم العرض من الخادم.
+  روابط التحقق في هذا المستند تعمل بمجرد نقل النطاق إلى الخادم الجديد،
+  وهي الخطوة الأخيرة المتبقية. أما خطوات التحقق من <strong>لوحة التحكم</strong> فتعمل الآن.</p>
+</div>
+
+<h2 class="part">الملخص التنفيذي</h2>
+<table class="sum">
+  <thead><tr><th style="width:12mm">#</th><th>البند</th><th style="width:28mm">الحالة</th><th style="width:52mm">أين تتحقق</th></tr></thead>
+  <tbody>
+    <tr><td>١</td><td>العرض من الخادم (SSR)</td><td class="st">مكتمل</td><td>المتصفح — مصدر الصفحة</td></tr>
+    <tr><td>٢</td><td>وصول زواحف الذكاء الاصطناعي و<span class="path">llms.txt</span></td><td class="st">مكتمل</td><td>لوحة التحكم — خريطة الموقع و Robots</td></tr>
+    <tr><td>٣</td><td>البيانات المنظّمة (Schema.org)</td><td class="st">مكتمل</td><td>أداة اختبار جوجل</td></tr>
+    <tr><td>٤</td><td>بنية المحتوى والإجابة المباشرة</td><td class="st">مكتمل</td><td>لوحة التحكم — قائمة فحص SEO / GEO</td></tr>
+    <tr><td>٥</td><td>الروابط والفلاتر والمحتوى الضعيف</td><td class="st">مكتمل</td><td>لوحة التحكم — فاحص الروابط</td></tr>
+    <tr><td>٦</td><td>تعدد اللغات (hreflang)</td><td class="st">مكتمل</td><td>لوحة التحكم — قائمة فحص SEO / GEO</td></tr>
+    <tr><td>٧</td><td>الصور</td><td class="st">مكتمل</td><td>لوحة التحكم — مكتبة الوسائط</td></tr>
+    <tr><td>٨</td><td>التقييمات والمراجعات</td><td class="st">مكتمل</td><td>لوحة التحكم — إعدادات الموقع</td></tr>
+    <tr><td>٩</td><td>بوابات النشر وسرعة الموقع</td><td class="st">مكتمل</td><td>تقرير آلي مع كل تحديث</td></tr>
+  </tbody>
+</table>
+
+<!-- ================= 1 ================= -->
+<h2 class="part">البنود بالتفصيل</h2>
+
+<section class="req">
+  <header><div class="num">١</div><h3>العرض من الخادم — المحتوى يصل كاملًا لمن لا يشغّل JavaScript</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>محركات البحث وزواحف الذكاء الاصطناعي لا تنتظر تحميل البرمجيات. المطلوب أن تصل الصفحة
+       كاملة في أول استجابة: العنوان، النص، السعر، الأسئلة الشائعة — لا هيكل فارغ يُملأ لاحقًا.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>كل صفحات الموقع العام تُبنى على الخادم قبل إرسالها.</li>
+      <li>رموز الاستجابة حقيقية: صفحة غير موجودة تُرجع <span class="path">404</span> فعليًا،
+          والتحويلات <span class="path">301</span>، وتعذُّر الواجهة <span class="path">503</span>
+          مع طلب إعادة المحاولة — لا <span class="path">200</span> لصفحة خطأ.</li>
+      <li>لوحة التحكم تبقى تطبيقًا في المتصفح، ومحجوبة عن الفهرسة.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — من المتصفح، بدون أدوات</div>
+      <ol>
+        <li>افتح أي صفحة، مثل <span class="path">hayaihealthcare.com/ar</span></li>
+        <li>اضغط بالزر الأيمن ← <strong>عرض مصدر الصفحة</strong> (View Page Source)</li>
+        <li>اضغط <span class="path">Ctrl+F</span> وابحث عن جملة تراها على الصفحة</li>
+      </ol>
+      <p style="margin-top:2mm"><strong>النتيجة الصحيحة:</strong> تجد الجملة مكتوبة داخل المصدر.
+         لو كان المصدر بضعة أسطر فقط بلا نص، فالمحتوى لا يصل للزواحف.</p>
+      <p style="margin-top:2mm"><strong>اختبار الـ 404:</strong> افتح
+         <span class="path">hayaihealthcare.com/ar/صفحة-غير-موجودة</span> — يجب أن تظهر صفحة
+         "غير موجودة" وليس تحويلًا للرئيسية.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="req">
+  <header><div class="num">٢</div><h3>وصول زواحف الذكاء الاصطناعي، وملف <span class="path">llms.txt</span></h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>السماح الصريح لزواحف المساعدات الذكية بقراءة الموقع، ونشر ملف
+       <span class="path">llms.txt</span> يلخّص ما يقدّمه الموقع لها، وإمكانية رصد زياراتها.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>أحد عشر زاحفًا مُعرَّفًا بالاسم ومرصودًا: Googlebot، Bingbot، GPTBot،
+          ChatGPT-User، OAI-SearchBot، ClaudeBot، Claude-User، Claude-SearchBot،
+          PerplexityBot، Perplexity-User، CCBot.</li>
+      <li><span class="path">robots.txt</span> و<span class="path">llms.txt</span> وخرائط الموقع
+          تُحرَّر من لوحة التحكم وتُنشر فورًا — لا تحتاج مبرمجًا.</li>
+      <li>زيارات الزواحف تُسجَّل وتظهر في لوحة التحكم، فيمكن معرفة أي مساعد ذكي يقرأ الموقع فعلًا.</li>
+      <li>حظر أي زاحف ذكاء اصطناعي يعرض تحذيرًا صريحًا قبل التنفيذ، لأن الحظر يعني
+          اختفاء HAYAI من إجابات ذلك المساعد.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — من لوحة التحكم</div>
+      <ol>
+        <li>افتح <strong>الموقع ← خريطة الموقع و Robots والذكاء الاصطناعي</strong></li>
+        <li>قسم <strong>الزواحف</strong> يعرض كل زاحف وهل هو مسموح، ومتى زار الموقع آخر مرة</li>
+        <li>قسم <strong>Robots</strong> و<strong>LLMs</strong> لتحرير الملفين ومعاينتهما</li>
+      </ol>
+      <p style="margin-top:2mm"><strong>ومن المتصفح:</strong> افتح
+        <span class="path">hayaihealthcare.com/llms.txt</span> و
+        <span class="path">hayaihealthcare.com/robots.txt</span> — يجب أن يظهر النص الذي حرّرته،
+        لا صفحة ويب.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="req">
+  <header><div class="num">٣</div><h3>البيانات المنظّمة (Schema.org)</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>وصف كل صفحة بلغة تفهمها محركات البحث: من نحن، ما نوع هذه الصفحة، أين موقعها في الموقع،
+       وما الذي تعرضه — لتظهر النتائج بشكل غني وتستشهد بها المساعدات الذكية.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>كتلة بيانات واحدة متماسكة لكل صفحة — لا تكرار ولا تعارض.</li>
+      <li>الرئيسية: <span class="path">MedicalOrganization</span> +
+          <span class="path">WebSite</span> + <span class="path">BreadcrumbList</span>.</li>
+      <li>الأسئلة الشائعة وصفحة التغطية: <span class="path">FAQPage</span>.</li>
+      <li>القوائم (الأطباء، المنتجات، التخصصات): <span class="path">CollectionPage</span>
+          بداخلها قائمة مرقّمة بالنتائج، والترقيم متصل عبر الصفحات.</li>
+      <li>ملف الطبيب: <span class="path">Physician</span> + مسار تنقّل كامل.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — بأداة جوجل الرسمية</div>
+      <ol>
+        <li>افتح <span class="path">search.google.com/test/rich-results</span></li>
+        <li>الصق رابط أي صفحة، مثل <span class="path">hayaihealthcare.com/ar/الأسئلة-الشائعة</span></li>
+        <li>اضغط <strong>اختبار الرابط</strong></li>
+      </ol>
+      <p style="margin-top:2mm"><strong>النتيجة الصحيحة:</strong> تظهر الأنواع المكتشفة
+        بدون أخطاء. جرّب صفحة قائمة وصفحة طبيب لترى اختلاف الأنواع.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="req">
+  <header><div class="num">٤</div><h3>بنية المحتوى والإجابة المباشرة</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <ul>
+      <li>عنوان رئيسي واحد لكل صفحة، وتسلسل عناوين بلا قفزات.</li>
+      <li>فقرة إجابة مباشرة من ٤٠ إلى ٦٠ كلمة، مفهومة بمفردها خارج سياق الصفحة —
+          هذه هي الفقرة التي تقتبسها المساعدات الذكية.</li>
+      <li>الجداول جداول حقيقية، لا صور ولا تنسيق بصري.</li>
+    </ul>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>عنوان رئيسي واحد مضمون على كل قالب، وقوائم التخصصات تحمل عنوانها الخاص
+          ("أطباء العناية المركزة") لا عنوان القسم العام.</li>
+      <li>الإجابة المباشرة حقل مستقل في المحرر، وعدد كلماته يُفحص آليًا.</li>
+      <li>جداول الأسعار والمقارنة جداول فعلية — نصّها قابل للقراءة والنسخ والقياس.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — من لوحة التحكم، لكل صفحة</div>
+      <ol>
+        <li>افتح <strong>الموقع ← الصفحات</strong> واختر أي صفحة</li>
+        <li>افتح تبويب <strong>قائمة فحص SEO / GEO</strong></li>
+        <li>اقرأ النتائج: <em>عنوان H1 واحد</em>، <em>ترتيب العناوين</em>،
+            <em>الإجابة المباشرة</em>، <em>طول عنوان SEO</em>، <em>الوصف التعريفي</em></li>
+      </ol>
+      <p style="margin-top:2mm">القائمة تُقيّم <strong>نسخة العمل</strong> — احفظ ثم اضغط
+        <em>تحديث</em> لرؤية النتيجة بعد التعديل. وكل عنصر يظهر إما ناجحًا أو تحذيرًا أو خطأ،
+        فلا تحتاج قراءة الكود.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="req">
+  <header><div class="num">٥</div><h3>الروابط والفلاتر والمحتوى الضعيف وخريطة الموقع</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <ul>
+      <li>روابط الفلاتر والبحث لا تُفهرَس، وتشير إلى الرابط النظيف.</li>
+      <li>الصفحات ضعيفة المحتوى لا تُفهرَس حتى تمتلئ.</li>
+      <li>خريطة الموقع تعكس الواقع — لا روابط محظورة بداخلها ولا صفحات مفهرسة خارجها.</li>
+    </ul>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>قاعدة واحدة تحكم الإشارتين: القائمة التي بها نتائج قابلة للفهرسة وموجودة في الخريطة،
+          والفارغة محجوبة وخارجها. لا يمكن أن تتعارض الإشارتان.</li>
+      <li>ملفات الأطباء ضعيفة المحتوى محجوبة عن الفهرسة وخارج الخريطة — تظهر للزائر وتُستبعد من البحث.</li>
+      <li>تخصص غير موجود يُرجع <span class="path">404</span> حقيقيًا بدل صفحة فارغة.</li>
+      <li>رابط التخصص هو الرابط الأساسي، حتى لو وصل الزائر عبر فلتر.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — فاحص الروابط المدمج</div>
+      <ol>
+        <li>افتح <strong>الموقع ← خريطة الموقع و Robots والذكاء الاصطناعي</strong></li>
+        <li>في <strong>فاحص الروابط</strong>، الصق أي رابط</li>
+        <li>يظهر لك: الرابط الأساسي، وتوجيه robots، وهل الصفحة قابلة للفهرسة</li>
+      </ol>
+      <p style="margin-top:2mm"><strong>جرّب هذه الأمثلة لترى الفرق:</strong></p>
+      <ul style="margin-top:1mm">
+        <li><span class="path">/ar/doctors</span> ← قابلة للفهرسة</li>
+        <li><span class="path">/ar/search?q=قلب</span> ← غير قابلة للفهرسة، والأساسي بلا باراميترات</li>
+        <li><span class="path">/ar/doctors/no-such-specialty</span> ← ‎404</li>
+      </ul>
+      <p style="margin-top:2mm"><strong>وخريطة الموقع:</strong>
+        <span class="path">hayaihealthcare.com/sitemap_index.xml</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="req">
+  <header><div class="num">٦</div><h3>تعدد اللغات (العربية والإنجليزية)</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>كل صفحة تعلن عن نسختها في اللغة الأخرى، والإعلان متبادل في الاتجاهين، ولغة الصفحة
+       واتجاه الكتابة صحيحان في مصدر الصفحة لا بالتنسيق فقط.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>روابط <span class="path">hreflang</span> متبادلة بين العربية والإنجليزية،
+          مع <span class="path">x-default</span>.</li>
+      <li>الصفحة العربية تعلن <span class="path">lang="ar"</span> و
+          <span class="path">dir="rtl"</span> في أول سطر من المصدر.</li>
+      <li>الروابط العربية بكلمات عربية مقروءة، لا أرقام ولا رموز.</li>
+      <li>زر تبديل اللغة يغيّر الصفحة فورًا دون إعادة تحميل يدوية.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق</div>
+      <ol>
+        <li><strong>من لوحة التحكم:</strong> في <em>قائمة فحص SEO / GEO</em> لأي صفحة،
+            انظر إلى بند <strong>بدائل اللغات (hreflang)</strong></li>
+        <li><strong>ومن المتصفح:</strong> افتح صفحة بالعربية، واضغط زر اللغة —
+            يجب أن ينتقل للنسخة الإنجليزية <em>لنفس الصفحة</em>، لا للرئيسية</li>
+        <li>ثم اضغط الزر مجددًا للعودة — هذا هو اختبار التبادل</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="req">
+  <header><div class="num">٧</div><h3>الصور</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>نص بديل لكل صورة، وأبعاد معلومة مسبقًا حتى لا تقفز الصفحة أثناء التحميل،
+       ومقاسات متعددة حتى لا يُحمّل الهاتف صورة بحجم الشاشة الكبيرة.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>كل صورة تُرفع تُولَّد منها مقاسات متعددة تلقائيًا، ويختار المتصفح الأنسب.</li>
+      <li>النص البديل يُحفَظ بالعربية والإنجليزية، وكتابة واحد منهما تملأ الآخر تلقائيًا.</li>
+      <li>أبعاد الصورة محجوزة قبل التحميل — لا قفز في التخطيط.</li>
+      <li>صور البطاقات تأخذ نصًا بديلًا من اسم العنصر تلقائيًا.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — من لوحة التحكم</div>
+      <ol>
+        <li>افتح <strong>الموقع ← الوسائط</strong></li>
+        <li>اختر أي صورة — يظهر حقل <strong>النص البديل</strong> بالعربية والإنجليزية</li>
+        <li>وفي <em>قائمة فحص SEO / GEO</em> لأي صفحة، انظر بند
+            <strong>النص البديل للصور</strong> — يخبرك بأي صورة ينقصها نص</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="req">
+  <header><div class="num">٨</div><h3>التقييمات والمراجعات</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>لا تقييمات مُصطنعة أو مزروعة في البيانات المنظّمة. التقييم إشارة ثقة، وإظهاره
+       بلا رصيد حقيقي يعرّض الموقع لعقوبة من محركات البحث.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li>التقييمات تُحسب من حجوزات مكتملة فقط — لا إدخال يدوي.</li>
+      <li>عتبة قابلة للضبط: لا يظهر تقييم في البيانات المنظّمة قبل بلوغ عدد معيّن من التقييمات
+          الحقيقية (الافتراضي ٥). دون العتبة يُحذف التقييم بالكامل، ولا يُرسل أصفارًا.</li>
+      <li>لا تُنشر مراجعات مكتوبة في البيانات المنظّمة حتى توجد مراجعات حقيقية.</li>
+      <li>بوابة النشر الآلية ترفض أي تقييم بلا مراجعات خلفه.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق — من لوحة التحكم</div>
+      <ol>
+        <li>افتح <strong>الموقع ← الإعدادات</strong>، ثم مجموعة <strong>SEO</strong></li>
+        <li>ابحث عن <strong>الحد الأدنى من التقييمات قبل إظهار التقييم</strong></li>
+        <li>القيمة رقم بين ١ و ١٠٠٠، والوصف بجوارها يشرح أثرها</li>
+      </ol>
+      <p style="margin-top:2mm">النجمة التي يراها الزائر على ملف الطبيب شيء، وما يُرسل لمحركات
+        البحث شيء آخر — هذه العتبة تحكم الثاني فقط.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section class="req">
+  <header><div class="num">٩</div><h3>بوابات النشر وسرعة الموقع</h3><span class="badge done">مكتمل</span></header>
+  <div class="body">
+    <div class="lbl">المطلوب</div>
+    <p>ألا تعتمد المواصفات على المراجعة اليدوية. أي تحديث يكسر بندًا يجب أن يُوقَف قبل النشر،
+       مع حدود قصوى لزمن التحميل واستقرار الصفحة.</p>
+
+    <div class="lbl">المنفَّذ</div>
+    <ul>
+      <li><strong>بوابة فحص آلية</strong> تفحص خمسة عشر قالبًا من الموقع مع كل تحديث،
+          وتوقف النشر عند أي مخالفة. ما تفحصه: وصول النص، أنواع البيانات المنظّمة،
+          العنوان الواحد وتسلسل العناوين، طول الإجابة المباشرة، الروابط الأساسية و hreflang،
+          حجب الفلاتر، الصور، التقييمات، وتطابق خريطة الموقع مع توجيه الفهرسة.</li>
+      <li><strong>ميزانية سرعة</strong> مربوطة بالنشر: أكبر عنصر مرئي خلال ٢٫٥ ثانية،
+          واستقرار التخطيط تحت ٠٫١، وزمن استجابة الخادم تحت ٠٫٦ ثانية — بقياس على شبكة هاتف محمول.</li>
+    </ul>
+
+    <div class="how">
+      <div class="lbl">التحقق</div>
+      <ol>
+        <li>كل تحديث يُنتج تقريرًا آليًا بنتيجة الخمسة عشر قالبًا — يمكن إرفاقه عند التسليم</li>
+        <li><strong>وبشكل مستقل:</strong> افتح <span class="path">pagespeed.web.dev</span>،
+            الصق رابط الموقع، واختر <strong>الهاتف</strong></li>
+      </ol>
+      <p style="margin-top:2mm">قياس السرعة النهائي يُجرى على النطاق بعد النشر، لأن الشبكة
+        والخادم جزء من النتيجة ولا يمكن محاكاتهما محليًا بصدق.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= APPENDIX ================= -->
+<h2 class="part">ملحق — ملاحظتان على المواصفات</h2>
+
+<section class="req">
+  <header><div class="num">أ</div><h3>خاصية <span class="path">acceptsInsurance</span> غير موجودة في Schema.org</h3><span class="badge pending">للعلم</span></header>
+  <div class="body">
+    <p>تذكر المواصفات خاصية باسم <span class="path">acceptsInsurance</span> ضمن بيانات المنشأة
+       الطبية. هذه الخاصية <strong>غير معرّفة في Schema.org</strong>، وإضافتها لا تُقرأ من
+       محركات البحث وقد تُعدّ بيانات غير صالحة.</p>
+    <p style="margin-top:2mm">الخاصية المعتمدة لنفس الغرض هي
+       <span class="path">healthPlanNetworkId</span>. وقد نُفِّذ التعامل مع التغطية التأمينية
+       بالطريقة المعتمدة، ونعرض هذه الملاحظة للتوثيق.</p>
+  </div>
+</section>
+
+<section class="req">
+  <header><div class="num">ب</div><h3>الخطوة المتبقية: نقل النطاق</h3><span class="badge pending">قيد التنفيذ</span></header>
+  <div class="body">
+    <p>العرض من الخادم يحتاج بيئة تشغيل لا توفّرها الاستضافة الحالية. الخادم الجديد جاهز
+       ومُختبَر، والخطوة المتبقية هي توجيه النطاق إليه — وهي خطوة واحدة قابلة للتراجع خلال دقائق.</p>
+    <p style="margin-top:2mm">إلى أن تتم، يعمل الموقع بالشكل القديم: الزائر يراه طبيعيًا،
+       لكن محركات البحث وزواحف الذكاء الاصطناعي لا تصل إلى محتواه. كل ما في هذا المستند
+       يصبح قابلًا للتحقق من النطاق فور إتمامها.</p>
+  </div>
+</section>
+
+<footer class="end">
+  HAYAI — تقرير تنفيذ متطلبات SEO و GEO · ٤ أكتوبر ٢٠٢٦
+</footer>
+
+</body>
+</html>
