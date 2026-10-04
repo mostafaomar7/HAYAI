@@ -94,3 +94,17 @@
 @media (max-width: 560px) {
   .schema-grid { grid-template-columns: 1fr; }
 }
+
+/* category ordering + app-visibility */
+.icon-btn {
+  width: 24px; height: 24px; border-radius: 6px; border: 1px solid #E5E7EB;
+  background: #fff; color: #374151; cursor: pointer; font-size: 12px; line-height: 1;
+}
+.icon-btn:hover { background: #F9FAFB; }
+.order-value { display: inline-block; min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.warn {
+  display: block; margin-top: 6px; font-size: 12px; color: #92400E;
+  background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 6px 9px;
+}
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; }
+.switch input { width: 16px; height: 16px; accent-color: #2563EB; }

@@ -1,0 +1,119 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <p class="hint-block">{{ loadError()! | t }}</p>
+  } @else if (report(); as r) {
+
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area">
+          <h2>{{ 'reports.report' | t }} #{{ r.id }}</h2>
+          <span class="target-tag">{{ ('reports.target.' + r.target_type) | t }}</span>
+          <span class="pill" [attr.data-status]="r.status">{{ r.status_label || (('reports.status.' + r.status) | t) }}</span>
+        </div>
+        <span class="created">{{ r.created_at | date:'medium' }}</span>
+      </div>
+
+      <div class="panel">
+        <div class="facts">
+          <div class="fact">
+            <span class="fact-label">{{ 'reports.reason' | t }}</span>
+            <span class="fact-value">{{ r.reason_label || (('reports.reason.' + r.reason) | t) }}</span>
+          </div>
+          <div class="fact">
+            <span class="fact-label">{{ 'reports.reporter' | t }}</span>
+            <span class="fact-value">
+              <bdi>{{ r.reporter?.name || '—' }}</bdi>
+              @if (r.reporter_is_subject) {
+                <span class="subject-badge">{{ 'reports.reported_by_subject' | t }}</span>
+              }
+            </span>
+          </div>
+        </div>
+
+        @if (r.reporter_is_subject) {
+          <!-- Allowed on purpose, and exactly the case to weigh carefully. -->
+          <p class="warn">{{ 'reports.subject_warning' | t }}</p>
+        }
+
+        @if (r.note) {
+          <p class="note-label">{{ 'reports.reporter_note' | t }}</p>
+          <p class="note-body">{{ r.note }}</p>
+        }
+      </div>
+    </div>
+
+    @if (r.target_snapshot) {
+      <div class="card">
+        <div class="card-head"><div class="title-area"><h2>{{ 'reports.snapshot' | t }}</h2></div></div>
+        <div class="panel">
+          <!-- Once a review is removed this copy is all that is left of it. -->
+          <p class="snapshot-hint">{{ 'reports.snapshot_hint' | t }}</p>
+
+          @if (isRating()) {
+            <div class="review">
+              <span class="stars">{{ stars() }}</span>
+              <span class="reviewer"><bdi>{{ r.target_snapshot!.reviewer_name || '—' }}</bdi></span>
+              @if (r.target_snapshot!.created_at) {
+                <span class="review-date">{{ r.target_snapshot!.created_at | date:'mediumDate' }}</span>
+              }
+            </div>
+            <p class="review-comment"><bdi>{{ r.target_snapshot!.comment || '—' }}</bdi></p>
+          }
+
+          @if (extraSnapshot().length) {
+            <div class="facts">
+              @for (f of extraSnapshot(); track f.key) {
+                <div class="fact">
+                  <span class="fact-label"><bdi dir="ltr">{{ f.key }}</bdi></span>
+                  <span class="fact-value"><bdi>{{ f.value }}</bdi></span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="card">
+      <div class="card-head"><div class="title-area"><h2>{{ 'reports.decision' | t }}</h2></div></div>
+      <div class="panel">
+        <div class="form-group">
+          <label>{{ 'reports.admin_note' | t }}</label>
+          <textarea rows="3" maxlength="2000" [value]="adminNote()"
+                    (input)="adminNote.set($any($event.target).value)"
+                    [placeholder]="'reports.admin_note_placeholder' | t"></textarea>
+        </div>
+
+        @if (isDecided()) {
+          <p class="decided">{{ 'reports.already_decided' | t }}</p>
+        }
+
+        <div class="actions">
+          <!-- Named by what they do, not by the status they write. -->
+          <button class="btn-danger" [disabled]="busy()" (click)="decide('actioned')">
+            {{ (isRating() ? 'reports.remove_review' : 'reports.mark_actioned') | t }}
+          </button>
+          <button class="btn-secondary" [disabled]="busy()" (click)="decide('dismissed')">
+            {{ (isRating() ? 'reports.keep_review' : 'reports.dismiss') | t }}
+          </button>
+          <button class="btn-secondary" [disabled]="busy()" (click)="decide('reviewing')">
+            {{ 'reports.mark_reviewing' | t }}
+          </button>
+        </div>
+
+        @if (isRating()) {
+          <p class="hint">{{ 'reports.remove_hint' | t }}</p>
+        }
+      </div>
+    </div>
+  }
+</div>

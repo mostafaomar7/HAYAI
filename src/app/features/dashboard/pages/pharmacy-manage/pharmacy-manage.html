@@ -1,0 +1,336 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'pharm.back_to_pharmacies' | t }}
+  </button>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="tab() === 'products'" (click)="setTab('products')">
+      {{ 'pharm.products' | t }} <span class="tab-count">{{ total() }}</span>
+    </button>
+    <button class="tab" [class.active]="tab() === 'branches'" (click)="setTab('branches')">
+      {{ 'pharm.branches' | t }} <span class="tab-count">{{ branches().length }}</span>
+    </button>
+    <button class="tab" [class.active]="tab() === 'upload'" (click)="setTab('upload')">
+      {{ 'pharm.bulk_upload' | t }}
+    </button>
+  </div>
+
+  <!-- ============================ products ============================ -->
+  @if (tab() === 'products') {
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area"><h2>{{ 'pharm.products' | t }}</h2></div>
+        <div class="head-actions">
+          <div class="search-box">
+            <input type="text" [placeholder]="'pharm.search_products' | t"
+                   (input)="onSearch($any($event.target).value)">
+          </div>
+          <button class="btn-primary" (click)="addProduct()">{{ 'pharm.add_product' | t }}</button>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'common.name' | t }}</th>
+              <th>{{ 'pharm.price' | t }}</th>
+              <th>{{ 'pharm.category' | t }}</th>
+              <th>{{ 'pharm.stock' | t }}</th>
+              <th>{{ 'pharm.rx' | t }}</th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading()) {
+              <tr><td class="table-hint" colspan="6">{{ 'common.loading' | t }}</td></tr>
+            } @else if (loadError()) {
+              <tr><td class="table-hint" colspan="6">{{ loadError()! | t }}</td></tr>
+            } @else if (!products().length) {
+              <tr><td class="table-hint" colspan="6">{{ 'pharm.no_products' | t }}</td></tr>
+            } @else {
+              @for (row of products(); track row.id) {
+                <tr>
+                  <td class="name-cell">
+                    <bdi>{{ row.name }}</bdi>
+                    @if (row.barcode) { <span class="sub"><bdi dir="ltr">{{ row.barcode }}</bdi></span> }
+                  </td>
+                  <td class="num">{{ row.price }} {{ row.currency }}</td>
+                  <td><bdi>{{ row.category || '—' }}</bdi></td>
+                  <td>
+                    <span class="pill" [class.ok]="row.in_stock">
+                      {{ (row.in_stock ? 'pharm.in_stock' : 'pharm.out_of_stock') | t }}
+                    </span>
+                    @if (row.quantity != null) { <span class="sub num">{{ row.quantity }}</span> }
+                  </td>
+                  <td>{{ row.prescription_required ? '✓' : '—' }}</td>
+                  <td class="actions-col">
+                    <button class="link-btn" (click)="editProduct(row)">{{ 'common.edit' | t }}</button>
+                    <button class="link-btn danger" (click)="removeProduct(row)">{{ 'common.delete' | t }}</button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+    </div>
+  }
+
+  <!-- ============================ branches ============================ -->
+  @if (tab() === 'branches') {
+    <div class="card">
+      <div class="card-head">
+        <div class="title-area"><h2>{{ 'pharm.branches' | t }}</h2></div>
+        <button class="btn-primary" (click)="addBranch()">{{ 'pharm.add_branch' | t }}</button>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ 'common.name' | t }}</th>
+              <th>{{ 'pharm.city' | t }}</th>
+              <th>{{ 'pharm.area' | t }}</th>
+              <th>{{ 'pharm.address' | t }}</th>
+              <th>{{ 'pharm.hotline' | t }}</th>
+              <th class="actions-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (!branchesLoaded()) {
+              <tr><td class="table-hint" colspan="6">{{ 'common.loading' | t }}</td></tr>
+            } @else if (!branches().length) {
+              <tr><td class="table-hint" colspan="6">{{ 'pharm.no_branches' | t }}</td></tr>
+            } @else {
+              @for (row of branches(); track row.id) {
+                <tr>
+                  <td class="name-cell"><bdi>{{ row.name }}</bdi></td>
+                  <td><bdi>{{ row.city || '—' }}</bdi></td>
+                  <td><bdi>{{ row.area || '—' }}</bdi></td>
+                  <td><bdi>{{ row.address || '—' }}</bdi></td>
+                  <td><bdi dir="ltr">{{ row.hotline || '—' }}</bdi></td>
+                  <td class="actions-col">
+                    <button class="link-btn" (click)="editBranch(row)">{{ 'common.edit' | t }}</button>
+                    <button class="link-btn danger" (click)="removeBranch(row)">{{ 'common.delete' | t }}</button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- =========================== bulk upload =========================== -->
+  @if (tab() === 'upload') {
+    <div class="card">
+      <div class="card-head"><div class="title-area"><h2>{{ 'pharm.bulk_upload' | t }}</h2></div></div>
+      <div class="panel">
+        <!-- Preview first, always: a pharmacy's export names its columns however
+             it likes, and a cost column read as a selling price would go public. -->
+        <p class="hint">{{ 'pharm.upload_hint' | t }}</p>
+
+        <div class="upload-row">
+          <label class="file-btn">
+            {{ file() ? ('pharm.change_file' | t) : ('pharm.choose_file' | t) }}
+            <input type="file" accept=".csv,.txt,.tsv,.xlsx,.xls" (change)="onFile($any($event.target))" hidden>
+          </label>
+          @if (file()) { <span class="file-name"><bdi>{{ file()!.name }}</bdi></span> }
+
+          @if (branches().length) {
+            <select [value]="uploadBranch()" (change)="uploadBranch.set($any($event.target).value)">
+              <option value="">{{ 'pharm.no_branch' | t }}</option>
+              @for (b of branches(); track b.id) {
+                <option [value]="b.id" [selected]="uploadBranch() === (b.id + '')">{{ b.name }}</option>
+              }
+            </select>
+          }
+
+          <button class="btn-primary" [disabled]="!file() || uploading()" (click)="runPreview()">
+            {{ (uploading() ? 'common.loading' : 'pharm.preview') | t }}
+          </button>
+          @if (file()) {
+            <button class="link-btn" (click)="resetUpload()">{{ 'common.reset' | t }}</button>
+          }
+        </div>
+
+        @if (uploadError()) { <p class="form-error">{{ uploadError() }}</p> }
+
+        @if (preview(); as p) {
+          <div class="preview">
+            <div class="preview-head">
+              <span class="stat ok">{{ 'pharm.rows_ready' | t : { count: p.valid_rows } }}</span>
+              <span class="stat">{{ 'pharm.rows_total' | t : { count: p.total_rows } }}</span>
+              @if (p.invalid_rows) {
+                <span class="stat warn">{{ 'pharm.rows_skipped' | t : { count: p.invalid_rows } }}</span>
+              }
+              <span class="stat">{{ 'pharm.header_row' | t : { row: p.header_row } }}</span>
+            </div>
+
+            <h3>{{ 'pharm.detected' | t }}</h3>
+            <div class="map-grid">
+              @for (pair of detectedPairs(p); track pair.field) {
+                <div class="map-row">
+                  <span class="field"><bdi dir="ltr">{{ pair.field }}</bdi></span>
+                  <span class="arrow">←</span>
+                  <span class="header"><bdi>{{ pair.header }}</bdi></span>
+                  <!-- Matched loosely, so it is the one to eyeball. -->
+                  @if (isFuzzy(p, pair.field)) { <span class="fuzzy">{{ 'pharm.fuzzy' | t }}</span> }
+                </div>
+              }
+            </div>
+
+            @if (ignoredPairs(p).length) {
+              <h3>{{ 'pharm.ignored' | t }}</h3>
+              <p class="hint">{{ 'pharm.ignored_hint' | t }}</p>
+              <div class="map-grid">
+                @for (pair of ignoredPairs(p); track pair.field) {
+                  <div class="map-row muted">
+                    <span class="field"><bdi dir="ltr">{{ pair.field }}</bdi></span>
+                    <span class="arrow">←</span>
+                    <span class="header"><bdi>{{ pair.header }}</bdi></span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (p.missing_required?.length) {
+              <p class="form-error">{{ 'pharm.missing_required' | t : { fields: p.missing_required.join(', ') } }}</p>
+            }
+
+            @if (p.issues?.length) {
+              <h3>{{ 'pharm.issues' | t }}</h3>
+              <ul class="issues">
+                @for (i of p.issues; track i.row) {
+                  <li [class.skipped]="i.skipped">
+                    <span class="row-no">{{ 'pharm.row' | t : { row: i.row } }}</span>
+                    <span>{{ i.reasons.join(' · ') }}</span>
+                    <span class="tag">{{ (i.skipped ? 'pharm.row_skipped' : 'pharm.row_imported') | t }}</span>
+                  </li>
+                }
+              </ul>
+            }
+
+            <div class="confirm-row">
+              <select [value]="mode()" (change)="mode.set($any($event.target).value)">
+                <option value="upsert">{{ 'pharm.mode_upsert' | t }}</option>
+                <option value="append">{{ 'pharm.mode_append' | t }}</option>
+                <option value="replace">{{ 'pharm.mode_replace' | t }}</option>
+              </select>
+              <button class="btn-primary" [disabled]="uploading() || !p.ready" (click)="confirmUpload()">
+                {{ (uploading() ? 'common.saving' : 'pharm.confirm_upload') | t }}
+              </button>
+              <span class="hint">{{ ('pharm.mode_hint.' + mode()) | t }}</span>
+            </div>
+          </div>
+        }
+
+        @if (result(); as r) {
+          <div class="result">
+            <h3>{{ 'pharm.upload_done' | t }}</h3>
+            <p>{{ 'pharm.result_line' | t : { created: r.created, updated: r.updated, skipped: r.skipped } }}</p>
+            @if (r.switched_off) {
+              <p class="hint">{{ 'pharm.switched_off' | t : { count: r.switched_off } }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ============================= drawers ============================= -->
+  @if (productDraft(); as d) {
+    <div class="drawer-backdrop" (click)="productDraft.set(null)"></div>
+    <aside class="drawer">
+      <header><h3>{{ (d.id ? 'pharm.edit_product' : 'pharm.add_product') | t }}</h3></header>
+      <div class="drawer-body">
+        <div class="form-group">
+          <label>{{ 'common.name' | t }} <span class="req">*</span></label>
+          <input type="text" [value]="d.name" (input)="setProduct('name', $any($event.target).value)">
+          @if (errors()['name']) { <span class="field-error">{{ errors()['name'] | t }}</span> }
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>{{ 'pharm.price' | t }} <span class="req">*</span></label>
+            <input type="number" min="0" step="0.01" [value]="d.price" (input)="setProduct('price', $any($event.target).value)">
+            @if (errors()['price']) { <span class="field-error">{{ errors()['price'] | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'pharm.original_price' | t }}</label>
+            <input type="number" min="0" step="0.01" [value]="d.original_price" (input)="setProduct('original_price', $any($event.target).value)">
+            <span class="hint">{{ 'pharm.original_price_hint' | t }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ 'pharm.category' | t }}</label>
+          <input type="text" [value]="d.category" (input)="setProduct('category', $any($event.target).value)">
+        </div>
+        <div class="form-group">
+          <label>{{ 'common.description' | t }}</label>
+          <textarea rows="3" [value]="d.description" (input)="setProduct('description', $any($event.target).value)"></textarea>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [checked]="d.in_stock" (change)="setProduct('in_stock', $any($event.target).checked)">
+          <span>{{ 'pharm.in_stock' | t }}</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" [checked]="d.prescription_required" (change)="setProduct('prescription_required', $any($event.target).checked)">
+          <span>{{ 'pharm.rx_required' | t }}</span>
+        </label>
+      </div>
+      <footer>
+        <button class="btn-secondary" (click)="productDraft.set(null)">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="saveProduct()">
+          {{ (saving() ? 'common.saving' : 'common.save') | t }}
+        </button>
+      </footer>
+    </aside>
+  }
+
+  @if (branchDraft(); as d) {
+    <div class="drawer-backdrop" (click)="branchDraft.set(null)"></div>
+    <aside class="drawer">
+      <header><h3>{{ (d.id ? 'pharm.edit_branch' : 'pharm.add_branch') | t }}</h3></header>
+      <div class="drawer-body">
+        <div class="form-group">
+          <label>{{ 'common.name' | t }} <span class="req">*</span></label>
+          <input type="text" [value]="d.name" (input)="setBranch('name', $any($event.target).value)">
+          @if (errors()['name']) { <span class="field-error">{{ errors()['name'] | t }}</span> }
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>{{ 'pharm.city' | t }} <span class="req">*</span></label>
+            <input type="text" [value]="d.city" (input)="setBranch('city', $any($event.target).value)">
+            @if (errors()['city']) { <span class="field-error">{{ errors()['city'] | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'pharm.area' | t }}</label>
+            <input type="text" [value]="d.area" (input)="setBranch('area', $any($event.target).value)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ 'pharm.address' | t }} <span class="req">*</span></label>
+          <input type="text" [value]="d.address" (input)="setBranch('address', $any($event.target).value)">
+          @if (errors()['address']) { <span class="field-error">{{ errors()['address'] | t }}</span> }
+        </div>
+        <div class="form-group">
+          <label>{{ 'pharm.hotline' | t }}</label>
+          <input type="text" dir="ltr" [value]="d.hotline" (input)="setBranch('hotline', $any($event.target).value)">
+        </div>
+      </div>
+      <footer>
+        <button class="btn-secondary" (click)="branchDraft.set(null)">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="saveBranch()">
+          {{ (saving() ? 'common.saving' : 'common.save') | t }}
+        </button>
+      </footer>
+    </aside>
+  }
+</div>

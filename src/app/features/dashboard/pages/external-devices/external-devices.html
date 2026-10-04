@@ -40,16 +40,6 @@
                 </select>
               </div>
             </div>
-            <div class="form-group">
-              <label>{{ 'common.source' | t }}</label>
-              <div class="custom-select">
-                <select [value]="sourceFilter()" (change)="sourceFilter.set($any($event.target).value)">
-                  <option value="">{{ 'common.any' | t }}</option>
-                  <option value="internal">Internal</option>
-                  <option value="external">External</option>
-                </select>
-              </div>
-            </div>
           </div>
           <div class="popup-footer">
             <button class="reset-btn" (click)="resetFilters()">{{ 'common.reset' | t }}</button>

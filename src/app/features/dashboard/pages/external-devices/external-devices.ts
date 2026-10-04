@@ -22,12 +22,11 @@ export class ExternalDevices {
   search = signal('');
   statusFilter = signal('');
   /**
-   * This section is the internal catalogue — every device in it is sold by a
-   * medical-device account on the platform. The externally imported ones are
-   * managed under Group Orders. It opens on `internal` to match its name; the
-   * filter is still there to widen it.
+   * This section is the internal catalogue, so it only ever asks for internal
+   * devices. There is no source filter to offer: the external, imported devices
+   * live under External Medical Devices (the group-order catalogue).
    */
-  sourceFilter = signal('internal');
+  private readonly source = 'internal';
   devices = signal<ExternalDevice[]>([]);
   total = signal(0);
 
@@ -35,7 +34,7 @@ export class ExternalDevices {
   page = signal(1);
 
   activeFilterCount = computed(() =>
-    (this.statusFilter() ? 1 : 0) + (this.sourceFilter() ? 1 : 0)
+    this.statusFilter() ? 1 : 0
   );
 
   constructor() { this.load(); }
@@ -47,7 +46,7 @@ export class ExternalDevices {
       per_page: this.perPage,
       search: this.search() || undefined,
       status: this.statusFilter() || undefined,
-      source: this.sourceFilter() || undefined
+      source: this.source
     }).subscribe({
       next: r => {
         // Deleting the last row of the last page leaves us past the end.
@@ -96,7 +95,6 @@ export class ExternalDevices {
   applyFilters() { this.showFilter = false; this.reload(); }
   resetFilters() {
     this.statusFilter.set('');
-    this.sourceFilter.set('');
     this.showFilter = false;
     this.reload();
   }

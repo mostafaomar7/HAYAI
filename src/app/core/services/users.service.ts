@@ -47,9 +47,25 @@ export interface PatientItem extends BaseUserListItem {
   plan_status?: PlanStatus | null;
 }
 
+/** What an admin recorded after confirming the tourist lives abroad. */
+export interface TouristVerification {
+  verified: boolean;
+  verified_at: string | null;
+  /** Admin user id. */
+  verified_by: number | null;
+  note: string | null;
+}
+
 export interface TouristItem extends BaseUserListItem {
   status: AccountStatus;
   gender: 'male' | 'female' | null;
+  /** Dialling code, kept apart from the number so wa.me can join them. */
+  country_code?: string | null;
+  nationality?: string | null;
+  nationality_code?: string | null;
+  residence?: string | null;
+  residence_country?: string | null;
+  verification?: TouristVerification;
 }
 
 /**
@@ -121,6 +137,8 @@ export interface UserListQuery {
   subspecialty_id?: number;
   // provider
   plan_id?: number;
+  /** Tourists only: `'false'` is the verification queue. Anything else is a 422. */
+  verified?: 'true' | 'false';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -129,6 +147,23 @@ export class UsersService {
 
   list<T = ProviderItem>(resource: UserResource, query: UserListQuery = {}): Observable<PagedResult<T>> {
     return this.api.getPaged<T>(`/admin/${resource}`, query);
+  }
+
+  /**
+   * Records that an admin confirmed the tourist lives abroad. Both fields are
+   * optional; Egypt is refused, because someone living in Egypt needs a patient
+   * account rather than a tourist one. Returns the updated row.
+   */
+  verifyTourist(
+    id: number,
+    body: { residence_country?: string; note?: string } = {}
+  ): Observable<TouristItem> {
+    return this.api.post<TouristItem>(`/admin/tourists/${id}/verify`, body);
+  }
+
+  /** Withdraws a verification; the tourist returns to the queue. */
+  unverifyTourist(id: number, body: { note?: string } = {}): Observable<TouristItem> {
+    return this.api.post<TouristItem>(`/admin/tourists/${id}/unverify`, body);
   }
 
   get<T = ProviderItem>(resource: UserResource, id: number): Observable<T> {

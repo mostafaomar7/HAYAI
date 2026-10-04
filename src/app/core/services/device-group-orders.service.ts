@@ -71,6 +71,11 @@ export interface SpecField {
   placeholder?: string | null;
 }
 
+/**
+ * A category is customer-facing: the app shows `name_en`/`name_ar` in the user's
+ * language, lists the active ones as its filter in `sort_order`, and builds
+ * links from `slug`.
+ */
 export interface DeviceCategory {
   id: number;
   name: string;
@@ -79,7 +84,10 @@ export interface DeviceCategory {
   slug: string;
   spec_schema: SpecField[] | null;
   devices_count?: number;
+  /** False hides it from the app's category filter; devices keep the category. */
   is_active?: boolean;
+  /** Position of the app's filter list; lower comes first. */
+  sort_order?: number | null;
 }
 
 export interface DeviceMedia {

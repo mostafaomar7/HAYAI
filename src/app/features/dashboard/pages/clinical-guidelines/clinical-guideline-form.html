@@ -1,0 +1,180 @@
+<div class="page-container">
+  <button class="back-btn" (click)="cancel()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <p class="hint-block">{{ loadError()! | t }}</p>
+  } @else {
+    @let d = draft();
+
+    <div class="card">
+      <div class="card-head">
+        <h2>{{ (isEdit() ? 'guidelines.edit' : 'guidelines.add') | t }}</h2>
+        <label class="switch">
+          <input type="checkbox" [checked]="d.is_published" (change)="set('is_published', $any($event.target).checked)">
+          <span>{{ (d.is_published ? 'guidelines.published' : 'guidelines.draft') | t }}</span>
+        </label>
+      </div>
+      <p class="card-sub">{{ (d.is_published ? 'guidelines.published_hint' : 'guidelines.draft_hint') | t }}</p>
+
+      @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
+
+      <div class="panel">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>{{ 'guidelines.title_en' | t }}</label>
+            <input type="text" dir="ltr" [value]="d.title_en" (input)="set('title_en', $any($event.target).value)"
+                   placeholder="Hypertension Management">
+            @if (errors()['title_en']) { <span class="field-error">{{ errors()['title_en'] | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'guidelines.title_ar' | t }}</label>
+            <input type="text" dir="rtl" [value]="d.title_ar" (input)="set('title_ar', $any($event.target).value)"
+                   placeholder="علاج ارتفاع ضغط الدم">
+          </div>
+        </div>
+        <span class="hint">{{ 'guidelines.title_rule' | t }}</span>
+
+        <div class="grid-2 top-gap">
+          <div class="form-group">
+            <label>{{ 'guidelines.summary_en' | t }}</label>
+            <textarea dir="ltr" rows="3" [value]="d.summary_en" (input)="set('summary_en', $any($event.target).value)"></textarea>
+          </div>
+          <div class="form-group">
+            <label>{{ 'guidelines.summary_ar' | t }}</label>
+            <textarea dir="rtl" rows="3" [value]="d.summary_ar" (input)="set('summary_ar', $any($event.target).value)"></textarea>
+          </div>
+        </div>
+
+        <div class="grid-3 top-gap">
+          <div class="form-group">
+            <label>{{ 'guidelines.category' | t }}</label>
+            <select [value]="d.subspecialty_id" (change)="set('subspecialty_id', $any($event.target).value)">
+              <option value="">{{ 'guidelines.no_category' | t }}</option>
+              @for (s of subspecialties(); track s.id) {
+                <option [value]="s.id" [selected]="d.subspecialty_id === (s.id + '')">{{ subspecialtyLabel(s) }}</option>
+              }
+            </select>
+            @if (errors()['subspecialty_id']) { <span class="field-error">{{ errors()['subspecialty_id'] | t }}</span> }
+            <span class="hint">{{ 'guidelines.category_hint' | t }}</span>
+          </div>
+          <div class="form-group">
+            <label>{{ 'guidelines.last_reviewed' | t }}</label>
+            <input type="date" [value]="d.last_reviewed_at" (input)="set('last_reviewed_at', $any($event.target).value)">
+            <span class="hint">{{ 'guidelines.last_reviewed_hint' | t }}</span>
+          </div>
+          <div class="form-group">
+            <label>{{ 'guidelines.sort_order' | t }}</label>
+            <input type="number" min="0" step="1" [value]="d.sort_order" (input)="set('sort_order', $any($event.target).value)">
+            @if (errors()['sort_order']) { <span class="field-error">{{ errors()['sort_order'] | t }}</span> }
+            <span class="hint">{{ 'guidelines.sort_hint' | t }}</span>
+          </div>
+        </div>
+
+        <div class="form-group top-gap">
+          <label>{{ 'guidelines.pdf' | t }}</label>
+          <!-- A guideline may be a PDF and a title, with no sections at all. -->
+          <div class="pdf-row">
+            @if (pdfLabel(); as name) {
+              <span class="pdf-name"><bdi>{{ name }}</bdi></span>
+              @if (storedPdfUrl() && !pdfFile() && !clearPdf()) {
+                <a class="link-btn" [href]="storedPdfUrl()!" target="_blank" rel="noopener">{{ 'guidelines.pdf_open' | t }}</a>
+              }
+              <label class="file-btn">
+                {{ 'guidelines.pdf_replace' | t }}
+                <input type="file" accept="application/pdf" (change)="onPdfPicked($any($event.target))" hidden>
+              </label>
+              <button class="link-btn danger" (click)="removePdf()">{{ 'guidelines.pdf_remove' | t }}</button>
+            } @else {
+              <label class="file-btn">
+                {{ 'guidelines.pdf_choose' | t }}
+                <input type="file" accept="application/pdf" (change)="onPdfPicked($any($event.target))" hidden>
+              </label>
+            }
+          </div>
+          @if (errors()['pdf']) {
+            <span class="field-error">{{ errors()['pdf'] | t : { max: pdfMaxMb() } }}</span>
+          }
+          <span class="hint">{{ 'guidelines.pdf_hint' | t : { max: pdfMaxMb() } }}</span>
+        </div>
+
+        <div class="grid-2 top-gap">
+          <div class="form-group">
+            <label>{{ 'guidelines.source' | t }}</label>
+            <input type="text" dir="ltr" [value]="d.source" (input)="set('source', $any($event.target).value)"
+                   placeholder="ESC/ESH 2023">
+          </div>
+          <div class="form-group">
+            <label>{{ 'guidelines.source_url' | t }}</label>
+            <input type="url" dir="ltr" [value]="d.source_url" (input)="set('source_url', $any($event.target).value)"
+                   placeholder="https://">
+            @if (errors()['source_url']) { <span class="field-error">{{ errors()['source_url'] | t }}</span> }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ sections ============================ -->
+    <div class="card">
+      <div class="card-head">
+        <h2>{{ 'guidelines.sections' | t }} <span class="count">{{ d.sections.length }} / {{ maxSections }}</span></h2>
+        <button class="btn-secondary" [disabled]="d.sections.length >= maxSections" (click)="addSection()">
+          + {{ 'guidelines.add_section' | t }}
+        </button>
+      </div>
+      <p class="card-sub">{{ 'guidelines.sections_hint' | t }}</p>
+
+      @for (s of d.sections; track $index; let i = $index; let first = $first; let last = $last) {
+        <div class="section-block">
+          <div class="section-head">
+            <span class="section-no">{{ i + 1 }}</span>
+            <div class="section-tools">
+              <button class="icon-btn" [disabled]="first" (click)="moveSection(i, -1)" [title]="'guidelines.move_up' | t">↑</button>
+              <button class="icon-btn" [disabled]="last" (click)="moveSection(i, 1)" [title]="'guidelines.move_down' | t">↓</button>
+              <button class="link-danger" (click)="removeSection(i)">{{ 'guidelines.remove_section' | t }}</button>
+            </div>
+          </div>
+          @if (errors()['section_' + i]) { <p class="field-error">{{ errors()['section_' + i] | t }}</p> }
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label>{{ 'guidelines.section_title_en' | t }}</label>
+              <input type="text" dir="ltr" [value]="s.title_en" (input)="setSection(i, 'title_en', $any($event.target).value)"
+                     placeholder="Diagnosis Criteria">
+            </div>
+            <div class="form-group">
+              <label>{{ 'guidelines.section_title_ar' | t }}</label>
+              <input type="text" dir="rtl" [value]="s.title_ar" (input)="setSection(i, 'title_ar', $any($event.target).value)"
+                     placeholder="معايير التشخيص">
+            </div>
+            <div class="form-group">
+              <label>{{ 'guidelines.items_en' | t }}</label>
+              <textarea dir="ltr" rows="5" [value]="s.items_en" (input)="setSection(i, 'items_en', $any($event.target).value)"></textarea>
+              <span class="hint">{{ 'guidelines.bullets' | t : { count: bulletCount(s.items_en) } }}</span>
+            </div>
+            <div class="form-group">
+              <label>{{ 'guidelines.items_ar' | t }}</label>
+              <textarea dir="rtl" rows="5" [value]="s.items_ar" (input)="setSection(i, 'items_ar', $any($event.target).value)"></textarea>
+              <span class="hint">{{ 'guidelines.bullets' | t : { count: bulletCount(s.items_ar) } }}</span>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint-block">{{ 'guidelines.no_sections' | t }}</p>
+      }
+    </div>
+
+    <div class="footer-bar">
+      <button class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        {{ (saving() ? 'common.saving' : 'common.save') | t }}
+      </button>
+    </div>
+  }
+</div>

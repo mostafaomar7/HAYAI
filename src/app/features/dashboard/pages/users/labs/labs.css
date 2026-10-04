@@ -301,11 +301,18 @@
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   padding: 8px;
-  min-width: 140px;
-  z-index: 50;
+    /* The menu is rendered inside a table cell, and `.data-table td` sets
+     `white-space: nowrap`. Inherited, it put every item on one line — a strip
+     wider than the screen. The column layout and `normal` undo it; the cap is
+     mirrored by MENU_MAX_W in user-list.base.ts, which keeps both edges on screen. */
+  white-space: normal;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 160px;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 16px));
+  z-index: 50;
 }
 
 .action-dropdown.flip { transform: translate(-100%, -100%); }
@@ -313,8 +320,11 @@
 :host-context(html[dir="rtl"]) .action-dropdown.flip { transform: translateY(-100%); }
 
 .dropdown-item {
+  display: block;
   width: 100%;
-  text-align: left;
+  /* `start`, not `left`: the labels belong on the reading side in Arabic too. */
+  text-align: start;
+  line-height: 1.4;
   background: none;
   border: none;
   padding: 8px 12px;

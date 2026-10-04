@@ -312,6 +312,61 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/user-activity/user-activity').then(m => m.UserActivity)
   },
+  {
+    path: 'pharmacies/new',
+    data: { title: 'pharm.create_title' },
+    loadComponent: () =>
+      import('./pages/pharmacy-manage/pharmacy-create').then(m => m.PharmacyCreate)
+  },
+  {
+    path: 'pharmacies/:id/manage',
+    data: { title: 'pharm.manage_title' },
+    loadComponent: () =>
+      import('./pages/pharmacy-manage/pharmacy-manage').then(m => m.PharmacyManage)
+  },
+  {
+    // Declared before the list so the id route is not shadowed.
+    path: 'reports/:id',
+    data: { title: 'reports.report' },
+    loadComponent: () => import('./pages/reports/report-details').then(m => m.ReportDetails)
+  },
+  {
+    path: 'reports',
+    data: { title: 'reports.title' },
+    loadComponent: () => import('./pages/reports/reports').then(m => m.Reports)
+  },
+  {
+    path: 'audit-logs',
+    data: { title: 'audit.title' },
+    loadComponent: () => import('./pages/audit-logs/audit-logs').then(m => m.AuditLogs)
+  },
+  {
+    path: 'settings',
+    data: { title: 'settings.title' },
+    loadComponent: () => import('./pages/settings/settings').then(m => m.Settings)
+  },
+  // Clinical guidelines sit under Lists in the sidebar but are not an option
+  // list: each one carries sections of bullets in two languages, which the
+  // generic list drawer has no shape for. Declared before the generated
+  // `lists/*` routes; the paths do not collide either way.
+  {
+    path: 'lists/clinical-guidelines',
+    data: { title: 'guidelines.title' },
+    loadComponent: () =>
+      import('./pages/clinical-guidelines/clinical-guidelines').then(m => m.ClinicalGuidelines)
+  },
+  {
+    path: 'lists/clinical-guidelines/new',
+    data: { title: 'guidelines.add' },
+    loadComponent: () =>
+      import('./pages/clinical-guidelines/clinical-guideline-form').then(m => m.ClinicalGuidelineForm)
+  },
+  {
+    path: 'lists/clinical-guidelines/:id/edit',
+    data: { title: 'guidelines.edit' },
+    loadComponent: () =>
+      import('./pages/clinical-guidelines/clinical-guideline-form').then(m => m.ClinicalGuidelineForm)
+  },
   // Six record lists on one screen, generated the same way the option lists
   // are: a seventh is a config entry, not a route and a component.
   ...Object.values(RECORD_LISTS).map(config => ({

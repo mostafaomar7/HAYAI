@@ -15,4 +15,18 @@ import { PaginationComponent } from '../../../../../shared/ui/pagination.compone
 export class Pharmacies extends UserListBase<ProviderItem> {
   override resource: UserResource = 'pharmacies';
   constructor() { super(); this.init(); }
+
+  /**
+   * Runs this pharmacy's catalogue on its behalf. Provider rows are keyed by
+   * organization id, which is what the admin pharmacy routes expect.
+   */
+  /** Opens an account on the pharmacy's behalf; the password is shown once. */
+  createPharmacy(): void {
+    this.router.navigate(['/dashboard/pharmacies/new']);
+  }
+
+  managePharmacy(row: { id: number }): void {
+    this.openActionMenuId = null;
+    this.router.navigate(['/dashboard/pharmacies', row.id, 'manage']);
+  }
 }

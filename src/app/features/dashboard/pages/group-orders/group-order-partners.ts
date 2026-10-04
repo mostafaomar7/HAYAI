@@ -22,6 +22,12 @@ interface CategoryDraft {
   name_en: string;
   name_ar: string;
   slug: string;
+  /** False removes the category from the app's filter list; devices keep it. */
+  is_active: boolean;
+  /** Position in the app's filter list; lower comes first. */
+  sort_order: string;
+  /** Devices already filed under it — the reason a slug edit is risky. */
+  devices_count: number;
   fields: SpecField[];
 }
 
@@ -114,7 +120,10 @@ export class GroupOrderPartners {
     this.fieldErrors.set({});
     this.formError.set(null);
     if (this.isCategories()) {
-      this.categoryDraft.set({ id: null, name_en: '', name_ar: '', slug: '', fields: [] });
+      this.categoryDraft.set({
+        id: null, name_en: '', name_ar: '', slug: '',
+        is_active: true, sort_order: '', devices_count: 0, fields: []
+      });
     } else {
       this.companyDraft.set({ id: null, name: '', contact_person: '', phone: '', email: '', notes: '', is_active: true });
     }
@@ -129,6 +138,9 @@ export class GroupOrderPartners {
       name_en: row.name_en ?? row.name ?? '',
       name_ar: row.name_ar ?? '',
       slug: row.slug ?? '',
+      is_active: row.is_active !== false,
+      sort_order: row.sort_order != null ? String(row.sort_order) : '',
+      devices_count: row.devices_count ?? 0,
       // Copied, not referenced: an abandoned drawer must not mutate the table.
       fields: (row.spec_schema ?? []).map(f => ({
         ...f,
@@ -224,6 +236,8 @@ export class GroupOrderPartners {
       })) as SpecField[]
     };
     if (d.slug.trim()) body.slug = d.slug.trim();
+    body.is_active = d.is_active;
+    if (d.sort_order.trim()) body.sort_order = Number(d.sort_order);
 
     this.saving.set(true);
     const req = d.id ? this.svc.updateCategory(d.id, body) : this.svc.createCategory(body);
@@ -279,7 +293,51 @@ export class GroupOrderPartners {
 
   // ------------------------------------------------------------------ delete
 
+  /**
+   * Hides a category from the app's filter without touching the devices under
+   * it — what the API tells you to do instead of deleting one that is in use.
+   */
+  deactivateCategory(row: DeviceCategory): void {
+    this.svc.updateCategory(row.id, { is_active: false }).subscribe({
+      next: () => { this.dialog.toast('success', 'gorders.category_deactivated'); this.load(); },
+      error: err => this.dialog.error('common.error', err?.error?.message ?? 'gorders.save_failed')
+    });
+  }
+
+  activateCategory(row: DeviceCategory): void {
+    this.svc.updateCategory(row.id, { is_active: true }).subscribe({
+      next: () => { this.dialog.toast('success', 'gorders.category_activated'); this.load(); },
+      error: err => this.dialog.error('common.error', err?.error?.message ?? 'gorders.save_failed')
+    });
+  }
+
+  /** Writes a new position straight away; the app orders its filter by it. */
+  moveCategory(row: DeviceCategory, delta: -1 | 1): void {
+    const next = Math.max(0, (row.sort_order ?? 0) + delta);
+    this.svc.updateCategory(row.id, { sort_order: next }).subscribe({
+      next: () => this.load(),
+      error: err => this.dialog.error('common.error', err?.error?.message ?? 'gorders.save_failed')
+    });
+  }
+
   async removeCategory(row: DeviceCategory): Promise<void> {
+    // The API refuses to delete a category that has devices (409) and says to
+    // deactivate it instead — so that is what is offered, rather than a delete
+    // that can only fail.
+    if ((row.devices_count ?? 0) > 0) {
+      const ok = await this.dialog.confirm({
+        title: 'gorders.category_in_use_title',
+        text: 'gorders.category_in_use_text',
+        params: { count: row.devices_count ?? 0 },
+        confirmText: 'gorders.deactivate'
+      });
+      if (ok) this.deactivateCategory(row);
+      return;
+    }
+    return this.removeCategoryConfirmed(row);
+  }
+
+  private async removeCategoryConfirmed(row: DeviceCategory): Promise<void> {
     const ok = await this.dialog.confirm({
       title: 'gorders.delete_category_title',
       text: 'gorders.delete_category_text',

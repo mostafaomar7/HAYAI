@@ -25,6 +25,8 @@
             <tr>
               <th>{{ 'gorders.category' | t }}</th>
               <th>{{ 'gorders.slug' | t }}</th>
+              <th>{{ 'gorders.in_app_filter' | t }}</th>
+              <th>{{ 'gorders.order' | t }}</th>
               <th>{{ 'gorders.spec_fields' | t }}</th>
               <th>{{ 'gorders.devices' | t }}</th>
               <th class="action-col">{{ 'common.actions' | t }}</th>
@@ -35,6 +37,19 @@
               <tr>
                 <td class="name-cell">{{ row.name }}</td>
                 <td><span class="code-chip">{{ row.slug }}</span></td>
+                <td>
+                  <span class="pill" [class.pill-joined]="row.is_active !== false"
+                        [class.pill-removed]="row.is_active === false">
+                    {{ (row.is_active === false ? 'gorders.hidden_in_app' : 'gorders.shown_in_app') | t }}
+                  </span>
+                </td>
+                <td class="num">
+                  <!-- Written straight to sort_order: the app reads the filter
+                       list in this order. -->
+                  <button class="icon-btn" (click)="moveCategory(row, -1)" [title]="'gorders.move_up' | t">↑</button>
+                  <span class="order-value">{{ row.sort_order ?? 0 }}</span>
+                  <button class="icon-btn" (click)="moveCategory(row, 1)" [title]="'gorders.move_down' | t">↓</button>
+                </td>
                 <td>
                   <!-- A category with no fields yields a device with no
                        specifications, so an empty template is called out. -->
@@ -48,6 +63,11 @@
                 <td class="action-col">
                   <div class="row-actions">
                     <button class="link-btn" (click)="editCategory(row)">{{ 'common.edit' | t }}</button>
+                    @if (row.is_active === false) {
+                      <button class="link-btn" (click)="activateCategory(row)">{{ 'gorders.show_in_app' | t }}</button>
+                    } @else {
+                      <button class="link-btn" (click)="deactivateCategory(row)">{{ 'gorders.hide_in_app' | t }}</button>
+                    }
                     <button class="link-btn danger" (click)="removeCategory(row)">{{ 'common.delete' | t }}</button>
                   </div>
                 </td>
@@ -136,6 +156,27 @@
           <label>{{ 'gorders.slug' | t }}</label>
           <input type="text" dir="ltr" [value]="d.slug" (input)="setCategory('slug', $any($event.target).value)">
           <span class="hint">{{ 'gorders.slug_hint' | t }}</span>
+          <!-- App links are built from the slug, so changing one that devices
+               already use breaks links people have saved. -->
+          @if (d.id && d.devices_count > 0) {
+            <span class="warn">{{ 'gorders.slug_warning' | t : { count: d.devices_count } }}</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'gorders.order' | t }}</label>
+          <input type="number" min="0" step="1" [value]="d.sort_order"
+                 (input)="setCategory('sort_order', $any($event.target).value)">
+          <span class="hint">{{ 'gorders.order_hint' | t }}</span>
+        </div>
+
+        <div class="form-group">
+          <label class="switch">
+            <input type="checkbox" [checked]="d.is_active"
+                   (change)="setCategory('is_active', $any($event.target).checked)">
+            <span>{{ 'gorders.in_app_filter' | t }}</span>
+          </label>
+          <span class="hint">{{ 'gorders.in_app_filter_hint' | t }}</span>
         </div>
 
         <div class="schema-head">

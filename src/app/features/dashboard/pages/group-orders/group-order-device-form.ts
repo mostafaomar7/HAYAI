@@ -207,7 +207,9 @@ export class GroupOrderDeviceForm {
     // Both names are required server-side; leaving Arabic blank fails with a 422
     // after the form has already been filled in.
     if (!b.name_ar.trim()) errors['name_ar'] = 'gorders.required';
-    if (!b.category_id) errors['category_id'] = 'gorders.required';
+    // The app filters its External tab by category, so a device saved without
+    // one is invisible there — the message says that rather than "required".
+    if (!b.category_id) errors['category_id'] = 'gorders.category_required';
     if (Object.keys(errors).length) { this.fieldErrors.set(errors); return; }
 
     const form = new FormData();

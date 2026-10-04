@@ -1,0 +1,93 @@
+<div class="page-container">
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <p class="hint-block">{{ loadError()! | t }}</p>
+  } @else {
+
+    @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
+
+    @for (group of groups(); track group.name) {
+      <div class="card">
+        <div class="card-head">
+          <!-- The group name comes from the API; an unknown one falls back to
+               itself rather than showing a raw key that looks broken. -->
+          <h2>{{ ('settings.group.' + group.name) | t }}</h2>
+        </div>
+
+        <div class="panel">
+          @for (row of group.rows; track row.key) {
+            <div class="setting" [class.dirty]="isDirty(row)">
+              <div class="setting-text">
+                <span class="setting-name">{{ ('settings.key.' + row.key) | t }}</span>
+                @if (row.description) {
+                  <span class="setting-desc">{{ row.description }}</span>
+                }
+                @if (row.updated_at) {
+                  <span class="setting-meta">
+                    {{ 'settings.last_changed' | t : { id: row.updated_by ?? 0 } }}
+                    {{ row.updated_at | date:'medium' }}
+                  </span>
+                } @else if (row.is_default) {
+                  <span class="setting-meta">{{ 'settings.untouched' | t }}</span>
+                }
+                @if (errors()[row.key]) {
+                  <span class="field-error">{{ errors()[row.key] }}</span>
+                }
+              </div>
+
+              <div class="setting-control">
+                @switch (row.type) {
+                  @case ('bool') {
+                    <label class="switch">
+                      <input type="checkbox" [checked]="boolValue(row)"
+                             (change)="setBool(row, $any($event.target).checked)">
+                      <span>{{ (boolValue(row) ? 'common.on' : 'common.off') | t }}</span>
+                    </label>
+                  }
+                  @case ('tokens') {
+                    <div class="tokens">
+                      <input type="number" min="0" step="1" [value]="tokensValue(row)"
+                             [placeholder]="'settings.tokens_placeholder' | t"
+                             (input)="setTokens(row, $any($event.target).value)">
+                      <!-- Empty and 0 are opposite instructions, so the line
+                           below always says which of the three states this is. -->
+                      @switch (tokensState(row)) {
+                        @case ('uncapped') { <span class="state">{{ 'settings.tokens_uncapped' | t }}</span> }
+                        @case ('none') { <span class="state danger">{{ 'settings.tokens_none' | t }}</span> }
+                        @case ('capped') {
+                          <span class="state ok">{{ 'settings.tokens_capped' | t : { count: approxAnswers(row) } }}</span>
+                        }
+                      }
+                    </div>
+                  }
+                  @case ('int') {
+                    <input type="number" step="1" [value]="textValue(row)"
+                           (input)="setText(row, $any($event.target).value)">
+                  }
+                  @default {
+                    <!-- An unrecognised type still gets an editable control
+                         rather than disappearing from the screen. -->
+                    <input type="text" [value]="textValue(row)"
+                           (input)="setText(row, $any($event.target).value)">
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="footer-bar">
+      @if (dirtyCount() > 0) {
+        <span class="dirty-count">{{ 'settings.unsaved' | t : { count: dirtyCount() } }}</span>
+        <button class="btn-secondary" [disabled]="saving()" (click)="reset()">{{ 'settings.discard' | t }}</button>
+      }
+      <button class="btn-primary" [disabled]="saving() || dirtyCount() === 0" (click)="save()">
+        {{ (saving() ? 'common.saving' : 'common.save') | t }}
+      </button>
+    </div>
+  }
+</div>

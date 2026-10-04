@@ -91,6 +91,15 @@ export abstract class UserListBase<T extends { id: number }> {
   readonly perPage = 15;
   page = signal(1);
 
+  /**
+   * Query parameters specific to one resource. The base sends none; a list that
+   * has its own filter (the tourists' verification queue) overrides this rather
+   * than adding a field here that eleven other lists would ignore.
+   */
+  protected extraQuery(): Record<string, unknown> {
+    return {};
+  }
+
   protected init() {
     this.loadPlans();
     this.load();
@@ -129,7 +138,9 @@ export abstract class UserListBase<T extends { id: number }> {
       gender: this.genderFilter() || undefined,
       doctor_role_id: this.roleFilter() ? Number(this.roleFilter()) : undefined,
       specialty_id: this.specialtyFilter() ? Number(this.specialtyFilter()) : undefined,
-      subspecialty_id: this.subspecialtyFilter() ? Number(this.subspecialtyFilter()) : undefined
+      subspecialty_id: this.subspecialtyFilter() ? Number(this.subspecialtyFilter()) : undefined,
+      // Filters that belong to one list only, contributed by that list.
+      ...this.extraQuery()
     };
     this.svc.list<T>(this.resource, query).subscribe({
       next: (r: PagedResult<T>) => {
@@ -175,14 +186,17 @@ export abstract class UserListBase<T extends { id: number }> {
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
     const rtl = document.documentElement.dir === 'rtl';
-    // Tallest menu in these lists is 4 items ≈ 170px; 200px keeps a margin.
-    const flip = rect.bottom + 200 > window.innerHeight;
-    // `min-width: 140px` on the menu — keep both its edges on screen.
-    const MIN_W = 148;
+    // Tallest menu is a provider row: 6 items, measured at 242px. 260px keeps
+    // a margin so a row near the bottom opens upwards instead of being cut off.
+    const flip = rect.bottom + 260 > window.innerHeight;
+    // The menu can grow to its CSS `max-width` (260px) plus an 8px gutter.
+    // Clamping against that — not the old 140px guess, which the Arabic
+    // "Reset password" label outgrew — keeps both edges on screen.
+    const MENU_MAX_W = Math.min(260, window.innerWidth - 16) + 8;
     const anchor = rtl ? rect.left : rect.right;
     const left = rtl
-      ? Math.min(anchor, window.innerWidth - MIN_W)
-      : Math.max(anchor, MIN_W);
+      ? Math.max(8, Math.min(anchor, window.innerWidth - MENU_MAX_W))
+      : Math.min(window.innerWidth - 8, Math.max(anchor, MENU_MAX_W));
     this.menuPos = { top: flip ? rect.top - 4 : rect.bottom + 4, left, flip };
   }
 

@@ -1,0 +1,98 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'guidelines.title' | t }}</h2>
+        <span class="badge">{{ 'guidelines.count' | t : { count: total() } }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'common.search' | t" (input)="onSearch($any($event.target).value)" />
+        </div>
+
+        <div class="filter-select">
+          <select [value]="subspecialtyFilter()" (change)="setSubspecialty($any($event.target).value)">
+            <option value="">{{ 'common.all' | t }} — {{ 'guidelines.category' | t }}</option>
+            @for (s of subspecialties(); track s.id) {
+              <option [value]="s.id" [selected]="subspecialtyFilter() === (s.id + '')">{{ subspecialtyLabel(s) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-select">
+          <select [value]="publishedFilter()" (change)="setPublished($any($event.target).value)">
+            <option value="" [selected]="publishedFilter() === ''">{{ 'common.all' | t }} — {{ 'guidelines.visibility' | t }}</option>
+            <option value="1" [selected]="publishedFilter() === '1'">{{ 'guidelines.published' | t }}</option>
+            <option value="0" [selected]="publishedFilter() === '0'">{{ 'guidelines.draft' | t }}</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" (click)="add()">{{ 'guidelines.add' | t }}</button>
+      </div>
+    </div>
+
+    <!-- Nothing is seeded: an empty list here is an empty screen in the doctor
+         app, which is worth saying rather than showing a bare "no data". -->
+    <p class="hint-bar">{{ 'guidelines.app_hint' | t }}</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'guidelines.col_title' | t }}</th>
+            <th>{{ 'guidelines.category' | t }}</th>
+            <th>{{ 'guidelines.sections' | t }}</th>
+            <th>{{ 'guidelines.source' | t }}</th>
+            <th>{{ 'guidelines.last_updated' | t }}</th>
+            <th>{{ 'guidelines.visibility' | t }}</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td class="table-hint" colspan="7">{{ 'common.loading' | t }}</td></tr>
+          } @else if (loadError()) {
+            <tr><td class="table-hint" colspan="7">{{ loadError()! | t }}</td></tr>
+          } @else if (!rows().length) {
+            <tr><td class="table-hint" colspan="7">
+              <strong>{{ 'guidelines.empty' | t }}</strong>
+              <span class="empty-sub">{{ 'guidelines.empty_hint' | t }}</span>
+            </td></tr>
+          } @else {
+            @for (row of rows(); track row.id) {
+              <tr class="openable" role="button" tabindex="0" (click)="edit(row)" (keydown.enter)="edit(row)">
+                <td class="title-cell">
+                  <bdi>{{ titleOf(row) }}</bdi>
+                  @if (row.has_pdf) { <span class="pdf-chip">{{ 'guidelines.has_pdf' | t }}</span> }
+                </td>
+                <td>
+                  @if (row.category) {
+                    <span class="category-tag">{{ row.category.name }}</span>
+                  } @else { — }
+                </td>
+                <td class="num">{{ row.sections_count }}</td>
+                <td><bdi>{{ row.source || '—' }}</bdi></td>
+                <td class="num">{{ lastUpdated(row) ? (lastUpdated(row) | date:'mediumDate') : '—' }}</td>
+                <td>
+                  <span class="pill" [class.pill-live]="row.is_published">
+                    {{ (row.is_published ? 'guidelines.published' : 'guidelines.draft') | t }}
+                  </span>
+                </td>
+                <td class="actions-col">
+                  <button class="link-danger" (click)="remove(row, $event)">{{ 'common.delete' | t }}</button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+  </div>
+</div>

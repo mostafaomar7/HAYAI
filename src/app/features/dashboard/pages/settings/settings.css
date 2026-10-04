@@ -1,0 +1,105 @@
+:host {
+  display: block;
+  background-color: #F8FAFC;
+  font-family: 'Inter', 'Cairo', sans-serif;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.page-container { max-width: 900px; margin: 0 auto; }
+
+.hint-block { padding: 24px; color: #6B7280; }
+
+.form-error {
+  margin: 0 0 16px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  background: #FEF2F2;
+  color: #B91C1C;
+  font-size: 13px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
+  margin-bottom: 20px;
+}
+.card-head { padding: 18px 24px; border-bottom: 1px solid #F1F5F9; }
+.card-head h2 { margin: 0; font-size: 16px; font-weight: 700; color: #111827; }
+.panel { padding: 6px 24px; }
+
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid #F8FAFC;
+}
+.setting:last-child { border-bottom: 0; }
+/* An edited row is marked so the admin can see what Save will send. */
+.setting.dirty { box-shadow: inset 3px 0 0 #2563EB; padding-inline-start: 12px; margin-inline-start: -12px; }
+:host-context([dir="rtl"]) .setting.dirty { box-shadow: inset -3px 0 0 #2563EB; }
+
+.setting-text { display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px; min-width: 0; }
+.setting-name { font-size: 14px; font-weight: 600; color: #111827; }
+.setting-desc { font-size: 13px; color: #6B7280; line-height: 1.6; }
+.setting-meta { font-size: 12px; color: #9CA3AF; }
+.field-error { font-size: 12px; color: #DC2626; }
+
+.setting-control { flex: 0 0 auto; }
+.setting-control input[type="text"],
+.setting-control input[type="number"] {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  width: 190px;
+  max-width: 100%;
+}
+.setting-control input:focus { border-color: #3B82F6; }
+
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: #2563EB; }
+
+.tokens { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.state { font-size: 12px; color: #6B7280; max-width: 220px; line-height: 1.5; }
+.state.ok { color: #047857; }
+.state.danger { color: #B45309; }
+
+.footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-bottom: 24px;
+}
+.dirty-count { font-size: 13px; color: #6B7280; margin-inline-end: auto; }
+
+.btn-primary, .btn-secondary {
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-primary { background: #2563EB; color: #fff; border: none; }
+.btn-primary:hover:not(:disabled) { background: #1D4ED8; }
+.btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
+.btn-secondary { background: #fff; color: #374151; border: 1px solid #E5E7EB; }
+.btn-secondary:hover:not(:disabled) { background: #F9FAFB; }
+
+@media (max-width: 640px) {
+  :host { padding: 16px; }
+  .card-head, .panel { padding-inline: 16px; }
+  .setting-control input[type="text"], .setting-control input[type="number"] { width: 100%; }
+  .setting-control { width: 100%; }
+  .footer-bar .btn-primary, .footer-bar .btn-secondary { flex: 1; }
+}

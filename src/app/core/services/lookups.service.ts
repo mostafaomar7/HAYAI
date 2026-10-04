@@ -3,6 +3,8 @@ import { Observable, shareReplay } from 'rxjs';
 import { ApiService } from './api.service';
 
 export interface LookupItem {
+  /** Countries key off `iso2` and carry no `id`, hence the index signature. */
+  [extra: string]: unknown;
   id: string | number;
   name?: string;
   label?: string;
@@ -31,6 +33,8 @@ export class LookupsService {
   transactionStatuses() { return this.cached('/lookups/transaction-statuses'); }
   listingStatuses() { return this.cached('/lookups/listing-statuses'); }
   doctorRoles() { return this.cached('/lookups/doctor-roles'); }
+  /** ISO2 + bilingual names, public. Used where a country has to be recorded. */
+  countries() { return this.cached('/lookups/countries'); }
   doctorSpecialties() { return this.cached('/lookups/doctor-specialties'); }
 
   doctorSubspecialties(specialtyId?: number): Observable<LookupItem[]> {

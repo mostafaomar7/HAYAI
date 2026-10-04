@@ -46,6 +46,7 @@ export const MENU_ITEMS: MenuItem[] = [
     children: [
       { id: 'DoctorSpecialties', label: 'lists.doctor_specialties', route: '/dashboard/lists/doctor-specialties' },
       { id: 'DoctorSubspecialties', label: 'lists.doctor_subspecialties', route: '/dashboard/lists/doctor-subspecialties' },
+      { id: 'ClinicalGuidelines', label: 'guidelines.title', route: '/dashboard/lists/clinical-guidelines' },
       { id: 'IcuGroups', label: 'lists.icu_groups', route: '/dashboard/lists/icu-specialty-groups' },
       { id: 'IcuCategories', label: 'lists.icu_categories', route: '/dashboard/lists/icu-specialty-categories' },
       { id: 'IcuSpecialties', label: 'lists.icu_specialties', route: '/dashboard/lists/icu-specialties' },
@@ -63,6 +64,15 @@ export const MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    id: 'Reports', label: 'reports.title', iconName: 'plans', route: '/dashboard/reports', roles: ['admin'],
+  },
+  {
+    id: 'AuditLogs', label: 'audit.title', iconName: 'plans', route: '/dashboard/audit-logs', roles: ['admin'],
+  },
+  {
+    id: 'Settings', label: 'settings.title', iconName: 'plans', route: '/dashboard/settings', roles: ['admin'],
+  },
+  {
     id: 'RecordLists', label: 'menu.records', iconName: 'plans', route: '', roles: ['admin'], hasDropdown: true,
     children: [
       { id: 'RecPharmacyOrders', label: 'records.pharmacy_orders', route: '/dashboard/records/pharmacy-orders' },
@@ -74,7 +84,7 @@ export const MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
-    id: 'GroupOrders', label: 'menu.group_orders', iconName: 'devices', route: '', roles: ['admin'], hasDropdown: true,
+    id: 'GroupOrders', label: 'menu.external_devices_section', iconName: 'devices', route: '', roles: ['admin'], hasDropdown: true,
     children: [
       { id: 'GroupOrdersOverview', label: 'menu.group_orders.overview', route: '/dashboard/group-orders' },
       { id: 'GroupOrderDevices', label: 'menu.group_orders.devices', route: '/dashboard/group-orders/devices' },

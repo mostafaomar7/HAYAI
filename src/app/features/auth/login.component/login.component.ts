@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -18,6 +18,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   i18n = inject(I18nService);
 
   showPassword = false;
@@ -44,7 +45,9 @@ export class LoginComponent {
     this.auth.login(this.form.getRawValue() as { identifier: string; password: string }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/dashboard']);
+        // Set when a session expired mid-screen; otherwise the usual home.
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router.navigateByUrl(returnUrl && returnUrl.startsWith('/') ? returnUrl : '/dashboard');
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

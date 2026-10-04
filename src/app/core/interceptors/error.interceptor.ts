@@ -19,7 +19,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         tokens.clearToken();
         auth.clearUser();
         if (!router.url.startsWith('/login')) {
-          router.navigate(['/login']);
+          // An admin token now expires after 12 hours, so a 401 is routine
+          // rather than exceptional. Carrying the current URL means signing in
+          // again returns to the screen that was open instead of the dashboard
+          // home. No toast: the login screen is the message.
+          router.navigate(['/login'], { queryParams: { returnUrl: router.url } });
         }
       }
       return throwError(() => err);

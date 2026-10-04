@@ -301,7 +301,17 @@
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   padding: 8px;
-  min-width: 140px;
+  /* The menu is rendered inside a table cell, and `.data-table td` sets
+     `white-space: nowrap`. Inherited, that put every item on one line — a strip
+     wider than the screen. The column layout and `normal` undo it; the cap is
+     mirrored by MENU_MAX_W in user-list.base.ts, which keeps both edges on screen. */
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 16px));
   z-index: 50;
 }
 
@@ -310,8 +320,11 @@
 :host-context(html[dir="rtl"]) .action-dropdown.flip { transform: translateY(-100%); }
 
 .dropdown-item {
+  display: block;
   width: 100%;
-  text-align: left;
+  /* `start`, not `left`: the labels belong on the reading side in Arabic too. */
+  text-align: start;
+  line-height: 1.4;
   background: none;
   border: none;
   padding: 8px 12px;
@@ -376,4 +389,62 @@
 .dots {
   color: #6B7280;
   margin: 0 4px;
+}
+/* ===================== verification queue ===================== */
+
+.tabs { display: flex; gap: 4px; padding: 0 24px 12px; flex-wrap: wrap; }
+.tab {
+  background: none; border: none; border-radius: 8px; padding: 8px 14px;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.tab:hover { background: #F8FAFC; color: #111827; }
+.tab.active { background: #EFF6FF; color: #2563EB; }
+.tab-count {
+  background: #2563EB; color: #fff; border-radius: 20px; min-width: 20px;
+  padding: 1px 7px; font-size: 11px; font-weight: 700; text-align: center;
+}
+.tab.active .tab-count { background: #1D4ED8; }
+
+.notice {
+  margin: 0 24px 12px; padding: 9px 13px; border-radius: 8px;
+  background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; font-size: 13px;
+}
+.inline-error {
+  margin: 0 24px 12px; padding: 9px 13px; border-radius: 8px;
+  background: #FEF2F2; color: #B91C1C; font-size: 13px;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+.link-btn {
+  background: none; border: none; padding: 0; font-family: inherit;
+  font-size: 13px; font-weight: 600; color: #2563EB; cursor: pointer;
+}
+.link-btn:hover { text-decoration: underline; }
+
+.open-id { display: flex; align-items: center; gap: 6px; }
+.open-id input {
+  border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 12px;
+  font-family: inherit; font-size: 14px; width: 110px; outline: none;
+}
+.open-id input:focus { border-color: #3B82F6; }
+.open-id-btn {
+  border: 1px solid #E5E7EB; background: #fff; border-radius: 8px; padding: 8px 12px;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer;
+}
+.open-id-btn:hover { background: #F9FAFB; }
+
+.wa-link { color: #047857; text-decoration: none; font-weight: 600; }
+.wa-link:hover { text-decoration: underline; }
+
+.verify-pill {
+  display: inline-block; border-radius: 20px; padding: 2px 9px;
+  font-size: 11px; font-weight: 700; background: #FEF3C7; color: #92400E; white-space: nowrap;
+}
+.verify-pill.ok { background: #ECFDF5; color: #047857; }
+.residence { margin-inline-start: 6px; font-size: 11px; color: #6B7280; }
+
+@media (max-width: 640px) {
+  .tabs, .notice, .inline-error { padding-inline: 16px; margin-inline: 0; }
+  .open-id { flex: 1; }
+  .open-id input { width: 100%; }
 }

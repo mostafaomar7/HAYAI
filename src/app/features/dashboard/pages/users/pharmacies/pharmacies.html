@@ -3,6 +3,7 @@
     <div class="table-header">
       <div class="title-area"><h2>{{ 'users.pharmacy.title' | t }}</h2><span class="badge">{{ total() }} {{ 'users.users_count' | t }}</span></div>
       <div class="actions-area">
+        <button class="add-pharmacy-btn" (click)="createPharmacy()">{{ 'pharm.create_account' | t }}</button>
         <div class="search-box"><input type="text" [placeholder]="'common.search' | t" [value]="search()" (input)="onSearch($any($event.target).value)" /></div>
         <div class="filter-wrapper">
           <button class="filter-btn" (click)="toggleFilter($event)">{{ 'common.filter' | t }}</button>
@@ -78,6 +79,7 @@
                       }
                       <button class="dropdown-item" (click)="goToActivity(p)">{{ 'activity.title' | t }}</button>
                       <button class="dropdown-item" (click)="resetPassword(p)">{{ 'users.reset_password.action' | t }}</button>
+                      <button class="dropdown-item" (click)="managePharmacy(p)">{{ 'pharm.manage' | t }}</button>
                       <button class="dropdown-item" (click)="changePlan(p.id)">{{ 'users.actions.change_plan' | t }}</button>
                     </div>
                   }

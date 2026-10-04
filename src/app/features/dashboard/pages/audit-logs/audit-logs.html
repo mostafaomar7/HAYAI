@@ -1,0 +1,89 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'audit.title' | t }}</h2>
+        <span class="badge">{{ 'audit.count' | t : { count: total() } }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'audit.path_placeholder' | t" (input)="onPath($any($event.target).value)" />
+        </div>
+
+        <select class="filter" [value]="methodFilter()" (change)="setMethod($any($event.target).value)">
+          <option value="">{{ 'common.all' | t }} — {{ 'audit.method' | t }}</option>
+          @for (m of methods; track m) {
+            <option [value]="m" [selected]="methodFilter() === m">{{ m }}</option>
+          }
+        </select>
+
+        <input class="filter date" type="date" [value]="fromFilter()" [title]="'audit.from' | t"
+               (change)="setFrom($any($event.target).value)">
+        <input class="filter date" type="date" [value]="toFilter()" [title]="'audit.to' | t"
+               (change)="setTo($any($event.target).value)">
+
+        @if (hasFilters()) {
+          <button class="link-btn" (click)="clearFilters()">{{ 'audit.clear' | t }}</button>
+        }
+      </div>
+    </div>
+
+    <p class="hint-bar">{{ 'audit.read_only' | t }}</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'audit.when' | t }}</th>
+            <th>{{ 'audit.admin' | t }}</th>
+            <th>{{ 'audit.method' | t }}</th>
+            <th>{{ 'audit.path' | t }}</th>
+            <th>{{ 'audit.fields' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'audit.ip' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td class="table-hint" colspan="7">{{ 'common.loading' | t }}</td></tr>
+          } @else if (loadError()) {
+            <tr><td class="table-hint" colspan="7">{{ loadError()! | t }}</td></tr>
+          } @else if (!rows().length) {
+            <tr><td class="table-hint" colspan="7">{{ 'audit.empty' | t }}</td></tr>
+          } @else {
+            @for (row of rows(); track row.id) {
+              <!-- A refused attempt is the row worth spotting, so it is tinted. -->
+              <tr [class.refused]="isRefused(row)">
+                <td class="nowrap">{{ row.created_at | date:'medium' }}</td>
+                <td>
+                  @if (row.admin) {
+                    <span class="admin-name">{{ row.admin.name }}</span>
+                    <span class="admin-id">#{{ row.admin.id }}</span>
+                  } @else { — }
+                </td>
+                <td><span class="method" [attr.data-method]="row.method">{{ row.method }}</span></td>
+                <td class="path"><bdi dir="ltr">{{ shortPath(row) }}</bdi></td>
+                <td class="fields">
+                  <!-- Names only. The log never carries the values. -->
+                  @for (k of row.input_keys ?? []; track k) {
+                    <span class="chip"><bdi dir="ltr">{{ k }}</bdi></span>
+                  }
+                  @if (!(row.input_keys ?? []).length) { — }
+                </td>
+                <td><span class="status" [class.bad]="isRefused(row)">{{ row.status }}</span></td>
+                <td class="ip"><bdi dir="ltr">{{ row.ip || '—' }}</bdi></td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+  </div>
+</div>

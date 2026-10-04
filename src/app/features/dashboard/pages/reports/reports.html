@@ -1,0 +1,113 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'reports.title' | t }}</h2>
+        <span class="badge">{{ 'reports.count' | t : { count: total() } }}</span>
+      </div>
+
+      <div class="actions-area">
+        <select class="filter" [value]="statusFilter()" (change)="setFilter('status', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }} — {{ 'common.status' | t }}</option>
+          @for (s of statuses; track s) {
+            <option [value]="s" [selected]="statusFilter() === s">{{ ('reports.status.' + s) | t }}</option>
+          }
+        </select>
+
+        <select class="filter" [value]="targetFilter()" (change)="setFilter('target', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }} — {{ 'reports.target' | t }}</option>
+          @for (t of targets; track t) {
+            <option [value]="t" [selected]="targetFilter() === t">{{ ('reports.target.' + t) | t }}</option>
+          }
+        </select>
+
+        <!-- Only narrows rating reports; left visible so the filter set matches
+             the API rather than appearing and disappearing. -->
+        <select class="filter" [value]="sourceFilter()" (change)="setFilter('source', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }} — {{ 'reports.source' | t }}</option>
+          @for (s of ratingSources; track s) {
+            <option [value]="s" [selected]="sourceFilter() === s">{{ ('reports.source.' + s) | t }}</option>
+          }
+        </select>
+
+        <select class="filter" [value]="reasonFilter()" (change)="setFilter('reason', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }} — {{ 'reports.reason' | t }}</option>
+          @for (r of reasons; track r) {
+            <option [value]="r" [selected]="reasonFilter() === r">{{ ('reports.reason.' + r) | t }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ 'reports.target' | t }}</th>
+            <th>{{ 'reports.content' | t }}</th>
+            <th>{{ 'reports.reason' | t }}</th>
+            <th>{{ 'reports.reporter' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'common.created' | t }}</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td class="table-hint" colspan="8">{{ 'common.loading' | t }}</td></tr>
+          } @else if (loadError()) {
+            <tr><td class="table-hint" colspan="8">{{ loadError()! | t }}</td></tr>
+          } @else if (!rows().length) {
+            <tr><td class="table-hint" colspan="8">{{ 'reports.empty' | t }}</td></tr>
+          } @else {
+            @for (row of rows(); track row.id) {
+              <tr class="openable" (click)="open(row)">
+                <td class="num">{{ row.id }}</td>
+                <td>
+                  <span class="target-tag">{{ ('reports.target.' + row.target_type) | t }}</span>
+                  @if (isRating(row) && row.target_snapshot?.rating_source) {
+                    <span class="source">{{ ('reports.source.' + row.target_snapshot!.rating_source) | t }}</span>
+                  }
+                </td>
+                <td class="content-cell">
+                  @if (isRating(row)) {
+                    <span class="stars">{{ stars(row) }}</span>
+                    <bdi class="comment">{{ comment(row) }}</bdi>
+                  } @else { — }
+                </td>
+                <td>{{ row.reason_label || (('reports.reason.' + row.reason) | t) }}</td>
+                <td>
+                  <bdi>{{ row.reporter?.name || '—' }}</bdi>
+                  <!-- The business the review is about may report it. That is
+                       allowed, and it is also what abuse looks like. -->
+                  @if (row.reporter_is_subject) {
+                    <span class="subject-badge">{{ 'reports.reported_by_subject' | t }}</span>
+                  }
+                </td>
+                <td><span class="pill" [attr.data-status]="row.status">{{ row.status_label || (('reports.status.' + row.status) | t) }}</span></td>
+                <td class="num nowrap">{{ row.created_at | date:'mediumDate' }}</td>
+                <td class="actions-col">
+                  <!-- Labelled by effect, not by status name. -->
+                  @if (row.status === 'open' || row.status === 'reviewing') {
+                    <button class="link-btn danger" [disabled]="busy() === row.id"
+                            (click)="decide(row, 'actioned', $event)">
+                      {{ (isRating(row) ? 'reports.remove_review' : 'reports.mark_actioned') | t }}
+                    </button>
+                    <button class="link-btn" [disabled]="busy() === row.id"
+                            (click)="decide(row, 'dismissed', $event)">
+                      {{ (isRating(row) ? 'reports.keep_review' : 'reports.dismiss') | t }}
+                    </button>
+                  } @else { — }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [total]="total()" [perPage]="perPage" (pageChange)="goToPage($event)" />
+  </div>
+</div>
