@@ -64,15 +64,15 @@ sudo tar -xzf hayai-web-<sha>.tar.gz -C /var/www/hayai-web
 sudo chown -R www-data:www-data /var/www/hayai-web
 ```
 
-## 2. Node 20
+## 2. Node 22
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
-node -v   # expect v20.x
+node -v   # expect v22.x
 ```
 
-Node 20 or newer. The server uses `fetch`, `AbortSignal.timeout` and
+Node 20 is end of life, so 22 is the one to install. The server needs 20 or newer either way: it uses `fetch`, `AbortSignal.timeout` and
 `import.meta.dirname`.
 
 ## 3. `WEBSITE_SERVER_KEY` — please generate and set it, do not wait for a reply
