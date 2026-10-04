@@ -202,7 +202,7 @@
             }
 
             @if (p.missing_required?.length) {
-              <p class="form-error">{{ 'pharm.missing_required' | t : { fields: p.missing_required.join(', ') } }}</p>
+              <p class="form-error">{{ 'pharm.missing_required' | t : { fields: (p.missing_required ?? []).join(', ') } }}</p>
             }
 
             @if (p.issues?.length) {

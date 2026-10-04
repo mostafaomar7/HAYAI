@@ -71,12 +71,14 @@ export interface BulkPreview {
   unrecognized_columns: string[];
   /** Matched loosely rather than by an exact alias — worth confirming. */
   fuzzy_columns: string[];
-  missing_required: string[];
+  /** Omitted by the server when there is nothing to report. */
+  missing_required?: string[];
   hints: string[];
   total_rows: number;
   valid_rows: number;
   invalid_rows: number;
-  issues: BulkIssue[];
+  /** Omitted by the server when every row parsed cleanly. */
+  issues?: BulkIssue[];
   sample: Record<string, unknown>[];
   default_branch_id?: number | null;
 }
