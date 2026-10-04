@@ -41,3 +41,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Hand-off bundles built by `npm run build` + zip (see docs/website-ssr-deployment.md).
+hayai-web-*.zip
