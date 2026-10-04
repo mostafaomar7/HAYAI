@@ -47,11 +47,35 @@ export class SiteApiService {
     );
   }
 
-  /** Listing endpoints (`products`, `articles`, `search`, `doctors`, `hospitals`). */
+  /**
+   * Listing endpoints (`products`, `articles`, `search`, `doctors`, `hospitals`).
+   *
+   * A 4xx here means the *query string* was rejected - a stale `?sort=` value
+   * from an old link, or a parameter a crawler invented. That is not a server
+   * fault, so it must not become a 5xx: the SEO spec warns that repeated 5xx
+   * responses cut crawl frequency for weeks. The listing is retried once
+   * without the query string, which is exactly the canonical URL the page
+   * already points at. Only a server error or a dead connection returns null,
+   * and only that becomes a 503.
+   */
   listing(locale: SiteLocale, endpoint: string, qs: string): Observable<ApiEnvelope<any> | null> {
-    return this.http
-      .get<ApiEnvelope<any>>(`${PUBLIC}/${locale}/${endpoint}${qs ? `?${qs}` : ''}`)
-      .pipe(catchError(() => of(null)));
+    const url = `${PUBLIC}/${locale}/${endpoint}`;
+    const clientError = (e: unknown) => {
+      const s = (e as { status?: number })?.status ?? 0;
+      return s >= 400 && s < 500;
+    };
+    // An empty result, not null: null is reserved for "the server is down" and
+    // is what the resolver turns into a 503.
+    const empty = () => of({ data: [], meta: null } as unknown as ApiEnvelope<any>);
+    return this.http.get<ApiEnvelope<any>>(`${url}${qs ? `?${qs}` : ''}`).pipe(
+      catchError((err: unknown) => {
+        if (!clientError(err)) return of(null);
+        if (!qs) return empty();
+        return this.http
+          .get<ApiEnvelope<any>>(url)
+          .pipe(catchError((e2: unknown) => (clientError(e2) ? empty() : of(null))));
+      })
+    );
   }
 
   preview(token: string, locale: SiteLocale): Observable<PagePayload | null> {

@@ -1,0 +1,199 @@
+#!/usr/bin/env node
+/**
+ * SEO / GEO deploy gate.
+ *
+ * Fetches every page template from a running server and fails the build on any
+ * breach of the client's "Technical SEO & GEO Specification". It covers the
+ * parts of that document that are checkable from the rendered HTML:
+ *
+ *   §1  server-rendered content   — body text present before any JS runs
+ *   §3  structured data           — JSON-LD parses, required @types per template,
+ *                                   and no fabricated aggregateRating / Review
+ *   §4  content architecture      — one <h1>, no skipped heading levels,
+ *                                   a 40-60 word self-contained direct answer
+ *   §6  internationalisation      — lang/dir, canonical, reciprocal hreflang
+ *   §7  images                    — explicit dimensions, alt text, srcset on
+ *                                   content images (CLS and the image pipeline)
+ *
+ * Usage:
+ *   node scripts/seo-gate.mjs [baseUrl]            # default http://localhost:4000
+ *   node scripts/seo-gate.mjs --targets t.json     # override the template list
+ *
+ * Exits 0 when every required check passes, 1 otherwise. Warnings (templates
+ * that have no content yet) are reported but do not fail the build.
+ */
+
+const args = process.argv.slice(2);
+const flag = (name) => {
+  const i = args.indexOf(name);
+  return i === -1 ? null : args[i + 1];
+};
+const BASE = (args.find((a) => a.startsWith('http')) || 'http://localhost:4000').replace(/\/$/, '');
+
+/**
+ * `required` are the @types that must be present. The spec asks for
+ * BreadcrumbList on every page; it is listed as `wanted` until the API emits
+ * it, so the gate reports it without blocking every deploy on one known gap.
+ */
+const DEFAULT_TARGETS = [
+  { label: 'home (en)', path: '/en', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
+  { label: 'home (ar)', path: '/ar', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+  { label: 'products listing', path: '/en/products', required: [], wanted: [], softMissing: true },
+  { label: 'search (parameterised)', path: '/en/search?q=test&sort=price', required: [], wanted: [], expectNoindex: true, expectCanonicalClean: '/en/search' },
+];
+
+const targets = flag('--targets')
+  ? JSON.parse(await (await import('node:fs/promises')).readFile(flag('--targets'), 'utf8'))
+  : DEFAULT_TARGETS;
+
+const problems = [];
+const warnings = [];
+const fail = (t, msg) => problems.push(`${t.label}: ${msg}`);
+const warn = (t, msg) => warnings.push(`${t.label}: ${msg}`);
+
+function jsonLdTypes(html) {
+  const blocks = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
+  const types = [];
+  let parseError = null;
+  for (const [, raw] of blocks) {
+    try {
+      const data = JSON.parse(raw.trim());
+      for (const item of Array.isArray(data) ? data : [data]) {
+        if (!item || typeof item !== 'object') continue;
+        const push = (t) => types.push(...(Array.isArray(t) ? t : [t]));
+        push(item['@type']);
+        for (const g of item['@graph'] || []) push(g['@type']);
+      }
+    } catch (e) {
+      parseError = e.message;
+    }
+  }
+  return { count: blocks.length, types: types.filter(Boolean), parseError };
+}
+
+function headingLevels(html) {
+  return [...html.matchAll(/<h([1-6])[\s>]/g)].map((m) => Number(m[1]));
+}
+
+function directAnswerWords(html) {
+  const m =
+    html.match(/data-geo="answer"[^>]*>([\s\S]*?)<\/section>/) ||
+    html.match(/aria-label="direct-answer"[^>]*>([\s\S]*?)<\/section>/);
+  if (!m) return null;
+  // The block carries the question as a heading; the spec's 40-60 words is the
+  // answer paragraph, so measure the last <p> rather than the whole section.
+  const paras = [...m[1].matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map((p) =>
+    p[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  );
+  const answer = paras.length ? paras[paras.length - 1] : m[1].replace(/<[^>]+>/g, ' ');
+  return answer.split(/\s+/).filter(Boolean).length;
+}
+
+async function check(t) {
+  let res, html;
+  try {
+    res = await fetch(BASE + t.path, { headers: { 'User-Agent': 'GPTBot' } });
+    html = await res.text();
+  } catch (e) {
+    fail(t, `request failed: ${e.message}`);
+    return;
+  }
+
+  // --- §1 rendering ---------------------------------------------------
+  if (res.status >= 500) {
+    fail(t, `HTTP ${res.status} — a 5xx cuts crawl frequency for weeks (spec §1)`);
+    return;
+  }
+  if (res.status >= 400 && !t.expect404) {
+    fail(t, `HTTP ${res.status}`);
+    return;
+  }
+  const text = html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (text.length < 400) {
+    if (t.softMissing) warn(t, `only ${text.length} chars of text — no content published yet`);
+    else fail(t, `only ${text.length} chars of server-rendered text (spec §1)`);
+  }
+
+  // --- §3 structured data ---------------------------------------------
+  const ld = jsonLdTypes(html);
+  if (ld.parseError) fail(t, `JSON-LD does not parse: ${ld.parseError}`);
+  for (const want of t.required || []) {
+    if (!ld.types.includes(want)) fail(t, `missing required schema @type "${want}" (spec §3)`);
+  }
+  for (const want of t.wanted || []) {
+    if (!ld.types.includes(want)) warn(t, `schema @type "${want}" not emitted yet (spec §3)`);
+  }
+  if (/aggregateRating/.test(html)) fail(t, 'aggregateRating present — forbidden until real reviews exist (spec §8)');
+  if (/"@type"\s*:\s*"Review"/.test(html)) fail(t, 'Review schema present — forbidden until real reviews exist (spec §8)');
+
+  // --- §4 content architecture -----------------------------------------
+  const levels = headingLevels(html);
+  const h1s = levels.filter((l) => l === 1).length;
+  if (h1s !== 1) fail(t, `${h1s} <h1> elements, expected exactly 1 (spec §4)`);
+  for (let i = 0; i < levels.length - 1; i++) {
+    if (levels[i + 1] - levels[i] > 1) {
+      fail(t, `heading level jumps h${levels[i]} → h${levels[i + 1]} (spec §4)`);
+      break;
+    }
+  }
+  if (t.geo) {
+    const words = directAnswerWords(html);
+    if (words === null) fail(t, 'no direct-answer block found (spec §4)');
+    else if (words < 40 || words > 60) fail(t, `direct answer is ${words} words, needs 40-60 (spec §4)`);
+  }
+
+  // --- §6 internationalisation ------------------------------------------
+  const htmlTag = (html.match(/<html([^>]*)>/) || [, ''])[1];
+  const lang = (htmlTag.match(/lang="([^"]+)"/) || [, null])[1];
+  const dir = (htmlTag.match(/dir="([^"]+)"/) || [, null])[1];
+  if (!lang) fail(t, 'no lang attribute on <html> (spec §6)');
+  if (t.rtl && dir !== 'rtl') fail(t, `dir="${dir}" on an Arabic page, expected rtl (spec §6)`);
+
+  const canonical = (html.match(/rel="canonical"\s+href="([^"]+)"/) || [, null])[1];
+  const robots = (html.match(/<meta name="robots" content="([^"]+)"/) || [, null])[1];
+  if (t.expectNoindex) {
+    if (!/noindex/.test(robots || '')) fail(t, `parameterised URL is not noindex (robots="${robots}") (spec §5)`);
+    if (t.expectCanonicalClean && canonical && !canonical.endsWith(t.expectCanonicalClean)) {
+      fail(t, `canonical "${canonical}" does not point at the clean URL "${t.expectCanonicalClean}" (spec §5)`);
+    }
+  } else {
+    if (!canonical) fail(t, 'no canonical link (spec §5)');
+    const tags = [...html.matchAll(/hreflang="([^"]+)"/g)].map((m) => m[1]);
+    for (const h of ['en', 'ar', 'x-default']) {
+      if (!tags.includes(h)) fail(t, `hreflang="${h}" missing — reciprocity is mandatory (spec §6)`);
+    }
+  }
+
+  // --- §7 images ---------------------------------------------------------
+  for (const tag of html.match(/<img[^>]*>/g) || []) {
+    const src = (tag.match(/src="([^"]*)"/) || [, ''])[1];
+    const name = src.split('/').pop() || 'image';
+    if (!/width=/.test(tag) || !/height=/.test(tag)) fail(t, `<img ${name}> has no width/height — causes CLS (spec §7)`);
+    if (!/alt=/.test(tag)) fail(t, `<img ${name}> has no alt attribute (spec §7)`);
+    // Logos and icons are fixed-size by design; only content images need srcset.
+    const isContent = /\/media\//.test(src);
+    if (isContent && !/srcset=/.test(tag)) fail(t, `content image ${name} has no srcset (spec §7)`);
+    if (isContent && /srcset=/.test(tag) && !/\.(webp|avif)/.test(tag)) {
+      warn(t, `content image ${name} serves no WebP/AVIF variant (spec §7)`);
+    }
+  }
+}
+
+console.log(`SEO / GEO gate — ${BASE}\n`);
+for (const t of targets) {
+  await check(t);
+  const mine = problems.filter((p) => p.startsWith(t.label)).length;
+  console.log(`  ${mine ? 'FAIL' : ' ok '}  ${t.label}  (${t.path})`);
+}
+
+if (warnings.length) {
+  console.log('\nWarnings (not blocking):');
+  for (const w of warnings) console.log('  ! ' + w);
+}
+if (problems.length) {
+  console.log('\nBlocking problems:');
+  for (const p of problems) console.log('  ✗ ' + p);
+  console.log(`\n${problems.length} problem(s). Deploy blocked.`);
+  process.exit(1);
+}
+console.log('\nAll required SEO / GEO checks passed.');

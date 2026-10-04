@@ -1,0 +1,54 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "node dist/BAREEQ/server/server.mjs",
+      "startServerReadyPattern": "listening on",
+      "startServerReadyTimeout": 60000,
+      "url": [
+        "http://localhost:4000/en",
+        "http://localhost:4000/ar",
+        "http://localhost:4000/en/products"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "formFactor": "mobile",
+        "screenEmulation": {
+          "mobile": true,
+          "width": 412,
+          "height": 823,
+          "deviceScaleFactor": 1.75,
+          "disabled": false
+        },
+        "throttling": {
+          "rttMs": 150,
+          "throughputKbps": 1638.4,
+          "cpuSlowdownMultiplier": 4
+        }
+      }
+    },
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 200 }],
+        "server-response-time": ["error", { "maxNumericValue": 600 }],
+        "categories:performance": ["warn", { "minScore": 0.9 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:seo": ["error", { "minScore": 1 }],
+        "uses-responsive-images": "error",
+        "modern-image-formats": "error",
+        "unsized-images": "error",
+        "image-alt": "error",
+        "hreflang": "error",
+        "canonical": "error",
+        "document-title": "error",
+        "meta-description": "error",
+        "http-status-code": "error",
+        "crawlable-anchors": "error",
+        "is-crawlable": "off"
+      }
+    },
+    "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
+  }
+}

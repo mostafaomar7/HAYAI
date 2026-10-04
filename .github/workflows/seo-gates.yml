@@ -1,0 +1,70 @@
+name: SEO / GEO gates
+
+# The client's "Technical SEO & GEO Specification" (§9) requires two deploy
+# gates: structured-data validation and a Core Web Vitals budget. Both run
+# against the real server-rendered output, not a dev build, because the whole
+# point of the spec is what a crawler receives.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  seo-gate:
+    name: Structured data, headings, hreflang, images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx ng build
+
+      - name: Start the SSR server
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://api.hayaihealthcare.com/api/v1' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://hayaihealthcare.com' }}
+          WEBSITE_SERVER_KEY: ${{ secrets.WEBSITE_SERVER_KEY }}
+          PORT: 4000
+        run: |
+          node dist/BAREEQ/server/server.mjs &
+          echo $! > server.pid
+          npx wait-on -t 60000 http://localhost:4000/en
+
+      - name: SEO / GEO gate
+        run: node scripts/seo-gate.mjs http://localhost:4000
+
+      - name: Stop the server
+        if: always()
+        run: kill "$(cat server.pid)" || true
+
+  lighthouse:
+    name: Core Web Vitals budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx ng build
+
+      - name: Lighthouse CI
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://api.hayaihealthcare.com/api/v1' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://hayaihealthcare.com' }}
+        run: npx -y @lhci/cli@0.14.x autorun
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          if-no-files-found: ignore
