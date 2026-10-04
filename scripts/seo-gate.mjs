@@ -35,11 +35,33 @@ const BASE = (args.find((a) => a.startsWith('http')) || 'http://localhost:4000')
  * BreadcrumbList on every page; it is listed as `wanted` until the API emits
  * it, so the gate reports it without blocking every deploy on one known gap.
  */
+const AR = {
+  insurance: '/ar/%D8%AA%D8%BA%D8%B7%D9%8A%D8%A9-%D8%A7%D9%84%D8%AA%D8%A3%D9%85%D9%8A%D9%86',
+  faq: '/ar/%D8%A7%D9%84%D8%A3%D8%B3%D8%A6%D9%84%D8%A9-%D8%A7%D9%84%D8%B4%D8%A7%D8%A6%D8%B9%D8%A9',
+  about: '/ar/%D8%B9%D9%86-%D8%AD%D9%8A%D8%A7%D8%A9',
+};
+
 const DEFAULT_TARGETS = [
   { label: 'home (en)', path: '/en', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
   { label: 'home (ar)', path: '/ar', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+
+  { label: 'insurance coverage (en)', path: '/en/insurance-coverage', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
+  { label: 'insurance coverage (ar)', path: AR.insurance, required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+  { label: 'emergency / ICU (en)', path: '/en/emergency-icu', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
+  { label: 'how it works (en)', path: '/en/how-it-works', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
+  { label: 'FAQ (en)', path: '/en/faq', required: ['MedicalOrganization', 'FAQPage'], wanted: ['BreadcrumbList'], geo: true },
+  { label: 'FAQ (ar)', path: AR.faq, required: ['MedicalOrganization', 'FAQPage'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+  { label: 'about (en)', path: '/en/about', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
+  { label: 'about (ar)', path: AR.about, required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+
   { label: 'products listing', path: '/en/products', required: [], wanted: [], softMissing: true },
   { label: 'search (parameterised)', path: '/en/search?q=test&sort=price', required: [], wanted: [], expectNoindex: true, expectCanonicalClean: '/en/search' },
+
+  // The provider directory is public, so its thin-content controls are now
+  // live and must keep holding: every profile without real content stays
+  // noindex, and no profile may ship a seeded aggregateRating.
+  { label: 'doctor listing', path: '/en/doctors', required: [], wanted: [], softMissing: true },
+  { label: 'doctor profile (thin)', path: '/en/doctors/critical-care/samaa-saeed-abdelfattah', required: ['Physician'], wanted: [], expectNoindex: true, softMissing: true },
 ];
 
 const targets = flag('--targets')
@@ -123,8 +145,25 @@ async function check(t) {
   for (const want of t.wanted || []) {
     if (!ld.types.includes(want)) warn(t, `schema @type "${want}" not emitted yet (spec §3)`);
   }
-  if (/aggregateRating/.test(html)) fail(t, 'aggregateRating present — forbidden until real reviews exist (spec §8)');
-  if (/"@type"\s*:\s*"Review"/.test(html)) fail(t, 'Review schema present — forbidden until real reviews exist (spec §8)');
+  // Only inside JSON-LD: Angular serialises the API response into the page for
+  // hydration, and a `rating` object in that blob is data, not schema.
+  const ldRaw = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
+    .map((m) => m[1])
+    .join(' ');
+  // The spec forbids seeded or placeholder ratings, and a handful of reviews is
+  // exactly that pattern. Below the threshold it is a blocker; above it the
+  // signal is real and allowed.
+  const MIN_REVIEWS = 5;
+  for (const m of ldRaw.matchAll(/"reviewCount"\s*:\s*(\d+)/g)) {
+    const n = Number(m[1]);
+    if (n < MIN_REVIEWS) {
+      fail(t, `aggregateRating with reviewCount ${n} — seeded/thin rating signals are penalised; suppress below ${MIN_REVIEWS} (spec §8)`);
+    }
+  }
+  if (/aggregateRating/.test(ldRaw) && !/"reviewCount"/.test(ldRaw)) {
+    fail(t, 'aggregateRating with no reviewCount in JSON-LD (spec §8)');
+  }
+  if (/"@type"\s*:\s*"Review"/.test(ldRaw)) fail(t, 'Review schema present — forbidden until real reviews exist (spec §8)');
 
   // --- §4 content architecture -----------------------------------------
   const levels = headingLevels(html);
@@ -168,8 +207,16 @@ async function check(t) {
   for (const tag of html.match(/<img[^>]*>/g) || []) {
     const src = (tag.match(/src="([^"]*)"/) || [, ''])[1];
     const name = src.split('/').pop() || 'image';
-    if (!/width=/.test(tag) || !/height=/.test(tag)) fail(t, `<img ${name}> has no width/height — causes CLS (spec §7)`);
-    if (!/alt=/.test(tag)) fail(t, `<img ${name}> has no alt attribute (spec §7)`);
+    // The spec accepts `aspect-ratio` instead of width/height, so an image
+    // given a sized class in the stylesheet is not a CLS risk.
+    const SIZED = /class="[^"]*\b(card-img|avatar|avatar-lg|logo-img|video-poster)\b/;
+    const hasDims = /width=/.test(tag) && /height=/.test(tag);
+    if (!hasDims && !SIZED.test(tag)) fail(t, `<img ${name}> has no width/height and no sized class — CLS risk (spec §7)`);
+    const alt = tag.match(/alt="([^"]*)"/);
+    if (!/\balt[=\s>]/.test(tag)) fail(t, `<img ${name}> has no alt attribute (spec §7)`);
+    else if (alt && !alt[1].trim() && /\/media\/|\/profiles\//.test(src)) {
+      fail(t, `<img ${name}> has an empty alt on a content image (spec §7)`);
+    }
     // Logos and icons are fixed-size by design; only content images need srcset.
     const isContent = /\/media\//.test(src);
     if (isContent && !/srcset=/.test(tag)) fail(t, `content image ${name} has no srcset (spec §7)`);

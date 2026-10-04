@@ -98,8 +98,21 @@ export function uuid(): string {
  * crawler always gets one coherent `@graph` and never two copies of the
  * organisation.
  */
-export function buildJsonLd(schemaScript: string | null | undefined, siteSchema: Dict[] | null | undefined): string | null {
+export function buildJsonLd(
+  schemaScript: string | null | undefined,
+  siteSchema: Dict[] | null | undefined,
+  schemaNodes?: Dict[] | null
+): string | null {
   const site = Array.isArray(siteSchema) ? siteSchema : [];
+  // Provider payloads (doctor, hospital) carry their nodes in `schema` but
+  // leave `schema_script` empty, so the Physician and BreadcrumbList blocks
+  // would never reach the page. Serialise the array ourselves in that case.
+  if (!schemaScript && Array.isArray(schemaNodes) && schemaNodes.length) {
+    schemaScript = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': schemaNodes.map(stripContext)
+    });
+  }
   if (!schemaScript) {
     if (!site.length) return null;
     return JSON.stringify({ '@context': 'https://schema.org', '@graph': site.map(stripContext) });

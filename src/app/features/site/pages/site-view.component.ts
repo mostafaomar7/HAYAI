@@ -157,7 +157,7 @@ export class SiteViewComponent {
         alternates: d['is_preview'] ? [] : seo.alternates,
         openGraph: seo.open_graph,
         twitter: seo.twitter,
-        jsonLd: d['is_preview'] ? null : buildJsonLd(d['schema_script'], siteSchema),
+        jsonLd: d['is_preview'] ? null : buildJsonLd(d['schema_script'], siteSchema, arr<Dict>(d['schema'])),
         preloadImage: img(firstHero?.['data'], 'image') ?? img(d, 'featured_image')
       });
       return;

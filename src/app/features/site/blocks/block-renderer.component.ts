@@ -494,7 +494,7 @@ const KNOWN_BLOCKS = new Set([
               @for (a of d['articles']; track a.id) {
                 <article class="card article-card">
                   @if (a.image) {
-                    <site-img [image]="a.image" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
+                    <site-img [image]="a.image" [altText]="a.title" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
                   }
                   <h3 class="card-title"><a [attr.href]="a.path">{{ a.title }}</a></h3>
                   @if (a.excerpt) {
@@ -601,7 +601,7 @@ const KNOWN_BLOCKS = new Set([
     <ng-template #productCard let-p let-showPrice="showPrice">
       <article class="card product-card">
         @if (p.image) {
-          <site-img [image]="p.image" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
+          <site-img [image]="p.image" [altText]="p.name" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
         }
         <h3 class="card-title"><a [attr.href]="p.path">{{ p.name }}</a></h3>
         @if (p.short_description) {

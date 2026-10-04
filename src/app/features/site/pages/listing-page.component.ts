@@ -82,7 +82,7 @@ import { arr, hrefOf, img, priceText, str } from '../site-utils';
             @for (x of items(); track $index) {
               <article class="card">
                 @if (img(x, 'featured_image', 'image', 'photo', 'logo')) {
-                  <site-img [image]="img(x, 'featured_image', 'image', 'photo', 'logo')" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
+                  <site-img [image]="img(x, 'featured_image', 'image', 'photo', 'logo')" [altText]="str(x['name'], x['title'])" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
                 }
                 <h2 class="card-title"><a [attr.href]="href(x)">{{ str(x['name'], x['title']) }}</a></h2>
                 @if (str(x['short_description'], x['excerpt'], x['specialty']?.name, x['specialty'])) {
