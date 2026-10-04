@@ -81,6 +81,16 @@ export interface BulkPreview {
   issues?: BulkIssue[];
   sample: Record<string, unknown>[];
   default_branch_id?: number | null;
+  /**
+   * What the import would actually do, from the server running the same
+   * matching in memory. `null` while the file is not `ready`, and absent on
+   * an API older than the 4 Oct release — so every reader must tolerate both.
+   */
+  will_create?: number | null;
+  will_update?: number | null;
+  will_delete?: number | null;
+  /** How many products the pharmacy has today. */
+  existing_products?: number | null;
 }
 
 export interface BulkResult {
@@ -140,10 +150,18 @@ export class AdminPharmaciesService {
    * The flow is preview first, then upload, so a mis-mapped price column is
    * caught before it becomes the public price.
    */
-  previewUpload(id: number, file: File, branchId?: number | null): Observable<BulkPreview> {
+  previewUpload(
+    id: number,
+    file: File,
+    mode: BulkMode,
+    branchId?: number | null
+  ): Observable<BulkPreview> {
+    // The mode has to go with the preview: the server runs the real matching
+    // in memory to produce will_create / will_update / will_delete, and those
+    // differ completely between upsert and replace.
     return this.api.postMultipart<BulkPreview>(
       `${BASE}/${id}/products/bulk-upload/preview`,
-      this.uploadForm(file, undefined, branchId)
+      this.uploadForm(file, mode, branchId)
     );
   }
 

@@ -174,6 +174,21 @@
               <span class="stat">{{ 'pharm.header_row' | t : { row: p.header_row } }}</span>
             </div>
 
+            @if (p.will_create !== null && p.will_create !== undefined) {
+              <h3>{{ 'pharm.forecast' | t }}</h3>
+              <div class="preview-head">
+                <span class="stat ok">{{ 'pharm.will_create' | t : { count: p.will_create } }}</span>
+                <span class="stat">{{ 'pharm.will_update' | t : { count: p.will_update ?? 0 } }}</span>
+                @if (p.will_delete) {
+                  <span class="stat danger">{{ 'pharm.will_delete' | t : { count: p.will_delete } }}</span>
+                }
+                <span class="stat">{{ 'pharm.existing_products' | t : { count: p.existing_products ?? 0 } }}</span>
+              </div>
+              @if (duplicateRisk(p)) {
+                <p class="form-error">{{ 'pharm.duplicate_risk' | t }}</p>
+              }
+            }
+
             <h3>{{ 'pharm.detected' | t }}</h3>
             <div class="map-grid">
               @for (pair of detectedPairs(p); track pair.field) {
@@ -219,7 +234,7 @@
             }
 
             <div class="confirm-row">
-              <select [value]="mode()" (change)="mode.set($any($event.target).value)">
+              <select [value]="mode()" (change)="setMode($any($event.target).value)">
                 <option value="upsert">{{ 'pharm.mode_upsert' | t }}</option>
                 <option value="append">{{ 'pharm.mode_append' | t }}</option>
                 <option value="replace">{{ 'pharm.mode_replace' | t }}</option>

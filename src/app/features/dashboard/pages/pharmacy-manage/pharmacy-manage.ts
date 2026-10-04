@@ -303,13 +303,23 @@ export class PharmacyManage {
     this.uploadError.set(null);
   }
 
+  /**
+   * The forecast in the preview is mode-specific, so switching mode after a
+   * preview re-runs it rather than leaving stale numbers on screen.
+   */
+  setMode(mode: BulkMode): void {
+    if (mode === this.mode()) return;
+    this.mode.set(mode);
+    if (this.preview()) this.runPreview();
+  }
+
   runPreview(): void {
     const f = this.file();
     if (!f) return;
     this.uploading.set(true);
     this.uploadError.set(null);
     this.result.set(null);
-    this.svc.previewUpload(this.id, f, this.uploadBranch() ? Number(this.uploadBranch()) : null)
+    this.svc.previewUpload(this.id, f, this.mode(), this.uploadBranch() ? Number(this.uploadBranch()) : null)
       .subscribe({
         next: p => { this.uploading.set(false); this.preview.set(p); },
         error: (err: HttpErrorResponse) => {
@@ -329,11 +339,15 @@ export class PharmacyManage {
     // "Replace" deletes the current catalogue outright and there is no undo.
     // With a branch chosen the server only switches products off at that
     // branch, so the warning is limited to the whole-catalogue case.
-    if (this.mode() === 'replace' && !this.uploadBranch() && this.total() > 0) {
+    // The server's own forecast is the number to quote; `total()` is only this
+    // list's pagination count and is wrong whenever a search filter is on.
+    const p = this.preview();
+    const doomed = p?.will_delete ?? p?.existing_products ?? this.total();
+    if (this.mode() === 'replace' && !this.uploadBranch() && doomed > 0) {
       const ok = await this.dialog.confirm({
         title: 'pharm.replace_confirm_title',
         text: 'pharm.replace_confirm_text',
-        params: { count: this.total() },
+        params: { count: doomed },
         confirmText: 'pharm.replace_confirm_ok',
         danger: true
       });
@@ -366,6 +380,18 @@ export class PharmacyManage {
 
   detectedPairs(p: BulkPreview): { field: string; header: string }[] {
     return Object.entries(p.detected_columns ?? {}).map(([field, header]) => ({ field, header }));
+  }
+
+  /**
+   * The pattern the importer's own author flagged: a file that would create
+   * almost a whole catalogue's worth of new products on a pharmacy that
+   * already has one. That is what a duplicated catalogue looks like before
+   * it happens.
+   */
+  duplicateRisk(p: BulkPreview): boolean {
+    const create = p.will_create ?? 0;
+    const existing = p.existing_products ?? 0;
+    return existing > 0 && p.valid_rows > 0 && create >= p.valid_rows * 0.9 && (p.will_update ?? 0) === 0;
   }
 
   ignoredPairs(p: BulkPreview): { field: string; header: string }[] {

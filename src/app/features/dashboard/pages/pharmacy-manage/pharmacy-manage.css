@@ -89,6 +89,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .stat { background: #F1F5F9; color: #475569; border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
 .stat.ok { background: #ECFDF5; color: #047857; }
 .stat.warn { background: #FFFBEB; color: #92400E; }
+.stat.danger { background: #FEF2F2; color: #B91C1C; }
 
 .map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 6px 16px; }
 .map-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 4px 0; }
