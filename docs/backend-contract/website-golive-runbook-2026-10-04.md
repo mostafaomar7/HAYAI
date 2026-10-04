@@ -44,7 +44,7 @@ documents Supervisor as the default.
 
 ## 1. The build
 
-A zip of `dist/BAREEQ/` is attached, or ask the owner for read access to the
+A `.tar.gz` of `dist/BAREEQ/` is attached, or ask the owner for read access to the
 website repo and run `npm ci && npx ng build` yourself — access is better,
 because every release otherwise becomes a manual file transfer.
 
@@ -60,7 +60,7 @@ directory. `server.mjs` on its own does nothing.
 
 ```bash
 sudo mkdir -p /var/www/hayai-web
-sudo unzip -o hayai-web-<sha>.zip -d /var/www/hayai-web
+sudo tar -xzf hayai-web-<sha>.tar.gz -C /var/www/hayai-web
 sudo chown -R www-data:www-data /var/www/hayai-web
 ```
 
@@ -275,7 +275,7 @@ The full acceptance list from the client's SEO spec is §9 of
 ## 11. Every release after this one
 
 ```bash
-sudo unzip -o hayai-web-<sha>.zip -d /var/www/hayai-web
+sudo tar -xzf hayai-web-<sha>.tar.gz -C /var/www/hayai-web
 sudo chown -R www-data:www-data /var/www/hayai-web
 sudo supervisorctl restart hayai-web
 ```
