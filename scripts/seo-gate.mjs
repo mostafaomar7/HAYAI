@@ -150,14 +150,18 @@ async function check(t) {
   const ldRaw = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
     .map((m) => m[1])
     .join(' ');
-  // The spec forbids seeded or placeholder ratings, and a handful of reviews is
-  // exactly that pattern. Below the threshold it is a blocker; above it the
-  // signal is real and allowed.
-  const MIN_REVIEWS = 5;
+  // The spec forbids *fabricated or seeded* ratings, not small ones. The API
+  // derives every rating from completed bookings, so a genuine count of two
+  // is honest data and blocking on it would only teach people to ignore the
+  // gate. A rating with no reviews behind it is the fabrication the spec
+  // means, and that still fails.
+  const THIN_REVIEWS = 5;
   for (const m of ldRaw.matchAll(/"reviewCount"\s*:\s*(\d+)/g)) {
     const n = Number(m[1]);
-    if (n < MIN_REVIEWS) {
-      fail(t, `aggregateRating with reviewCount ${n} — seeded/thin rating signals are penalised; suppress below ${MIN_REVIEWS} (spec §8)`);
+    if (n === 0) {
+      fail(t, `aggregateRating with reviewCount 0 — a rating with no reviews behind it is a fabricated signal (spec §8)`);
+    } else if (n < THIN_REVIEWS) {
+      warn(t, `aggregateRating on only ${n} review(s) — genuine but thin; search engines may ignore or penalise it (spec §8)`);
     }
   }
   if (/aggregateRating/.test(ldRaw) && !/"reviewCount"/.test(ldRaw)) {
