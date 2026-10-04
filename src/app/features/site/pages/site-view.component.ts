@@ -165,6 +165,11 @@ export class SiteViewComponent {
 
     if (result.kind === 'listing') {
       const seo: SeoData = v.listing?.seo ?? {};
+      // The resolve payload behind a listing carries its own schema — a
+      // CollectionPage and the BreadcrumbList for the section. Until the
+      // 4 October API release it was empty here, so this branch used to emit
+      // the site graph alone and the listings shipped with no page schema.
+      const ld = (result.data ?? {}) as Dict;
       this.state.alternates.set(arr(seo.alternates));
       this.seo.apply({
         locale,
@@ -175,7 +180,7 @@ export class SiteViewComponent {
         alternates: seo.alternates,
         openGraph: seo.open_graph,
         twitter: seo.twitter,
-        jsonLd: buildJsonLd(null, siteSchema)
+        jsonLd: buildJsonLd(ld['schema_script'], siteSchema, arr<Dict>(ld['schema']))
       });
       return;
     }

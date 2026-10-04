@@ -31,9 +31,13 @@ const flag = (name) => {
 const BASE = (args.find((a) => a.startsWith('http')) || 'http://localhost:4000').replace(/\/$/, '');
 
 /**
- * `required` are the @types that must be present. The spec asks for
- * BreadcrumbList on every page; it is listed as `wanted` until the API emits
- * it, so the gate reports it without blocking every deploy on one known gap.
+ * `required` are the @types that must be present, and the gate blocks on a
+ * missing one. BreadcrumbList sat in `wanted` while the API did not emit it;
+ * the 4 October release does emit it on every template, so it is required
+ * now and a regression stops a deploy instead of printing a warning nobody
+ * reads. `wanted` is left for types that depend on an editor keeping the
+ * right block on the page — FAQPage follows FAQ content, so losing it is an
+ * editorial choice, not a bug.
  */
 const AR = {
   insurance: '/ar/%D8%AA%D8%BA%D8%B7%D9%8A%D8%A9-%D8%A7%D9%84%D8%AA%D8%A3%D9%85%D9%8A%D9%86',
@@ -42,26 +46,27 @@ const AR = {
 };
 
 const DEFAULT_TARGETS = [
-  { label: 'home (en)', path: '/en', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
-  { label: 'home (ar)', path: '/ar', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+  { label: 'home (en)', path: '/en', required: ['MedicalOrganization', 'WebSite', 'BreadcrumbList'], geo: true },
+  { label: 'home (ar)', path: '/ar', required: ['MedicalOrganization', 'WebSite', 'BreadcrumbList'], geo: true, rtl: true },
 
-  { label: 'insurance coverage (en)', path: '/en/insurance-coverage', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
-  { label: 'insurance coverage (ar)', path: AR.insurance, required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
-  { label: 'emergency / ICU (en)', path: '/en/emergency-icu', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
-  { label: 'how it works (en)', path: '/en/how-it-works', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
-  { label: 'FAQ (en)', path: '/en/faq', required: ['MedicalOrganization', 'FAQPage'], wanted: ['BreadcrumbList'], geo: true },
-  { label: 'FAQ (ar)', path: AR.faq, required: ['MedicalOrganization', 'FAQPage'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
-  { label: 'about (en)', path: '/en/about', required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true },
-  { label: 'about (ar)', path: AR.about, required: ['MedicalOrganization'], wanted: ['BreadcrumbList'], geo: true, rtl: true },
+  { label: 'insurance coverage (en)', path: '/en/insurance-coverage', required: ['MedicalOrganization', 'BreadcrumbList'], wanted: ['FAQPage'], geo: true },
+  { label: 'insurance coverage (ar)', path: AR.insurance, required: ['MedicalOrganization', 'BreadcrumbList'], wanted: ['FAQPage'], geo: true, rtl: true },
+  { label: 'emergency / ICU (en)', path: '/en/emergency-icu', required: ['MedicalOrganization', 'BreadcrumbList'], geo: true },
+  { label: 'how it works (en)', path: '/en/how-it-works', required: ['MedicalOrganization', 'BreadcrumbList'], geo: true },
+  { label: 'FAQ (en)', path: '/en/faq', required: ['MedicalOrganization', 'BreadcrumbList', 'FAQPage'], geo: true },
+  { label: 'FAQ (ar)', path: AR.faq, required: ['MedicalOrganization', 'BreadcrumbList', 'FAQPage'], geo: true, rtl: true },
+  { label: 'about (en)', path: '/en/about', required: ['MedicalOrganization', 'BreadcrumbList'], geo: true },
+  { label: 'about (ar)', path: AR.about, required: ['MedicalOrganization', 'BreadcrumbList'], geo: true, rtl: true },
 
-  { label: 'products listing', path: '/en/products', required: [], wanted: [], softMissing: true },
-  { label: 'search (parameterised)', path: '/en/search?q=test&sort=price', required: [], wanted: [], expectNoindex: true, expectCanonicalClean: '/en/search' },
+  { label: 'products listing', path: '/en/products', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
+  // A parameterised URL is noindex by design, so it carries no schema of its own.
+  { label: 'search (parameterised)', path: '/en/search?q=test&sort=price', required: [], expectNoindex: true, expectCanonicalClean: '/en/search' },
 
   // The provider directory is public, so its thin-content controls are now
   // live and must keep holding: every profile without real content stays
   // noindex, and no profile may ship a seeded aggregateRating.
-  { label: 'doctor listing', path: '/en/doctors', required: [], wanted: [], softMissing: true },
-  { label: 'doctor profile (thin)', path: '/en/doctors/critical-care/samaa-saeed-abdelfattah', required: ['Physician'], wanted: [], expectNoindex: true, softMissing: true },
+  { label: 'doctor listing', path: '/en/doctors', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
+  { label: 'doctor profile (thin)', path: '/en/doctors/critical-care/samaa-saeed-abdelfattah', required: ['Physician', 'BreadcrumbList'], expectNoindex: true, softMissing: true },
 ];
 
 const targets = flag('--targets')
