@@ -323,9 +323,22 @@ export class PharmacyManage {
       });
   }
 
-  confirmUpload(): void {
+  async confirmUpload(): Promise<void> {
     const f = this.file();
     if (!f) return;
+    // "Replace" deletes the current catalogue outright and there is no undo.
+    // With a branch chosen the server only switches products off at that
+    // branch, so the warning is limited to the whole-catalogue case.
+    if (this.mode() === 'replace' && !this.uploadBranch() && this.total() > 0) {
+      const ok = await this.dialog.confirm({
+        title: 'pharm.replace_confirm_title',
+        text: 'pharm.replace_confirm_text',
+        params: { count: this.total() },
+        confirmText: 'pharm.replace_confirm_ok',
+        danger: true
+      });
+      if (!ok) return;
+    }
     this.uploading.set(true);
     this.uploadError.set(null);
     this.svc.upload(this.id, f, this.mode(), this.uploadBranch() ? Number(this.uploadBranch()) : null)
