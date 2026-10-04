@@ -58,18 +58,18 @@ const DEFAULT_TARGETS = [
   { label: 'about (en)', path: '/en/about', required: ['MedicalOrganization', 'BreadcrumbList'], geo: true },
   { label: 'about (ar)', path: AR.about, required: ['MedicalOrganization', 'BreadcrumbList'], geo: true, rtl: true },
 
-  { label: 'products listing', path: '/en/products', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
+  { label: 'products listing', path: '/en/products', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true, listing: true },
   // A parameterised URL is noindex by design, so it carries no schema of its own.
   { label: 'search (parameterised)', path: '/en/search?q=test&sort=price', required: [], expectNoindex: true, expectCanonicalClean: '/en/search' },
 
   // The provider directory is public, so its thin-content controls are now
   // live and must keep holding: every profile without real content stays
   // noindex, and no profile may ship a seeded aggregateRating.
-  { label: 'doctor listing', path: '/en/doctors', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
+  { label: 'doctor listing', path: '/en/doctors', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true, listing: true },
   // A specialty is a path facet, not a page of its own in the CMS. It used to
   // fetch the whole directory and ship as a duplicate of /en/doctors, so its
   // own h1, canonical and breadcrumb are checked here.
-  { label: 'doctor specialty facet', path: '/en/doctors/critical-care', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true },
+  { label: 'doctor specialty facet', path: '/en/doctors/critical-care', required: ['MedicalOrganization', 'BreadcrumbList', 'CollectionPage'], softMissing: true, listing: true },
   { label: 'doctor profile (thin)', path: '/en/doctors/critical-care/samaa-saeed-abdelfattah', required: ['Physician', 'BreadcrumbList'], expectNoindex: true, softMissing: true },
 ];
 
@@ -118,6 +118,33 @@ function directAnswerWords(html) {
   );
   const answer = paras.length ? paras[paras.length - 1] : m[1].replace(/<[^>]+>/g, ' ');
   return answer.split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * The URLs in each language's sitemap, fetched once.
+ *
+ * The API builds `robots` and the sitemap from one rule: a listing with
+ * results is `index` and is listed, an empty one is `noindex` and is not.
+ * One rule is only worth having if the two outputs are checked against each
+ * other — an indexable page missing from the sitemap is a page we ask Google
+ * to find by luck, and a noindex page inside it is a contradiction a crawler
+ * has to resolve for us.
+ */
+const sitemaps = new Map();
+async function sitemapUrls(locale) {
+  if (sitemaps.has(locale)) return sitemaps.get(locale);
+  let urls = null;
+  try {
+    const res = await fetch(`${BASE}/sitemap-${locale}.xml`);
+    if (res.ok) {
+      const xml = await res.text();
+      urls = new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(/\/$/, '')));
+    }
+  } catch {
+    /* reported by the caller as "could not be read" */
+  }
+  sitemaps.set(locale, urls);
+  return urls;
 }
 
 async function check(t) {
@@ -214,6 +241,27 @@ async function check(t) {
     for (const h of ['en', 'ar', 'x-default']) {
       if (!tags.includes(h)) fail(t, `hreflang="${h}" missing — reciprocity is mandatory (spec §6)`);
     }
+
+  // --- the sitemap and `robots` must agree (spec §5) --------------------
+  if (t.listing && canonical) {
+    const locale = t.path.startsWith('/ar') ? 'ar' : 'en';
+    const urls = await sitemapUrls(locale);
+    const clean = canonical.replace(/\/$/, '');
+    const indexable = !/noindex/.test(robots || '');
+    // Page 2 onwards is self-canonical and indexable but deliberately out of
+    // the sitemap: its contents shift every time a row is added, and crawlers
+    // reach it from page 1. Only a listing's clean first page is checked.
+    const paginated = /[?&]page=/.test(clean);
+    if (!urls) {
+      warn(t, `sitemap-${locale}.xml could not be read, so the sitemap check was skipped`);
+    } else if (paginated) {
+      /* intentionally not in the sitemap */
+    } else if (indexable && !urls.has(clean)) {
+      fail(t, `indexable but missing from sitemap-${locale}.xml: ${clean} (spec §5)`);
+    } else if (!indexable && urls.has(clean)) {
+      fail(t, `noindex but listed in sitemap-${locale}.xml: ${clean} (spec §5)`);
+    }
+  }
   }
 
   // --- §7 images ---------------------------------------------------------

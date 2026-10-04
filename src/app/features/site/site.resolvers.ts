@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { SiteApiService } from './services/site-api.service';
 import { SiteStateService } from './services/site-state.service';
 import { DEFAULT_SITE_LOCALE, SiteLocale, isSiteLocale } from './site-paths';
-import { ResolveResult, ResolvedView, SiteData } from './models/site.models';
+import { Dict, ResolveResult, ResolvedView, SiteData } from './models/site.models';
 import { cleanQueryString, str } from './site-utils';
 
 declare const ngDevMode: unknown;
@@ -58,27 +58,23 @@ const LISTING_ENDPOINTS: Record<string, string> = {
 };
 
 /**
- * A listing facet the API expresses as a path rather than a query. The API
- * answers `/doctors?specialty=critical-care` with the canonical
- * `/en/doctors/critical-care`, so that path is the specialty page and the
- * segment is the filter — but the listing endpoint itself only takes the
- * query form, and resolve does not say which parameter the segment is. Until
- * it does, the mapping lives here; without it a specialty URL fetched the
- * whole directory and shipped as a duplicate of `/en/doctors`.
+ * The query to fetch a listing with.
+ *
+ * A path facet — `/en/doctors/critical-care` — is `?specialty=critical-care`
+ * to the listing endpoint, and resolve is the only thing that knows which
+ * parameter the segment is. It says so in `data.query`, an object that is
+ * `{}` when the path carries no facet. We merge it over the URL's own query,
+ * and it wins on a clash, because the path facet is what the canonical is
+ * built from: `?specialty=x` on `/doctors/y` must not quietly serve x under
+ * y's canonical.
  */
-const PATH_FACETS: Record<string, string> = { doctors: 'specialty' };
-
-/**
- * The query to fetch a listing with: the URL's own query, plus the path facet
- * if this listing has one and the URL carries a segment for it.
- */
-function listingQuery(listingName: string, path: string, qs: string): string {
-  const facet = PATH_FACETS[listingName];
-  const segments = path.split('/').filter(Boolean);
-  if (!facet || segments.length < 2) return qs;
+function listingQuery(result: ResolveResult, qs: string): string {
+  const facets = (result.data as Dict | null)?.['query'];
+  if (!facets || typeof facets !== 'object' || Array.isArray(facets)) return qs;
   const params = new URLSearchParams(qs);
-  // An explicit `?specialty=` in the URL wins: it is what the visitor asked for.
-  if (!params.has(facet)) params.set(facet, segments[segments.length - 1]);
+  for (const [k, v] of Object.entries(facets as Dict)) {
+    if (v !== null && v !== undefined) params.set(k, String(v));
+  }
   return params.toString();
 }
 
@@ -135,7 +131,7 @@ export const siteViewResolver: ResolveFn<ResolvedView | RedirectCommand> = async
       const listingName = str(result.data?.listing);
       const endpoint = LISTING_ENDPOINTS[listingName];
       if (endpoint) {
-        const query = listingQuery(listingName, path, qs);
+        const query = listingQuery(result, qs);
         const res = await firstValueFrom(api.listing(locale, endpoint, query));
         if (!res) {
           setServerResponse(responseInit, 503, { 'Retry-After': '120' });
