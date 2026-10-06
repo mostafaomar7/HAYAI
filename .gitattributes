@@ -1,0 +1,4 @@
+# Shell scripts must keep LF endings whatever the checkout does. A .sh file
+# committed with CRLF fails on Linux with "bad interpreter: /usr/bin/env
+# bash^M", which is how CI breaks on a machine nobody is looking at.
+*.sh text eol=lf
