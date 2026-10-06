@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>استفسارات على ملف القياس والتتبّع — HAYAI</title>
+<style>
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:400;src:url('fonts/Cairo-400.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:600;src:url('fonts/Cairo-600.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:700;src:url('fonts/Cairo-700.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:900;src:url('fonts/Cairo-900.ttf') format('truetype');font-display:block}
+
+  :root{ --ink:#0F172A; --body:#334155; --muted:#6B7280; --line:#E5E7EB; --brand:#0E7490; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{ size:A4; margin:20mm 18mm 18mm; }
+  html{font-family:'Cairo',sans-serif;font-size:11pt}
+  body{color:var(--body);line-height:1.9;background:#fff}
+
+  header.doc{border-bottom:2px solid var(--brand);padding-bottom:5mm;margin-bottom:7mm}
+  header.doc .org{color:var(--brand);font-weight:700;font-size:10pt;letter-spacing:.04em;margin-bottom:2mm}
+  header.doc h1{color:var(--ink);font-size:19pt;font-weight:900;line-height:1.45}
+  header.doc .date{color:var(--muted);font-size:9.5pt;margin-top:2mm}
+
+  .lede{margin-bottom:4mm}
+  .lede p{margin-bottom:2.5mm}
+
+  .note{border-right:3px solid var(--brand);background:#F8FAFC;border-radius:0 6px 6px 0;
+        padding:3.5mm 4mm;margin:5mm 0 7mm;font-size:10.5pt}
+
+  .q{page-break-inside:avoid;margin-bottom:6mm}
+  .q h2{color:var(--ink);font-size:12.5pt;font-weight:700;margin-bottom:2mm;
+        display:flex;align-items:baseline;gap:3mm}
+  .q h2 .n{color:var(--brand);font-weight:900;font-size:13pt;min-width:7mm}
+  .q p{margin-bottom:2mm}
+  .q ul{margin:0 7mm 2.5mm 0;padding-right:4mm}
+  .q li{margin-bottom:1mm}
+
+  code{font-family:'Consolas','Courier New',monospace;direction:ltr;unicode-bidi:isolate;
+       background:#F1F5F9;border:1px solid var(--line);border-radius:3px;padding:0 1.5mm;font-size:9.5pt;color:var(--ink)}
+  strong{color:var(--ink);font-weight:700}
+
+  footer.sign{margin-top:8mm;padding-top:4mm;border-top:1px solid var(--line);font-size:10.5pt}
+  footer.sign .small{color:var(--muted);font-size:9pt;margin-top:4mm;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <div class="org">HAYAI</div>
+  <h1>استفسارات على ملف القياس والتتبّع</h1>
+  <div class="date">٦ أكتوبر ٢٠٢٦</div>
+</header>
+
+<div class="lede">
+  <p>راجعنا الملف بالكامل وبدأنا التنفيذ في الأجزاء اللي من ناحيتنا. فيه عدد من النقاط
+     محتاجين ردّكم عليها عشان نكمّل، معظمها حسابات أو أرقام مش موجودة في الملف.</p>
+</div>
+
+<div class="note">
+  رتّبناها بالأولوية: من واحد لخمسة بتوقّف التركيب نفسه، والباقي محتاجينه قبل ما الحملات تشتغل.
+</div>
+
+<section class="q">
+  <h2><span class="n">١</span> حساب جوجل اللي هيتسجّل عليه كل حاجة</h2>
+  <p>الملف بيطلب إن الحسابات تكون باسم الشركة مش باسم شخص أو وكالة. محتاجين نعرف:</p>
+  <p>هل فيه حساب Google Workspace باسم HAYAI؟ ولو أيوة، مين اللي هيتولّى إنشاء الحسابات
+     الأربعة (Tag Manager و Analytics و Ads و Search Console)؟</p>
+  <p>ده أول خطوة، وكل اللي بعدها متوقف عليها.</p>
+</section>
+
+<section class="q">
+  <h2><span class="n">٢</span> معرّف حاوية Tag Manager</h2>
+  <p>بعد إنشاء الحساب هيطلع معرّف شكله <code>GTM-XXXXXXX</code>. محتاجينه عشان نركّب
+     الكود في الموقع.</p>
+</section>
+
+<section class="q">
+  <h2><span class="n">٣</span> معرّفات Google Analytics</h2>
+  <p>محتاجين اتنين: واحد للموقع الحقيقي وواحد للنسخة التجريبية (شكلهم <code>G-XXXXXXX</code>).
+     السبب إن الملف بيشترط إن الاختبارات ما تلوّثش بيانات الموقع الحقيقي، وده بيتم بفصل الحسابين.</p>
+</section>
+
+<section class="q">
+  <h2><span class="n">٤</span> معرّف Google Ads وقيم التحويلات</h2>
+  <p>محتاجين:</p>
+  <ul>
+    <li>معرّف الحساب (شكله <code>AW-XXXXXXXXX</code>)</li>
+    <li>اسم ومعرّف لكل تحويل من الأربعة: إرسال نموذج، تأكيد حجز، ضغط واتساب، ضغط رقم تليفون</li>
+    <li>وقيمة تقديرية بالجنيه لكل واحد فيهم</li>
+  </ul>
+  <p>النقطة الأخيرة دي الملف سايبها لكم بالنص ("set by marketing"). والقيم دي هي اللي جوجل
+     بيتعلّم منها إزاي يوزّع الميزانية، فلو مش مضبوطة الحملات بتتحسّن في الاتجاه الغلط.</p>
+</section>
+
+<section class="q">
+  <h2><span class="n">٥</span> بانر الموافقة على الكوكيز</h2>
+  <p>الملف بيشترط خدمة معتمدة من جوجل، بتدعم النسخة التانية من Consent Mode، وبواجهة عربية.
+     الخيارات المذكورة: CookieYes أو Cookiebot.</p>
+  <p>محتاجين قرار بأي واحدة، ومين هيفتح الاشتراك. ودي مش تفصيلة شكلية: من غير البانر ده،
+     كل أدوات القياس مقفولة بالكامل وما بتسجّلش أي حاجة. يعني الموقع هيبقى شغّال بس مفيش
+     ولا رقم بيتسجّل.</p>
+</section>
+
+<section class="q">
+  <h2><span class="n">٦</span> حساب Microsoft Clarity</h2>
+  <p>لو مطلوب تسجيل جلسات المستخدمين والخرائط الحرارية، محتاجين معرّف المشروع. ولو مش
+     مطلوب دلوقتي، قولوا لنا ونأجّله.</p>
+</section>
+
+<section class="q">
+  <h2><span class="n">٧</span> عناوين الإنترنت الخاصة بمكاتبكم</h2>
+  <p>عشان زيارات الفريق للموقع ما تتحسبش ضمن الزيارات الحقيقية وتشوّه الأرقام. محتاجين
+     نطاق الـ IP بتاع المكتب، ولو فيه أكتر من فرع نحتاجهم كلهم.</p>
+</section>
+
+<footer class="sign">
+  <p>تحت أمركم لأي استفسار.</p>
+  <div class="small">HAYAI · استفسارات على ملف القياس والتتبّع · ٦ أكتوبر ٢٠٢٦</div>
+</footer>
+
+</body>
+</html>
