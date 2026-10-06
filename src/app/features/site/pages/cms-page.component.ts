@@ -163,7 +163,20 @@ export class CmsPageComponent {
   protected arr = arr;
   protected href = hrefOf;
 
-  protected sections = computed(() => arr<PageSection>(this.page().sections).filter(s => s && s.type));
+  protected sections = computed(() => {
+    const all = arr<PageSection>(this.page().sections).filter(s => s && s.type);
+    const geo = this.page().geo?.['direct_answer'];
+    const answer = str(geo?.answer);
+    if (!answer) return all;
+    // The SEO spec puts the direct answer immediately after the H1, and this
+    // page prints `geo.direct_answer` there. An editor who also added a
+    // direct_answer block with the same text would have it rendered twice —
+    // four of the five content pages did. Only the matching block is dropped,
+    // so a page that genuinely answers a second question still shows it.
+    return all.filter(
+      s => !(s.type === 'direct_answer' && str(s.data?.['answer']) === answer)
+    );
+  });
   protected h1Text = computed(() => str(this.page().h1?.text, this.page().title));
   /** The hero that carries the H1: the one `h1.section_id` names, else a hero
    *  with `is_h1`. Any other hero renders its headline as `<h2>`. */
