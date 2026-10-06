@@ -10,7 +10,7 @@ import { BreadcrumbsComponent } from '../ui/breadcrumbs.component';
 import { BuyBoxComponent } from '../ui/buy-box.component';
 import { VideoBlockComponent } from './video-block.component';
 import { FormBlockComponent } from './form-block.component';
-import { isExternalHref, money } from '../site-utils';
+import { isExternalHref, money, str } from '../site-utils';
 
 const KNOWN_BLOCKS = new Set([
   'hero', 'rich_text', 'direct_answer', 'feature_grid', 'feature_list', 'pricing', 'product_grid',
@@ -54,6 +54,8 @@ const KNOWN_BLOCKS = new Set([
       [attr.id]="s.anchor || null"
       [class]="classes()"
       [attr.data-block]="s.type"
+      [attr.data-section]="sectionKey()"
+      [attr.data-clarity-mask]="masked() || null"
       [attr.aria-labelledby]="headingId()"
     >
       <div class="wrap">
@@ -688,6 +690,30 @@ export class BlockRendererComponent {
     const own = ['hero', 'direct_answer', 'faq', 'contact_form', 'hospital_partner_cta', 'product_card', 'purchase_cta'];
     const hasHeading = own.includes(s.type) || !!this.title();
     return hasHeading ? `h-${s.anchor || s.id || s.type}` : null;
+  });
+
+  /**
+   * What the visibility trigger reports as a viewed section.
+   *
+   * An anchor means the editor named this block, which is the only signal
+   * we have that it matters; the rest are the blocks a visitor's attention
+   * is worth knowing about on any page. Tagging every block instead would
+   * put a dozen section views on every page view and tell nobody anything.
+   */
+  protected sectionKey = computed(() => {
+    const s = this.section();
+    const KEY = ['pricing', 'faq', 'contact_form', 'purchase_cta', 'hospital_partner_cta', 'comparison_table', 'steps'];
+    return str(s.anchor) || (KEY.includes(s.type) ? s.type : null);
+  });
+
+  /**
+   * Clarity records sessions. A block where a patient types their name,
+   * phone or anything about their health is masked at the container, so no
+   * recording can contain it even if a field is added later.
+   */
+  protected masked = computed(() => {
+    const MASK = ['contact_form', 'purchase_cta', 'hospital_partner_cta'];
+    return MASK.includes(this.section().type) ? 'true' : null;
   });
 
   protected classes = computed(() => {

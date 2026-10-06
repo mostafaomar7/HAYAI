@@ -262,3 +262,9 @@ html[lang="ar"] body {
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* A click on the icon or the label inside a CTA must be reported as a click on
+   the CTA itself. Without this the tag manager reads whichever child element
+   was hit, and the same button arrives under a different name depending on
+   where the finger landed. */
+[data-cta] * { pointer-events: none; }
