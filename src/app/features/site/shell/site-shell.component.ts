@@ -17,6 +17,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { SiteStateService } from '../services/site-state.service';
 import { SiteAnalyticsService } from '../services/site-analytics.service';
+import { TagLayerService } from '../services/tag-layer.service';
 import { SeoHeadService } from '../services/seo-head.service';
 import { CtaButtonComponent } from '../ui/cta-button.component';
 import { SiteFormComponent } from '../ui/site-form.component';
@@ -51,6 +52,7 @@ import { isPublicSitePath } from '../site-paths';
 export class SiteShellComponent implements OnDestroy {
   protected state = inject(SiteStateService);
   private analytics = inject(SiteAnalyticsService);
+  private tags = inject(TagLayerService);
   private seo = inject(SeoHeadService);
   private router = inject(Router);
   private document = inject(DOCUMENT);
@@ -200,6 +202,9 @@ export class SiteShellComponent implements OnDestroy {
     if (this.lastPath !== null && this.lastPath !== path && !hasFragment) window.scrollTo(0, 0);
     if (this.lastPath !== path) {
       this.analytics.captureLanding();
+      // Not on the first path: the server already pushed that one, before the
+      // container loaded. Pushing it again would count the landing twice.
+      if (this.lastPath !== null) this.tags.pageView(path);
       this.analytics.track('page_view', { referrer: this.lastPath === null ? this.document.referrer || null : null });
     }
     this.lastPath = path;

@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { SiteStateService } from './site-state.service';
 import { SiteAnalyticsService } from './site-analytics.service';
 import { SiteApiService } from './site-api.service';
+import { TagLayerService } from './tag-layer.service';
 import { Dict, SiteCta } from '../models/site.models';
 
 /** What a CTA button needs, derived from a resolved CTA (website-public-blocks.md §5.2). */
@@ -51,6 +52,7 @@ export class SiteCtaService {
   private state = inject(SiteStateService);
   private analytics = inject(SiteAnalyticsService);
   private api = inject(SiteApiService);
+  private tags = inject(TagLayerService);
   private document = inject(DOCUMENT);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -61,6 +63,7 @@ export class SiteCtaService {
     this.analytics.track('cta_click', base);
     if (cta.kind === 'phone') this.analytics.track('phone_click', base);
     if (cta.kind === 'whatsapp') this.analytics.track('whatsapp_click', base);
+    this.tags.ctaClick(cta.kind, cta.trackingKey, placement);
 
     if (cta.kind === 'form' && cta.formKey) {
       event.preventDefault();

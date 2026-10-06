@@ -4,6 +4,7 @@ import { Dict } from '../models/site.models';
 import { SiteStateService } from '../services/site-state.service';
 import { SiteApiService } from '../services/site-api.service';
 import { SiteAnalyticsService } from '../services/site-analytics.service';
+import { TagLayerService } from '../services/tag-layer.service';
 import { arr, money, priceText, str, uuid } from '../site-utils';
 import { trackOrderPath } from '../site-paths';
 
@@ -133,6 +134,7 @@ export class PurchaseFormComponent {
   protected money = money;
   private api = inject(SiteApiService);
   private analytics = inject(SiteAnalyticsService);
+  private tags = inject(TagLayerService);
   private formEl = viewChild<ElementRef<HTMLFormElement>>('formEl');
 
   /** Plan picked in this form; until then the one chosen in the buy box,
@@ -241,7 +243,9 @@ export class PurchaseFormComponent {
       next: res => {
         this.sending.set(false);
         this.idempotencyKey = null;
-        this.result.set((res as Dict)?.['data'] ?? res);
+        const done = ((res as Dict)?.['data'] ?? res) as Dict;
+        this.result.set(done);
+        this.tags.purchase(done);
       },
       error: (err: HttpErrorResponse) => {
         this.sending.set(false);

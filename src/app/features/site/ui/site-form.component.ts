@@ -14,6 +14,7 @@ import { Dict, FormDefinition, FormField } from '../models/site.models';
 import { SiteStateService } from '../services/site-state.service';
 import { SiteApiService } from '../services/site-api.service';
 import { SiteAnalyticsService } from '../services/site-analytics.service';
+import { TagLayerService } from '../services/tag-layer.service';
 import { str } from '../site-utils';
 
 type Values = Record<string, string | string[] | boolean>;
@@ -238,6 +239,7 @@ export class SiteFormComponent {
   protected state = inject(SiteStateService);
   private api = inject(SiteApiService);
   private analytics = inject(SiteAnalyticsService);
+  private tags = inject(TagLayerService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private formEl = viewChild<ElementRef<HTMLFormElement>>('formEl');
 
@@ -451,6 +453,7 @@ export class SiteFormComponent {
         this.reference.set(str(d?.reference) || null);
         this.doneMessage.set(str(f.success_message, d?.message, res?.['message']));
         this.done.set(true);
+        this.tags.lead(d as Dict, this.form()?.key ?? null);
         this.submitted.emit(d);
       },
       error: (err: HttpErrorResponse) => {
