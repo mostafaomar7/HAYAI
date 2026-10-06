@@ -25,6 +25,7 @@ import {
 import express, { NextFunction, Request, Response } from 'express';
 import compression from 'compression';
 import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { Readable } from 'node:stream';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -202,9 +203,10 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   const isSite = /^\/(en|ar)(\/|$)/.test(req.path);
   if (isSite) recordCrawlerHit(req, 'page');
+  const nonce = randomBytes(16).toString('base64');
   angularApp
     .handle(req)
-    .then(response => {
+    .then(async response => {
       if (!response) return next();
       // (try: headers of some Response objects are immutable)
       try {
@@ -221,10 +223,69 @@ app.use((req, res, next) => {
         }
       }
       } catch {}
-      return writeResponseToNodeResponse(response, res);
+
+      const html = response.headers.get('Content-Type')?.includes('text/html');
+      if (!html) return writeResponseToNodeResponse(response, res);
+
+      // Buffered so the nonce can be stamped into the markup. A page is tens
+      // of kilobytes; nothing here is worth streaming.
+      const body = withNonce(await response.text(), nonce);
+      res.status(response.status);
+      response.headers.forEach((v, k) => {
+        if (k.toLowerCase() !== 'content-length') res.setHeader(k, v);
+      });
+      res.setHeader('Content-Security-Policy-Report-Only', contentSecurityPolicy(nonce));
+      return res.send(body);
     })
     .catch(next);
 });
+
+/**
+ * The tracking spec requires every inline script to carry a nonce, so the
+ * policy can allow exactly what this server rendered and nothing a tag
+ * manager, an injected extension or a stored-XSS payload adds later.
+ *
+ * Three things need stamping: the inline scripts and styles Angular emits
+ * (hydration state, critical CSS), `ngCspNonce` so Angular reuses the same
+ * nonce for styles it injects in the browser, and the `{{CSP_NONCE}}`
+ * placeholder the spec's consent and container blocks will use.
+ */
+function withNonce(html: string, nonce: string): string {
+  return html
+    .replaceAll('{{CSP_NONCE}}', nonce)
+    .replace(/<style(?![^>]*\bnonce=)/g, `<style nonce="${nonce}"`)
+    .replace(/<script(?![^>]*\b(?:src|nonce)=)/g, `<script nonce="${nonce}"`)
+    .replace(/<app-root(?![^>]*\bngCspNonce=)/g, `<app-root ngCspNonce="${nonce}"`);
+}
+
+/**
+ * Report-Only for now, deliberately. The spec asks for a week of violation
+ * reports before enforcing, because Google adds regional ad domains without
+ * warning and a missing host under enforcement is a blank page rather than a
+ * line in a log. Switch the header name to `Content-Security-Policy` once the
+ * reports are quiet.
+ */
+function contentSecurityPolicy(nonce: string): string {
+  const google = 'https://www.googletagmanager.com https://*.googletagmanager.com';
+  return [
+    `default-src 'self'`,
+    `base-uri 'self'`,
+    `object-src 'none'`,
+    `frame-ancestors 'none'`,
+    `form-action 'self'`,
+    `script-src 'self' 'nonce-${nonce}' ${google} https://www.google-analytics.com ` +
+      `https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com https://*.clarity.ms`,
+    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
+    `font-src 'self' https://fonts.gstatic.com data:`,
+    `img-src 'self' data: blob: https: https://*.google-analytics.com ${google} ` +
+      `https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.eg https://*.clarity.ms`,
+    `connect-src 'self' ${API_BASE_URL} https://*.google-analytics.com https://*.analytics.google.com ` +
+      `https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com ` +
+      `https://www.google.com.eg https://pagead2.googlesyndication.com https://*.clarity.ms`,
+    `frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net`,
+    `upgrade-insecure-requests`
+  ].join('; ');
+}
 
 /**
  * The last word on errors. Express's built-in handler prints the stack trace
