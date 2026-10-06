@@ -23,6 +23,7 @@ import { SiteFormComponent } from '../ui/site-form.component';
 import { PurchaseFormComponent } from '../ui/purchase-form.component';
 import { MenuItem } from '../models/site.models';
 import { hrefOf, str } from '../site-utils';
+import { withAttribution } from '../tracking-params';
 import { isPublicSitePath } from '../site-paths';
 
 /**
@@ -76,20 +77,34 @@ export class SiteShellComponent implements OnDestroy {
     return n ? `https://wa.me/${n}` : null;
   });
 
+  /**
+   * This visit's query string, kept in step with navigation. Read from the
+   * router rather than `location`, so it is the same on the server render
+   * and in the browser.
+   */
+  private currentSearch = signal(this.router.url.split('?')[1] ?? '');
+
   /** The language switcher points at the hreflang alternate of THIS page
-   *  (slugs differ per language), falling back to the other home page. */
+   *  (slugs differ per language), falling back to the other home page.
+   *
+   *  The alternate comes from the API and carries only what identifies the
+   *  page, so this visit's `gclid` / `utm_*` have to be carried over by hand.
+   *  Without that, switching language strips the ad click id from the URL —
+   *  and a visitor who has not yet answered the consent banner has nothing
+   *  storing it, so the click becomes unattributable. */
   protected switchHref = computed(() => {
     const other = this.state.otherLocale();
+    const search = this.currentSearch();
     const alt = this.state.alternates().find(a => a.hreflang === other || a.locale === other);
     if (alt?.href) {
       try {
         const u = new URL(alt.href);
-        return u.pathname + u.search;
+        return withAttribution(u.pathname + u.search, search);
       } catch {
-        return alt.href;
+        return withAttribution(alt.href, search);
       }
     }
-    return `/${other}`;
+    return withAttribution(`/${other}`, search);
   });
 
   constructor() {
@@ -98,7 +113,10 @@ export class SiteShellComponent implements OnDestroy {
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(e => this.afterNavigation(e));
+      .subscribe(e => {
+        this.currentSearch.set(e.urlAfterRedirects.split('?')[1] ?? '');
+        this.afterNavigation(e);
+      });
 
     // Body scroll lock + focus handling while the dialog is open.
     effect(() => {
