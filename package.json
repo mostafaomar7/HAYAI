@@ -9,6 +9,7 @@
     "test": "ng test",
     "serve:ssr:BAREEQ": "node dist/BAREEQ/server/server.mjs",
     "seo:gate": "node scripts/seo-gate.mjs",
+    "track:check": "bash scripts/check-tracking.sh",
     "seo:lighthouse": "lhci autorun"
   },
   "prettier": {

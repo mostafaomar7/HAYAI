@@ -26,6 +26,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import compression from 'compression';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { ATTRIBUTION_PARAMS } from './app/features/site/tracking-params';
 import { Readable } from 'node:stream';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -53,6 +54,106 @@ const angularApp = new AngularNodeAppEngine({
 });
 
 app.use(compression());
+
+/* ------------------------------------------------------------------------
+ * First-touch attribution, captured by the server.
+ *
+ * A patient who clicks an ad rarely converts on that page view. By the time
+ * they send the form, the campaign parameters are three navigations behind
+ * them. This keeps the first set seen for the whole visit, and promotes it to
+ * a 90-day cookie once consent allows storage.
+ *
+ * Why the server and not JavaScript: Safari caps cookies written by scripts
+ * at seven days, which loses most iPhone attribution before a patient
+ * converts. An HttpOnly cookie written here lasts the full ninety and no
+ * third-party tag in the container can read it.
+ *
+ * Why a session cookie for the first step: before the visitor has answered
+ * the consent banner nothing may be stored durably, but the click id must
+ * survive the next page or it is lost. A cookie that ends with the browser
+ * is the narrowest thing that does that. It holds campaign identifiers only —
+ * never anything about the patient.
+ * --------------------------------------------------------------------- */
+
+/** The CMP's own cookie, and the value that means storage was allowed. */
+const CONSENT_COOKIE = process.env['CONSENT_COOKIE'] || '';
+const CONSENT_GRANTED = process.env['CONSENT_GRANTED_PATTERN'] || 'granted';
+
+const FT_SESSION_COOKIE = 'hayai_ft_s';
+const FT_COOKIE = 'hayai_ft';
+const FT_MAX_AGE = 90 * 864e5;
+
+function readCookies(header: string | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of (header || '').split(';')) {
+    const i = part.indexOf('=');
+    if (i < 1) continue;
+    try {
+      out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    } catch {
+      /* a malformed cookie is not worth a 500 */
+    }
+  }
+  return out;
+}
+
+/**
+ * Whether the visitor has allowed storage. Unknown until the CMP is chosen
+ * and `CONSENT_COOKIE` names its cookie — and unknown means no, so nothing is
+ * stored durably by default.
+ */
+function consentAllows(cookies: Record<string, string>): boolean {
+  if (!CONSENT_COOKIE) return false;
+  const raw = cookies[CONSENT_COOKIE];
+  return !!raw && new RegExp(CONSENT_GRANTED).test(raw);
+}
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+  const cookies = readCookies(req.headers.cookie);
+  const query = new URLSearchParams(req.url.split('?')[1] || '');
+  const fresh: Record<string, string> = {};
+  for (const key of ATTRIBUTION_PARAMS) {
+    const value = query.get(key);
+    if (value) fresh[key] = value.slice(0, 200);
+  }
+
+  const stored = cookies[FT_COOKIE] || cookies[FT_SESSION_COOKIE];
+  let ft: Record<string, unknown> | null = null;
+  if (stored) {
+    try {
+      ft = JSON.parse(stored);
+    } catch {
+      ft = null;
+    }
+  }
+
+  // The FIRST touch wins: a visitor who arrives from an ad and later returns
+  // through a newsletter is still that ad's patient.
+  if (!ft && Object.keys(fresh).length) {
+    ft = { ...fresh, landing: req.path.slice(0, 200), ts: Date.now() };
+    res.cookie(FT_SESSION_COOKIE, JSON.stringify(ft), {
+      httpOnly: true,
+      secure: req.secure,
+      sameSite: 'lax'
+    });
+  }
+
+  if (ft && !cookies[FT_COOKIE] && consentAllows(cookies)) {
+    res.cookie(FT_COOKIE, JSON.stringify(ft), {
+      maxAge: FT_MAX_AGE,
+      httpOnly: true,
+      secure: req.secure,
+      sameSite: 'lax'
+    });
+    res.clearCookie(FT_SESSION_COOKIE);
+  }
+
+  // Read by the page metadata block as ft_source / ft_medium / ft_campaign.
+  res.locals['ft'] = ft;
+  next();
+});
 
 /* ------------------------------------------------------------------------
  * Crawler visibility (Website → Crawlers in the dashboard).

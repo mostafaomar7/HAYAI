@@ -39,6 +39,13 @@ jobs:
       - name: SEO / GEO gate
         run: node scripts/seo-gate.mjs http://localhost:4000
 
+      # Nothing hard-coded in a template, the container exactly twice, and
+      # consent defaults before the metadata before the container.
+      - name: Tracking install gate
+        env:
+          GTM_ID: ${{ vars.GTM_ID }}
+        run: bash scripts/check-tracking.sh http://localhost:4000/en http://localhost:4000/ar http://localhost:4000/en/faq http://localhost:4000/en/products http://localhost:4000/en/doctors
+
       - name: Stop the server
         if: always()
         run: kill "$(cat server.pid)" || true
