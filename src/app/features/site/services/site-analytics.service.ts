@@ -8,6 +8,8 @@ import { uuid } from '../site-utils';
 const SESSION_KEY = 'hayai_site_session';
 const ATTR_KEY = 'hayai_site_attribution';
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
+/** Kept out of UTM_KEYS: these never come from storage, only from the server. */
+const CLICK_ID_KEYS = ['gclid', 'gbraid', 'wbraid', 'fbclid', 'ttclid'] as const;
 
 /**
  * Visitor attribution + analytics events. Browser-only by construction: every
@@ -29,6 +31,7 @@ export class SiteAnalyticsService {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private listening = false;
   private memorySession: string | null = null;
+  private serverFt: Dict | undefined;
 
   /** Session id shared by events and form/purchase attribution. */
   sessionId(): string {
@@ -71,6 +74,30 @@ export class SiteAnalyticsService {
     }
   }
 
+  /**
+   * What the server captured on the first page of this visit.
+   *
+   * It holds the click ids, which nothing in the browser can supply: they
+   * arrive on the landing URL and are gone by the time a patient reaches the
+   * form, and the cookie that keeps them is HttpOnly so that Safari does not
+   * expire it after seven days. Without reading this the lead is stored with
+   * no `gclid` and the conversion can never be matched back to its ad.
+   *
+   * Read once — the island is server-rendered and does not change while the
+   * app is running.
+   */
+  private firstTouch(): Dict {
+    if (this.serverFt !== undefined) return this.serverFt;
+    this.serverFt = {};
+    try {
+      const raw = this.document.getElementById('hayai-ft')?.textContent;
+      if (raw) this.serverFt = JSON.parse(raw) as Dict;
+    } catch {
+      /* best-effort: a visit with no campaign has no island at all */
+    }
+    return this.serverFt;
+  }
+
   /** The `attribution` object forms and purchases send (contract §18.3). */
   attribution(extra: Dict = {}): Dict {
     if (!this.isBrowser) return {};
@@ -78,9 +105,16 @@ export class SiteAnalyticsService {
     try {
       stored = JSON.parse(sessionStorage.getItem(ATTR_KEY) || 'null') ?? {};
     } catch {}
+    const ft = this.firstTouch();
     const out: Dict = { session_id: this.sessionId() };
     UTM_KEYS.forEach(k => stored[k] && (out[k] = stored[k]));
-    out['landing_page'] = stored['landing_page'] ?? location.pathname + location.search;
+    // The server's capture is the first touch of the visit and wins over the
+    // session's latest-campaign copy: a patient who arrives from an ad and
+    // returns through a newsletter is still that ad's patient.
+    UTM_KEYS.forEach(k => ft[k] && (out[k] = ft[k]));
+    CLICK_ID_KEYS.forEach(k => ft[k] && (out[k] = ft[k]));
+    if (ft['ts']) out['first_seen_at'] = ft['ts'];
+    out['landing_page'] = ft['landing'] ?? stored['landing_page'] ?? location.pathname + location.search;
     if (stored['referrer']) out['referrer'] = stored['referrer'];
     const pageId = this.state.page()?.id;
     if (pageId) out['page_id'] = pageId;

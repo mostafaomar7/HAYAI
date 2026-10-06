@@ -391,8 +391,8 @@ app.use((req, res, next) => {
       const rendered = await response.text();
       const body = withNonce(
         rendered
-          .replaceAll('{{TRACKING_HEAD}}', isSite ? trackingHead(res, rendered) : '')
-          .replaceAll('{{TRACKING_BODY}}', isSite ? trackingBody() : ''),
+          .replaceAll('{{TRACKING_HEAD}}', isSite ? trackingHead(res, rendered, response.status) : '')
+          .replaceAll('{{TRACKING_BODY}}', isSite ? trackingBody(res) : ''),
         nonce
       );
       res.status(response.status);
@@ -442,7 +442,14 @@ const GTM_ENV_PARAMS = (process.env['GTM_ENV_PARAMS'] || '').trim().replace(/^[?
  * and Arabic-script slugs, and a URL pattern that silently stops matching a
  * renamed emergency page is exactly how ad tags end up firing on one.
  */
-function measurementFields(html: string): Record<string, string> {
+function measurementFields(html: string, status: number): Record<string, string> {
+  // A 404 carries no payload by design, and the contract fixes its values
+  // rather than leaving them to the fallback below. It is not an unclassified
+  // page; it is a page that does not exist.
+  if (status === 404) {
+    return { page_sensitivity: 'standard', content_group: 'other', journey_stage: 'know' };
+  }
+
   const match = /"measurement":(\{[^{}]{0,400}\})/.exec(html);
   const out: Record<string, string> = {};
   if (match) {
@@ -466,8 +473,8 @@ function measurementFields(html: string): Record<string, string> {
 }
 
 /** What goes into the dataLayer before any tag can read it. */
-function pageMetadata(res: Response, html: string): Record<string, unknown> {
-  const out: Record<string, unknown> = measurementFields(html);
+function pageMetadata(res: Response, html: string, status: number): Record<string, unknown> {
+  const out: Record<string, unknown> = measurementFields(html, status);
   const ft = res.locals['ft'] as Record<string, unknown> | null;
   if (ft) {
     if (ft['utm_source']) out['ft_source'] = ft['utm_source'];
@@ -485,7 +492,7 @@ function inlineJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
-function trackingHead(res: Response, html: string): string {
+function trackingHead(res: Response, html: string, status: number): string {
   const consent =
     `<script>window.dataLayer=window.dataLayer||[];` +
     `function gtag(){dataLayer.push(arguments)}` +
@@ -498,7 +505,7 @@ function trackingHead(res: Response, html: string): string {
     // the URL instead of a cookie so a conversion is still attributable.
     `gtag('set','ads_data_redaction',true);gtag('set','url_passthrough',true);</script>`;
 
-  const metadata = `<script>dataLayer.push(${inlineJson(pageMetadata(res, html))});</script>`;
+  const metadata = `<script>dataLayer.push(${inlineJson(pageMetadata(res, html, status))});</script>`;
 
   if (!GTM_ID) return consent + metadata;
 
@@ -522,12 +529,33 @@ function trackingHead(res: Response, html: string): string {
   return consent + metadata + blocklist + loader;
 }
 
-function trackingBody(): string {
-  if (!GTM_ID) return '';
+/**
+ * The first touch, handed to the browser so a submission can carry it.
+ *
+ * The capture lives in an HttpOnly cookie, which is what makes it survive —
+ * Safari caps script-written cookies at seven days and most patients convert
+ * later than that. But HttpOnly also means the app cannot read it, and the
+ * form posts to the API from the browser. Without this the click id reaches
+ * our server and stops there: the lead is stored with no `gclid`, and the
+ * weekly upload back to Google Ads has nothing to match a click on.
+ *
+ * A JSON island rather than a global: nothing is executed, and the value
+ * cannot escape into the surrounding script.
+ */
+function firstTouchIsland(res: Response): string {
+  const ft = res.locals['ft'] as Record<string, unknown> | null;
+  if (!ft) return '';
+  return `<script type="application/json" id="hayai-ft">${inlineJson(ft)}</script>`;
+}
+
+function trackingBody(res: Response): string {
+  const island = firstTouchIsland(res);
+  if (!GTM_ID) return island;
   const env = GTM_ENV_PARAMS ? `&amp;${GTM_ENV_PARAMS}` : '';
   return (
     `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}${env}"` +
-    ` height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+    ` height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>` +
+    island
   );
 }
 
