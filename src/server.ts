@@ -15,6 +15,8 @@
  *   WEBSITE_SERVER_KEY  sent as `X-Website-Key` on server→API calls; never to browsers
  *   SITE_URL            public origin (default https://hayaihealthcare.com)
  *   NG_ALLOWED_HOSTS    extra comma-separated host names allowed to be rendered
+ *   GTM_ID              tag manager container; unset means no container is printed
+ *   GTM_ENV_PARAMS      `gtm_auth=…&gtm_preview=…&gtm_cookies_win=x` for staging
  */
 import {
   AngularNodeAppEngine,
@@ -75,7 +77,18 @@ app.use(compression());
  * never anything about the patient.
  * --------------------------------------------------------------------- */
 
-/** The CMP's own cookie, and the value that means storage was allowed. */
+/**
+ * The CMP's own cookie, and the value that means storage was allowed.
+ *
+ * CookieYes is the chosen banner. Once the subscription is live this should
+ * be `CONSENT_COOKIE=cookieyes-consent` with a pattern matching its
+ * advertisement grant — read the real cookie off the banner before setting
+ * it, rather than trusting the shape documented here.
+ *
+ * Left empty on purpose until then. Unknown means denied, so nothing is
+ * stored durably: the wrong guess here would keep a 90-day cookie on a
+ * visitor who refused one.
+ */
 const CONSENT_COOKIE = process.env['CONSENT_COOKIE'] || '';
 const CONSENT_GRANTED = process.env['CONSENT_GRANTED_PATTERN'] || 'granted';
 
@@ -152,6 +165,46 @@ app.use((req, res, next) => {
 
   // Read by the page metadata block as ft_source / ft_medium / ft_campaign.
   res.locals['ft'] = ft;
+  next();
+});
+
+/* ------------------------------------------------------------------------
+ * Internal traffic, marked by a cookie rather than by IP.
+ *
+ * GA4's own exclusion works on IP ranges, which does not survive contact with
+ * reality here: Egyptian consumer lines are issued dynamically, and the team
+ * is not always in the office. An address list would quietly stop matching
+ * and staff visits would be counted as patients.
+ *
+ * So the team opts in once per device — /ar/?hayai_team=1 — and the flag
+ * rides a one-year cookie from there. `?hayai_team=0` clears it, which
+ * matters more than it looks: without it, whoever marks their laptop can
+ * never again see the site the way a patient sees it.
+ *
+ * Deliberately not HttpOnly. It holds no personal data, and a reader in the
+ * container is a useful second route to the same signal; being able to see it
+ * in devtools is also how a team member confirms the opt-in worked.
+ * --------------------------------------------------------------------- */
+const TEAM_COOKIE = 'hayai_team';
+const TEAM_MAX_AGE = 365 * 864e5;
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+  const flag = new URLSearchParams(req.url.split('?')[1] || '').get('hayai_team');
+  if (flag === '1') {
+    res.cookie(TEAM_COOKIE, '1', {
+      maxAge: TEAM_MAX_AGE,
+      secure: req.secure,
+      sameSite: 'lax'
+    });
+    res.locals['internal'] = true;
+  } else if (flag === '0') {
+    res.clearCookie(TEAM_COOKIE);
+    res.locals['internal'] = false;
+  } else {
+    res.locals['internal'] = readCookies(req.headers.cookie)[TEAM_COOKIE] === '1';
+  }
   next();
 });
 
@@ -330,7 +383,18 @@ app.use((req, res, next) => {
 
       // Buffered so the nonce can be stamped into the markup. A page is tens
       // of kilobytes; nothing here is worth streaming.
-      const body = withNonce(await response.text(), nonce);
+      //
+      // The install goes in before the nonce pass, so its inline scripts are
+      // stamped with the same nonce as everything else. The dashboard is an
+      // internal tool and is not measured, so there the placeholders are just
+      // removed — leaving them would print the literal text into the page.
+      const rendered = await response.text();
+      const body = withNonce(
+        rendered
+          .replaceAll('{{TRACKING_HEAD}}', isSite ? trackingHead(res, rendered) : '')
+          .replaceAll('{{TRACKING_BODY}}', isSite ? trackingBody() : ''),
+        nonce
+      );
       res.status(response.status);
       response.headers.forEach((v, k) => {
         if (k.toLowerCase() !== 'content-length') res.setHeader(k, v);
@@ -340,6 +404,132 @@ app.use((req, res, next) => {
     })
     .catch(next);
 });
+
+/* ------------------------------------------------------------------------
+ * The tracking install — section 1 of the measurement spec.
+ *
+ * Three blocks, and the order between them is the whole point:
+ *
+ *   1. Consent defaults, everything denied. Consent Mode only works if the
+ *      default state is already set when the first Google tag reads it. A
+ *      container that loads first has already decided it may store things.
+ *   2. Page metadata. The rules that stop ad tags firing on sensitive pages
+ *      are read from the dataLayer, so the values have to be there before
+ *      any tag can fire — not pushed by the app after hydration.
+ *   3. The container.
+ *
+ * Built here rather than written into index.html so the order cannot be
+ * broken by an edit to the template, and so the per-request values are
+ * server-rendered: a tag that waits for Angular to push them has already
+ * missed the page view.
+ *
+ * With no GTM_ID nothing of the container is printed at all — not an empty
+ * loader, not a placeholder id. The consent and metadata blocks still go out,
+ * because they are correct on their own and the staging container needs them.
+ * --------------------------------------------------------------------- */
+const GTM_ID = (process.env['GTM_ID'] || '').trim();
+const GTM_ENV_PARAMS = (process.env['GTM_ENV_PARAMS'] || '').trim().replace(/^[?&]+/, '');
+
+/**
+ * The editorial fields, read back out of the render.
+ *
+ * They arrive with the page as `measurement` on the resolve payload, so by
+ * the time Angular has rendered they are already sitting in the hydration
+ * state. Reading them from there costs nothing; asking the API again would
+ * cost a second round trip on every page view.
+ *
+ * Not derived from the URL, deliberately. The SEO spec allows transliterated
+ * and Arabic-script slugs, and a URL pattern that silently stops matching a
+ * renamed emergency page is exactly how ad tags end up firing on one.
+ */
+function measurementFields(html: string): Record<string, string> {
+  const match = /"measurement":(\{[^{}]{0,400}\})/.exec(html);
+  const out: Record<string, string> = {};
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[1]) as Record<string, unknown>;
+      for (const key of ['page_sensitivity', 'content_group', 'journey_stage']) {
+        const value = parsed[key];
+        if (typeof value === 'string' && value) out[key] = value;
+      }
+    } catch {
+      /* fall through to the safe default below */
+    }
+  }
+  // Unknown is treated as sensitive, never as standard. A page whose
+  // classification did not arrive is a page nobody has judged, and the cost
+  // of the two mistakes is not symmetric: suppressing ads on an ordinary
+  // page loses a little attribution, firing them on an ICU page is the
+  // failure the whole section exists to prevent. Analytics still runs.
+  if (!out['page_sensitivity']) out['page_sensitivity'] = 'sensitive';
+  return out;
+}
+
+/** What goes into the dataLayer before any tag can read it. */
+function pageMetadata(res: Response, html: string): Record<string, unknown> {
+  const out: Record<string, unknown> = measurementFields(html);
+  const ft = res.locals['ft'] as Record<string, unknown> | null;
+  if (ft) {
+    if (ft['utm_source']) out['ft_source'] = ft['utm_source'];
+    if (ft['utm_medium']) out['ft_medium'] = ft['utm_medium'];
+    if (ft['utm_campaign']) out['ft_campaign'] = ft['utm_campaign'];
+  }
+  // GA4 excludes this with its own Internal traffic filter — no custom
+  // JavaScript in the container, nothing to keep in step.
+  if (res.locals['internal']) out['traffic_type'] = 'internal';
+  return out;
+}
+
+/** `</script>` inside a JSON string would end the block early. */
+function inlineJson(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+function trackingHead(res: Response, html: string): string {
+  const consent =
+    `<script>window.dataLayer=window.dataLayer||[];` +
+    `function gtag(){dataLayer.push(arguments)}` +
+    `gtag('consent','default',{` +
+    `'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied',` +
+    `'analytics_storage':'denied','functionality_storage':'denied',` +
+    `'personalization_storage':'denied','security_storage':'granted',` +
+    `'wait_for_update':500});` +
+    // Ads without cookies until consent arrives, and the click id carried in
+    // the URL instead of a cookie so a conversion is still attributable.
+    `gtag('set','ads_data_redaction',true);gtag('set','url_passthrough',true);</script>`;
+
+  const metadata = `<script>dataLayer.push(${inlineJson(pageMetadata(res, html))});</script>`;
+
+  if (!GTM_ID) return consent + metadata;
+
+  // Custom HTML tags are how a container turns into an injection point. The
+  // policy blocks them in the browser; this blocks them in the container.
+  const blocklist = `<script>dataLayer.push({'gtm.blocklist':['customScripts']});</script>`;
+
+  const env = GTM_ENV_PARAMS ? `+'&${GTM_ENV_PARAMS}'` : '';
+  const loader =
+    `<script>(function(w,d,s,l,i){w[l]=w[l]||[];` +
+    `w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});` +
+    `var f=d.getElementsByTagName(s)[0],j=d.createElement(s),` +
+    `dl=l!='dataLayer'?'&l='+l:'';j.async=true;` +
+    `j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl${env};` +
+    // The container loads its own tags; without this they inherit no nonce
+    // and the policy rejects every one of them.
+    `j.setAttribute('nonce','{{CSP_NONCE}}');` +
+    `f.parentNode.insertBefore(j,f);` +
+    `})(window,document,'script','dataLayer','${GTM_ID}');</script>`;
+
+  return consent + metadata + blocklist + loader;
+}
+
+function trackingBody(): string {
+  if (!GTM_ID) return '';
+  const env = GTM_ENV_PARAMS ? `&amp;${GTM_ENV_PARAMS}` : '';
+  return (
+    `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}${env}"` +
+    ` height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+  );
+}
 
 /**
  * The tracking spec requires every inline script to carry a nonce, so the
@@ -368,6 +558,9 @@ function withNonce(html: string, nonce: string): string {
  */
 function contentSecurityPolicy(nonce: string): string {
   const google = 'https://www.googletagmanager.com https://*.googletagmanager.com';
+  // The chosen CMP. Its banner has to load before anything it gates, so a
+  // policy that blocked it would leave the whole site measuring nothing.
+  const cookieyes = 'https://cdn-cookieyes.com https://*.cookieyes.com';
   return [
     `default-src 'self'`,
     `base-uri 'self'`,
@@ -375,14 +568,15 @@ function contentSecurityPolicy(nonce: string): string {
     `frame-ancestors 'none'`,
     `form-action 'self'`,
     `script-src 'self' 'nonce-${nonce}' ${google} https://www.google-analytics.com ` +
-      `https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com https://*.clarity.ms`,
+      `https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com ` +
+      `https://*.clarity.ms ${cookieyes}`,
     `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
     `font-src 'self' https://fonts.gstatic.com data:`,
     `img-src 'self' data: blob: https: https://*.google-analytics.com ${google} ` +
       `https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.eg https://*.clarity.ms`,
     `connect-src 'self' ${API_BASE_URL} https://*.google-analytics.com https://*.analytics.google.com ` +
       `https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com ` +
-      `https://www.google.com.eg https://pagead2.googlesyndication.com https://*.clarity.ms`,
+      `https://www.google.com.eg https://pagead2.googlesyndication.com https://*.clarity.ms ${cookieyes}`,
     `frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net`,
     `upgrade-insecure-requests`
   ].join('; ');

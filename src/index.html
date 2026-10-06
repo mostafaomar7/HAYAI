@@ -15,6 +15,12 @@
   <title>Hayai</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Consent defaults, page metadata and the tag manager container, in that
+       order, built in src/server.ts. Public pages only. Do not add analytics,
+       pixels or a second container anywhere else in this file: everything
+       goes through the one container, and scripts/check-tracking.sh fails the
+       build if a second copy appears. -->
+  {{TRACKING_HEAD}}
   <!-- Inter was already the declared body font but never loaded; Poppins is the
        display face used by the landing page design. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +31,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 </head>
 <body>
+  {{TRACKING_BODY}}
   <app-root></app-root>
 </body>
 </html>

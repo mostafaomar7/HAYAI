@@ -70,6 +70,17 @@ for URL in "$@"; do
   if [[ -z "$M" ]]; then echo "FAIL $URL — no page metadata push (page_sensitivity missing)"; FAILED=1; continue; fi
   if [[ -z "$G" ]]; then echo "FAIL $URL — container loader not found"; FAILED=1; continue; fi
 
+  # 3b. The classification came from the CMS, not from the server's fallback.
+  # An unclassified page is rendered as `sensitive` so no ad tag fires on it,
+  # which is the right thing to serve but the wrong thing to ship quietly:
+  # it looks identical to a genuinely sensitive page. content_group only ever
+  # comes from the payload, so its absence is what distinguishes the two.
+  if ! grep -qE "[\"']content_group[\"']" <<<"$H"; then
+    echo "FAIL $URL — page classification missing from the payload; the server fell back to 'sensitive' and ads will not fire here"
+    FAILED=1
+    continue
+  fi
+
   if (( C < M && M < G )); then
     echo "PASS $URL"
   else
