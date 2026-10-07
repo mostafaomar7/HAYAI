@@ -204,7 +204,7 @@ export class SiteShellComponent implements OnDestroy {
       this.analytics.captureLanding();
       // Not on the first path: the server already pushed that one, before the
       // container loaded. Pushing it again would count the landing twice.
-      if (this.lastPath !== null) this.tags.pageView(path);
+      if (this.lastPath !== null) this.tags.virtualPageView(path);
       this.analytics.track('page_view', { referrer: this.lastPath === null ? this.document.referrer || null : null });
     }
     this.lastPath = path;

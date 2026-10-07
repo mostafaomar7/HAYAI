@@ -49,14 +49,30 @@ export class TagLayerService {
     return { ...(m as Dict) };
   }
 
-  /** A route change inside the app. Not the first page — the server did that. */
-  pageView(path: string): void {
+  /**
+   * A route change inside the app. Not the first page — the server did that.
+   *
+   * Named `virtual_page_view`, not `page_view`: the container's trigger is
+   * `CE - virtual_page_view`, and GA4's own history-based page view is turned
+   * off so the two cannot double-count the same navigation.
+   */
+  virtualPageView(path: string): void {
     this.push({
-      event: 'page_view',
+      event: 'virtual_page_view',
       ...this.measurement(),
-      page_path: path,
+      page_location: this.href(path),
       page_title: this.state.page()?.['title'] ?? null
     });
+  }
+
+  /** Full URL, as the spec asks for, with the path the router settled on. */
+  private href(path: string): string {
+    if (!this.isBrowser) return path;
+    try {
+      return new URL(path, location.origin).href;
+    } catch {
+      return path;
+    }
   }
 
   /**
