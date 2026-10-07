@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>ما تم تنفيذه من ملف القياس — HAYAI</title>
+<style>
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:400;src:url('fonts/Cairo-400.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:600;src:url('fonts/Cairo-600.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:700;src:url('fonts/Cairo-700.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-style:normal;font-weight:900;src:url('fonts/Cairo-900.ttf') format('truetype');font-display:block}
+
+  :root{ --ink:#0F172A; --body:#334155; --muted:#6B7280; --line:#E5E7EB; --brand:#0E7490;
+         --good:#047857; --goodbg:#ECFDF5; --warn:#B45309; --warnbg:#FFFBEB; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{ size:A4; margin:18mm 16mm 16mm; }
+  html{font-family:'Cairo',sans-serif;font-size:10.5pt}
+  body{color:var(--body);line-height:1.85;background:#fff}
+
+  header.doc{border-bottom:2px solid var(--brand);padding-bottom:5mm;margin-bottom:6mm}
+  header.doc .org{color:var(--brand);font-weight:700;font-size:9.5pt;letter-spacing:.04em;margin-bottom:2mm}
+  header.doc h1{color:var(--ink);font-size:18pt;font-weight:900;line-height:1.45}
+  header.doc .date{color:var(--muted);font-size:9pt;margin-top:2mm}
+
+  p{margin-bottom:2.5mm}
+  h2.sec{color:var(--ink);font-size:13pt;font-weight:900;margin:7mm 0 3mm;
+         padding-bottom:1.5mm;border-bottom:1px solid var(--line)}
+  h2.sec .n{color:var(--brand)}
+
+  .note{border-right:3px solid var(--brand);background:#F8FAFC;border-radius:0 6px 6px 0;
+        padding:3.5mm 4mm;margin:3mm 0 5mm;font-size:10pt}
+  .warn{border-right:3px solid var(--warn);background:var(--warnbg);border-radius:0 6px 6px 0;
+        padding:3.5mm 4mm;margin:3mm 0 5mm;font-size:10pt}
+
+  .item{page-break-inside:avoid;margin-bottom:5mm;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .item .h{background:#F8FAFC;padding:2.5mm 4mm;border-bottom:1px solid var(--line);
+           display:flex;align-items:baseline;gap:3mm}
+  .item .h .tick{color:var(--good);font-weight:900}
+  .item .h .t{color:var(--ink);font-weight:700;font-size:11pt;flex:1}
+  .item .h .ref{color:var(--muted);font-size:8.5pt;white-space:nowrap}
+  .item .b{padding:3mm 4mm}
+  .item .b p:last-child{margin-bottom:0}
+
+  .test{background:var(--goodbg);border-radius:5px;padding:3mm 4mm;margin-top:2.5mm;font-size:10pt}
+  .test .lbl{color:var(--good);font-weight:700;font-size:9pt;letter-spacing:.03em;margin-bottom:1.5mm}
+  .test ol{margin:0 6mm 0 0;padding-right:3mm}
+  .test li{margin-bottom:1mm}
+  .test .exp{margin-top:2mm;color:var(--ink)}
+
+  code{font-family:'Consolas','Courier New',monospace;direction:ltr;unicode-bidi:isolate;
+       background:#F1F5F9;border:1px solid var(--line);border-radius:3px;padding:0 1.2mm;font-size:9pt;color:var(--ink)}
+  .url{display:block;font-family:'Consolas','Courier New',monospace;direction:ltr;unicode-bidi:isolate;
+       text-align:left;background:#F1F5F9;border:1px solid var(--line);border-radius:4px;
+       padding:2mm 3mm;margin:2mm 0;font-size:9pt;color:var(--ink);word-break:break-all}
+  strong{color:var(--ink);font-weight:700}
+  ul.plain{margin:0 6mm 2mm 0;padding-right:3mm}
+  ul.plain li{margin-bottom:1mm}
+
+  footer.sign{margin-top:7mm;padding-top:3mm;border-top:1px solid var(--line);font-size:10pt}
+  footer.sign .small{color:var(--muted);font-size:8.5pt;margin-top:3mm;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <div class="org">HAYAI</div>
+  <h1>ما تم تنفيذه من ملف القياس والتتبّع</h1>
+  <div class="date">٧ أكتوبر ٢٠٢٦ · مع طريقة اختبار كل بند</div>
+</header>
+
+<p>ده جرد بالبنود اللي <strong>خلصت وشغّالة على الموقع دلوقتي</strong>، وجنب كل واحد
+   إزاي تتأكد منه بنفسك. كل اختبار هنا تقدر تعمله من متصفحك من غير أي أداة أو حساب.</p>
+
+<div class="note">
+  <strong>قبل ما تبدأ:</strong> معظم الاختبارات محتاجة تفتح <strong>Developer Tools</strong> —
+  اضغط <code>F12</code> في كروم، وروح على تبويب <strong>Console</strong>. هتكتب فيه كلمة واحدة
+  وتضغط Enter، وهيطلعلك اللي الموقع بيسجّله.
+</div>
+
+<h2 class="sec"><span class="n">١.</span> التركيب في الصفحة</h2>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">الترتيب الصحيح: الموافقة ← بيانات الصفحة ← الحاوية</span><span class="ref">القسم ١</span></div>
+  <div class="b">
+    <p>الملف بيشترط ترتيب معيّن: شاشة الموافقة لازم تتسجّل قبل أي أداة قياس تقرأها، وبيانات
+       الصفحة قبل أول تاج يشتغل. الترتيب ده مبني في السيرفر نفسه، <strong>فتعديل في القوالب
+       مش ممكن يلخبطه</strong>.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح أي صفحة على الموقع</li>
+        <li>اضغط <code>Ctrl+U</code> (عرض مصدر الصفحة)</li>
+        <li>اضغط <code>Ctrl+F</code> ودوّر على كلمة <code>consent</code></li>
+      </ol>
+      <p class="exp">هتلاقيها في أول الصفحة، وبعدها <code>page_sensitivity</code>. ده الترتيب المطلوب.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">مفيش أي كود تتبّع مباشر في الصفحات</span><span class="ref">القسم ١</span></div>
+  <div class="b">
+    <p>الملف بيحذّر إن أخطر عيب في التتبّع هو تركيب أداة مرتين — مرة من الحاوية ومرة مباشرة —
+       لأن كل تحويل بيتعدّ مرتين وجوجل بيزايد على أرقام مضاعفة. <strong>فيه فحص آلي بيمنع ده
+       قبل أي نشر.</strong></p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>في مصدر الصفحة، دوّر على <code>gtag/js</code> أو <code>fbevents</code></li>
+      </ol>
+      <p class="exp">المفروض ما تلاقيش ولا واحدة. كل حاجة بتعدّي من الحاوية بس.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">سياسة الأمان (CSP) بالمواصفات المطلوبة</span><span class="ref">القسم ١</span></div>
+  <div class="b">
+    <p>السياسة بتسمح لجوجل و Clarity بالظبط، ومن غير <code>unsafe-eval</code> ولا
+       <code>unsafe-inline</code> زي ما الملف طالب. شغّالة دلوقتي في وضع <strong>المراقبة</strong>
+       أسبوع — بتسجّل أي حاجة اتمنعت من غير ما تكسر حاجة، وده اللي الملف نفسه بيوصي بيه.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>في Developer Tools، روح تبويب <strong>Network</strong></li>
+        <li>اعمل Refresh واضغط على أول سطر في القائمة</li>
+        <li>دوّر في <strong>Response Headers</strong> على <code>Content-Security-Policy</code></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">٢.</span> الصفحات الحسّاسة</h2>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">كل صفحة بتعلن تصنيفها من المحتوى مش من الرابط</span><span class="ref">القسم ٢</span></div>
+  <div class="b">
+    <p>صفحات الطوارئ والرعاية المركزة والبحث اتصنّفت <strong>حسّاسة</strong> — يعني إعلانات
+       جوجل وميتا وتيك توك ممنوعة عليها تمامًا، والقياس العادي بس هو اللي بيشتغل.</p>
+    <p>والتصنيف جاي من <strong>لوحة التحكم</strong> مش من شكل الرابط، زي ما الملف اشترط — عشان
+       لو حد غيّر اسم صفحة أو ضاف صفحة جديدة، التصنيف ما يضيعش.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح <code>hayaihealthcare.com/ar</code> واكتب في الـ Console كلمة <code>dataLayer</code></li>
+        <li>افتح السطر اللي فيه <code>page_sensitivity</code> — هتلاقيها <code>standard</code></li>
+        <li>دلوقتي افتح صفحة <strong>الطوارئ والعناية المركزة</strong> من القائمة فوق</li>
+        <li>اكتب <code>dataLayer</code> تاني</li>
+      </ol>
+      <p class="exp">هتلاقي سطر جديد فيه <code>sensitive</code>. دي الصفحة اللي الإعلانات
+         مقفولة عليها.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">صفحة من غير تصنيف تتعامل كـ «حسّاسة» تلقائيًا</span><span class="ref">إضافة على الملف</span></div>
+  <div class="b">
+    <p>دي مش مطلوبة في الملف، ضفناها من ناحيتنا. أي صفحة جديدة تتضاف ومحدش حدّد تصنيفها،
+       الموقع بيعاملها على إنها حسّاسة لحد ما حد يراجعها.</p>
+    <p>السبب: الغلطتين مش بنفس التكلفة. منع الإعلانات على صفحة عادية بيضيّع شوية إسناد.
+       <strong>تشغيل الإعلانات على صفحة رعاية مركّزة هو الكارثة اللي الملف اتكتب عشانها.</strong></p>
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">٣.</span> الأحداث اللي الكود بيرسلها</h2>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">تسجيل نموذج ناجح — <code>generate_lead</code></span><span class="ref">القسم ٣</span></div>
+  <div class="b">
+    <p>بيترسل <strong>بعد ما السيرفر يأكّد الحفظ فقط</strong>، ومعاه رقم مرجعي فريد
+       (<code>transaction_id</code>) — ده اللي جوجل بيستخدمه عشان ما يعدّش نفس التحويل مرتين.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح الصفحة الرئيسية واضغط <strong>«عرّفني أول ما نفتح»</strong></li>
+        <li>املا الاسم ورقم الموبايل وابعت</li>
+        <li>اكتب في الـ Console: <code>dataLayer</code></li>
+      </ol>
+      <p class="exp">هتلاقي <code>generate_lead</code> ومعاه رقم زي
+         <code>LD-261006-3QYGVD</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">إعادة الإرسال ما بتتحسبش تحويل تاني</span><span class="ref">القسم ٦</span></div>
+  <div class="b">
+    <p>لو حد بعت نفس النموذج مرتين بالغلط، السيرفر بيرجّع نفس الرقم المرجعي ويقول إنها مكررة،
+       والموقع <strong>ما بيبعتش تحويل تاني</strong>. من غير ده كان المريض الواحد هيتعدّ اتنين
+       وجوجل هيزايد على رقم مضاعف.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>ابعت نموذج التواصل وشوف <code>generate_lead</code> في الـ Console</li>
+        <li>اعمل Refresh وابعت نفس النموذج بنفس الإيميل تاني</li>
+      </ol>
+      <p class="exp">المرة التانية <strong>مش هيظهر</strong> أي <code>generate_lead</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">التنقّل داخل الموقع — <code>virtual_page_view</code></span><span class="ref">القسم ٣</span></div>
+  <div class="b">
+    <p>الموقع بيتنقّل من غير ما يعيد تحميل الصفحة، فالتنقّل ده بيترسل كحدث مستقل ومعاه
+       تصنيف الصفحة الجديدة.</p>
+    <p>ودي كانت أهم نقطة في الشغل كله: من غيرها كان المريض اللي بيدخل على الرئيسية وبعدين
+       يفتح صفحة الطوارئ <strong>بيفضل محسوب على إنه في صفحة عادية</strong> — والإعلانات
+       كانت هتشتغل على صفحة الرعاية المركزة من غير ما يبان أي خطأ.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح الصفحة الرئيسية</li>
+        <li>اضغط <strong>«الطوارئ والعناية المركزة»</strong> من القائمة</li>
+        <li>اكتب <code>dataLayer</code></li>
+      </ol>
+      <p class="exp">هتلاقي <code>virtual_page_view</code> ومعاه <code>sensitive</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">ضغطات الواتساب والتليفون والتطبيق</span><span class="ref">القسم ٣</span></div>
+  <div class="b">
+    <p>كل زرار في الموقع عليه علامة ثابتة (<code>data-cta</code>) عشان الحاوية تتعرّف عليه،
+       <strong>من غير ما تعتمد على شكل الزرار أو تنسيقه</strong> — فلو التصميم اتغيّر، القياس
+       ما بيقعش.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>اضغط <code>Ctrl+U</code> ودوّر على <code>data-cta</code></li>
+      </ol>
+      <p class="exp">هتلاقيها على كل زرار، وكل واحد باسم مختلف.</p>
+    </div>
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">٨.</span> تتبّع مصدر الزائر</h2>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">السيرفر بيمسك مصدر الحملة من أول لحظة</span><span class="ref">القسم ٨</span></div>
+  <div class="b">
+    <p>اتنفّذ بالطريقة اللي الملف وصفها بالحرف: كوكي مؤقت قبل ما الزائر يرد على شاشة الموافقة،
+       وبعد الموافقة بيتحوّل لكوكي ٩٠ يوم من السيرفر مش من الجافاسكريبت.</p>
+    <p><strong>السبب:</strong> سفاري بيمسح أي كوكي بيتكتب بالجافاسكريبت بعد ٧ أيام، ومعظم
+       المرضى بيحجزوا بعد كده — فكان الإسناد هيضيع على كل مستخدمي الآيفون.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح الرابط ده (فيه مصدر حملة وهمي):</li>
+      </ol>
+      <span class="url">hayaihealthcare.com/ar?utm_source=facebook&amp;utm_campaign=tajreba&amp;gclid=test123</span>
+      <ol start="2">
+        <li>اكتب في الـ Console: <code>dataLayer</code></li>
+      </ol>
+      <p class="exp">هتلاقي <code>ft_source: "facebook"</code> و
+         <code>ft_campaign: "tajreba"</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">معرّف الإعلان بيتخزّن مع كل تسجيل</span><span class="ref">القسم ٦ و ٨</span></div>
+  <div class="b">
+    <p>ده أهم بند في الملف كله، وهو أساس «الحلقة المقفولة»: لما مريض يضغط إعلان ويسجّل بياناته،
+       <strong>معرّف الإعلان بيتخزّن جنب التسجيل في قاعدة البيانات</strong>. من غيره مستحيل
+       تعرف أي إعلان جاب أي مريض.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد — ده أقوى اختبار في الورقة</div>
+      <ol>
+        <li>افتح الرابط اللي فوق (اللي فيه <code>gclid=test123</code>)</li>
+        <li>املا نموذج «عرّفني أول ما نفتح» وابعته</li>
+        <li>افتح لوحة التحكم ← <strong>Website Sales &amp; SEO</strong> ← <strong>Leads</strong></li>
+        <li>افتح التسجيل اللي لسه واصل</li>
+      </ol>
+      <p class="exp">هتلاقي <code>gclid: test123</code> و <code>utm_source: facebook</code>
+         مخزّنين معاه. يعني الدايرة قفلت من ضغطة الإعلان لحد قاعدة البيانات.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">تبديل اللغة ما بيضيّعش مصدر الإعلان</span><span class="ref">القسم ٦</span></div>
+  <div class="b">
+    <p>الملف بيشترط إن معرّف الإعلان ما يضيعش عند التبديل بين العربي والإنجليزي.
+       <strong>كان بيضيع فعلاً، واتصلّح.</strong></p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح الرابط اللي فيه <code>gclid=test123</code></li>
+        <li>اضغط زرار <strong>English</strong> فوق</li>
+        <li>بص على الرابط في شريط العنوان</li>
+      </ol>
+      <p class="exp"><code>gclid=test123</code> لسه موجود فيه.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">إخفاء المحتوى الحسّاس من تسجيلات Clarity</span><span class="ref">القسم ٨</span></div>
+  <div class="b">
+    <p>كل نموذج وكل زرار حجز أو شراء عليه علامة إخفاء، فأي حاجة المريض يكتبها مش هتظهر في
+       التسجيلات — <strong>حتى لو اتضاف حقل جديد بعدين</strong>.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>اضغط <code>Ctrl+U</code> ودوّر على <code>data-clarity-mask</code></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">٥.</span> استبعاد زيارات الفريق</h2>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">كوكي بدل عناوين الإنترنت</span><span class="ref">القسم ٥ — بالحل اللي اتفقنا عليه</span></div>
+  <div class="b">
+    <p>الملف كان بيطلب عناوين IP للمكتب. اتفقنا على حل أحسن لأن الخطوط في مصر عناوينها بتتغيّر
+       والفريق مش دايمًا من المكتب.</p>
+    <p>أي حد من الفريق يفتح الرابط ده <strong>مرة واحدة من كل جهاز</strong>، وزياراته تتستبعد سنة:</p>
+    <span class="url">https://hayaihealthcare.com/ar/?hayai_team=1</span>
+    <p>ولو حب يرجع يتصفّح كزائر عادي، يفتح نفس الرابط بـ <code>0</code> بدل <code>1</code>.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح الرابط اللي فوق</li>
+        <li>اكتب <code>dataLayer</code></li>
+      </ol>
+      <p class="exp">هتلاقي <code>traffic_type: "internal"</code>.</p>
+    </div>
+    <div class="warn" style="margin-bottom:0">
+      الرابط ده للفريق الداخلي بس. لو اتنشر في مكان عام أو وصل لعميل، زياراته هتختفي من
+      التقارير وهتفضلوا تدوّروا على السبب شهور.
+    </div>
+  </div>
+</div>
+
+<h2 class="sec"><span class="n">٩.</span> الفحص الآلي</h2>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">فحص بيوقف أي نشر يكسر التتبّع</span><span class="ref">القسم ٩</span></div>
+  <div class="b">
+    <p>قبل أي نشر، فحص آلي بيشتغل على كل صفحات الموقع ويتأكد من أربع حاجات: الترتيب صح،
+       الحاوية مركّبة مرة واحدة، مفيش كود تتبّع مباشر، والتصنيف جاي من لوحة التحكم فعلاً مش من
+       الوضع الاحتياطي.</p>
+    <p>آخر تشغيل: <strong>١١ صفحة من ١١ نجحت</strong>.</p>
+    <p>ده اللي بيخلّي التتبّع ما يقعش بالصمت لما حد يعدّل زرار بعد ٦ شهور — وده اللي الملف
+       بيحذّر منه بالنص في القسم ٩.</p>
+  </div>
+</div>
+
+<h2 class="sec">ملحوظة على اللي لسه ما خلصش</h2>
+
+<p>الورقة دي للبنود اللي خلصت بس. الباقي في الملف نوعين:</p>
+
+<ul class="plain">
+  <li><strong>مستني الحسابات منكم</strong> — الحاوية، وحسابات Analytics و Ads و Clarity،
+      واشتراك بانر الكوكيز. التركيب جاهز ومستنيهم، وأول ما يوصلوا بيشتغلوا من غير أي تعديل في الكود.</li>
+  <li><strong>أحداث لخدمات لسه مش موجودة على الموقع</strong> — زي تأكيد الحجز وفحص التغطية
+      ونتائج الإرشاد. دي بعتنالكم فيها ورقة منفصلة لأنها محتاجة قرار منكم الأول.</li>
+</ul>
+
+<footer class="sign">
+  <p>أي بند في الورقة دي حابين نمشي عليه مع حضراتكم خطوة بخطوة، إحنا تحت أمركم.</p>
+  <div class="small">HAYAI · ما تم تنفيذه من ملف القياس والتتبّع · ٧ أكتوبر ٢٠٢٦</div>
+</footer>
+
+</body>
+</html>
