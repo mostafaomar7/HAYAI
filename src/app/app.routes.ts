@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Route, Routes, UrlSegment } from '@angular/router';
-import { dashboardShellGuard } from './core/guards/auth.guard';
+import { dashboardShellGuard, signedOutOnlyGuard } from './core/guards/auth.guard';
 import { TokenService } from './core/services/token.service';
 import { DashboardShellComponent } from './core/layouts/dashboard-shell/dashboard-shell.component/dashboard-shell.component';
 import { isSiteLocale } from './features/site/site-paths';
@@ -31,6 +31,9 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
+    // A signed-in admin never belongs on the holding page; it reads as a
+    // logout. Same rule as the wildcard at the bottom of this file.
+    canActivate: [signedOutOnlyGuard],
     // import('./features/landing/landing.component/landing.component').then(m => m.LandingComponent)
     loadComponent: () =>
       import('./features/coming-soon/coming-soon.component/coming-soon.component')
@@ -66,6 +69,7 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [signedOutOnlyGuard],
     loadComponent: () =>
       import('./features/auth/login.component/login.component').then(m => m.LoginComponent)
   },

@@ -46,8 +46,13 @@ export class LoginComponent {
       next: () => {
         this.loading.set(false);
         // Set when a session expired mid-screen; otherwise the usual home.
+        // `/` is the parked holding page and `/login` is this screen: either
+        // as a return address sends a freshly signed-in admin somewhere that
+        // looks like the sign-in failed.
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        this.router.navigateByUrl(returnUrl && returnUrl.startsWith('/') ? returnUrl : '/dashboard');
+        const usable =
+          returnUrl && returnUrl.startsWith('/') && !/^\/(login([/?#]|$)|$)/.test(returnUrl);
+        this.router.navigateByUrl(usable ? returnUrl! : '/dashboard');
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
