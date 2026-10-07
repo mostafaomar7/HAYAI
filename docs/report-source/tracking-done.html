@@ -71,9 +71,11 @@
    إزاي تتأكد منه بنفسك. كل اختبار هنا تقدر تعمله من متصفحك من غير أي أداة أو حساب.</p>
 
 <div class="note">
-  <strong>قبل ما تبدأ:</strong> معظم الاختبارات محتاجة تفتح <strong>Developer Tools</strong> —
-  اضغط <code>F12</code> في كروم، وروح على تبويب <strong>Console</strong>. هتكتب فيه كلمة واحدة
-  وتضغط Enter، وهيطلعلك اللي الموقع بيسجّله.
+  <strong>الورقة جزئين:</strong> الأول بيثبت إن الموقع بيسجّل صح، والتاني (<strong>«الأرقام في
+  لوحة التحكم»</strong> في الآخر) عن المكان اللي هتتفرّجوا فيه على الأرقام كل يوم.
+  <p style="margin:2mm 0 0">اختبارات الجزء الأول محتاجة تفتح <strong>Developer Tools</strong> —
+  اضغط <code>F12</code> في كروم وروح على تبويب <strong>Console</strong>، واكتب فيه الكلمة
+  المطلوبة واضغط Enter. ولو ده مش مريح، ابدأوا من الجزء التاني على طول.</p>
 </div>
 
 <h2 class="sec"><span class="n">١.</span> التركيب في الصفحة</h2>
@@ -346,6 +348,106 @@
     <p>آخر تشغيل: <strong>١١ صفحة من ١١ نجحت</strong>.</p>
     <p>ده اللي بيخلّي التتبّع ما يقعش بالصمت لما حد يعدّل زرار بعد ٦ شهور — وده اللي الملف
        بيحذّر منه بالنص في القسم ٩.</p>
+  </div>
+</div>
+
+
+<h2 class="sec">الأرقام في لوحة التحكم</h2>
+
+<p>الاختبارات اللي فاتت بتثبت إن الموقع بيسجّل صح. القسم ده عن <strong>المكان اللي
+   هتتفرّجوا فيه على الأرقام كل يوم</strong> — من غير أي أدوات مطوّرين.</p>
+
+<div class="note">
+  <strong>فيه مكانين منفصلين تمامًا للأرقام، وده أهم فرق في الورقة:</strong>
+  <ul class="plain" style="margin-top:2mm;margin-bottom:0">
+    <li><strong>لوحة تحكم حياة</strong> — نظامنا الخاص، <strong>شغّال ومليان بيانات دلوقتي</strong>.</li>
+    <li><strong>Google Analytics و Ads و Clarity</strong> — <strong>فاضية تمامًا</strong>، لأن
+        الحسابات نفسها لسه ما اتعملتش. مش عطل: الموقع بيجهّز البيانات ومستني حد ياخدها.</li>
+  </ul>
+</div>
+
+<p>يعني حتى لو الحسابات اتأخرت شهر، <strong>مش بتخسروا قياس</strong> — بتخسروا قدرة جوجل
+   إنه يظبّط الحملات بس. الجرد تحت كله من لوحة التحكم.</p>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">Analytics &amp; Conversions — الصورة العامة</span><span class="ref">Website Sales &amp; SEO</span></div>
+  <div class="b">
+    <p>الشاشة الرئيسية للأرقام. بتوري عدد الجلسات، التحويلات، نسبة التحويل، والقُمع — يعني
+       كام واحد شاف صفحة، وكام ضغط زرار، وكام وصل للآخر.</p>
+    <p>وفيها فلتر تاريخ من/إلى، ورسم يومي تعرفوا منه الأيام اللي فيها حركة.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح لوحة التحكم ← <strong>Website Sales &amp; SEO</strong> ← <strong>Analytics &amp; Conversions</strong></li>
+      </ol>
+      <p class="exp">وقت كتابة الورقة كانت بتوري: <strong>١٥٠ جلسة · ٨ تحويلات · نسبة ٥.٣٪ ·
+         ٤ تسجيلات · ٣ طلبات شراء</strong>. الأرقام دي حقيقية ومن زيارات فعلية للموقع.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">Leads — كل تسجيل ومعاه مصدره</span><span class="ref">Website Sales &amp; SEO</span></div>
+  <div class="b">
+    <p>دي أهم شاشة للتسويق. كل تسجيل وصل من الموقع، وجواه <strong>الحملة اللي جابته ومعرّف
+       الإعلان</strong>.</p>
+    <p>وفيها فلتر مهم: <strong>التسجيلات اللي جاية من إعلان مدفوع بس</strong>. ده اللي
+       هيخليكم تعرفوا الحملات بتجيب كام تسجيل فعلاً، بدل التخمين.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح <strong>Leads</strong></li>
+        <li>اضغط على أي تسجيل عشان تفتح تفاصيله</li>
+        <li>دوّر على قسم <strong>attribution</strong></li>
+      </ol>
+      <p class="exp">هتلاقوا <code>utm_campaign</code> و <code>gclid</code> و
+         <code>landing_page</code> — يعني الصفحة اللي دخل منها والإعلان اللي جابه.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">Purchases / Orders — طلبات الشركات</span><span class="ref">Website Sales &amp; SEO</span></div>
+  <div class="b">
+    <p>طلبات الشراء اللي بتيجي من المستشفيات والشركات، وكل طلب معاه قيمته بالجنيه ومصدره
+       زي التسجيلات بالظبط.</p>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">Sitemap, Robots &amp; AI — مين بيزور الموقع من محركات البحث</span><span class="ref">Website Sales &amp; SEO</span></div>
+  <div class="b">
+    <p>الشاشة دي بتوري زيارات زواحف محركات البحث ومساعدات الذكاء الاصطناعي خلال آخر ١٤ يوم —
+       Googlebot و Bing و ChatGPT و Claude و Perplexity.</p>
+    <p>وفيها نتيجة تستاهل وقفة. وقت كتابة الورقة:</p>
+    <div class="test" style="background:#F8FAFC">
+      <div class="lbl" style="color:var(--brand)">آخر ١٤ يوم</div>
+      <ul class="plain" style="margin-bottom:0">
+        <li><strong>ClaudeBot — ٩١ زيارة</strong></li>
+        <li><strong>GPTBot — ٣٠ زيارة</strong></li>
+        <li>Googlebot — ١٢ زيارة</li>
+        <li>OAI-SearchBot — ٥ زيارات</li>
+      </ul>
+    </div>
+    <p style="margin-top:2.5mm">مساعدات الذكاء الاصطناعي بتقرا الموقع <strong>أكتر من جوجل نفسه</strong>.
+       ودي بالظبط النتيجة اللي شغل ملف الـ SEO كان بيستهدفها: الصفحات بتتبني كاملة على السيرفر،
+       فالزواحف اللي ما بتشغّلش جافاسكريبت بتقرا المحتوى كله من أول رد.</p>
+    <div class="test">
+      <div class="lbl">إزاي تتأكد</div>
+      <ol>
+        <li>افتح <strong>Sitemap, Robots &amp; AI</strong></li>
+      </ol>
+      <p class="exp">الأرقام بتتحدّث لوحدها، ومحتاجة أيام تتجمّع — فمتقلقوش لو لقيتوا صفر
+         على زاحف معيّن.</p>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="h"><span class="tick">✓</span><span class="t">Website Settings — بيانات التواصل اللي جوجل بيقراها</span><span class="ref">Website Sales &amp; SEO</span></div>
+  <div class="b">
+    <p>رقم التليفون والواتساب والإيميل والوصف العربي — دول مش بس بيظهروا في الفوتر، دول كمان
+       بيتبعتوا لجوجل في البيانات المنظّمة بتاعة الموقع.</p>
   </div>
 </div>
 
