@@ -1,0 +1,75 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>المطلوب من فريق التسويق</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:16mm 16mm 14mm}*{box-sizing:border-box}
+body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2430;font-size:11pt;line-height:1.8;margin:0;text-align:right}
+header{border-bottom:2px solid #0E7490;padding-bottom:4mm;margin-bottom:5mm}
+header .org{color:#0E7490;font-weight:700;font-size:9.5pt}header h1{font-size:17pt;color:#0b2545;margin:1mm 0}header .date{color:#6B7280;font-size:9pt}
+h2{font-size:12.5pt;color:#0b2545;margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid #e3e8ef;break-after:avoid}
+p{margin:0 0 8px}ul,ol{margin:0 0 10px;padding:0 18px 0 0}li{margin-bottom:5px;break-inside:avoid}b{color:#0b2545}
+code{font-family:Consolas,monospace;direction:ltr;unicode-bidi:isolate;background:#F1F5F9;border:1px solid #E5E7EB;border-radius:3px;padding:0 4px;font-size:9.5pt;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:9.8pt}th,td{border:1px solid #E5E7EB;padding:5px 8px;vertical-align:top;text-align:right}th{background:#F1F5F9;color:#0b2545}tr{break-inside:avoid}
+.key{background:#FFF7ED;border-right:3px solid #C2410C;padding:8px 12px;margin:8px 0 12px}
+.ok{background:#ECFDF5;border-right:3px solid #047857;padding:8px 12px;margin:8px 0 12px}
+.n{color:#0E7490}
+</style></head><body>
+<header><div class="org">HAYAI</div><h1>المطلوب من فريق التسويق قبل تشغيل الإعلانات</h1><div class="date">٩ أكتوبر ٢٠٢٦ · على ملف القياس والتتبّع</div></header>
+
+<p>أهلاً بيكم،</p>
+<p>شكرًا على ورقة الحسابات والمعرّفات، المعرّفات كلها وصلت كاملة. الورقة دي فيها البنود الباقية من ملف القياس اللي من مسؤولية فريق التسويق، مرتّبة حسب الأولوية، وجنب كل بند مكانه في الحساب.</p>
+
+<div class="ok"><b>من ناحية الموقع: جاهز.</b> الحاوية <code>GTM-5VKC5CMT</code> متركّبة، وكل الأحداث بتتبعت، وقواعد الموافقة شغّالة، وفيه اختبارات آلية بتشتغل مع كل نشر. التفاصيل الكاملة للي الموقع بيبعته في ملحق ورقة الرد السابقة.</div>
+
+<h2><span class="n">١.</span> بناء الحاوية في Tag Manager — أولوية قصوى</h2>
+<div class="key">ده البند الوحيد اللي من غيره <b>مفيش ولا تحويل هيتسجّل في Google Ads</b>، ولا بيانات هتوصل لـ Analytics أو Clarity.</div>
+<p>الحاوية على حساب د. جنة، وهي اللي عندها صلاحية النشر. المطلوب بناؤها حسب الملحق اللي في ورقة الرد السابقة:</p>
+<ol>
+<li><b>البانر:</b> template ‏<b>CookieYes CMP</b> من الـ Gallery بالـ key بتاعكم، على Consent Initialization.</li>
+<li><b>Analytics:</b> الـ Google tag بـ Lookup Table على الـ hostname (الموقع الحقيقي ← <code>G-NS1Q07ZLBF</code>، أي حاجة تانية ← <code>G-EXCKD07VXC</code>)، وتاج GA4 لكل حدث.</li>
+<li><b>Page Location:</b> في إعدادات الـ Google tag، خلّوا <code>page_location</code> = المتغيّر <code>page_location</code> اللي الموقع بيبعته. الموقع بيبعته من غير نص البحث ومن غير الكود السري لصفحة متابعة الطلب، فده بيمنع إن Analytics يسجّل اللي المريض كتبه.</li>
+<li><b>التحويلات التلاتة:</b> Lead و WhatsApp و Phone بالـ labels بتاعتكم، ومعاهم استثناءات Sensitive و Internal و Staging.</li>
+<li><b>Clarity:</b> template ‏<b>Microsoft Clarity</b>، ويشتغل بس لما <code>clarity_allowed</code> = <code>true</code>.</li>
+<li><b>قبل النشر:</b> اختبار بزرار Preview على الموقع، وبعد النشر Export للحاوية بصيغة JSON وإرسالها لينا نحفظها مع المشروع.</li>
+</ol>
+<p><b>مهم:</b> الموقع بيمنع أي <b>Custom HTML</b> أو <b>Custom JavaScript</b> في الحاوية. أي تاج من النوع ده مش هيشتغل، فالبانر و Clarity لازم من الـ templates.</p>
+
+<h2><span class="n">٢.</span> إعدادات Google Analytics</h2>
+<table><tr><th>البند</th><th>مكانه في Admin</th><th>المطلوب</th></tr>
+<tr><td>المنطقة الزمنية والعملة</td><td>Property details</td><td>Egypt (Cairo) و Egyptian Pound (EGP)</td></tr>
+<tr><td>الأبعاد المخصّصة — Event</td><td>Custom definitions</td><td><code>page_type</code>، <code>page_language</code>، <code>page_sensitivity</code>، <code>content_group</code>، <code>journey_stage</code>، <code>care_category</code>، <code>form_id</code>، <code>cta_tracking_key</code>، <code>error_type</code>، <code>area</code></td></tr>
+<tr><td>المقاييس المخصّصة — Event</td><td>Custom definitions</td><td><code>result_count</code></td></tr>
+<tr><td>الأبعاد المخصّصة — User</td><td>Custom definitions</td><td><code>first_source</code>، <code>first_medium</code>، <code>first_campaign</code></td></tr>
+<tr><td>الأحداث المهمة (Key events)</td><td>Data display ← Events</td><td><code>generate_lead</code>، <code>whatsapp_click</code>، <code>phone_click</code>، <code>purchase_submitted</code></td></tr>
+<tr><td>Google signals</td><td>Data collection</td><td>On</td></tr>
+<tr><td>الربط</td><td>Product links</td><td>Search Console و BigQuery (Export يومي). ربط Google Ads خلص.</td></tr>
+<tr><td>الجماهير</td><td>Audiences</td><td>الأربعة اللي في القسم ٥ من الملف، من السلوك بس، ومن غير أي صفحة حسّاسة.</td></tr>
+<tr><td>تنبيه وقوع الأرقام</td><td>Insights ← Custom</td><td>لو الأحداث المهمة اليومية وقعت أكتر من ٥٠٪ عن نفس اليوم الأسبوع اللي فات</td></tr>
+</table>
+<p>الأبعاد المخصّصة لازم تتسجّل <b>قبل</b> تشغيل الإعلانات، لأن Analytics بيعرضها من يوم تسجيلها بس، ومش بيرجع للبيانات القديمة.</p>
+
+<h2><span class="n">٣.</span> Google Ads</h2>
+<ul>
+<li><b>إجراء تحويل جديد اسمه <code>Attended (offline)</code>:</b> من Goals ← Conversions ← New ← Import ← Track conversions from clicks. ده اللي هيترفع عليه كل أسبوع ملف العملاء اللي اتعاقدوا فعلًا، وهيكون Secondary في الأول.</li>
+<li><b>Auto-tagging:</b> يكون شغّال.</li>
+<li><b>Remarketing:</b> لو هيتعمل، يكون من الجماهير السلوكية بس، ومن غير أي ذكر لحالة صحية في الإعلان.</li>
+</ul>
+
+<h2><span class="n">٤.</span> Search Console و Bing</h2>
+<ul>
+<li>رفع <code>https://hayaihealthcare.com/sitemap_index.xml</code> في Sitemaps.</li>
+<li>ربطه بـ Analytics من Settings ← Associations.</li>
+<li>Bing Webmaster Tools ← Import from Google Search Console.</li>
+<li>تشغيل إيميلات التنبيهات على إيميل مشترك للتسويق.</li>
+</ul>
+
+<h2><span class="n">٥.</span> صلاحيات Tag Manager</h2>
+<ul>
+<li>الملف بيطلب <b>شخصين</b> بصلاحية Publish علشان ما يبقاش فيه شخص واحد بس يقدر ينشر. دلوقتي د. جنة بس.</li>
+<li>التأكيد بخطوتين (2-Step Verification) على كل حساب عنده Publish.</li>
+<li>تشغيل إيميل تنبيه مع كل نشر للحاوية: Admin ← User settings ← Notifications.</li>
+</ul>
+
+<h2><span class="n">٦.</span> بعد النشر</h2>
+<p>أول ما الحاوية تتنشر، بلّغونا ونختبر مع بعض بالـ Preview على الموقع الحقيقي: البانر، والتحويلات التلاتة، وإن الإعلانات مش بتشتغل على صفحات الطوارئ وزيارات الفريق. وبعدها تفعّلوا فلتر الزيارات الداخلية في Analytics.</p>
+
+<p style="margin-top:14px">لو فيه أي بند محتاج توضيح، إحنا موجودين. شكرًا ليكم.</p>
+</body></html>
