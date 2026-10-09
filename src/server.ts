@@ -481,10 +481,29 @@ function pageMetadata(res: Response, html: string, status: number): Record<strin
     if (ft['utm_medium']) out['ft_medium'] = ft['utm_medium'];
     if (ft['utm_campaign']) out['ft_campaign'] = ft['utm_campaign'];
   }
+  out['clarity_allowed'] = clarityAllowed(html, out['page_sensitivity']);
   // GA4 excludes this with its own Internal traffic filter — no custom
   // JavaScript in the container, nothing to keep in step.
   if (res.locals['internal']) out['traffic_type'] = 'internal';
   return out;
+}
+
+/**
+ * Whether session recording (Clarity) may load on this page.
+ *
+ * Clarity's terms forbid using it with health data, so the client asked for it
+ * to stay off sensitive pages, booking and purchase pages and provider
+ * profiles. The rule is an allow-list: only an editorial CMS page (kind
+ * `page`) classified `standard`. Products (buy box), doctor and hospital
+ * profiles, listings and search, order tracking and anything unclassified are
+ * all off. Forms on an allowed page (the home page's contact form) are masked
+ * with `data-clarity-mask` instead, so the page stays measurable and nothing a
+ * patient types is recorded. The container's Clarity tag fires only when this
+ * is true; TagLayerService applies the same rule on in-app navigation.
+ */
+function clarityAllowed(html: string, sensitivity: unknown): boolean {
+  if (sensitivity !== 'standard') return false;
+  return /<site-view[^>]*\bdata-page-kind="page"/.test(html);
 }
 
 /** `</script>` inside a JSON string would end the block early. */

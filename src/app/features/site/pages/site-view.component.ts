@@ -33,6 +33,9 @@ import { arr, buildJsonLd, img, str } from '../site-utils';
   styleUrl: './site-view.component.css',
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // What the page is, for the server's tracking metadata (server.ts reads it
+  // out of the render to decide whether session recording may load).
+  host: { '[attr.data-page-kind]': 'view()?.result?.kind ?? null' },
   template: `
     @if (view(); as v) {
       @switch (v.result.kind) {

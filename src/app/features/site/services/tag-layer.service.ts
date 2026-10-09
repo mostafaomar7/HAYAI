@@ -57,12 +57,37 @@ export class TagLayerService {
    * off so the two cannot double-count the same navigation.
    */
   virtualPageView(path: string): void {
+    const measurement = this.measurement();
+    const clarityAllowed = this.clarityAllowed(measurement);
+    // The container starts Clarity once, on the first page load, and only
+    // where the server said it may. In-app navigation never reloads, so a
+    // recording that began on the home page would follow the visitor onto a
+    // product or ICU page. Stop it there; it does not restart until a fresh
+    // page load lands on an allowed page.
+    if (!clarityAllowed) this.stopClarity();
     this.push({
       event: 'virtual_page_view',
-      ...this.measurement(),
+      ...measurement,
+      clarity_allowed: clarityAllowed,
       page_location: this.href(path),
       page_title: this.state.page()?.['title'] ?? null
     });
+  }
+
+  /** Same rule as `clarityAllowed()` in server.ts: a standard editorial page only. */
+  private clarityAllowed(measurement: Dict): boolean {
+    const page = this.state.page();
+    return measurement['page_sensitivity'] === 'standard' && page?.['entity'] === 'page' && !page?.['is_preview'];
+  }
+
+  private stopClarity(): void {
+    if (!this.isBrowser) return;
+    const clarity = (window as unknown as { clarity?: (...args: unknown[]) => void }).clarity;
+    try {
+      clarity?.('stop');
+    } catch {
+      /* recording is optional; never let it break navigation */
+    }
   }
 
   /** Full URL, as the spec asks for, with the path the router settled on. */
@@ -114,13 +139,20 @@ export class TagLayerService {
     });
   }
 
-  /** A click the client counts as a conversion: WhatsApp, phone, app store. */
+  /**
+   * A CMS button was clicked. Always `cta_click`, whatever it opens.
+   *
+   * WhatsApp and phone conversions are NOT pushed from here: the container
+   * counts them with its link-click triggers (wa.me / tel:+20…), which see
+   * every such link on the page, including the footer number that is not a
+   * CMS button. Pushing `whatsapp_click` here as well would give the same
+   * click two sources, and Google Ads would count it twice.
+   */
   ctaClick(kind: string, trackingKey: string | null, placement: string): void {
-    const event =
-      kind === 'whatsapp' ? 'whatsapp_click' : kind === 'phone' ? 'phone_click' : 'cta_click';
     this.push({
-      event,
+      event: 'cta_click',
       ...this.measurement(),
+      cta_kind: kind,
       cta_tracking_key: trackingKey,
       placement
     });
