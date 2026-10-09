@@ -1,0 +1,64 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>استيراد حاوية Tag Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:16mm 16mm 14mm}*{box-sizing:border-box}
+body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2430;font-size:11pt;line-height:1.8;margin:0;text-align:right}
+header{border-bottom:2px solid #0E7490;padding-bottom:4mm;margin-bottom:5mm}
+header .org{color:#0E7490;font-weight:700;font-size:9.5pt}header h1{font-size:17pt;color:#0b2545;margin:1mm 0}header .date{color:#6B7280;font-size:9pt}
+h2{font-size:12.5pt;color:#0b2545;margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid #e3e8ef;break-after:avoid}
+p{margin:0 0 8px}ul,ol{margin:0 0 10px;padding:0 18px 0 0}li{margin-bottom:5px;break-inside:avoid}b{color:#0b2545}
+code{font-family:Consolas,monospace;direction:ltr;unicode-bidi:isolate;background:#F1F5F9;border:1px solid #E5E7EB;border-radius:3px;padding:0 4px;font-size:9.5pt;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:9.8pt}th,td{border:1px solid #E5E7EB;padding:5px 8px;vertical-align:top;text-align:right}th{background:#F1F5F9;color:#0b2545}tr{break-inside:avoid}
+.key{background:#FFF7ED;border-right:3px solid #C2410C;padding:8px 12px;margin:8px 0 12px}
+.ok{background:#ECFDF5;border-right:3px solid #047857;padding:8px 12px;margin:8px 0 12px}
+.n{color:#0E7490}
+</style></head><body>
+<header><div class="org">HAYAI</div><h1>استيراد حاوية Tag Manager</h1><div class="date">٩ أكتوبر ٢٠٢٦ · مع ملف <code>hayai-container-import.json</code></div></header>
+
+<p>وعليكم السلام، وجمعة مباركة.</p>
+<p>الملف المرفق <code>hayai-container-import.json</code> فيه الحاوية جاهزة للاستيراد، مبنية على الأحداث اللي الموقع بيبعتها بالظبط. دي خطوات الاستيراد والمراجعة والنشر.</p>
+
+<h2><span class="n">١.</span> اللي جوه الملف</h2>
+<table><tr><th>النوع</th><th>العدد</th><th>التفاصيل</th></tr>
+<tr><td>Tags</td><td>15</td><td>الـ Google tag، و ١٠ أحداث GA4، و Conversion Linker، والتحويلات التلاتة (Lead و WhatsApp و Phone) بالـ labels بتاعتكم</td></tr>
+<tr><td>Triggers</td><td>14</td><td>أحداث الموقع، وضغطات الواتساب والتليفون والمتجر، وشرط Clarity، والاستثناءات التلاتة (Sensitive و Staging و Internal)</td></tr>
+<tr><td>Variables</td><td>28</td><td>متغيّرات الـ dataLayer، و Lookup للـ GA4 حسب العنوان، و Conversion ID، والإعدادات المشتركة</td></tr>
+</table>
+<div class="key"><b>تاجين مش في الملف وبيتضافوا من الـ Gallery:</b> CookieYes CMP و Microsoft Clarity. الـ templates دي ملك الشركات اللي عاملاها، وإضافتها من الـ Gallery بتخليها تاخد تحديثاتهم أول بأول. الـ trigger بتاع Clarity موجود في الملف وجاهز. الخطوات في القسم ٣.</div>
+
+<h2><span class="n">٢.</span> الاستيراد</h2>
+<ol>
+<li>Admin ← <b>Import Container</b> ← Choose container file ← اختاروا <code>hayai-container-import.json</code>.</li>
+<li>Choose workspace: <b>New</b>، وسمّوه <code>initial build</code>.</li>
+<li>Choose an import option: <b>Merge</b> ← <b>Rename conflicting tags, triggers, and variables</b>.</li>
+<li>Confirm. Tag Manager هيعرض ملخص بالعدد اللي هيتضاف، المفروض يطابق جدول القسم ١.</li>
+</ol>
+
+<h2><span class="n">٣.</span> التاجين من الـ Gallery</h2>
+<table><tr><th>التاج</th><th>الإعدادات</th><th>Triggering</th><th>Consent</th></tr>
+<tr><td>Tags ← New ← Community Template Gallery ← <b>CookieYes CMP</b></td><td>Website key: <code>aa524032afac8db9c6d93f8b2c688ffb</code>. الحالة الافتراضية لكل الأنواع: Denied، زي الموقع.</td><td><b>Consent Initialization - All Pages</b></td><td>—</td></tr>
+<tr><td>Tags ← New ← Community Template Gallery ← <b>Microsoft Clarity - Official</b></td><td>Project ID: <code>yu39huk43j</code></td><td><b>Window Loaded - Clarity allowed</b><br>Exception: <b>Block - Internal</b></td><td><code>analytics_storage</code></td></tr>
+</table>
+<p><b>مهم:</b> Clarity لازم يتربط بالـ trigger اللي فوق بالظبط، مش All Pages. الـ trigger ده هو اللي بيمنعه من الصفحات الحسّاسة وصفحات الخدمات والدكاترة.</p>
+
+<h2><span class="n">٤.</span> المراجعة قبل النشر — بزرار Preview</h2>
+<ol>
+<li>افتحوا <code>https://hayaihealthcare.com/ar</code> في الـ Preview. <b>قبل</b> الموافقة على البانر: مفيش أي تاج من GA4 أو Ads أو Clarity يشتغل.</li>
+<li>وافقوا على الكل: <code>Google tag - GA4</code> يشتغل، و Clarity يشتغل على الرئيسية.</li>
+<li>افتحوا صفحة الطوارئ والعناية المركزة: Clarity <b>ما يشتغلش</b>.</li>
+<li>اضغطوا زرار الواتساب: <code>GA4 - whatsapp_click</code> و <code>GAds - Conv - WhatsApp</code> يشتغلوا مرة واحدة.</li>
+<li>في صفحة الطوارئ اضغطوا الواتساب: GA4 يشتغل، و Ads <b>لأ</b> (Block - Sensitive).</li>
+<li>افتحوا الموقع بـ <code>?hayai_team=1</code>: تاجز Ads و Clarity <b>ما يشتغلوش</b>.</li>
+</ol>
+
+<h2><span class="n">٥.</span> النشر</h2>
+<ol>
+<li>Submit ← Publish and Create Version، باسم <code>v1 initial build</code> وسطر وصف.</li>
+<li>Admin ← <b>Export Container</b> للنسخة المنشورة، وابعتوا لنا الملف نحفظه مع المشروع.</li>
+<li>بلّغونا بعد النشر، ونتأكد مع بعض إن الأرقام بدأت توصل لـ Analytics و Ads.</li>
+</ol>
+
+<h2><span class="n">٦.</span> صلاحية النشر التانية</h2>
+<div class="ok">أيوه، <code>Hayai.healthcare@gmail.com</code> هو الإيميل المتفق عليه، ومش محتاجين حد تالت. يتضاف من Admin ← User Management بصلاحية <b>Publish</b> على الحاوية و <b>Administrator</b> على الحساب، ويتفعّل عليه التأكيد بخطوتين زي حساب د. جنة.</div>
+
+<p style="margin-top:14px">لو أي خطوة ما مشيتش زي المكتوب، ابعتولنا صورة من الشاشة. شكرًا ليكم.</p>
+</body></html>
