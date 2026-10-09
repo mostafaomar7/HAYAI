@@ -458,6 +458,7 @@ export class SiteFormComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.sending.set(false);
+        this.tags.formError(this.form()?.key ?? null, err.status);
         if (err.status === 422 && err.error?.errors) {
           const mapped: Record<string, string> = {};
           for (const [key, msgs] of Object.entries(err.error.errors as Record<string, string[]>)) {

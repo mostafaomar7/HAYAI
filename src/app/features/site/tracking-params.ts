@@ -59,3 +59,39 @@ export function withAttribution(href: string, search: string): string {
   const qs = merged.toString();
   return `${path}${qs ? `?${qs}` : ''}${fragment ? `#${fragment}` : ''}`;
 }
+
+/**
+ * The spec's `care_category` (hospital / insurance / emergency …).
+ *
+ * The API may send it in `measurement`; until it does, the values the spec
+ * names are read off `content_group`, which already carries them under a
+ * plural name. Anything else stays null rather than being guessed. Shared by
+ * the server (first render) and the tag layer (in-app moves, leads).
+ */
+export function careCategoryOf(contentGroup: unknown): string | null {
+  const map: Record<string, string> = { hospitals: 'hospital', insurance: 'insurance', emergency: 'emergency', doctors: 'doctor' };
+  return typeof contentGroup === 'string' ? (map[contentGroup] ?? null) : null;
+}
+
+/**
+ * Query parameters that may carry what a patient typed or a private
+ * credential: the search box, and the order-tracking reference and token.
+ * GA4 records the full URL of every hit, so these never reach it.
+ */
+export const PRIVATE_QUERY_PARAMS: readonly string[] = ['q', 'query', 'search', 'ref', 'token', 'email', 'phone', 'name'];
+
+/**
+ * The URL to report as `page_location`: the page as visited, minus the
+ * private parameters above. Campaign parameters stay — they are what GA4
+ * attributes the session on.
+ */
+export function safePageLocation(href: string): string {
+  try {
+    const url = new URL(href);
+    for (const key of PRIVATE_QUERY_PARAMS) url.searchParams.delete(key);
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return href.split('?')[0];
+  }
+}

@@ -28,6 +28,14 @@ export class SiteStateService {
   readonly alternates = signal<SeoAlternate[]>([]);
   /** The CMS page / product on screen: its forms, CTAs and id (attribution). */
   readonly page = signal<PagePayload | null>(null);
+  /**
+   * What the tag manager is told about the page on screen: its template
+   * (`page_type`) and the API's `measurement` block. Kept apart from `page`
+   * because listings, profiles and 404s have a classification too, and
+   * without it an in-app move to the doctors index would report the safe
+   * fallback instead of what the API said.
+   */
+  readonly tagPage = signal<{ pageType: string; measurement: Dict | null }>({ pageType: 'unknown', measurement: null });
   readonly fetchedForms = signal<Record<string, FormDefinition>>({});
   readonly modal = signal<SiteModal | null>(null);
 

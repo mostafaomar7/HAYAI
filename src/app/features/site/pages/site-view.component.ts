@@ -35,7 +35,10 @@ import { arr, buildJsonLd, img, str } from '../site-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
   // What the page is, for the server's tracking metadata (server.ts reads it
   // out of the render to decide whether session recording may load).
-  host: { '[attr.data-page-kind]': 'view()?.result?.kind ?? null' },
+  host: {
+    '[attr.data-page-kind]': 'view()?.result?.kind ?? null',
+    '[attr.data-page-type]': 'pageType()'
+  },
   template: `
     @if (view(); as v) {
       @switch (v.result.kind) {
@@ -119,6 +122,7 @@ export class SiteViewComponent {
     initialValue: this.route.snapshot.data['view'] as ResolvedView
   });
   protected redirectTo = computed(() => str(this.view()?.result.redirect?.location, this.view()?.result.redirect?.url));
+  protected pageType = computed(() => pageTypeOf(this.view()));
 
   constructor() {
     // Runs synchronously for the initial data (server render included) and on
@@ -143,6 +147,7 @@ export class SiteViewComponent {
 
     const isEntity = ['page', 'product', 'author', 'doctor', 'hospital'].includes(result.kind) && result.data;
     this.state.page.set(result.kind === 'page' || result.kind === 'product' ? (result.data as PagePayload) : null);
+    this.state.tagPage.set({ pageType: pageTypeOf(v), measurement: measurementOf(v) });
 
     if (isEntity) {
       const d = result.data as Dict;
@@ -197,4 +202,49 @@ export class SiteViewComponent {
       result.kind === 'error' ? this.state.t('errorTitle') : result.kind === 'redirect' ? this.state.t('redirecting') : this.state.t('notFoundTitle');
     this.seo.apply({ locale, title: `${title} | ${suffix}`, robots: 'noindex, follow' });
   }
+}
+
+/**
+ * The template the page was rendered from, for the tag manager (`page_type`).
+ *
+ * Derived from what the resolver returned, never from the URL, for the same
+ * reason `page_sensitivity` is: a renamed slug must not change what the page
+ * reports itself as. The server reads it back off this component's host
+ * attribute for the first render; TagLayerService reads it on in-app moves.
+ */
+export function pageTypeOf(v: ResolvedView | undefined | null): string {
+  if (!v) return 'unknown';
+  const { result } = v;
+  switch (result.kind) {
+    case 'page':
+      // The CMS template: home / page / landing / article.
+      return str(result.data?.type) || 'page';
+    case 'product':
+      return 'product';
+    case 'author':
+      return 'author';
+    case 'doctor':
+      return 'doctor_profile';
+    case 'hospital':
+      return 'hospital_profile';
+    case 'listing': {
+      const kind = v.listing?.kind === 'blog' ? 'articles' : str(v.listing?.kind);
+      if (kind === 'search') return 'search_results';
+      return kind ? `${kind}_listing` : 'listing';
+    }
+    case 'not_found':
+      return 'not_found';
+    default:
+      return result.kind;
+  }
+}
+
+/** The API's classification of the page, wherever this kind of result keeps it. */
+export function measurementOf(v: ResolvedView | undefined | null): Dict | null {
+  if (!v) return null;
+  // A 404 carries no payload; these are the contract's fixed values, the same
+  // ones the server renders.
+  if (v.result.kind === 'not_found') return { page_sensitivity: 'standard', content_group: 'other', journey_stage: 'know' };
+  const m = v.result.data?.measurement ?? v.listing?.meta?.['measurement'];
+  return m && typeof m === 'object' ? (m as Dict) : null;
 }

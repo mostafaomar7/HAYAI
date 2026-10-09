@@ -10,7 +10,8 @@
     "serve:ssr:BAREEQ": "node dist/BAREEQ/server/server.mjs",
     "seo:gate": "node scripts/seo-gate.mjs",
     "track:check": "bash scripts/check-tracking.sh",
-    "seo:lighthouse": "lhci autorun"
+    "seo:lighthouse": "lhci autorun",
+    "track:test": "playwright test"
   },
   "prettier": {
     "printWidth": 100,
@@ -45,6 +46,7 @@
     "@angular/build": "^20.3.22",
     "@angular/cli": "^20.3.22",
     "@angular/compiler-cli": "^20.3.0",
+    "@playwright/test": "^1.64.0",
     "@types/compression": "^1.8.1",
     "@types/express": "^5.0.1",
     "@types/jasmine": "~5.1.0",

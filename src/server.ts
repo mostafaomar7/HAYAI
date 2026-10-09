@@ -28,7 +28,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import compression from 'compression';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { ATTRIBUTION_PARAMS } from './app/features/site/tracking-params';
+import { ATTRIBUTION_PARAMS, careCategoryOf, safePageLocation } from './app/features/site/tracking-params';
 import { Readable } from 'node:stream';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -455,7 +455,7 @@ function measurementFields(html: string, status: number): Record<string, string>
   if (match) {
     try {
       const parsed = JSON.parse(match[1]) as Record<string, unknown>;
-      for (const key of ['page_sensitivity', 'content_group', 'journey_stage']) {
+      for (const key of ['page_sensitivity', 'content_group', 'journey_stage', 'care_category']) {
         const value = parsed[key];
         if (typeof value === 'string' && value) out[key] = value;
       }
@@ -474,7 +474,18 @@ function measurementFields(html: string, status: number): Record<string, string>
 
 /** What goes into the dataLayer before any tag can read it. */
 function pageMetadata(res: Response, html: string, status: number): Record<string, unknown> {
-  const out: Record<string, unknown> = measurementFields(html, status);
+  const out: Record<string, unknown> = {
+    page_type: pageTypeIn(html),
+    page_language: /<html[^>]*\blang="([a-z]{2})/i.exec(html)?.[1] ?? null,
+    ...measurementFields(html, status)
+  };
+  out['care_category'] ??= careCategoryOf(out['content_group']);
+  // GA4 records the URL of every hit. Without this, the search page reports
+  // what the patient searched for and order tracking reports its private
+  // token. The container sets the Google tag's page_location from this key.
+  const host = res.req.get('host');
+  const proto = host && host.replace(/^www\./, '') === siteHost ? new URL(SITE_URL).protocol : `${res.req.protocol}:`;
+  out['page_location'] = safePageLocation(`${host ? `${proto}//${host}` : SITE_URL}${res.req.originalUrl}`);
   const ft = res.locals['ft'] as Record<string, unknown> | null;
   if (ft) {
     if (ft['utm_source']) out['ft_source'] = ft['utm_source'];
@@ -504,6 +515,15 @@ function pageMetadata(res: Response, html: string, status: number): Record<strin
 function clarityAllowed(html: string, sensitivity: unknown): boolean {
   if (sensitivity !== 'standard') return false;
   return /<site-view[^>]*\bdata-page-kind="page"/.test(html);
+}
+
+/**
+ * The template the page was rendered from, as the page component declared it
+ * (`data-page-type` on its host). Never derived from the URL: a renamed slug
+ * must not change what the page reports itself as.
+ */
+function pageTypeIn(html: string): string {
+  return /\bdata-page-type="([a-z_]+)"/.exec(html)?.[1] ?? 'unknown';
 }
 
 /** `</script>` inside a JSON string would end the block early. */

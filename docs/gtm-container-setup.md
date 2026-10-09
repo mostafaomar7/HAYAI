@@ -37,8 +37,11 @@ Rendered by the server **before** the container loads, on every `/ar` `/en` page
 
 | Key | Values |
 |---|---|
+| `page_type` | `home`, `page`, `landing`, `article`, `product`, `doctor_profile`, `hospital_profile`, `<kind>_listing`, `search_results`, `order_tracking`, `not_found` |
+| `page_language` | `ar` / `en` |
 | `page_sensitivity` | `standard` / `sensitive` (unknown = sensitive) |
 | `content_group`, `journey_stage` | from the CMS |
+| `care_category` | from the CMS when sent; else `hospital` / `insurance` / `emergency` / `doctor` from `content_group`; else null |
 | `clarity_allowed` | `true` only on a standard CMS page (home, coverage, how it works, FAQ, about); `false` on products, doctor/hospital pages, listings/search, order tracking, sensitive pages |
 | `traffic_type` | `internal` for the team (`?hayai_team=1`) |
 | `ft_source`, `ft_medium`, `ft_campaign` | first touch, after consent |
@@ -49,9 +52,14 @@ Events pushed by the app (only after the server confirmed the action):
 | Event | Parameters |
 |---|---|
 | `virtual_page_view` | full metadata above + `page_location`, `page_title` |
-| `generate_lead` | `transaction_id`, `form_key`, `lead_type` |
-| `purchase_submitted` | `transaction_id`, `value`, `currency: EGP` (hospital purchase request) |
+| `generate_lead` | `transaction_id`, `event_id` (same value), `form_id` (`form_key` too, same value), `lead_type`, `care_category` |
+| `purchase_submitted` | `transaction_id`, `event_id`, `value`, `currency: EGP` (hospital purchase request) |
 | `cta_click` | `cta_kind`, `cta_tracking_key`, `placement` |
+| `search_results_view` | `result_count`, `care_category`, `area` — never the query (search, doctors, hospitals, products) |
+| `no_results` | `care_category`, `area` — right after `search_results_view` with 0 |
+| `form_error` | `form_id`, `error_type` (`validation` / `server` / `timeout`) — only when the API refused a submit |
+
+Every event also carries the page metadata above. The full plan is `tracking/plan.json`.
 
 WhatsApp and phone are **not** pushed by the app; the link-click triggers below
 are their only source, so a click can never be counted twice.
@@ -62,11 +70,13 @@ Built-in: Click URL, Click Element, Page Hostname, Page Path, Event, Container V
 
 | Name | Type | Value |
 |---|---|---|
+| `DLV - page_type`, `DLV - page_language`, `DLV - care_category` | Data Layer Variable v2 | same key |
 | `DLV - page_sensitivity` | Data Layer Variable v2 | `page_sensitivity` |
 | `DLV - clarity_allowed` | Data Layer Variable v2 | `clarity_allowed` |
 | `DLV - traffic_type` | Data Layer Variable v2 | `traffic_type` |
 | `DLV - content_group`, `DLV - journey_stage` | Data Layer Variable v2 | same key |
-| `DLV - transaction_id`, `DLV - form_key`, `DLV - lead_type` | Data Layer Variable v2 | same key |
+| `DLV - transaction_id`, `DLV - event_id`, `DLV - form_id`, `DLV - lead_type` | Data Layer Variable v2 | same key |
+| `DLV - result_count`, `DLV - area`, `DLV - error_type` | Data Layer Variable v2 | same key |
 | `DLV - value`, `DLV - currency` | Data Layer Variable v2 | same key |
 | `DLV - cta_kind`, `DLV - cta_tracking_key`, `DLV - placement` | Data Layer Variable v2 | same key |
 | `DLV - page_location`, `DLV - page_title` | Data Layer Variable v2 | same key |
@@ -82,6 +92,7 @@ Built-in: Click URL, Click Element, Page Hostname, Page Path, Event, Container V
 | `CE - generate_lead` | Custom Event `generate_lead` |
 | `CE - purchase_submitted` | Custom Event `purchase_submitted` |
 | `CE - cta_click` | Custom Event `cta_click` |
+| `CE - search_results_view`, `CE - no_results`, `CE - form_error` | Custom Event, exact name |
 | `Click - WhatsApp` | Just Links, **Wait for tags OFF**, Click URL matches RegEx `wa\.me\|api\.whatsapp\.com\|whatsapp://` |
 | `Click - Phone` | Just Links, **Wait for tags OFF**, Click URL matches RegEx `^tel:\s*\+?\s*20` (HAYAI's own number; the ambulance `123` never matches) |
 | `Click - App store` | Just Links, Wait for tags OFF, Click URL matches RegEx `play\.google\.com\|apps\.apple\.com` |
@@ -97,11 +108,12 @@ Every tag declares its consent (Advanced settings → Consent settings → Requi
 | Tag | Settings | Fires on | Exceptions | Consent |
 |---|---|---|---|---|
 | `CMP - CookieYes` | Gallery template **CookieYes CMP**, website key `aa524032afac8db9c6d93f8b2c688ffb`, defaults all denied (same as the page) | Consent Initialization - All Pages | — | none (CMP) |
-| `Google tag - GA4` | Tag ID `{{LT - GA4 ID by hostname}}`; config params `page_sensitivity`, `content_group`, `journey_stage`, `traffic_type`; user properties `first_source/medium/campaign` ← `DLV ft_*` | Initialization - All Pages | — | analytics_storage |
+| `Google tag - GA4` | Tag ID `{{LT - GA4 ID by hostname}}`; config params `page_type`, `page_language`, `page_sensitivity`, `content_group`, `journey_stage`, `traffic_type`; user properties `first_source/medium/campaign` ← `DLV ft_*` | Initialization - All Pages | — | analytics_storage |
 | `GA4 - page_view (SPA)` | Event `page_view`, `page_location`, `page_title` from DLV | CE - virtual_page_view | — | analytics_storage |
-| `GA4 - generate_lead` | params `transaction_id`, `form_key`, `lead_type` | CE - generate_lead | — | analytics_storage |
+| `GA4 - generate_lead` | params `transaction_id`, `form_id`, `lead_type`, `care_category` | CE - generate_lead | — | analytics_storage |
 | `GA4 - purchase_submitted` | params `transaction_id`, `value`, `currency` | CE - purchase_submitted | — | analytics_storage |
 | `GA4 - cta_click` | params `cta_kind`, `cta_tracking_key`, `placement` | CE - cta_click | — | analytics_storage |
+| `GA4 - search_results_view` / `no_results` / `form_error` | params as in section 1 | the matching CE trigger | — | analytics_storage |
 | `GA4 - whatsapp_click` / `phone_click` / `app_download_click` | param `link_url` = Click URL | the matching Click trigger | — | analytics_storage |
 | `Conversion Linker` | default | All Pages | — | built-in |
 | `GAds - Conv - Lead` | ID `AW-18499939113`, label `8zBYCL-7zZQdEKnWuvVE`, Transaction ID `{{DLV - transaction_id}}`, value empty (set in Ads) | CE - generate_lead | Sensitive, Staging, Internal | ad_storage, ad_user_data |

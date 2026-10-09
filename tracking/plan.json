@@ -1,0 +1,96 @@
+{
+  "$comment": "The tracking plan (Measurement & Tracking Specification, section 3). Every event the website pushes to the GTM dataLayer, who pushes it, and what it carries. A template or feature is not done until its events are here and covered by tests/tracking. The container (GTM-5VKC5CMT) is built on these names; docs/gtm-container-setup.md maps each one to its tags.",
+  "container": "GTM-5VKC5CMT",
+  "page_metadata": {
+    "pushed_by": "server (src/server.ts) before the container loads; TagLayerService repeats it on every in-app event",
+    "keys": {
+      "page_type": "home | page | landing | article | product | author | doctor_profile | hospital_profile | <kind>_listing | search_results | order_tracking | not_found",
+      "page_language": "ar | en",
+      "page_sensitivity": "standard | sensitive (unknown is sensitive)",
+      "content_group": "from the CMS measurement block",
+      "journey_stage": "know | find | act, from the CMS",
+      "care_category": "from the CMS when sent, else hospital | insurance | emergency | doctor from content_group, else null",
+      "clarity_allowed": "true only on a standard CMS page",
+      "traffic_type": "internal for the team (?hayai_team=1)",
+      "ft_source / ft_medium / ft_campaign": "first touch, after consent",
+      "gtm.blocklist": "['customScripts']"
+    },
+    "tested_by": ["scripts/check-tracking.sh", "tests/tracking: page metadata"]
+  },
+  "events": [
+    {
+      "event": "virtual_page_view",
+      "when": "an in-app route change (not the first page, which the server described)",
+      "pushed_by": "TagLayerService.virtualPageView ← SiteShellComponent",
+      "params": ["page_location", "page_title", "page metadata"],
+      "gtm": "CE - virtual_page_view → GA4 page_view",
+      "owner": "engineering",
+      "tested_by": "tests/tracking: an in-app move to a sensitive page"
+    },
+    {
+      "event": "generate_lead",
+      "when": "the API saved a form submission (not on duplicate: true)",
+      "pushed_by": "TagLayerService.lead ← SiteFormComponent",
+      "params": ["transaction_id", "event_id", "form_id", "form_key", "lead_type", "care_category", "page metadata"],
+      "never": ["user_data", "any field value"],
+      "gtm": "CE - generate_lead → GA4 + GAds - Conv - Lead",
+      "owner": "engineering",
+      "tested_by": "tests/tracking: lead form"
+    },
+    {
+      "event": "purchase_submitted",
+      "when": "the API saved a purchase request (not on duplicate: true)",
+      "pushed_by": "TagLayerService.purchase ← PurchaseFormComponent",
+      "params": ["transaction_id", "event_id", "value (only when priced)", "currency: EGP", "page metadata"],
+      "gtm": "CE - purchase_submitted → GA4",
+      "owner": "engineering"
+    },
+    {
+      "event": "cta_click",
+      "when": "a CMS button or link is clicked",
+      "pushed_by": "TagLayerService.ctaClick ← SiteCtaService",
+      "params": ["cta_kind", "cta_tracking_key", "placement", "page metadata"],
+      "gtm": "CE - cta_click → GA4",
+      "owner": "engineering"
+    },
+    {
+      "event": "search_results_view",
+      "when": "search results, or the doctors / hospitals / products index, are shown",
+      "pushed_by": "TagLayerService.resultsView ← ListingPageComponent",
+      "params": ["result_count", "care_category", "area", "page metadata"],
+      "never": ["the search query"],
+      "gtm": "CE - search_results_view → GA4",
+      "owner": "engineering",
+      "tested_by": "tests/tracking: search"
+    },
+    {
+      "event": "no_results",
+      "when": "right after search_results_view when result_count is 0",
+      "pushed_by": "TagLayerService.resultsView",
+      "params": ["care_category", "area", "page metadata"],
+      "gtm": "CE - no_results → GA4",
+      "owner": "engineering"
+    },
+    {
+      "event": "form_error",
+      "when": "the API refused a submit (not the browser's own checks)",
+      "pushed_by": "TagLayerService.formError ← SiteFormComponent, PurchaseFormComponent",
+      "params": ["form_id", "error_type: validation | server | timeout", "page metadata"],
+      "never": ["the error message", "any field value"],
+      "gtm": "CE - form_error → GA4",
+      "owner": "engineering",
+      "tested_by": "tests/tracking: a rejected submit"
+    },
+    {
+      "event": "whatsapp_click / phone_click / app_download_click",
+      "when": "a wa.me, tel:+20… or store link is clicked anywhere on the page",
+      "pushed_by": "GTM link-click triggers only — the site pushes nothing, so a click has one source",
+      "gtm": "Click - WhatsApp / Click - Phone / Click - App store → GA4 + GAds conversions",
+      "owner": "marketing (container)"
+    }
+  ],
+  "not_on_the_website": {
+    "$comment": "In the spec, but the action happens in the app, not on the website. Add here when a website flow exists.",
+    "events": ["booking_complete", "coverage_check_complete", "availability_check", "guidance_complete", "sign_up"]
+  }
+}

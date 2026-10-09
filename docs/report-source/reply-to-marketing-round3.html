@@ -51,19 +51,25 @@ table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:9.5pt;brea
 
 <h3>المتغيّرات اللي على كل صفحة (Data Layer Variables)</h3>
 <table><tr><th>المتغيّر</th><th>القيم</th></tr>
+<tr><td><code>page_type</code></td><td>نوع الصفحة: <code>home</code>، <code>product</code>، <code>doctor_profile</code>، <code>doctors_listing</code>، <code>search_results</code>، …</td></tr>
+<tr><td><code>page_language</code></td><td><code>ar</code> أو <code>en</code></td></tr>
 <tr><td><code>page_sensitivity</code></td><td><code>standard</code> أو <code>sensitive</code></td></tr>
 <tr><td><code>clarity_allowed</code></td><td><code>true</code> / <code>false</code></td></tr>
 <tr><td><code>traffic_type</code></td><td><code>internal</code> لزيارات الفريق (<code>?hayai_team=1</code>)</td></tr>
 <tr><td><code>content_group</code>، <code>journey_stage</code></td><td>من الـ CMS</td></tr>
+<tr><td><code>care_category</code></td><td><code>hospital</code> / <code>insurance</code> / <code>emergency</code> / <code>doctor</code></td></tr>
 <tr><td><code>ft_source</code>، <code>ft_medium</code>، <code>ft_campaign</code></td><td>أول مصدر جه منه الزائر، بعد الموافقة</td></tr>
 </table>
 
 <h3>الأحداث</h3>
 <table><tr><th>الحدث</th><th>البيانات اللي معاه</th><th>بيتبعت إمتى</th></tr>
 <tr><td><code>virtual_page_view</code></td><td><code>page_location</code>، <code>page_title</code> + المتغيّرات اللي فوق</td><td>التنقّل جوه الموقع</td></tr>
-<tr><td><code>generate_lead</code></td><td><code>transaction_id</code>، <code>form_key</code>، <code>lead_type</code></td><td>بعد ما السيرفر يأكّد استلام الفورم</td></tr>
+<tr><td><code>generate_lead</code></td><td><code>transaction_id</code>، <code>event_id</code>، <code>form_id</code>، <code>lead_type</code>، <code>care_category</code></td><td>بعد ما السيرفر يأكّد استلام الفورم</td></tr>
 <tr><td><code>purchase_submitted</code></td><td><code>transaction_id</code>، <code>value</code>، <code>currency: EGP</code></td><td>بعد تأكيد طلب الشراء</td></tr>
 <tr><td><code>cta_click</code></td><td><code>cta_kind</code>، <code>cta_tracking_key</code>، <code>placement</code></td><td>ضغطة على أي زرار من الـ CMS</td></tr>
+<tr><td><code>search_results_view</code></td><td><code>result_count</code>، <code>care_category</code>، <code>area</code> (من غير نص البحث)</td><td>نتايج البحث أو قوائم الدكاترة والمستشفيات والخدمات</td></tr>
+<tr><td><code>no_results</code></td><td><code>care_category</code>، <code>area</code></td><td>بحث أو قائمة من غير نتايج</td></tr>
+<tr><td><code>form_error</code></td><td><code>form_id</code>، <code>error_type</code></td><td>السيرفر رفض الفورم</td></tr>
 </table>
 
 <h3>الـ Triggers</h3>
@@ -80,7 +86,7 @@ table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:9.5pt;brea
 <table><tr><th>التاج</th><th>بيشتغل على</th><th>الاستثناءات</th><th>الموافقة</th></tr>
 <tr><td>CookieYes CMP (key <code>aa524032…688ffb</code>)</td><td>Consent Initialization</td><td>—</td><td>—</td></tr>
 <tr><td>Google tag — GA4 (Lookup على الـ hostname: الموقع الحقيقي ← <code>G-NS1Q07ZLBF</code>، أي حاجة تانية ← <code>G-EXCKD07VXC</code>)</td><td>Initialization</td><td>—</td><td>analytics_storage</td></tr>
-<tr><td>GA4 events: page_view (من virtual_page_view)، generate_lead، purchase_submitted، cta_click، whatsapp_click، phone_click</td><td>الحدث أو الـ trigger بتاعه</td><td>—</td><td>analytics_storage</td></tr>
+<tr><td>GA4 events: page_view (من virtual_page_view)، generate_lead، purchase_submitted، cta_click، search_results_view، no_results، form_error، whatsapp_click، phone_click</td><td>الحدث أو الـ trigger بتاعه</td><td>—</td><td>analytics_storage</td></tr>
 <tr><td>Ads — Lead (<code>8zBYCL-7zZQdEKnWuvVE</code>)، Transaction ID = <code>transaction_id</code></td><td>generate_lead</td><td>Sensitive، Internal، Staging</td><td>ad_storage، ad_user_data</td></tr>
 <tr><td>Ads — WhatsApp (<code>vjE2CMK7zZQdEKnWuvVE</code>)</td><td>Click - WhatsApp</td><td>Sensitive، Internal، Staging</td><td>ad_storage، ad_user_data</td></tr>
 <tr><td>Ads — Phone (<code>9eobCMW7zZQdEKnWuvVE</code>)</td><td>Click - Phone</td><td>Sensitive، Internal، Staging</td><td>ad_storage، ad_user_data</td></tr>

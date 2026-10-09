@@ -20,6 +20,7 @@ import { trackOrderPath } from '../site-paths';
  */
 @Component({
   selector: 'site-track-order',
+  host: { 'data-page-type': 'order_tracking' },
   styleUrl: './site-view.component.css',
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,6 +138,9 @@ export class TrackOrderPageComponent {
   constructor() {
     const locale = this.state.locale();
     this.state.page.set(null);
+    // No API classification here: the server and the tag layer both fall back
+    // to sensitive, which is right for a page showing a private order.
+    this.state.tagPage.set({ pageType: 'order_tracking', measurement: null });
     this.state.alternates.set([]);
     inject(SeoHeadService).apply({
       locale,

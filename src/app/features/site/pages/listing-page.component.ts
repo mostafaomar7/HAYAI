@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Dict, ResolvedView } from '../models/site.models';
 import { SiteStateService } from '../services/site-state.service';
+import { TagLayerService } from '../services/tag-layer.service';
 import { SiteImageComponent } from '../ui/site-image.component';
 import { arr, hrefOf, img, priceText, str } from '../site-utils';
 
@@ -139,6 +141,32 @@ export class ListingPageComponent {
   protected img = img;
   protected href = hrefOf;
   protected priceText = priceText;
+  private tags = inject(TagLayerService);
+
+  constructor() {
+    // One results event per listing shown, in the browser only: the first
+    // after hydration, then one per in-app move or filter. A server render is
+    // not a patient looking at results.
+    if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+    effect(() => {
+      const v = this.view();
+      untracked(() => this.reportResults(v));
+    });
+  }
+
+  /** Search, and the directory / services indexes — not the article list. */
+  private reportResults(v: ResolvedView): void {
+    const kind = this.kind();
+    if (!['search', 'doctors', 'hospitals', 'products'].includes(kind)) return;
+    // An empty search box is the search page, not a search.
+    if (kind === 'search' && !this.query()['q']) return;
+    const count =
+      kind === 'search'
+        ? this.searchGroups().reduce((n, g) => n + g.items.length, 0)
+        : Number(this.meta()?.['pagination']?.total ?? this.items().length) || 0;
+    const q = v.listing?.query ?? {};
+    this.tags.resultsView(count, q['area'] || q['city'] || null);
+  }
 
   protected kind = computed(() => {
     const k = this.view().listing?.kind ?? '';

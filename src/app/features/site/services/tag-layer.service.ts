@@ -2,6 +2,7 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { SiteStateService } from './site-state.service';
 import { Dict } from '../models/site.models';
+import { careCategoryOf, safePageLocation } from '../tracking-params';
 
 /**
  * The dataLayer the tag manager reads.
@@ -39,14 +40,18 @@ export class TagLayerService {
    * page the spec forbids them on.
    */
   private measurement(): Dict {
-    const m = this.state.page()?.['measurement'];
-    if (!m || typeof m !== 'object') {
-      // Unknown is sensitive, never standard — the same asymmetry the server
-      // applies. Suppressing ads on an ordinary page costs a little
-      // attribution; firing them on an ICU page is the thing being prevented.
-      return { page_sensitivity: 'sensitive' };
-    }
-    return { ...(m as Dict) };
+    const { pageType, measurement } = this.state.tagPage();
+    const out: Dict = {
+      page_type: pageType,
+      page_language: this.state.locale(),
+      ...(measurement ?? {})
+    };
+    // Unknown is sensitive, never standard — the same asymmetry the server
+    // applies. Suppressing ads on an ordinary page costs a little
+    // attribution; firing them on an ICU page is the thing being prevented.
+    if (typeof out['page_sensitivity'] !== 'string' || !out['page_sensitivity']) out['page_sensitivity'] = 'sensitive';
+    out['care_category'] ??= careCategoryOf(out['content_group']);
+    return out;
   }
 
   /**
@@ -94,7 +99,8 @@ export class TagLayerService {
   private href(path: string): string {
     if (!this.isBrowser) return path;
     try {
-      return new URL(path, location.origin).href;
+      // Minus the search text and the order-tracking token: GA4 keeps the URL.
+      return safePageLocation(new URL(path, location.origin).href);
     } catch {
       return path;
     }
@@ -110,12 +116,21 @@ export class TagLayerService {
    */
   lead(payload: Dict, formKey: string | null): void {
     if (payload['duplicate'] === true) return;
+    const reference = payload['reference'] ?? null;
     this.push({
       event: 'generate_lead',
       ...this.measurement(),
+      // The spec's name. `form_key` stays alongside it for a container
+      // already built on the earlier name.
+      form_id: formKey,
       form_key: formKey,
       lead_type: payload['type'] ?? null,
-      transaction_id: payload['reference'] ?? null
+      // One server id under both names: Google Ads de-duplicates on
+      // transaction_id, Meta and TikTok match browser to server on event_id.
+      transaction_id: reference,
+      event_id: reference
+      // No user_data: enhanced conversions are off by the client's decision,
+      // so no e-mail or phone, hashed or not, ever enters the dataLayer.
     });
   }
 
@@ -135,6 +150,7 @@ export class TagLayerService {
       event: 'purchase_submitted',
       ...this.measurement(),
       transaction_id: payload['reference'] ?? null,
+      event_id: payload['reference'] ?? null,
       ...(value !== null && Number.isFinite(value) ? { value, currency: 'EGP' } : {})
     });
   }
@@ -156,5 +172,34 @@ export class TagLayerService {
       cta_tracking_key: trackingKey,
       placement
     });
+  }
+
+  /**
+   * A results page was shown: site search, or a directory / services index.
+   *
+   * The count only — never the query. Search is a sensitive page because what
+   * a patient types is health information, and GA4 keeps whatever it is sent.
+   * `no_results` follows on an empty set, so the gaps in the directory show up
+   * as their own report rather than as a filter on this one.
+   */
+  resultsView(resultCount: number, area: string | null): void {
+    const measurement = this.measurement();
+    const base = { ...measurement, care_category: measurement['care_category'] ?? null, area };
+    this.push({ event: 'search_results_view', ...base, result_count: resultCount });
+    if (resultCount === 0) this.push({ event: 'no_results', ...base });
+  }
+
+  /**
+   * The server refused a submit. Pushed only for what the server said, not for
+   * the browser's own checks before sending: the spec asks how often a patient
+   * who pressed "send" was turned away, and a required field caught before
+   * the request is a different, already visible, problem.
+   *
+   * `error_type` is a category, never the message, which can echo the value
+   * the patient typed.
+   */
+  formError(formId: string | null, status: number): void {
+    const errorType = status === 422 ? 'validation' : status === 0 || status === 408 || status === 504 ? 'timeout' : 'server';
+    this.push({ event: 'form_error', ...this.measurement(), form_id: formId, error_type: errorType });
   }
 }

@@ -249,6 +249,7 @@ export class PurchaseFormComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.sending.set(false);
+        this.tags.formError('purchase', err.status);
         if (err.status !== 0) this.idempotencyKey = null;
         if (err.status === 422 && err.error?.errors) {
           const mapped: Record<string, string> = {};

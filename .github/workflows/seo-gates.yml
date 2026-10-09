@@ -46,6 +46,23 @@ jobs:
           GTM_ID: ${{ vars.GTM_ID }}
         run: bash scripts/check-tracking.sh http://localhost:4000/en http://localhost:4000/ar http://localhost:4000/en/faq http://localhost:4000/en/products http://localhost:4000/en/doctors
 
+      # Each event fires once, with its required parameters and no personal
+      # data — in a real browser, against the server-rendered build. Form
+      # submissions are answered inside the test, so no real lead is filed.
+      - name: Tracking tests (Playwright)
+        env:
+          BASE_URL: http://localhost:4000
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: tracking-test-results
+          path: test-results
+          if-no-files-found: ignore
+
       - name: Stop the server
         if: always()
         run: kill "$(cat server.pid)" || true

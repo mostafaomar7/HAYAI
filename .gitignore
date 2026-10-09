@@ -48,3 +48,7 @@ hayai-web-*.tar.gz
 
 # Google's, fetched on demand — see docs/report-source/README.md
 docs/report-source/fonts/
+
+# Playwright
+/test-results/
+/playwright-report/
