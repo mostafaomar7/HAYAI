@@ -186,6 +186,10 @@
             <dd dir="ltr" class="ltr-cell">
               @if (l.cta) { <span class="mono">{{ l.cta.tracking_key || l.cta.key }}</span> } @else { — }
             </dd>
+            @if (l.whatsapp_ref) {
+              <dt>{{ 'web.leads.wa.ref' | t }}</dt>
+              <dd dir="ltr" class="ltr-cell"><span class="mono">{{ l.whatsapp_ref }}</span></dd>
+            }
             @for (a of attribution(); track a.key) {
               <dt>{{ attrLabel(a.key) }}</dt>
               <dd dir="ltr" class="ltr-cell">{{ a.value }}</dd>

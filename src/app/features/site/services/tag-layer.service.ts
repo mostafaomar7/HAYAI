@@ -50,7 +50,9 @@ export class TagLayerService {
     // applies. Suppressing ads on an ordinary page costs a little
     // attribution; firing them on an ICU page is the thing being prevented.
     if (typeof out['page_sensitivity'] !== 'string' || !out['page_sensitivity']) out['page_sensitivity'] = 'sensitive';
-    out['care_category'] ??= careCategoryOf(out['content_group']);
+    // The API always sends the key now, and null means "none" on purpose.
+    // The mapping is only for a payload from before the field existed.
+    if (!('care_category' in out)) out['care_category'] = careCategoryOf(out['content_group']);
     return out;
   }
 

@@ -11,7 +11,7 @@ import {
   PageUpdateInput, PermissionCatalog, PreviewToken, ProductInput, ProductRelationsInput,
   RedirectInput, ResolvedUrl, RobotsRule, RobotsRuleInput, SeoAuditResult, SeoMeta, SitemapInfo,
   VersionDiff, WebsiteAdmin, WebsiteAuthor, WebsiteCategory, WebsiteCta, WebsiteEnums, WebsiteFaq,
-  WebsiteForm, WebsiteLead, WebsiteMe, WebsiteMedia, WebsiteMenu, WebsiteOverview, WebsitePage,
+  WebsiteForm, WebsiteLead, WhatsappRef, WebsiteMe, WebsiteMedia, WebsiteMenu, WebsiteOverview, WebsitePage,
   WebsitePageRow, WebsiteProduct, WebsitePurchase, WebsiteRedirect, WebsiteRole, WebsiteSetting,
   WebsiteSource
 } from './website.models';
@@ -333,6 +333,25 @@ export class WebsiteApiService {
 
   exportLeads(params: ListParams = {}): Observable<HttpResponse<Blob>> {
     return this.download(`${BASE}/leads/export`, params);
+  }
+
+  /** A WhatsApp chat's reference code (`H-7K3Q9MX`; case, spaces and `H-` are forgiven). */
+  whatsappRef(ref: string): Observable<WhatsappRef> {
+    return this.api.get<WhatsappRef>(`${BASE}/whatsapp-refs/${encodeURIComponent(ref.trim())}`);
+  }
+
+  /** Turns the chat into a normal lead carrying the code's attribution. 409 when already converted. */
+  leadFromWhatsappRef(ref: string, body: { name?: string; phone: string; email?: string; organization?: string; notes?: string }): Observable<WebsiteLead> {
+    return this.api.post<WebsiteLead>(`${BASE}/whatsapp-refs/${encodeURIComponent(ref.trim())}/lead`, body);
+  }
+
+  /**
+   * The weekly Google Ads offline-conversion upload: converted leads and
+   * completed purchases with a gclid, in Google's own template. No dates =
+   * the last 7 days.
+   */
+  googleAdsConversions(params: { from?: string; to?: string } = {}): Observable<HttpResponse<Blob>> {
+    return this.download(`${BASE}/conversions/google-ads.csv`, params);
   }
 
   // ── 8. forms ────────────────────────────────────────────────────

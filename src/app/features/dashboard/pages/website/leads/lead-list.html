@@ -20,8 +20,88 @@
         <button class="btn-secondary" [disabled]="exporting()" (click)="exportCsv()">
           {{ (exporting() ? 'web.leads.exporting' : 'web.leads.export_csv') | t }}
         </button>
+        @if (canAdsExport()) {
+          <button class="btn-secondary" [disabled]="adsExporting()" (click)="exportGoogleAds()"
+                  [title]="'web.leads.wa.ads_hint' | t">
+            {{ (adsExporting() ? 'web.leads.exporting' : 'web.leads.wa.ads_export') | t }}
+          </button>
+        }
+        <button class="btn-secondary" [class.active]="waOpen()" (click)="toggleWhatsapp()">
+          {{ 'web.leads.wa.button' | t }}
+        </button>
       </div>
     </div>
+
+    @if (waOpen()) {
+      <div class="wa-panel">
+        <form class="wa-find" (submit)="findWhatsappRef($event)">
+          <label for="wa-ref">{{ 'web.leads.wa.label' | t }}</label>
+          <div class="wa-row">
+            <input id="wa-ref" type="text" dir="ltr" autocomplete="off" placeholder="H-7K3Q9MX"
+                   [value]="waRef()" (input)="waRef.set($any($event.target).value)">
+            <button type="submit" class="btn-primary" [disabled]="waLoading() || !waRef().trim()">
+              {{ (waLoading() ? 'common.loading' : 'web.leads.wa.find') | t }}
+            </button>
+          </div>
+          <p class="hint">{{ 'web.leads.wa.hint' | t }}</p>
+        </form>
+
+        @if (waError()) { <p class="notice error">{{ waError()! | t }}</p> }
+
+        @if (waResult(); as w) {
+          <div class="wa-result">
+            <dl class="wa-facts">
+              <dt>{{ 'web.leads.wa.ref' | t }}</dt><dd class="mono" dir="ltr">{{ w.ref }}</dd>
+              <dt>{{ 'common.created_at' | t }}</dt><dd>{{ date(w.created_at) }}</dd>
+              <dt>{{ 'web.leads.wa.page' | t }}</dt><dd dir="ltr" class="ltr-cell">{{ w.page_path || '—' }}</dd>
+              <dt>{{ 'web.leads.cta' | t }}</dt><dd dir="ltr" class="ltr-cell mono">{{ w.cta_tracking_key || '—' }}</dd>
+              @for (a of waAttribution(); track a.key) {
+                <dt>{{ attrLabel(a.key) }}</dt><dd dir="ltr" class="ltr-cell">{{ a.value }}</dd>
+              }
+            </dl>
+            @if (!waAttribution().length) { <p class="muted">{{ 'web.purchases.no_attribution' | t }}</p> }
+
+            @if (w.lead_id) {
+              <p class="notice info">
+                {{ 'web.leads.wa.already' | t }}
+                <button type="button" class="link-btn mono" (click)="openLead(w.lead_id)">{{ w.lead_reference || ('#' + w.lead_id) }}</button>
+              </p>
+            } @else if (ctx.can('leads.update')) {
+              <form class="form-grid wa-form" (submit)="createWhatsappLead($event)" novalidate>
+                <div class="form-group">
+                  <label for="wa-phone">{{ 'web.leads.wa.phone' | t }} <span class="req">*</span></label>
+                  <input id="wa-phone" name="phone" type="text" dir="ltr" inputmode="tel" autocomplete="off">
+                  @if (waFieldErrors()['phone']) { <p class="field-error">{{ waFieldErrors()['phone'] }}</p> }
+                </div>
+                <div class="form-group">
+                  <label for="wa-name">{{ 'web.leads.wa.name' | t }}</label>
+                  <input id="wa-name" name="name" type="text" autocomplete="off">
+                  @if (waFieldErrors()['name']) { <p class="field-error">{{ waFieldErrors()['name'] }}</p> }
+                </div>
+                <div class="form-group">
+                  <label for="wa-email">{{ 'web.leads.wa.email' | t }}</label>
+                  <input id="wa-email" name="email" type="email" dir="ltr" autocomplete="off">
+                  @if (waFieldErrors()['email']) { <p class="field-error">{{ waFieldErrors()['email'] }}</p> }
+                </div>
+                <div class="form-group">
+                  <label for="wa-org">{{ 'web.leads.wa.organization' | t }}</label>
+                  <input id="wa-org" name="organization" type="text" autocomplete="off">
+                </div>
+                <div class="form-group full">
+                  <label for="wa-notes">{{ 'web.leads.wa.notes' | t }}</label>
+                  <textarea id="wa-notes" name="notes" rows="2"></textarea>
+                </div>
+                <div class="form-group full">
+                  <button type="submit" class="btn-primary" [disabled]="waSaving()">
+                    {{ (waSaving() ? 'common.saving' : 'web.leads.wa.create') | t }}
+                  </button>
+                </div>
+              </form>
+            }
+          </div>
+        }
+      </div>
+    }
 
     <div class="tabs">
       @for (s of tabs(); track s) {

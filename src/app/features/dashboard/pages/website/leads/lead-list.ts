@@ -11,12 +11,12 @@ import {
 } from '../../../../../core/services/website/website-api.service';
 import { WebsiteContextService } from '../../../../../core/services/website/website-context.service';
 import {
-  ListParams, LocaleInfo, StatusFlow, WebsiteForm, WebsiteLead
+  ListParams, LocaleInfo, StatusFlow, WebsiteForm, WebsiteLead, WhatsappRef
 } from '../../../../../core/services/website/website.models';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../../shared/utils/debounce.util';
 import { fmtDate } from '../shared/website-utils';
-import { enumLabel } from '../purchases/sales-shared';
+import { attrLabel, attributionRows, enumLabel } from '../purchases/sales-shared';
 
 const SPAM = 'spam';
 
@@ -55,6 +55,19 @@ export class LeadList {
   loading = signal(true);
   loadError = signal<string | null>(null);
   exporting = signal(false);
+  adsExporting = signal(false);
+
+  // A WhatsApp chat's reference code → the visit it came from → a lead.
+  waOpen = signal(false);
+  waRef = signal('');
+  waResult = signal<WhatsappRef | null>(null);
+  waLoading = signal(false);
+  waError = signal<string | null>(null);
+  waSaving = signal(false);
+  waFieldErrors = signal<Record<string, string>>({});
+  waAttribution = computed(() => attributionRows(this.waResult()?.attribution as Record<string, unknown> | null));
+  /** The Google Ads file covers leads and purchases, so it needs both permissions. */
+  readonly canAdsExport = computed(() => this.ctx.can('leads.view') && this.ctx.can('orders.view'));
   total = signal(0);
   readonly perPage = 20;
   page = signal(1);
@@ -232,6 +245,96 @@ export class LeadList {
         this.dialog.error('common.error', 'web.leads.export_failed');
       }
     });
+  }
+
+  /**
+   * The weekly Google Ads offline upload. Uses the list's date filter when
+   * one is set; without it the API sends the last 7 days.
+   */
+  exportGoogleAds(): void {
+    this.adsExporting.set(true);
+    this.api.googleAdsConversions({ from: this.from() || undefined, to: this.to() || undefined }).subscribe({
+      next: res => {
+        this.adsExporting.set(false);
+        saveDownload(res, 'google-ads-conversions.csv');
+      },
+      error: () => {
+        this.adsExporting.set(false);
+        this.dialog.error('common.error', 'web.leads.wa.ads_failed');
+      }
+    });
+  }
+
+  toggleWhatsapp(): void {
+    this.waOpen.set(!this.waOpen());
+  }
+
+  findWhatsappRef(event?: Event): void {
+    event?.preventDefault();
+    const ref = this.waRef().trim();
+    if (!ref) return;
+    this.waLoading.set(true);
+    this.waError.set(null);
+    this.waResult.set(null);
+    this.waFieldErrors.set({});
+    this.api.whatsappRef(ref).subscribe({
+      next: res => {
+        this.waLoading.set(false);
+        this.waResult.set(res);
+      },
+      error: err => {
+        this.waLoading.set(false);
+        this.waError.set(err?.status === 404 ? 'web.leads.wa.not_found' : errorMessage(err, 'web.leads.wa.lookup_failed'));
+      }
+    });
+  }
+
+  createWhatsappLead(event: Event): void {
+    event.preventDefault();
+    const found = this.waResult();
+    if (!found) return;
+    const data = new FormData(event.target as HTMLFormElement);
+    const value = (k: string) => String(data.get(k) ?? '').trim() || undefined;
+    const phone = value('phone');
+    if (!phone) {
+      this.waFieldErrors.set({ phone: this.i18n.translate('web.leads.wa.phone_required') });
+      return;
+    }
+    this.waSaving.set(true);
+    this.waFieldErrors.set({});
+    this.api
+      .leadFromWhatsappRef(found.ref, { phone, name: value('name'), email: value('email'), organization: value('organization'), notes: value('notes') })
+      .subscribe({
+        next: lead => {
+          this.waSaving.set(false);
+          this.dialog.toast('success', 'web.leads.wa.created');
+          this.router.navigate(['/dashboard/website/leads', lead.id]);
+        },
+        error: err => {
+          this.waSaving.set(false);
+          // Converted already (by someone else, a moment ago): show the lead it became.
+          const existing = err?.status === 409 ? err.error?.errors : null;
+          if (existing?.lead_id) {
+            this.waResult.set({ ...found, lead_id: existing.lead_id, lead_reference: existing.lead_reference ?? null });
+            return;
+          }
+          if (err?.status === 422 && err.error?.errors) {
+            const mapped: Record<string, string> = {};
+            for (const [k, msgs] of Object.entries(err.error.errors as Record<string, string[]>)) mapped[k] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            this.waFieldErrors.set(mapped);
+            return;
+          }
+          this.dialog.error('common.error', errorMessage(err, 'web.leads.wa.create_failed'));
+        }
+      });
+  }
+
+  openLead(id: number): void {
+    this.router.navigate(['/dashboard/website/leads', id]);
+  }
+
+  attrLabel(key: string): string {
+    return attrLabel(this.i18n, key);
   }
 
   async remove(row: WebsiteLead, event: Event): Promise<void> {

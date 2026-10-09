@@ -18,6 +18,7 @@ import { filter } from 'rxjs';
 import { SiteStateService } from '../services/site-state.service';
 import { SiteAnalyticsService } from '../services/site-analytics.service';
 import { TagLayerService } from '../services/tag-layer.service';
+import { WhatsappRefService } from '../services/whatsapp-ref.service';
 import { SeoHeadService } from '../services/seo-head.service';
 import { CtaButtonComponent } from '../ui/cta-button.component';
 import { SiteFormComponent } from '../ui/site-form.component';
@@ -110,6 +111,9 @@ export class SiteShellComponent implements OnDestroy {
   });
 
   constructor() {
+    // A reference code on every WhatsApp chat started from the site.
+    inject(WhatsappRefService).install();
+
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),

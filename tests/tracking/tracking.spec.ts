@@ -142,6 +142,38 @@ test.describe('lead form', () => {
   });
 });
 
+test.describe('whatsapp reference code', () => {
+  test('a tap adds one code to the message and reports it to the API', async ({ page, context }) => {
+    // Never leave for WhatsApp, and never file a real code on the API.
+    await context.route(/wa\.me|api\.whatsapp\.com/, route => route.abort());
+    const beacons: { body: Record<string, unknown>; type: string | undefined }[] = [];
+    await page.route('**/whatsapp-refs', route => {
+      beacons.push({ body: JSON.parse(route.request().postData() || '{}'), type: route.request().headers()['content-type'] });
+      return route.fulfill({ status: 204 });
+    });
+
+    await page.goto('/ar?utm_source=ci&utm_medium=test&utm_campaign=wa-ref');
+    await hydrated(page);
+    const link = page.locator('a[href*="wa.me"], a[href*="api.whatsapp.com"]').first();
+    test.skip((await link.count()) === 0, 'no WhatsApp link on the home page');
+
+    // Stay on the page so the link can be read back: the site adds the code
+    // in the capture phase, this cancels the navigation after it.
+    await page.evaluate(() => document.addEventListener('click', e => e.preventDefault()));
+    await link.click();
+    await expect.poll(() => beacons.length).toBe(1);
+
+    const ref = String(beacons[0].body['ref']);
+    expect(ref).toMatch(/^H-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{7}$/);
+    expect(beacons[0].type).toContain('text/plain');
+    expect((beacons[0].body['attribution'] as Record<string, unknown>)['utm_campaign']).toBe('wa-ref');
+    // The chat opens with the same code in its message, written with %20.
+    const href = await link.getAttribute('href');
+    expect(decodeURIComponent(href ?? '')).toContain(ref);
+    expect(href).not.toContain('+');
+  });
+});
+
 test.describe('search', () => {
   test('results are counted, the query is never sent', async ({ page }) => {
     await page.goto('/en/search?q=chest+pain');

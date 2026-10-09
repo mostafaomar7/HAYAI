@@ -647,6 +647,20 @@ export interface WebsiteLead {
   closed_at?: string | null;
   created_at?: string;
   history?: StatusHistoryRow[];
+  /** Set on a lead created from a WhatsApp chat's reference code. */
+  whatsapp_ref?: string | null;
+}
+
+/** A WhatsApp chat's reference code and the visit it came from (§7.2). */
+export interface WhatsappRef {
+  ref: string;
+  created_at: string;
+  locale: Locale;
+  page_path: string | null;
+  cta_tracking_key: string | null;
+  attribution: Attribution | null;
+  lead_id: number | null;
+  lead_reference: string | null;
 }
 
 export interface FormFieldOption {

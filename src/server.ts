@@ -442,7 +442,7 @@ const GTM_ENV_PARAMS = (process.env['GTM_ENV_PARAMS'] || '').trim().replace(/^[?
  * and Arabic-script slugs, and a URL pattern that silently stops matching a
  * renamed emergency page is exactly how ad tags end up firing on one.
  */
-function measurementFields(html: string, status: number): Record<string, string> {
+function measurementFields(html: string, status: number): Record<string, string | null> {
   // A 404 carries no payload by design, and the contract fixes its values
   // rather than leaving them to the fallback below. It is not an unclassified
   // page; it is a page that does not exist.
@@ -451,13 +451,15 @@ function measurementFields(html: string, status: number): Record<string, string>
   }
 
   const match = /"measurement":(\{[^{}]{0,400}\})/.exec(html);
-  const out: Record<string, string> = {};
+  const out: Record<string, string | null> = {};
   if (match) {
     try {
       const parsed = JSON.parse(match[1]) as Record<string, unknown>;
       for (const key of ['page_sensitivity', 'content_group', 'journey_stage', 'care_category']) {
         const value = parsed[key];
         if (typeof value === 'string' && value) out[key] = value;
+        // An explicit null is an answer (an editor cleared it), not a gap.
+        else if (value === null && key === 'care_category') out[key] = null;
       }
     } catch {
       /* fall through to the safe default below */
@@ -479,7 +481,8 @@ function pageMetadata(res: Response, html: string, status: number): Record<strin
     page_language: /<html[^>]*\blang="([a-z]{2})/i.exec(html)?.[1] ?? null,
     ...measurementFields(html, status)
   };
-  out['care_category'] ??= careCategoryOf(out['content_group']);
+  // Fallback only for a payload that has no key at all; null is kept.
+  if (!('care_category' in out)) out['care_category'] = careCategoryOf(out['content_group']);
   // GA4 records the URL of every hit. Without this, the search page reports
   // what the patient searched for and order tracking reports its private
   // token. The container sets the Google tag's page_location from this key.

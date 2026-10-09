@@ -15,14 +15,21 @@
       "ft_source / ft_medium / ft_campaign": "first touch, after consent",
       "gtm.blocklist": "['customScripts']"
     },
-    "tested_by": ["scripts/check-tracking.sh", "tests/tracking: page metadata"]
+    "tested_by": [
+      "scripts/check-tracking.sh",
+      "tests/tracking: page metadata"
+    ]
   },
   "events": [
     {
       "event": "virtual_page_view",
       "when": "an in-app route change (not the first page, which the server described)",
       "pushed_by": "TagLayerService.virtualPageView ← SiteShellComponent",
-      "params": ["page_location", "page_title", "page metadata"],
+      "params": [
+        "page_location",
+        "page_title",
+        "page metadata"
+      ],
       "gtm": "CE - virtual_page_view → GA4 page_view",
       "owner": "engineering",
       "tested_by": "tests/tracking: an in-app move to a sensitive page"
@@ -31,8 +38,19 @@
       "event": "generate_lead",
       "when": "the API saved a form submission (not on duplicate: true)",
       "pushed_by": "TagLayerService.lead ← SiteFormComponent",
-      "params": ["transaction_id", "event_id", "form_id", "form_key", "lead_type", "care_category", "page metadata"],
-      "never": ["user_data", "any field value"],
+      "params": [
+        "transaction_id",
+        "event_id",
+        "form_id",
+        "form_key",
+        "lead_type",
+        "care_category",
+        "page metadata"
+      ],
+      "never": [
+        "user_data",
+        "any field value"
+      ],
       "gtm": "CE - generate_lead → GA4 + GAds - Conv - Lead",
       "owner": "engineering",
       "tested_by": "tests/tracking: lead form"
@@ -41,7 +59,13 @@
       "event": "purchase_submitted",
       "when": "the API saved a purchase request (not on duplicate: true)",
       "pushed_by": "TagLayerService.purchase ← PurchaseFormComponent",
-      "params": ["transaction_id", "event_id", "value (only when priced)", "currency: EGP", "page metadata"],
+      "params": [
+        "transaction_id",
+        "event_id",
+        "value (only when priced)",
+        "currency: EGP",
+        "page metadata"
+      ],
       "gtm": "CE - purchase_submitted → GA4",
       "owner": "engineering"
     },
@@ -49,7 +73,12 @@
       "event": "cta_click",
       "when": "a CMS button or link is clicked",
       "pushed_by": "TagLayerService.ctaClick ← SiteCtaService",
-      "params": ["cta_kind", "cta_tracking_key", "placement", "page metadata"],
+      "params": [
+        "cta_kind",
+        "cta_tracking_key",
+        "placement",
+        "page metadata"
+      ],
       "gtm": "CE - cta_click → GA4",
       "owner": "engineering"
     },
@@ -57,8 +86,15 @@
       "event": "search_results_view",
       "when": "search results, or the doctors / hospitals / products index, are shown",
       "pushed_by": "TagLayerService.resultsView ← ListingPageComponent",
-      "params": ["result_count", "care_category", "area", "page metadata"],
-      "never": ["the search query"],
+      "params": [
+        "result_count",
+        "care_category",
+        "area",
+        "page metadata"
+      ],
+      "never": [
+        "the search query"
+      ],
       "gtm": "CE - search_results_view → GA4",
       "owner": "engineering",
       "tested_by": "tests/tracking: search"
@@ -67,7 +103,11 @@
       "event": "no_results",
       "when": "right after search_results_view when result_count is 0",
       "pushed_by": "TagLayerService.resultsView",
-      "params": ["care_category", "area", "page metadata"],
+      "params": [
+        "care_category",
+        "area",
+        "page metadata"
+      ],
       "gtm": "CE - no_results → GA4",
       "owner": "engineering"
     },
@@ -75,8 +115,15 @@
       "event": "form_error",
       "when": "the API refused a submit (not the browser's own checks)",
       "pushed_by": "TagLayerService.formError ← SiteFormComponent, PurchaseFormComponent",
-      "params": ["form_id", "error_type: validation | server | timeout", "page metadata"],
-      "never": ["the error message", "any field value"],
+      "params": [
+        "form_id",
+        "error_type: validation | server | timeout",
+        "page metadata"
+      ],
+      "never": [
+        "the error message",
+        "any field value"
+      ],
       "gtm": "CE - form_error → GA4",
       "owner": "engineering",
       "tested_by": "tests/tracking: a rejected submit"
@@ -91,6 +138,22 @@
   ],
   "not_on_the_website": {
     "$comment": "In the spec, but the action happens in the app, not on the website. Add here when a website flow exists.",
-    "events": ["booking_complete", "coverage_check_complete", "availability_check", "guidance_complete", "sign_up"]
+    "events": [
+      "booking_complete",
+      "coverage_check_complete",
+      "availability_check",
+      "guidance_complete",
+      "sign_up"
+    ]
+  },
+  "whatsapp_ref": {
+    "$comment": "Spec §8. Not a dataLayer event: a code on the chat itself, so a WhatsApp conversation can be traced to its campaign in the CRM.",
+    "when": "a tap on any wa.me / api.whatsapp.com / whatsapp:// link (CMS button or footer)",
+    "done_by": "WhatsappRefService (installed by SiteShellComponent), capture phase, before the tag manager reads the URL",
+    "code": "H- + 7 chars from 23456789ABCDEFGHJKMNPQRSTUVWXYZ, one per visit (sessionStorage)",
+    "message": "appended to the link text: \"رقم المرجع: H-…\" / \"Ref: H-…\"",
+    "api": "POST /api/v1/public/{locale}/whatsapp-refs by sendBeacon, text/plain JSON {ref, page_path, cta_tracking_key, attribution}",
+    "dashboard": "Leads → WhatsApp code: look up, then create a lead carrying the attribution",
+    "tested_by": "tests/tracking: whatsapp reference code"
   }
 }
