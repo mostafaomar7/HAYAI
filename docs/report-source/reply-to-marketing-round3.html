@@ -5,6 +5,88 @@ body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2430;font-size:11
 header{border-bottom:2px solid #0E7490;padding-bottom:4mm;margin-bottom:5mm}
 header .org{color:#0E7490;font-weight:700;font-size:9.5pt}header h1{font-size:17pt;color:#0b2545;margin:1mm 0}header .date{color:#6B7280;font-size:9pt}
 h2{font-size:12.5pt;color:#0b2545;margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid #e3e8ef;break-after:avoid}
+h3{font-size:11pt;color:#0E7490;margin:12px 0 4px;break-after:avoid}
 p{margin:0 0 8px}ul{margin:0 0 10px;padding:0 18px 0 0}li{margin-bottom:5px;break-inside:avoid}b{color:#0b2545}
-code{font-family:Consolas,monospace;direction:ltr;unicode-bidi:isolate;background:#F1F5F9;border:1px solid #E5E7EB;border-radius:3px;padding:0 4px;font-size:9.5pt}
-</style></head><body><header><div class="org">HAYAI</div><h1>ردّنا على ورقة الحسابات والمعرّفات</h1><div class="date">٩ أكتوبر ٢٠٢٦</div></header><p>أهلاً يا جنة،</p><p>شكرًا على الورقة، كل حاجة فيها واضحة ووصلتنا كاملة. دي الردود على التلات أسئلة، والخطوة الجاية.</p><h2>١. بيئة التجربة</h2><p>اطمّنوا، سنيبت التجربة عمره ما هيتحمّل على الموقع الحقيقي، ولا على <code>/login</code>.</p><p>الموقع الحقيقي بيطبع الحاوية <code>GTM-5VKC5CMT</code> من غير <code>gtm_auth</code> و <code>gtm_preview</code> خالص، وده متثبّت في السيرفر نفسه. الرابط اللي اتسجّل في Tag Manager هو مجرد رابط للمعاينة، ومش بيأثّر على أي زائر.</p><p>دلوقتي مفيش نسخة تجربة على عنوان منفصل. فلحد ما تتعمل:</p><ul><li><b>أي تعديل في الحاوية بنختبره بزرار Preview في Tag Manager.</b> المعاينة دي بتشتغل على المتصفح اللي فتحها بس، والزوار مش بيشوفوها.</li><li><b>أي عنوان غير <code>hayaihealthcare.com</code></b> (زي جهاز المبرمج) بيبعت بياناته لحساب التحليلات التجريبي <code>G-EXCKD07VXC</code> تلقائيًا، وإعلانات جوجل مش بتشتغل عليه خالص. يعني الأرقام الحقيقية مش هتتلخبط.</li></ul><p>ولما يبقى فيه عنوان تجربة منفصل، هنفعّل عليه بيئة Staging على طول.</p><h2>٢. Clarity والصفحات الحسّاسة</h2><p>اتنفّذ زي ما طلبتوا. Clarity بيشتغل بس على صفحات المحتوى العادية: الرئيسية، والتغطية التأمينية، وإزاي بيشتغل، والأسئلة الشائعة، ومن نحن.</p><p>ومش بيشتغل على:</p><ul><li>الصفحات الحسّاسة (الطوارئ والرعاية المركزة والبحث)</li><li>صفحات الخدمات والشراء</li><li>صفحات الدكاترة والمستشفيات وقوائمهم</li><li>صفحة متابعة الطلب</li></ul><p>ولو زائر بدأ من الرئيسية ودخل على صفحة من دول من جوه الموقع، التسجيل بيقف أول ما الصفحة دي تتفتح.</p><p>وفورم التواصل اللي في الرئيسية مخفي بالكامل من التسجيل. ده غير إن الإخفاء عندكم على Strict أصلًا، فمفيش أي حاجة المريض بيكتبها بتوصل لـ Clarity.</p><p>وطبعًا Clarity مستني موافقة البانر زي باقي الأدوات.</p><h2>٣. الحاجة الوحيدة اللي محتاجينها منكم: صلاحية على Tag Manager</h2><p>إحنا اللي هنبني الحاوية: تاجز Analytics، والتحويلات التلاتة بالـ labels اللي بعتّوها، و Clarity، والبانر، والاستثناءات. وكتبنا الإعداد كامل بالمعرّفات بتاعتكم، علشان تقدروا تراجعوه في أي وقت.</p><p>ابعتوا دعوة على Tag Manager بصلاحية <b>Publish</b> لـ: <code>mobaiomo442@gmail.com</code></p><p>وأول ما نخلّص وننشر، هنبعتلكم تأكيد زي ما طلبتوا في النقطة ٣، تراجعوا الأرقام وتفعّلوا فلتر الزيارات الداخلية.</p><h2>ملاحظات صغيرة على التحويلات</h2><ul><li><b>الواتساب والتليفون:</b> بيتحسبوا من أي مكان في الصفحة، سواء الزرار أو الرقم اللي تحت في الفوتر. وكل ضغطة بتتحسب مرة واحدة بس.</li><li><b>رقم الإسعاف ١٢٣:</b> مستبعد من تحويل التليفون. اللي بيتحسب هو رقم حياة بس.</li><li><b>تحويل الحجز:</b> هنسيبه من غير تاج دلوقتي، لأن الحجز بيحصل في التطبيق مش الموقع. ولما يبقى فيه حدث تأكيد حجز، هنبعت معاه <code>value</code> و <code>currency: 'EGP'</code> زي ما قلتوا.</li><li><b>الإعلانات:</b> مش هتشتغل على الصفحات الحسّاسة، ولا على زيارات الفريق.</li></ul><p>تحت أمركم لأي حاجة.</p></body></html>
+code{font-family:Consolas,monospace;direction:ltr;unicode-bidi:isolate;background:#F1F5F9;border:1px solid #E5E7EB;border-radius:3px;padding:0 4px;font-size:9.5pt;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:9.5pt;break-inside:auto}th,td{border:1px solid #E5E7EB;padding:4px 7px;vertical-align:top;text-align:right}th{background:#F1F5F9;color:#0b2545}tr{break-inside:avoid}
+.note{background:#FFF7ED;border-right:3px solid #C2410C;padding:6px 10px;margin:8px 0;font-size:10pt}
+.appendix{break-before:page}
+</style></head><body><header><div class="org">HAYAI</div><h1>ردّنا على ورقة الحسابات والمعرّفات</h1><div class="date">٩ أكتوبر ٢٠٢٦</div></header>
+
+<p>أهلاً يا جنة،</p>
+<p>شكرًا على الورقة، كل حاجة فيها واضحة ووصلتنا كاملة. دي الردود على التلات نقط اللي طلبتوا تأكيدنا عليها، وفي الآخر ملحق باللي محتاجين يتعمل جوه Tag Manager علشان يطابق الموقع.</p>
+
+<h2>١. بيئة التجربة</h2>
+<p>اطمّنوا، سنيبت التجربة عمره ما هيتحمّل على الموقع الحقيقي، ولا على <code>/login</code>.</p>
+<p>الموقع الحقيقي بيحمّل الحاوية <code>GTM-5VKC5CMT</code> من غير <code>gtm_auth</code> و <code>gtm_preview</code> خالص، زي ما في آخر سطر من الملحق بتاعكم. وده متثبّت في إعدادات السيرفر نفسه، مش في الكود. والرابط <code>/login</code> اللي اتسجّل في Tag Manager مجرد رابط للمعاينة، ومش بيأثّر على أي زائر.</p>
+<p>دلوقتي مفيش نسخة تجربة على عنوان منفصل. فلحد ما تتعمل، أي تعديل في الحاوية يتختبر بزرار <b>Preview</b> في Tag Manager. المعاينة دي بتشتغل على المتصفح اللي فتحها بس، والزوار مش بيشوفوها. ولما يبقى فيه عنوان تجربة منفصل هنبعتهولكم، ونركّب عليه سنيبت الـ Staging هو بس.</p>
+
+<h2>٢. Clarity والصفحات الحسّاسة</h2>
+<p>من ناحية الموقع خلص. كل صفحة بتقول لـ Tag Manager هل Clarity مسموح عليها ولا لأ، في متغيّر اسمه <code>clarity_allowed</code>:</p>
+<ul>
+<li><b><code>true</code></b> على صفحات المحتوى العادية بس: الرئيسية، والتغطية التأمينية، وإزاي بيشتغل، والأسئلة الشائعة، ومن نحن.</li>
+<li><b><code>false</code></b> على الصفحات الحسّاسة (الطوارئ والرعاية المركزة والبحث)، وصفحات الخدمات والشراء، وصفحات الدكاترة والمستشفيات وقوائمهم، وصفحة متابعة الطلب.</li>
+</ul>
+<p>ولو زائر بدأ من الرئيسية ودخل على صفحة من دول من جوه الموقع، الموقع بيوقّف تسجيل Clarity أول ما الصفحة دي تتفتح. وفورم التواصل اللي في الرئيسية مخفي بالكامل من التسجيل، ده غير إن الإخفاء عندكم على Strict أصلًا.</p>
+<div class="note"><b>المطلوب في Tag Manager:</b> تاج Clarity يشتغل بس لما <code>clarity_allowed</code> = <code>true</code>، وبموافقة <code>analytics_storage</code> من البانر. لو اتعمل على All Pages، هيتحمّل على الصفحات الحسّاسة. التفاصيل في الملحق.</div>
+
+<h2>٣. بعد التركيب</h2>
+<p>الموقع جاهز: الحاوية <code>GTM-5VKC5CMT</code> متركّبة، والأحداث بتتبعت، وقواعد الموافقة شغّالة (كل حاجة مقفولة لحد ما الزائر يوافق). اللي فاضل إنها تتفعّل على السيرفر الحقيقي، وأول ما ده يحصل هنبعتلكم تأكيد زي ما طلبتوا.</p>
+<p>وزي ما قلتوا، الحاوية على حساب د. جنة وأي تعديل فيها بيعدّي من خلالها. فالتاجز والتحويلات بتتبني من عندكم. علشان تطابق اللي الموقع بيبعته بالظبط، جهّزنا الملحق اللي تحت: أسماء الأحداث والمتغيّرات، والتاجز، والاستثناءات. ولو حابّين نبنيها مع بعض على شاشة مشتركة، إحنا موجودين.</p>
+<p>بعد ما تنشروا الحاوية، نختبر مع بعض بالـ Preview، وبعدها تراجعوا الأرقام في GA4 و Clarity وتفعّلوا فلتر الزيارات الداخلية.</p>
+
+<h2>ملاحظات على التحويلات</h2>
+<ul>
+<li><b>الواتساب والتليفون:</b> الموقع مش بيبعت حدث خاص بيهم، علشان الضغطة ما تتحسبش مرتين. بيتحسبوا من Link Click triggers على اللينك نفسه، فبيلقطوا الزرار والرقم اللي في الفوتر مع بعض.</li>
+<li><b>رقم الإسعاف ١٢٣:</b> لازم يتستبعد من تحويل التليفون. الـ trigger يمسك الأرقام اللي بتبدأ بـ <code>+20</code> بس.</li>
+<li><b>تحويل الحجز:</b> الحجز بيحصل في التطبيق مش الموقع، فمفيش حدث تأكيد حجز على الموقع دلوقتي. ولما يتعمل، هيتبعت معاه <code>value</code> و <code>currency: 'EGP'</code> زي ما قلتوا.</li>
+<li><b>الإعلانات:</b> تاجز Ads محتاجة استثناء للصفحات الحسّاسة، وزيارات الفريق، وأي عنوان غير الموقع الحقيقي.</li>
+</ul>
+<p>تحت أمركم لأي حاجة.</p>
+
+<div class="appendix">
+<h2>ملحق. اللي الموقع بيبعته لـ Tag Manager، وإزاي تتبني الحاوية عليه</h2>
+
+<div class="note"><b>مهم:</b> الموقع بيمنع أي <b>Custom HTML</b> أو <b>Custom JavaScript</b> في الحاوية (حماية للصفحات الحسّاسة). فالبانر يتركّب بـ template ‏<b>CookieYes CMP</b>، و Clarity بـ template ‏<b>Microsoft Clarity</b> من الـ Gallery، مش بالسكربت المنسوخ.</div>
+
+<h3>المتغيّرات اللي على كل صفحة (Data Layer Variables)</h3>
+<table><tr><th>المتغيّر</th><th>القيم</th></tr>
+<tr><td><code>page_sensitivity</code></td><td><code>standard</code> أو <code>sensitive</code></td></tr>
+<tr><td><code>clarity_allowed</code></td><td><code>true</code> / <code>false</code></td></tr>
+<tr><td><code>traffic_type</code></td><td><code>internal</code> لزيارات الفريق (<code>?hayai_team=1</code>)</td></tr>
+<tr><td><code>content_group</code>، <code>journey_stage</code></td><td>من الـ CMS</td></tr>
+<tr><td><code>ft_source</code>، <code>ft_medium</code>، <code>ft_campaign</code></td><td>أول مصدر جه منه الزائر، بعد الموافقة</td></tr>
+</table>
+
+<h3>الأحداث</h3>
+<table><tr><th>الحدث</th><th>البيانات اللي معاه</th><th>بيتبعت إمتى</th></tr>
+<tr><td><code>virtual_page_view</code></td><td><code>page_location</code>، <code>page_title</code> + المتغيّرات اللي فوق</td><td>التنقّل جوه الموقع</td></tr>
+<tr><td><code>generate_lead</code></td><td><code>transaction_id</code>، <code>form_key</code>، <code>lead_type</code></td><td>بعد ما السيرفر يأكّد استلام الفورم</td></tr>
+<tr><td><code>purchase_submitted</code></td><td><code>transaction_id</code>، <code>value</code>، <code>currency: EGP</code></td><td>بعد تأكيد طلب الشراء</td></tr>
+<tr><td><code>cta_click</code></td><td><code>cta_kind</code>، <code>cta_tracking_key</code>، <code>placement</code></td><td>ضغطة على أي زرار من الـ CMS</td></tr>
+</table>
+
+<h3>الـ Triggers</h3>
+<table><tr><th>الاسم</th><th>الشرط</th></tr>
+<tr><td>Click - WhatsApp</td><td>Just Links، Click URL matches RegEx <code>wa\.me|api\.whatsapp\.com|whatsapp://</code>، و Wait for tags مقفول</td></tr>
+<tr><td>Click - Phone</td><td>Just Links، Click URL matches RegEx <code>^tel:\s*\+?\s*20</code> (رقم ١٢٣ مش بيطابق)</td></tr>
+<tr><td>Clarity allowed</td><td>Window Loaded، و <code>clarity_allowed</code> equals <code>true</code></td></tr>
+<tr><td>Block - Sensitive</td><td>Custom Event <code>.*</code>، و <code>page_sensitivity</code> equals <code>sensitive</code></td></tr>
+<tr><td>Block - Internal</td><td>Custom Event <code>.*</code>، و <code>traffic_type</code> equals <code>internal</code></td></tr>
+<tr><td>Block - Staging</td><td>Custom Event <code>.*</code>، و Page Hostname does not match <code>^(www\.)?hayaihealthcare\.com$</code></td></tr>
+</table>
+
+<h3>التاجز</h3>
+<table><tr><th>التاج</th><th>بيشتغل على</th><th>الاستثناءات</th><th>الموافقة</th></tr>
+<tr><td>CookieYes CMP (key <code>aa524032…688ffb</code>)</td><td>Consent Initialization</td><td>—</td><td>—</td></tr>
+<tr><td>Google tag — GA4 (Lookup على الـ hostname: الموقع الحقيقي ← <code>G-NS1Q07ZLBF</code>، أي حاجة تانية ← <code>G-EXCKD07VXC</code>)</td><td>Initialization</td><td>—</td><td>analytics_storage</td></tr>
+<tr><td>GA4 events: page_view (من virtual_page_view)، generate_lead، purchase_submitted، cta_click، whatsapp_click، phone_click</td><td>الحدث أو الـ trigger بتاعه</td><td>—</td><td>analytics_storage</td></tr>
+<tr><td>Ads — Lead (<code>8zBYCL-7zZQdEKnWuvVE</code>)، Transaction ID = <code>transaction_id</code></td><td>generate_lead</td><td>Sensitive، Internal، Staging</td><td>ad_storage، ad_user_data</td></tr>
+<tr><td>Ads — WhatsApp (<code>vjE2CMK7zZQdEKnWuvVE</code>)</td><td>Click - WhatsApp</td><td>Sensitive، Internal، Staging</td><td>ad_storage، ad_user_data</td></tr>
+<tr><td>Ads — Phone (<code>9eobCMW7zZQdEKnWuvVE</code>)</td><td>Click - Phone</td><td>Sensitive، Internal، Staging</td><td>ad_storage، ad_user_data</td></tr>
+<tr><td>Conversion Linker</td><td>All Pages</td><td>—</td><td>—</td></tr>
+<tr><td>Clarity (<code>yu39huk43j</code>)</td><td>Clarity allowed</td><td>Internal</td><td>analytics_storage</td></tr>
+</table>
+<p>كل تاجز Ads على <code>AW-18499939113</code>، وخانة القيمة فاضية زي ما قلتوا. تاج الحجز (<code>Ap5ZCLy7zZQdEKnWuvVE</code>) يستنى لحد ما يبقى فيه حدث تأكيد حجز.</p>
+</div>
+</body></html>

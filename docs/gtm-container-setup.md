@@ -1,8 +1,8 @@
 # HAYAI — Tag Manager container setup (GTM-5VKC5CMT)
 
 The exact configuration of the container, built on what the site pushes today.
-Written so whoever builds it in the GTM UI (us, with Publish access) produces the
-same container, and so marketing can audit it later.
+The container lives on Dr. Jannah's account (marketing holds Publish; every change goes through her). This file is what we hand them so the container matches
+what the site pushes. It also serves as the audit list during the joint Preview test.
 
 IDs from the marketing team's reply of 7 Oct 2026:
 
