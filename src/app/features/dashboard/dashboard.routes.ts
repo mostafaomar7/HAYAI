@@ -210,6 +210,14 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
   },
   {
+    path: 'account-deletion-requests',
+    data: { title: 'deletion_requests.title' },
+    loadComponent: () =>
+      import('./pages/account-deletion-requests/account-deletion-requests').then(
+        m => m.AccountDeletionRequests
+      )
+  },
+  {
     path: 'hospital-verifications',
     data: { title: 'menu.hospital_verifications' },
     loadComponent: () =>

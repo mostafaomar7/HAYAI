@@ -1,0 +1,91 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'deletion_requests.title' | t }}</h2>
+        <span class="badge">{{ total() }} {{ 'deletion_requests.count' | t }}</span>
+      </div>
+
+      <div class="tab-group">
+        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">{{ 'deletion_requests.tab.pending' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'completed'" (click)="setStatus('completed')">{{ 'deletion_requests.tab.completed' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">{{ 'deletion_requests.tab.rejected' | t }}</button>
+      </div>
+    </div>
+
+    <p class="page-note">{{ 'deletion_requests.note' | t }}</p>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'deletion_requests.identifier' | t }}</th>
+            <th>{{ 'deletion_requests.matched' | t }}</th>
+            <th>{{ 'deletion_requests.reason' | t }}</th>
+            <th>{{ 'common.created' | t }}</th>
+            <th style="width:220px;">{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="5" class="text-gray" style="padding:32px 24px;">{{ 'common.loading' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="5" class="text-gray" style="padding:32px 24px;">{{ 'deletion_requests.empty' | t }}</td></tr>
+          } @else {
+            @for (r of items(); track r.id) {
+              <tr>
+                <td>
+                  <span class="identifier" dir="ltr">{{ r.identifier || '—' }}</span>
+                </td>
+
+                <td>
+                  @if (matches(r).length) {
+                    <ul class="matched-list">
+                      @for (a of matches(r); track a.id) {
+                        <li>{{ accountLabel(a) }}</li>
+                      }
+                    </ul>
+                  } @else {
+                    <!-- Nothing matched the email or phone they typed. Worth
+                         seeing at a glance: there is nothing here to delete. -->
+                    <span class="no-match">{{ 'deletion_requests.no_match' | t }}</span>
+                  }
+                </td>
+
+                <td class="text-gray">
+                  @if (r.reason) {
+                    <span class="reason-text" [title]="r.reason">{{ r.reason }}</span>
+                  } @else { — }
+                </td>
+
+                <td class="text-gray">{{ r.created_at | date:'mediumDate' }}</td>
+
+                <td>
+                  @if (r.status === 'pending') {
+                    <div class="action-row">
+                      <button class="btn-danger" [disabled]="!matches(r).length" (click)="complete(r)">
+                        {{ 'deletion_requests.complete_action' | t }}
+                      </button>
+                      <button class="btn-reject" (click)="reject(r)">{{ 'common.reject' | t }}</button>
+                    </div>
+                  } @else if (r.handled_note) {
+                    <span class="reason-text" [title]="r.handled_note">{{ r.handled_note }}</span>
+                  } @else {
+                    <span class="text-gray" style="font-size:12px;">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [perPage]="perPage"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
+  </div>
+</div>

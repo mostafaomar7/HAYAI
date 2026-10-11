@@ -7,6 +7,7 @@ export const MENU_ITEMS: MenuItem[] = [
   // There is no admin-wide transactions endpoint — `/api/v1/transactions` is
   // scoped to the caller. A menu entry will need a new endpoint first.
   { id: 'RenewalUsers', label: 'menu.renewal', iconName: 'renewal', route: '/dashboard/renewal', roles: ['admin'] },
+  { id: 'AccountDeletionRequests', label: 'menu.deletion_requests', iconName: 'renewal', route: '/dashboard/account-deletion-requests', roles: ['admin'] },
   { id: 'PlansManagements', label: 'menu.plans', iconName: 'plans', route: '/dashboard/plans', roles: ['admin'] },
   { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notfication', roles: ['admin'] },
   { id: 'NotificationHistory', label: 'menu.notification_history', iconName: 'notifications', route: '/dashboard/notfication/history', roles: ['admin'] },

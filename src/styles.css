@@ -273,5 +273,9 @@ html[lang="ar"] body {
    into each of the twelve list stylesheets, so the one action that cannot be
    undone looks the same wherever it appears — a red label in a grey menu is
    the only thing that separates "block" from "delete" at a glance. */
-.dropdown-item.danger { color: #B42318; }
-.dropdown-item.danger:hover { background-color: #FEF3F2; color: #912018; }
+/* Scoped through the menu so it outranks the component's own `.dropdown-item`.
+   Angular's emulated encapsulation gives that rule a `[_ngcontent-…]`, which
+   ties on specificity with a bare `.dropdown-item.danger` — and component
+   styles are injected after this file, so the tie goes to them. */
+.action-dropdown .dropdown-item.danger { color: #B42318; }
+.action-dropdown .dropdown-item.danger:hover { background-color: #FEF3F2; color: #912018; }
