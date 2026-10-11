@@ -46,7 +46,8 @@
         </div>
         <div class="form-group">
           <label>{{ 'plans.num_months' | t }}</label>
-          <input type="number" min="1" [placeholder]="'plans.enter_months' | t" [(ngModel)]="months" name="months">
+          <input type="number" min="0" [placeholder]="'plans.enter_months' | t" [(ngModel)]="months" name="months">
+          <small class="field-hint">{{ 'plans.months_zero_hint' | t }}</small>
         </div>
         <div class="form-group">
           <label>{{ 'plans.discount_pct' | t }}</label>

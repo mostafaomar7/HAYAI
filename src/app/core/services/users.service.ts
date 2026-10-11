@@ -92,6 +92,11 @@ export interface DoctorItem extends ProviderItem {
   role: string | null;
   specialty: string | null;
   subspecialty: string | null;
+  /** The admin-set third line on the verification card the app shows. */
+  credentials_verified?: boolean;
+  credentials_verified_note_en?: string | null;
+  credentials_verified_note_ar?: string | null;
+  credentials_verified_at?: string | null;
 }
 
 export interface PasswordResetResult {
@@ -223,6 +228,22 @@ export class UsersService {
 
   unblock(resource: BlockableResource, id: number): Observable<{ id: number; status: AccountStatus }> {
     return this.api.post<{ id: number; status: AccountStatus }>(`/admin/${resource}/${id}/unblock`);
+  }
+
+  /**
+   * The third line on a doctor's verification card in the app: "verified by
+   * HAYAI", with a note. It is an admin judgement, not something the doctor
+   * can set, so it lives here and nowhere else.
+   *
+   * Both notes or neither — the API returns 422 for one language alone, since
+   * a card that reads in English and is blank in Arabic is worse than the
+   * default line it falls back to.
+   */
+  setCredentialsVerification(
+    doctorId: number,
+    body: { credentials_verified: boolean; credentials_verified_note_en?: string; credentials_verified_note_ar?: string }
+  ): Observable<DoctorItem> {
+    return this.api.patch<DoctorItem>(`/admin/doctors/${doctorId}/credentials-verification`, body);
   }
 
   setPlan<T = ProviderItem>(resource: UserResource, id: number, planId: number): Observable<T> {
