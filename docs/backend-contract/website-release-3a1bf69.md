@@ -20,7 +20,19 @@ and measurement specs rely on. Full server setup, first time only:
 hayai-web/
   browser/     static files (JS, CSS, fonts, images) — 5.1 MB
   server/      server.mjs and its chunks — 4.9 MB
+  RELEASE      3a1bf690e2395411829b785bcf5197c5e4ba78e5
   DEPLOY.md    this file
+```
+
+`RELEASE` is in the package this time so that `/var/www/hayai-web/RELEASE`
+cannot go stale: copy it across with the two folders and
+`cat /var/www/hayai-web/RELEASE` always answers which build is live.
+
+**Checksums** — verify before extracting:
+
+```
+tar.gz  acf25df285d7c81f5446cfb62ecaabc7f2ac9868dbb7cb459bf26e2db1877c36
+zip     5ec6a616921e5ef9a80cd1dda8e4a2a8b04cfa5631ee8b265af9e22518d535a1
 ```
 
 - **Self-contained.** No `npm install`, no `node_modules`. Verified by running
@@ -45,6 +57,7 @@ sudo cp -r /var/www/hayai-web /var/www/hayai-web.prev
 #    forever.
 sudo rm -rf /var/www/hayai-web/browser /var/www/hayai-web/server
 sudo cp -r /tmp/hayai-web/browser /tmp/hayai-web/server /var/www/hayai-web/
+sudo cp /tmp/hayai-web/RELEASE /var/www/hayai-web/RELEASE
 sudo chown -R www-data:www-data /var/www/hayai-web
 
 # 4. Restart. No `reread`/`update` this time — the variables did not change.
@@ -53,6 +66,13 @@ sudo supervisorctl status hayai-web                    # RUNNING
 ```
 
 About two seconds of downtime during the restart.
+
+**One difference from the usual method:** do not extract over the running
+tree. Angular hashes every file name per build, so an extract-on-top leaves
+the previous release's `chunk-*.js` beside the new ones — they are never
+served, they never get cleaned up, and they make the next "which files belong
+to this build?" question unanswerable. `rm -rf` on the two folders first, as
+in step 3, is the only part of this that is not optional.
 
 **Rollback:**
 
