@@ -88,6 +88,57 @@
       </div>
     </div>
 
+    <!-- Group buying. Absent on an internal device and on an external one with
+         no round open, so the whole card is conditional rather than showing
+         empty rows. -->
+    @if (o.group_round; as r) {
+      <div class="card">
+        <div class="card-head"><div class="title-area">
+          <h2>{{ 'external.orders.round.title' | t }}</h2>
+          <span class="sub">{{ 'external.orders.round.number' | t : { number: r.round_number } }}</span>
+        </div></div>
+        <div class="panel">
+          @if (r.my_membership; as m) {
+            <p class="round-place">
+              {{ 'external.orders.round.place' | t : { position: m.position, target: r.target_size } }}
+              <span class="muted">· {{ 'common.quantity' | t }}: {{ m.quantity }}</span>
+            </p>
+          }
+
+          <div class="round-bar" [attr.aria-label]="r.progress_percent + '%'">
+            <span [style.width.%]="r.progress_percent"></span>
+          </div>
+
+          <dl class="money">
+            <div class="money-row">
+              <dt>{{ 'external.orders.round.joined' | t }}</dt>
+              <dd>{{ r.joined_count }} / {{ r.target_size }}</dd>
+            </div>
+            @if (r.reserved_count) {
+              <div class="money-row">
+                <dt>{{ 'external.orders.round.reserved' | t }}</dt>
+                <dd>{{ r.reserved_count }}</dd>
+              </div>
+            }
+            <div class="money-row">
+              <dt>{{ 'external.orders.round.remaining' | t }}</dt>
+              <dd>{{ r.seats_remaining }}</dd>
+            </div>
+            @if (r.join_deadline) {
+              <div class="money-row">
+                <dt>{{ 'external.orders.round.deadline' | t }}</dt>
+                <dd>{{ r.join_deadline }}</dd>
+              </div>
+            }
+            <div class="money-row">
+              <dt>{{ 'common.status' | t }}</dt>
+              <dd>{{ r.status }}@if (!r.joinable) { <span class="muted"> · {{ 'external.orders.round.closed' | t }}</span> }</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    }
+
     <div class="card">
       <div class="card-head"><div class="title-area"><h2>{{ 'external.orders.customer' | t }}</h2></div></div>
       <div class="panel">

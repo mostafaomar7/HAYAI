@@ -15,6 +15,15 @@
         <button class="tab-btn" [class.active]="status() === 'delivered'" (click)="setStatus('delivered')">{{ 'external.orders.tab.delivered' | t }}</button>
         <button class="tab-btn" [class.active]="status() === 'cancelled'" (click)="setStatus('cancelled')">{{ 'external.orders.tab.cancelled' | t }}</button>
       </div>
+
+      <!-- Which catalogue the device came from. Separate from the status tabs
+           above: a dashboard device can be pending or delivered just the same,
+           and QA needs to see only the ones the admin has to fulfil. -->
+      <div class="tabs source-tabs">
+        <button class="tab-btn" [class.active]="source() === ''" (click)="setSource('')">{{ 'external.orders.source.all' | t }}</button>
+        <button class="tab-btn" [class.active]="source() === 'external'" (click)="setSource('external')">{{ 'external.orders.source.external' | t }}</button>
+        <button class="tab-btn" [class.active]="source() === 'internal'" (click)="setSource('internal')">{{ 'external.orders.source.internal' | t }}</button>
+      </div>
     </div>
 
     <div class="table-responsive">

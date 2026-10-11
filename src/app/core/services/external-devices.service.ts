@@ -37,6 +37,32 @@ export interface ExternalDevice {
   updated_at: string;
 }
 
+/**
+ * A buyer's place in a group-buying round, as it stands right now.
+ *
+ * Null for an internal device, and null for an external one with no round
+ * open — a round is a thing that starts and closes, not a property of the
+ * device.
+ */
+export interface GroupRound {
+  round_id: number;
+  round_number: number;
+  status: string;
+  target_size: number;
+  joined_count: number;
+  reserved_count: number;
+  seats_remaining: number;
+  progress_percent: number;
+  join_deadline: string | null;
+  joinable: boolean;
+  /** Where THIS order's buyer sits in the round — "#3 of 10". */
+  my_membership: {
+    status: string;
+    quantity: number;
+    position: number;
+  } | null;
+}
+
 export interface ExternalDeviceOrder {
   id: number;
   device_id: number;
@@ -54,10 +80,14 @@ export interface ExternalDeviceOrder {
   status_label?: string;
   purchase_type_label?: string;
   payment_status_label?: string;
-  /** Null on every order measured so far; the device name comes from the catalogue. */
-  device?: { id: number; name: string } | null;
+  device?: { id: number; name: string; brand?: string | null; cover_image_url?: string | null } | null;
   product_name?: string | null;
+  product_image?: string | null;
   brand?: string | null;
+  /** `external` = a dashboard device the admin fulfils. `internal` = in-app. */
+  device_source?: 'external' | 'internal' | null;
+  price_pending?: boolean;
+  group_round?: GroupRound | null;
   delivery_fee?: number | string | null;
   grand_total?: number | string | null;
   /** What the buyer wrote, and what the seller wrote back. */
@@ -110,7 +140,9 @@ export class ExternalDevicesService {
     return this.api.delete<void>(`/admin/external-devices/${id}`);
   }
 
-  listOrders(query: { page?: number; per_page?: number; status?: string; user_id?: number } = {}): Observable<PagedResult<ExternalDeviceOrder>> {
+  listOrders(
+    query: { page?: number; per_page?: number; status?: string; user_id?: number; source?: 'external' | 'internal' } = {}
+  ): Observable<PagedResult<ExternalDeviceOrder>> {
     return this.api.getPaged<ExternalDeviceOrder>('/admin/external-device-orders', query);
   }
 

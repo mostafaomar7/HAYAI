@@ -70,6 +70,11 @@ const LINK_ID_TYPE: Record<string, 'user' | 'organization' | 'facility' | 'docto
   'medical-devices': 'facility'
 };
 
+/** API segments that have a dashboard screen of their own, not an account. */
+const LINK_DIRECT_ROUTE: Record<string, string> = {
+  'external-device-orders': '/dashboard/external/orders'
+};
+
 /**
  * Where a notification should actually open, or null when there is nowhere to
  * go. Null is deliberate: staying put beats redirecting to the dashboard home,
@@ -83,6 +88,13 @@ export function notificationTarget(link: string | null | undefined): string | nu
 
   const m = /^\/admin\/([a-z-]+)\/(\d+)$/.exec(link);
   if (!m) return null;
+
+  // Not every link points at an account. An order has a screen of its own,
+  // and sending it to the buyer's activity timeline would answer a different
+  // question than the one the notification asked.
+  const direct = LINK_DIRECT_ROUTE[m[1]];
+  if (direct) return `${direct}/${m[2]}`;
+
   const idType = LINK_ID_TYPE[m[1]];
   if (!idType) return null;
 

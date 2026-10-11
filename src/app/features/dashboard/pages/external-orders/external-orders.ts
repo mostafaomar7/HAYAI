@@ -18,6 +18,12 @@ export class ExternalOrders {
 
   loading = signal(true);
   status = signal('');
+  /**
+   * `external` = devices added in the dashboard, which the admin fulfils.
+   * QA could not find these orders at all, because the list mixed them with
+   * the in-app ones and there was no way to separate the two.
+   */
+  source = signal<'' | 'external' | 'internal'>('');
   orders = signal<ExternalDeviceOrder[]>([]);
   total = signal(0);
   devicesById = signal<Map<number, ExternalDevice>>(new Map());
@@ -42,7 +48,8 @@ export class ExternalOrders {
     this.svc.listOrders({
       page: this.page(),
       per_page: this.perPage,
-      status: this.status() || undefined
+      status: this.status() || undefined,
+      source: this.source() || undefined
     }).subscribe({
       next: r => {
         // A status change can empty the current page — fall back one page.
@@ -57,6 +64,12 @@ export class ExternalOrders {
       },
       error: () => this.loading.set(false)
     });
+  }
+
+  setSource(value: '' | 'external' | 'internal') {
+    this.source.set(value);
+    this.page.set(1);
+    this.load();
   }
 
   goToPage(page: number) { this.page.set(page); this.load(); }
