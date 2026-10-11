@@ -268,3 +268,10 @@ html[lang="ar"] body {
    was hit, and the same button arrives under a different name depending on
    where the finger landed. */
 [data-cta] * { pointer-events: none; }
+
+/* The destructive row in an account's action menu. Global rather than copied
+   into each of the twelve list stylesheets, so the one action that cannot be
+   undone looks the same wherever it appears — a red label in a grey menu is
+   the only thing that separates "block" from "delete" at a glance. */
+.dropdown-item.danger { color: #B42318; }
+.dropdown-item.danger:hover { background-color: #FEF3F2; color: #912018; }

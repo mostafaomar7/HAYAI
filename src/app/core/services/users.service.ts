@@ -103,6 +103,19 @@ export interface PasswordResetResult {
   sessions_revoked: boolean;
 }
 
+/**
+ * What a delete did. The backend decides which, not the caller.
+ *
+ * `deleted` — a patient or tourist, gone completely.
+ * `erased`  — a provider: closed for good and wiped of name, email, phone and
+ *             photo, but its row stays so the orders and records of the
+ *             patients who used it are not orphaned.
+ */
+export interface AccountDeleteResult {
+  user_id: number;
+  mode: 'deleted' | 'erased';
+}
+
 export type UserResource =
   | 'patients'
   | 'tourists'
@@ -214,6 +227,23 @@ export class UsersService {
 
   setPlan<T = ProviderItem>(resource: UserResource, id: number, planId: number): Observable<T> {
     return this.api.patch<T>(`/admin/${resource}/${id}/plan`, { plan_id: planId });
+  }
+
+  /**
+   * Deletes an account for good. There is no undo and no unblock afterwards.
+   *
+   * `confirm: 'DELETE'` is required by the API and refused without it — the
+   * body is the second lock, after the typed confirmation in the UI, so a
+   * mis-aimed request cannot delete anyone on its own.
+   *
+   * `resource` takes the same id the page it sits on already reads: the user
+   * id for a patient or tourist, the doctor id, the facility or organization
+   * id for a provider. `users` works for any account by its user id.
+   */
+  deleteAccount(resource: UserResource | 'users', id: number): Observable<AccountDeleteResult> {
+    return this.api.delete<AccountDeleteResult>(`/admin/${resource}/${id}`, {
+      body: { confirm: 'DELETE' }
+    });
   }
 
   /**

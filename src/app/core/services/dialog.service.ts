@@ -73,6 +73,41 @@ export class DialogService {
   }
 
   /**
+   * Confirmation that cannot be clicked through: the admin has to type a word
+   * exactly before the button does anything.
+   *
+   * For actions with no undo. An ordinary confirm is one reflex click away
+   * from a deleted account, and the dialog that asks "are you sure?" is the
+   * one people learn to dismiss without reading.
+   */
+  async confirmTyped(opts: {
+    title: string;
+    text?: string;
+    word: string;
+    confirmText?: string;
+    params?: DialogParams;
+  }): Promise<boolean> {
+    const result: SweetAlertResult = await Swal.fire({
+      title: this.t(opts.title, opts.params),
+      text: this.t(opts.text, opts.params),
+      icon: 'warning',
+      input: 'text',
+      inputPlaceholder: opts.word,
+      inputAttributes: { autocapitalize: 'off', autocomplete: 'off', spellcheck: 'false' },
+      showCancelButton: true,
+      confirmButtonText: this.t(opts.confirmText ?? 'common.confirm'),
+      cancelButtonText: this.t('common.cancel'),
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      reverseButtons: true,
+      // Trimmed, but not case-folded: typing it exactly is the whole point.
+      inputValidator: value =>
+        (value ?? '').trim() === opts.word ? null : this.t('dialog.type_to_confirm', { word: opts.word })
+    });
+    return result.isConfirmed && (result.value ?? '').trim() === opts.word;
+  }
+
+  /**
    * Single-choice select. Returns the chosen option key, or null if cancelled.
    * Option labels are translated; dynamic labels fall through unchanged.
    */

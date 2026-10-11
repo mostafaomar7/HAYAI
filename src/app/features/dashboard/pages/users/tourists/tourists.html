@@ -164,7 +164,9 @@
                       } @else {
                         <button class="dropdown-item" (click)="verify(user)">{{ 'tourists.verify' | t }}</button>
                       }
-                    </div>
+                                          <!-- Last in the menu, and separated: it is the one action with no undo. -->
+                      <button class="dropdown-item danger" (click)="deleteAccount(user.id, user.name)">{{ 'users.delete_account.action' | t }}</button>
+</div>
                   }
                 </td>
               </tr>

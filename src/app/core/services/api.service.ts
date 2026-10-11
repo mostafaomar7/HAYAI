@@ -70,8 +70,15 @@ export class ApiService {
     return this.http.patch<ApiResponse<T>>(this.url(path), body).pipe(map(r => r.data));
   }
 
-  delete<T>(path: string): Observable<T> {
-    return this.http.delete<ApiResponse<T>>(this.url(path)).pipe(map(r => r.data));
+  /**
+   * `opts.body` is for the few endpoints that require one on a DELETE — the
+   * account deletes want `{confirm: 'DELETE'}`, and refuse the request
+   * without it. Angular only sends a DELETE body when it is passed this way.
+   */
+  delete<T>(path: string, opts?: { body?: unknown }): Observable<T> {
+    return this.http
+      .delete<ApiResponse<T>>(this.url(path), opts?.body === undefined ? {} : { body: opts.body })
+      .pipe(map(r => r.data));
   }
 
   private url(path: string): string {

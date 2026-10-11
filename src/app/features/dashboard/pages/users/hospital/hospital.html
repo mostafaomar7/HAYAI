@@ -129,7 +129,9 @@
                       <button class="dropdown-item" (click)="goToActivity(h)">{{ 'activity.title' | t }}</button>
                       <button class="dropdown-item" (click)="resetPassword(h)">{{ 'users.reset_password.action' | t }}</button>
                       <button class="dropdown-item" (click)="changePlan(h.id)">{{ 'users.actions.change_plan' | t }}</button>
-                    </div>
+                                          <!-- Last in the menu, and separated: it is the one action with no undo. -->
+                      <button class="dropdown-item danger" (click)="deleteAccount(h.id, h.name)">{{ 'users.delete_account.action' | t }}</button>
+</div>
                   }
                 </td>
               </tr>

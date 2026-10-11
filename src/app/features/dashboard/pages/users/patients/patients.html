@@ -151,7 +151,9 @@
                       @if (isPlanException(user.plan_status)) {
                         <button class="dropdown-item" (click)="resetPlan(user.id)">{{ 'users.actions.reset_plan' | t }}</button>
                       }
-                    </div>
+                                          <!-- Last in the menu, and separated: it is the one action with no undo. -->
+                      <button class="dropdown-item danger" (click)="deleteAccount(user.id, user.name)">{{ 'users.delete_account.action' | t }}</button>
+</div>
                   }
                 </td>
               </tr>

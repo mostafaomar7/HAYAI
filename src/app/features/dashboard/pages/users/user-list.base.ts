@@ -259,6 +259,41 @@ export abstract class UserListBase<T extends { id: number }> {
     this.setAccountStatus(id, 'active');
   }
 
+  /**
+   * Deletes an account for good.
+   *
+   * What the backend does depends on the kind: a patient or tourist is removed
+   * outright, a provider is closed and wiped of its name, email, phone and
+   * photo but keeps its row, so the orders and records of patients who used it
+   * are not left pointing at nothing. Either way it cannot be undone and the
+   * account can never be unblocked back into service.
+   *
+   * Confirmed by typing the word, not by clicking: this sits in the same menu
+   * as Block, one row apart, and an ordinary confirm is a reflex away from
+   * deleting the account somebody meant to suspend.
+   */
+  async deleteAccount(id: number, name?: string | null) {
+    this.openActionMenuId = null;
+    const ok = await this.dialog.confirmTyped({
+      title: 'users.delete_account.title',
+      text: 'users.delete_account.text',
+      word: 'DELETE',
+      confirmText: 'users.delete_account.action',
+      params: { name: name ?? '' }
+    });
+    if (!ok) return;
+    this.svc.deleteAccount(this.resource, id).subscribe({
+      next: res => {
+        this.dialog.toast('success', res.mode === 'erased'
+          ? 'users.delete_account.erased_toast'
+          : 'users.delete_account.deleted_toast');
+        this.load();
+      },
+      error: err =>
+        this.dialog.error('users.delete_account.failed', err.error?.message ?? 'dialog.try_again')
+    });
+  }
+
   private setAccountStatus(id: number, status: AccountStatus) {
     this.svc.setStatus(this.resource, id, status).subscribe({
       next: res => {
