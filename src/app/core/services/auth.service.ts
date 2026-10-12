@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
+import { SessionService } from './session.service';
 import { TokenService } from './token.service';
 import { LoginRequest, LoginResponse, UserModel } from '../models/user.model';
 
@@ -8,6 +9,7 @@ import { LoginRequest, LoginResponse, UserModel } from '../models/user.model';
 export class AuthService {
   private api = inject(ApiService);
   private tokens = inject(TokenService);
+  private session = inject(SessionService);
 
   readonly currentUser = signal<UserModel | null>(null);
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
@@ -20,10 +22,17 @@ export class AuthService {
     this.currentUser.set(null);
   }
 
+  /**
+   * In cookie mode the response still carries `token` — the API keeps it there
+   * through the transition — and it is deliberately ignored. Storing it would
+   * put the session back in `localStorage`, which is the whole thing this was
+   * meant to end, and the interceptor would then send a header the API
+   * prefers over the cookie.
+   */
   login(body: LoginRequest): Observable<LoginResponse> {
     return this.api.post<LoginResponse>('/auth/login', body).pipe(
       tap(res => {
-        this.tokens.setToken(res.token);
+        if (!this.session.isCookieMode) this.tokens.setToken(res.token);
         this.setUser(res.user);
       })
     );
@@ -32,7 +41,7 @@ export class AuthService {
   logout(): Observable<void> {
     return this.api.post<void>('/auth/logout').pipe(
       tap(() => {
-        this.tokens.clearToken();
+        this.session.clear();
         this.clearUser();
       })
     );
@@ -47,7 +56,7 @@ export class AuthService {
   refresh(): Observable<UserModel & { token: string }> {
     return this.api.post<UserModel & { token: string }>('/auth/refresh').pipe(
       tap(res => {
-        this.tokens.setToken(res.token);
+        if (!this.session.isCookieMode) this.tokens.setToken(res.token);
         this.setUser(res);
       })
     );

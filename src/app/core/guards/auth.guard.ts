@@ -2,12 +2,12 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { TokenService } from '../services/token.service';
+import { SessionService } from '../services/session.service';
 import { UserModel } from '../models/user.model';
 
 export const dashboardShellGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
-  const tokens = inject(TokenService);
+  const session = inject(SessionService);
   const router = inject(Router);
 
   // Every `/admin/*` endpoint is gated on `user_type === 'admin'` by the
@@ -20,19 +20,19 @@ export const dashboardShellGuard: CanActivateFn = () => {
   // `/dashboard`, which would bounce such a session between the two forever.
   const allow = (user: UserModel | null) => {
     if (user?.user_type === 'admin') return true;
-    tokens.clearToken();
+    session.clear();
     return router.createUrlTree(['/login']);
   };
 
   const current = auth.currentUser();
   if (current) return allow(current);
 
-  if (!tokens.hasToken()) return router.createUrlTree(['/login']);
+  if (!session.hasSession()) return router.createUrlTree(['/login']);
 
   return auth.me().pipe(
     map(user => allow(user)),
     catchError(() => {
-      tokens.clearToken();
+      session.clear();
       return of(router.createUrlTree(['/login']));
     })
   );
@@ -54,7 +54,7 @@ export const dashboardShellGuard: CanActivateFn = () => {
  * it, clears it and sends it to `/login` — one bounce, not a loop.
  */
 export const signedOutOnlyGuard: CanActivateFn = () => {
-  const tokens = inject(TokenService);
+  const session = inject(SessionService);
   const router = inject(Router);
-  return tokens.hasToken() ? router.createUrlTree(['/dashboard']) : true;
+  return session.hasSession() ? router.createUrlTree(['/dashboard']) : true;
 };

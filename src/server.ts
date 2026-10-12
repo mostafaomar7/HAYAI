@@ -17,6 +17,11 @@
  *   NG_ALLOWED_HOSTS    extra comma-separated host names allowed to be rendered
  *   GTM_ID              tag manager container; unset means no container is printed
  *   GTM_ENV_PARAMS      `gtm_auth=…&gtm_preview=…&gtm_cookies_win=x` for staging
+ *   AUTH_MODE           `cookie` moves the dashboard session to the API's
+ *                       HttpOnly cookie; anything else keeps today's bearer
+ *                       token. Default bearer
+ *   CSP_REPORT_ONLY     `1` stops enforcing the content policy
+ *   HSTS_INCLUDE_SUBDOMAINS  `1` extends HSTS to every subdomain
  */
 import {
   AngularNodeAppEngine,
@@ -44,6 +49,13 @@ const WEBSITE_KEY = process.env['WEBSITE_SERVER_KEY'] || '';
 // to a report endpoint that does not exist. Set CSP_REPORT_ONLY=1 to fall
 // back to reporting — one Supervisor line and a restart, no rebuild — if a
 // tag added later turns out to need an origin that is not on the list.
+// Which session the dashboard should use — see
+// docs/backend-contract/auth-session-cookie-2026-10-12.md. It is a server
+// setting rather than a build constant on purpose: if the switch to cookies
+// goes wrong, every admin is locked out of the dashboard, and the way back
+// should be a Supervisor line and a restart, not a rebuild and a redeploy.
+const AUTH_MODE = process.env['AUTH_MODE'] === 'cookie' ? 'cookie' : 'bearer';
+
 const CSP_HEADER = process.env['CSP_REPORT_ONLY'] === '1'
   ? 'Content-Security-Policy-Report-Only'
   : 'Content-Security-Policy';
@@ -401,7 +413,7 @@ app.use((req, res, next) => {
   // going out with no policy at all.
   const shellNonce = randomBytes(16).toString('base64');
   applyAdminHeaders(res, shellNonce);
-  res.type('text/html').send(deferCssWithNonce(adminShell(), shellNonce));
+  res.type('text/html').send(withAuthMode(deferCssWithNonce(adminShell(), shellNonce)));
 });
 
 /* ------------------------------------------------------------------------
@@ -453,12 +465,14 @@ app.use((req, res, next) => {
       response.headers.forEach((v, k) => {
         if (k.toLowerCase() !== 'content-length') res.setHeader(k, v);
       });
-      if (isAdminShell(req.path)) {
+      const admin = isAdminShell(req.path);
+      if (admin) {
         applyAdminHeaders(res, nonce);
       } else {
         res.setHeader(CSP_HEADER, contentSecurityPolicy(nonce));
       }
-      return res.send(deferCssWithNonce(body, nonce));
+      const out = deferCssWithNonce(body, nonce);
+      return res.send(admin ? withAuthMode(out) : out);
     })
     .catch(next);
 });
@@ -757,6 +771,19 @@ function adminShell(): string {
     adminShellHtml = readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8');
   }
   return adminShellHtml;
+}
+
+/**
+ * Prints the session mode into the admin shell.
+ *
+ * A meta tag rather than a JSON island: these pages carry an enforced policy
+ * with `script-src 'self'` and a nonce, and a meta tag is simply not a script,
+ * so there is nothing to argue about. The shell is cached, so the tag is
+ * stamped per response.
+ */
+function withAuthMode(html: string): string {
+  const tag = `<meta name="hayai-auth-mode" content="${AUTH_MODE}">`;
+  return html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : tag + html;
 }
 
 /** True for the pages that make up the admin app rather than the website. */
