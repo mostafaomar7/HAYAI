@@ -136,9 +136,28 @@ having the two steps.
 
 ## 6. Not in this item, but found alongside it
 
-- **No HSTS.** `Strict-Transport-Security` is absent from both the site and
-  the API. One nginx line on each; it stops a first request over plain HTTP
-  from being downgradeable. Worth doing whatever happens with the token.
+- **The API has no HSTS** (BUG-05 in the QA list, which only looked at the
+  website). Measured on 2026-10-12:
+
+  ```
+  $ curl -sI https://api.hayaihealthcare.com/api/v1/public/en/site
+  X-Frame-Options: SAMEORIGIN          ✓
+  X-Content-Type-Options: nosniff      ✓
+  Referrer-Policy: strict-origin-…     ✓
+  Strict-Transport-Security            ← absent
+  ```
+
+  The website side was fixed on our deploy. Yours is the one that matters
+  more: the admin token travels to this host on every request, and without
+  HSTS a first request made over plain HTTP can be downgraded. One line:
+
+  ```nginx
+  add_header Strict-Transport-Security "max-age=31536000" always;
+  ```
+
+  `includeSubDomains` is deliberately left off until somebody has confirmed
+  every subdomain of hayaihealthcare.com serves HTTPS — it is a year-long
+  commitment that no deploy can undo.
 - The website's own CSP is still `Report-Only`. That is deliberate for now —
   the tag container loads third-party tags and enforcing it blind would break
   measurement. It should be tightened once the violation reports are read.
