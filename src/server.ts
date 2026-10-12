@@ -39,6 +39,15 @@ const WEBSITE_KEY = process.env['WEBSITE_SERVER_KEY'] || '';
 // A CSP source with a path matches that path and nothing below it, so
 // `https://api…/api/v1` would block `/api/v1/admin/users` the moment the
 // policy stops being report-only. connect-src takes the origin.
+// Enforced by default. A policy nobody enforces protects nobody, and the
+// violations the live site reports were measured and fixed rather than left
+// to a report endpoint that does not exist. Set CSP_REPORT_ONLY=1 to fall
+// back to reporting — one Supervisor line and a restart, no rebuild — if a
+// tag added later turns out to need an origin that is not on the list.
+const CSP_HEADER = process.env['CSP_REPORT_ONLY'] === '1'
+  ? 'Content-Security-Policy-Report-Only'
+  : 'Content-Security-Policy';
+
 const API_ORIGIN = (() => {
   try { return new URL(API_BASE_URL).origin; } catch { return API_BASE_URL; }
 })();
@@ -63,6 +72,40 @@ const angularApp = new AngularNodeAppEngine({
 });
 
 app.use(compression());
+
+/**
+ * The headers BUG-03 found missing. nginx already adds `X-Content-Type-Options`
+ * and `Referrer-Policy`, so those are deliberately not repeated here —
+ * setting them twice sends them twice.
+ *
+ * `Strict-Transport-Security` carries no `includeSubDomains`. It would be
+ * stronger, and it is a year-long, hard-to-reverse promise about every
+ * subdomain of hayaihealthcare.com, including any that does not serve HTTPS
+ * today. That is a decision to take deliberately, not a default to inherit:
+ * set HSTS_INCLUDE_SUBDOMAINS=1 once every subdomain has been checked.
+ *
+ * A browser ignores HSTS received over plain HTTP, so sending it
+ * unconditionally is safe behind the proxy.
+ */
+const HSTS = `max-age=31536000${process.env['HSTS_INCLUDE_SUBDOMAINS'] === '1' ? '; includeSubDomains' : ''}`;
+// Nothing on the site or in the dashboard asks for a camera, a microphone, a
+// location or a payment handler — measured, not assumed. Denying them means a
+// script that tries cannot even prompt.
+const PERMISSIONS_POLICY = [
+  'accelerometer=()', 'autoplay=()', 'camera=()', 'display-capture=()',
+  'encrypted-media=()', 'geolocation=()', 'gyroscope=()', 'magnetometer=()',
+  'microphone=()', 'midi=()', 'payment=()', 'usb=()', 'xr-spatial-tracking=()'
+].join(', ');
+
+app.use((_req, res, next) => {
+  res.setHeader('Strict-Transport-Security', HSTS);
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  // No page on either side is meant to be framed; nothing in the app uses an
+  // iframe. `frame-ancestors` says the same to a modern browser, this to the
+  // rest.
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
 
 /* ------------------------------------------------------------------------
  * First-touch attribution, captured by the server.
@@ -356,8 +399,9 @@ app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache');
   // This shell boots the admin app, so it gets the admin policy. It was
   // going out with no policy at all.
-  applyAdminHeaders(res, randomBytes(16).toString('base64'));
-  res.type('text/html').send(adminShell());
+  const shellNonce = randomBytes(16).toString('base64');
+  applyAdminHeaders(res, shellNonce);
+  res.type('text/html').send(deferCssWithNonce(adminShell(), shellNonce));
 });
 
 /* ------------------------------------------------------------------------
@@ -411,11 +455,10 @@ app.use((req, res, next) => {
       });
       if (isAdminShell(req.path)) {
         applyAdminHeaders(res, nonce);
-        return res.send(withoutDeferredCss(body));
       } else {
-        res.setHeader('Content-Security-Policy-Report-Only', contentSecurityPolicy(nonce));
+        res.setHeader(CSP_HEADER, contentSecurityPolicy(nonce));
       }
-      return res.send(body);
+      return res.send(deferCssWithNonce(body, nonce));
     })
     .catch(next);
 });
@@ -681,18 +724,27 @@ function adminSecurityPolicy(nonce: string): string {
  * Angular defers the main stylesheet behind `media="print" onload="this.media='all'"`
  * so the inlined critical CSS paints first. That `onload` is an inline event
  * handler, and the admin policy blocks those — which would leave the
- * dashboard with critical CSS only and nothing else. Measured: Chrome
- * reports `script-src-attr | blocked=inline` on exactly this tag.
+ * page with critical CSS only and nothing else. Measured on the live site:
+ * every page reports `script-src-attr | blocked=inline` on exactly this tag.
  *
- * On admin pages the trick is simply removed. They are behind a login, and
- * one render-blocking stylesheet on an internal tool costs less than a
- * policy with a hole in it. The website keeps the optimisation.
+ * The optimisation is worth keeping, so the handler moves into a nonced
+ * script rather than being dropped. Same behaviour, nothing inline, and it
+ * works everywhere instead of only where `'unsafe-hashes'` is understood.
  */
-function withoutDeferredCss(html: string): string {
-  return html.replace(
+function deferCssWithNonce(html: string, nonce: string): string {
+  let found = false;
+  const out = html.replace(
     /<link([^>]*?)\s+media="print"\s+onload="this\.media='all'"([^>]*)>/g,
-    '<link$1$2>'
+    (_m, a, b) => { found = true; return `<link${a} media="print" data-hayai-defer${b}>`; }
   );
+  if (!found) return out;
+  const flip =
+    `<script nonce="${nonce}">(function(){` +
+    `var l=document.querySelectorAll('link[data-hayai-defer]');` +
+    `for(var i=0;i<l.length;i++){(function(e){` +
+    `if(e.sheet){e.media='all';}else{e.addEventListener('load',function(){e.media='all';});}` +
+    `})(l[i]);}})();</script>`;
+  return out.includes('</body>') ? out.replace('</body>', flip + '</body>') : out + flip;
 }
 
 /**
@@ -702,9 +754,7 @@ function withoutDeferredCss(html: string): string {
 let adminShellHtml: string | null = null;
 function adminShell(): string {
   if (adminShellHtml === null) {
-    adminShellHtml = withoutDeferredCss(
-      readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8')
-    );
+    adminShellHtml = readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8');
   }
   return adminShellHtml;
 }
@@ -715,13 +765,10 @@ function isAdminShell(path: string): boolean {
 }
 
 /**
- * Headers for an admin page. `frame-ancestors` already says it, but
- * X-Frame-Options is what an older browser reads, and an admin panel is
- * exactly the thing worth framing.
+ * Headers for an admin page, on top of the ones every response carries.
  */
 function applyAdminHeaders(res: Response, nonce: string): void {
-  res.setHeader('Content-Security-Policy', adminSecurityPolicy(nonce));
-  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader(CSP_HEADER, adminSecurityPolicy(nonce));
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
 }
 
@@ -739,10 +786,19 @@ function contentSecurityPolicy(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' ${google} https://www.google-analytics.com ` +
       `https://googleads.g.doubleclick.net https://www.googleadservices.com https://www.google.com ` +
       `https://*.clarity.ms ${cookieyes}`,
-    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
-    `font-src 'self' https://fonts.gstatic.com data:`,
+    // Nothing legitimately uses an inline handler any more — the one that
+    // did is now a nonced script. Saying so explicitly means an injected
+    // `onclick` has nowhere to land.
+    `script-src-attr 'none'`,
+    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com ${cookieyes} https://*.clarity.ms`,
+    // Server-rendered style bindings land as real `style="…"` attributes —
+    // `<site-block style="display: contents">`, `<div style="--cols: 3">`.
+    // They cannot execute anything; blocking them would only break layout.
+    `style-src-attr 'unsafe-inline'`,
+    `font-src 'self' https://fonts.gstatic.com data: ${cookieyes}`,
     `img-src 'self' data: blob: https: https://*.google-analytics.com ${google} ` +
-      `https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.eg https://*.clarity.ms`,
+      `https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.eg ` +
+      `https://*.clarity.ms ${cookieyes}`,
     `connect-src 'self' ${API_ORIGIN} https://*.google-analytics.com https://*.analytics.google.com ` +
       `https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com ` +
       `https://www.google.com.eg https://pagead2.googlesyndication.com https://*.clarity.ms ${cookieyes}`,
