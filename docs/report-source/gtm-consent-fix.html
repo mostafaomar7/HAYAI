@@ -1,0 +1,53 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تعديل الحاوية بعد بانر الكوكيز</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:16mm 16mm 14mm}*{box-sizing:border-box}
+body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2430;font-size:11pt;line-height:1.8;margin:0;text-align:right}
+header{border-bottom:2px solid #0E7490;padding-bottom:4mm;margin-bottom:5mm}
+header .org{color:#0E7490;font-weight:700;font-size:9.5pt}header h1{font-size:17pt;color:#0b2545;margin:1mm 0}header .date{color:#6B7280;font-size:9pt}
+h2{font-size:12.5pt;color:#0b2545;margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid #e3e8ef;break-after:avoid}
+p{margin:0 0 8px}ul,ol{margin:0 0 10px;padding:0 18px 0 0}li{margin-bottom:6px;break-inside:avoid}b{color:#0b2545}
+code{font-family:Consolas,monospace;direction:ltr;unicode-bidi:isolate;background:#F1F5F9;border:1px solid #E5E7EB;border-radius:3px;padding:0 4px;font-size:9.5pt;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:9.8pt}th,td{border:1px solid #E5E7EB;padding:5px 8px;vertical-align:top;text-align:right}th{background:#F1F5F9;color:#0b2545}tr{break-inside:avoid}
+.key{background:#FFF7ED;border-right:3px solid #C2410C;padding:8px 12px;margin:8px 0 12px}
+.ok{background:#ECFDF5;border-right:3px solid #047857;padding:8px 12px;margin:8px 0 12px}
+.n{color:#0E7490}
+</style></head><body>
+<header><div class="org">HAYAI</div><h1>بانر الكوكيز وتعديل صغير في الحاوية</h1><div class="date">١٢ أكتوبر ٢٠٢٦ · بخصوص رسالة CookieYes «installation code isn’t added»</div></header>
+
+<p>أهلاً بيكم،</p>
+<p>شكرًا على الصورة. راجعنا الموقع الحقيقي والحاوية المنشورة (النسخة ٢)، والحاوية مبنية صح، وتاج CookieYes جواها بالـ key الصحيح. لقينا سببين بيمنعوا البانر والقياس، واحد من ناحية الموقع وواحد في الحاوية.</p>
+
+<h2><span class="n">١.</span> من ناحية الموقع — اتصلّح</h2>
+<p>الموقع كان بيقول لـ Tag Manager يمنع نوع معيّن من التاجز علشان الأمان، والنوع ده طلع بيشمل templates الـ Gallery اللي بتحمّل سكربت خارجي، زي CookieYes و Clarity. فالتاج كان بيشتغل بس البانر نفسه ما بيتحمّلش، وده اللي خلّى CookieYes يقول إن الكود مش متركّب.</p>
+<p>اتعدّل والنسخة الجديدة جاهزة للرفع على السيرفر. جرّبناها على الموقع الحقيقي: البانر بيظهر بالعربي (قبول الكل / رفض / تخصيص)، وبعد «قبول الكل» الكوكي بيتسجّل صح.</p>
+<div class="ok">بعد رفع النسخة الجديدة، الرسالة في CookieYes هتختفي لوحدها أول ما البانر يتحمّل على الموقع، أو من زرار إعادة الفحص عندهم.</div>
+
+<h2><span class="n">٢.</span> في الحاوية — تعديل مطلوب</h2>
+<div class="key"><b>المشكلة:</b> تاج Analytics وتاج Clarity بيشتغلوا مع بداية تحميل الصفحة، وده قبل ما الزائر يضغط على البانر، فبيتمنعوا لأن الموافقة لسه ما جاتش. Tag Manager مش بيرجع يشغّلهم تاني بعد الموافقة. النتيجة: <b>زائر جديد يوافق، ومع ذلك ولا Analytics ولا Clarity بيسجّلوا الصفحة اللي هو فيها.</b></div>
+<p>الحل: trigger إضافي على الحدث اللي بانر CookieYes بيبعته لما الزائر يرد، واسمه <code>cookie_consent_update</code>.</p>
+
+<table><tr><th>#</th><th>المكان</th><th>المطلوب</th></tr>
+<tr><td>١</td><td>Triggers ← New</td><td>Custom Event، Event name: <code>cookie_consent_update</code>، All Custom Events.<br>الاسم: <code>CE - cookie_consent_update</code></td></tr>
+<tr><td>٢</td><td>Triggers ← New</td><td>Custom Event، Event name: <code>cookie_consent_update</code>، Some Custom Events: <code>DLV - clarity_allowed</code> equals <code>true</code>.<br>الاسم: <code>Consent update - Clarity allowed</code></td></tr>
+<tr><td>٣</td><td>تاج <b>Google tag - GA4</b></td><td>Triggering: يفضل <code>Initialization - All Pages</code>، ويتضاف <code>CE - cookie_consent_update</code>.<br>Advanced Settings ← Tag firing options: <b>Once per page</b></td></tr>
+<tr><td>٤</td><td>تاج <b>Clarity</b></td><td>Triggering: يفضل <code>Window Loaded - Clarity allowed</code>، ويتضاف <code>Consent update - Clarity allowed</code>.<br>Advanced Settings ← Tag firing options: <b>Once per page</b></td></tr>
+<tr><td>٥</td><td>تاج <b>Conversion Linker</b></td><td>Triggering: يفضل <code>All Pages</code>، ويتضاف <code>CE - cookie_consent_update</code>. الـ firing option يفضل زي ما هو.</td></tr>
+</table>
+<p><b>ليه Once per page:</b> الزائر اللي وافق قبل كده، موافقته بتبقى معروفة من أول الصفحة، فالتاج بيشتغل من البداية. والبانر بيبعت الحدث تاني، فمن غير الإعداد ده الزيارة هتتحسب مرتين.</p>
+
+<h2><span class="n">٣.</span> الترتيب والاختبار</h2>
+<ol>
+<li>السيرفر يرفع النسخة الجديدة من الموقع الأول، لأن من غيرها البانر مش هيظهر حتى في الـ Preview.</li>
+<li>التعديلات اللي فوق في workspace جديد، وبعدها Preview على <code>https://hayaihealthcare.com/ar</code> في نافذة Incognito:
+  <ul>
+  <li>قبل الضغط على البانر: مفيش أي تاج من GA4 أو Ads أو Clarity يشتغل.</li>
+  <li>اضغطوا «قبول الكل»: <code>Google tag - GA4</code> و Clarity يشتغلوا مرة واحدة على حدث <code>cookie_consent_update</code>.</li>
+  <li>اعملوا Refresh: <code>Google tag - GA4</code> يشتغل مرة واحدة بس، على Initialization.</li>
+  <li>افتحوا صفحة الطوارئ والعناية المركزة: Clarity ما يشتغلش.</li>
+  </ul>
+</li>
+<li>Publish باسم <code>v3 consent triggers</code>.</li>
+</ol>
+
+<p style="margin-top:14px">لو أي خطوة ما مشيتش زي المكتوب، ابعتولنا صورة من شاشة الـ Preview. شكرًا ليكم.</p>
+</body></html>
