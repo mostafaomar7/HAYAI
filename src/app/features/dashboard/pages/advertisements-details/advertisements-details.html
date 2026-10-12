@@ -17,7 +17,7 @@
       <select [value]="ownerType()" (change)="onOwnerTypeChange($any($event.target).value)">
         <option value="">{{ 'ads.select_owner_type' | t }}</option>
         @for (opt of ownerTypeOptions; track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
+          <option [value]="opt.value">{{ opt.label | t }}</option>
         }
       </select>
     </div>

@@ -17,7 +17,7 @@
       <div class="custom-select">
         <select [(ngModel)]="audience" name="audience">
           @for (a of audiences; track a.value) {
-            <option [value]="a.value">{{ a.label }}</option>
+            <option [value]="a.value">{{ a.label | t }}</option>
           }
         </select>
       </div>

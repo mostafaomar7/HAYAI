@@ -807,6 +807,7 @@
   "notif.send.sent_success": "تم إرسال الإشعار.",
   "notif.send.subtitle": "أرسل إشعارًا جماعيًا لجمهور مستهدف.",
   "notif.send.target_audience": "الجمهور المستهدف",
+  "notif.send.audience.all": "كل المستخدمين",
   "notif.send.title": "إرسال الإشعارات",
   "notif.send.title_label": "العنوان",
   "notif.send.title_placeholder": "عنوان الإشعار",

@@ -48,17 +48,20 @@ export class AdvertisementsDetails {
   ownerSearch = signal('');
   owners = signal<OwnerOption[]>([]);
 
+  // The same keys the notification audience and the sidebar use, for the
+  // same reason: an owner type should read the same wherever it appears,
+  // and in Arabic these were thirteen English words in an Arabic form.
   readonly ownerTypeOptions: OwnerTypeOption[] = [
-    { value: 'doctors', label: 'Doctor' },
-    { value: 'hospitals', label: 'Hospital' },
-    { value: 'clinics', label: 'Clinic' },
-    { value: 'pharmacies', label: 'Pharmacy' },
-    { value: 'labs', label: 'Lab / Radiology' },
-    { value: 'medical-issuance', label: 'Medical Insurance' },
-    { value: 'home-care', label: 'Home Care' },
-    { value: 'physical-therapy', label: 'Physical Therapy' },
-    { value: 'employment-offices', label: 'Employment Office' },
-    { value: 'medical-devices', label: 'Medical Devices' }
+    { value: 'doctors', label: 'users.doctor.title' },
+    { value: 'hospitals', label: 'users.hospital.title' },
+    { value: 'clinics', label: 'users.clinic.title' },
+    { value: 'pharmacies', label: 'users.pharmacy.title' },
+    { value: 'labs', label: 'users.lab.title' },
+    { value: 'medical-issuance', label: 'users.issuance.title' },
+    { value: 'home-care', label: 'users.home_care.title' },
+    { value: 'physical-therapy', label: 'users.therapy.title' },
+    { value: 'employment-offices', label: 'users.employment.title' },
+    { value: 'medical-devices', label: 'users.medical_devices.title' }
   ];
 
   form = this.fb.group({
