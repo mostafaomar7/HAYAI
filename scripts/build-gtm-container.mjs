@@ -161,6 +161,16 @@ const T = {
     type: 'WINDOW_LOADED',
     filter: [cond('EQUALS', V.clarity_allowed, 'true')]
   }),
+  // The banner pushes this whenever the visitor answers it. A tag that needs
+  // consent and fired before the answer was blocked, and Tag Manager does not
+  // retry it on its own: without this second trigger GA4 and Clarity send
+  // nothing at all on a visitor's first page.
+  consentUpdate: ce('cookie_consent_update'),
+  clarityAfterConsent: trig('Consent update - Clarity allowed', {
+    type: 'CUSTOM_EVENT',
+    customEventFilter: [cond('EQUALS', '{{_event}}', 'cookie_consent_update')],
+    filter: [cond('EQUALS', V.clarity_allowed, 'true')]
+  }),
   blockSensitive: anyEvent('Block - Sensitive', cond('EQUALS', V.page_sensitivity, 'sensitive')),
   blockStaging: anyEvent('Block - Staging', cond('MATCH_REGEX', '{{Page Hostname}}', '^(www\\.)?hayaihealthcare\\.com$', true)),
   blockInternal: anyEvent('Block - Internal', cond('EQUALS', V.traffic_type, 'internal'))
@@ -178,7 +188,7 @@ const tag = (name, type, parameter, firing, opts = {}) =>
     parameter,
     firingTriggerId: firing,
     ...(opts.blocking ? { blockingTriggerId: opts.blocking } : {}),
-    tagFiringOption: 'ONCE_PER_EVENT',
+    tagFiringOption: opts.once ? 'ONCE_PER_LOAD' : 'ONCE_PER_EVENT',
     monitoringMetadata: { type: 'MAP' },
     consentSettings: opts.consent ?? consent('analytics_storage')
   });
@@ -193,7 +203,11 @@ tag(
     list('configSettingsTable', paramRows([['page_location', V.page_location]])),
     t('eventSettingsVariable', SHARED)
   ],
-  [BUILTIN_INITIALIZATION]
+  // On load when consent is already known (a returning visitor), else the
+  // moment the banner is accepted. Once per page, so a returning visitor's
+  // page view is not sent twice.
+  [BUILTIN_INITIALIZATION, T.consentUpdate],
+  { once: true }
 );
 
 const ga4Event = (name, eventName, firing, rows) =>
@@ -242,7 +256,8 @@ tag(
   'Conversion Linker',
   'gclidw',
   [b('enableCrossDomain', false), b('enableUrlPassthrough', false), b('enableCookieOverrides', false)],
-  [BUILTIN_ALL_PAGES],
+  [BUILTIN_ALL_PAGES, T.consentUpdate],
+  // Twice is harmless here; once-per-page would skip the run after consent.
   { consent: { consentStatus: 'NOT_SET' } }
 );
 

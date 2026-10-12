@@ -13,7 +13,7 @@
       "clarity_allowed": "true only on a standard CMS page",
       "traffic_type": "internal for the team (?hayai_team=1)",
       "ft_source / ft_medium / ft_campaign": "first touch, after consent",
-      "gtm.blocklist": "['customScripts']"
+      "gtm.blocklist": "['jsm'] — not customScripts/html, which also block the CookieYes and Clarity Gallery templates; Custom HTML is caught by scripts/check-tracking.sh on the published container"
     },
     "tested_by": [
       "scripts/check-tracking.sh",

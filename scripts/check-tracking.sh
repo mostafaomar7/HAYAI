@@ -89,4 +89,24 @@ for URL in "$@"; do
   fi
 done
 
+# 4. The published container has no Custom HTML tag and no Custom JavaScript
+# variable. The page's gtm.blocklist cannot forbid Custom HTML without also
+# blocking the Gallery templates the site depends on (CookieYes, Clarity), so
+# the rule is enforced here, on what Google actually serves to visitors.
+if [[ -n "$GTM_ID" ]]; then
+  JS=$(curl -fsS --max-time 30 "https://www.googletagmanager.com/gtm.js?id=$GTM_ID" 2>/dev/null)
+  if [[ -z "$JS" ]]; then
+    echo "FAIL container $GTM_ID — could not download the published container"
+    FAILED=1
+  else
+    CUSTOM=$(grep -oE '"function":"__(html|jsm)"' <<<"$JS" | sort | uniq -c | tr -s ' ')
+    if [[ -n "$CUSTOM" ]]; then
+      echo "FAIL container $GTM_ID — published with custom code:$CUSTOM (__html = Custom HTML tag, __jsm = Custom JavaScript variable)"
+      FAILED=1
+    else
+      echo "PASS container $GTM_ID (no Custom HTML, no Custom JavaScript)"
+    fi
+  fi
+fi
+
 exit "$FAILED"

@@ -1,6 +1,6 @@
 {
   "exportFormatVersion": 2,
-  "exportTime": "2026-10-09 14:11:23",
+  "exportTime": "2026-10-12 18:50:34",
   "containerVersion": {
     "path": "accounts/0/containers/0/versions/0",
     "accountId": "0",
@@ -22,7 +22,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "43",
+        "tagId": "45",
         "name": "Google tag - GA4",
         "type": "googtag",
         "parameter": [
@@ -59,9 +59,10 @@
           }
         ],
         "firingTriggerId": [
-          "2147479573"
+          "2147479573",
+          "40"
         ],
-        "tagFiringOption": "ONCE_PER_EVENT",
+        "tagFiringOption": "ONCE_PER_LOAD",
         "monitoringMetadata": {
           "type": "MAP"
         },
@@ -81,7 +82,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "44",
+        "tagId": "46",
         "name": "GA4 - page_view (SPA)",
         "type": "gaawe",
         "parameter": [
@@ -170,7 +171,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "45",
+        "tagId": "47",
         "name": "GA4 - generate_lead",
         "type": "gaawe",
         "parameter": [
@@ -274,7 +275,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "46",
+        "tagId": "48",
         "name": "GA4 - purchase_submitted",
         "type": "gaawe",
         "parameter": [
@@ -378,7 +379,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "47",
+        "tagId": "49",
         "name": "GA4 - cta_click",
         "type": "gaawe",
         "parameter": [
@@ -482,7 +483,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "48",
+        "tagId": "50",
         "name": "GA4 - search_results_view",
         "type": "gaawe",
         "parameter": [
@@ -571,7 +572,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "49",
+        "tagId": "51",
         "name": "GA4 - no_results",
         "type": "gaawe",
         "parameter": [
@@ -645,7 +646,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "50",
+        "tagId": "52",
         "name": "GA4 - form_error",
         "type": "gaawe",
         "parameter": [
@@ -734,7 +735,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "51",
+        "tagId": "53",
         "name": "GA4 - whatsapp_click",
         "type": "gaawe",
         "parameter": [
@@ -808,7 +809,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "52",
+        "tagId": "54",
         "name": "GA4 - phone_click",
         "type": "gaawe",
         "parameter": [
@@ -882,7 +883,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "53",
+        "tagId": "55",
         "name": "GA4 - app_download_click",
         "type": "gaawe",
         "parameter": [
@@ -956,7 +957,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "54",
+        "tagId": "56",
         "name": "Conversion Linker",
         "type": "gclidw",
         "parameter": [
@@ -977,7 +978,8 @@
           }
         ],
         "firingTriggerId": [
-          "2147479553"
+          "2147479553",
+          "40"
         ],
         "tagFiringOption": "ONCE_PER_EVENT",
         "monitoringMetadata": {
@@ -990,7 +992,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "55",
+        "tagId": "57",
         "name": "GAds - Conv - Lead",
         "type": "awct",
         "parameter": [
@@ -1049,9 +1051,9 @@
           "30"
         ],
         "blockingTriggerId": [
-          "40",
-          "41",
-          "42"
+          "42",
+          "43",
+          "44"
         ],
         "tagFiringOption": "ONCE_PER_EVENT",
         "monitoringMetadata": {
@@ -1077,7 +1079,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "56",
+        "tagId": "58",
         "name": "GAds - Conv - WhatsApp",
         "type": "awct",
         "parameter": [
@@ -1131,9 +1133,9 @@
           "36"
         ],
         "blockingTriggerId": [
-          "40",
-          "41",
-          "42"
+          "42",
+          "43",
+          "44"
         ],
         "tagFiringOption": "ONCE_PER_EVENT",
         "monitoringMetadata": {
@@ -1159,7 +1161,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "tagId": "57",
+        "tagId": "59",
         "name": "GAds - Conv - Phone",
         "type": "awct",
         "parameter": [
@@ -1213,9 +1215,9 @@
           "37"
         ],
         "blockingTriggerId": [
-          "40",
-          "41",
-          "42"
+          "42",
+          "43",
+          "44"
         ],
         "tagFiringOption": "ONCE_PER_EVENT",
         "monitoringMetadata": {
@@ -1568,6 +1570,71 @@
         "accountId": "0",
         "containerId": "0",
         "triggerId": "40",
+        "name": "CE - cookie_consent_update",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "cookie_consent_update"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "41",
+        "name": "Consent update - Clarity allowed",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "cookie_consent_update"
+              }
+            ]
+          }
+        ],
+        "filter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{DLV - clarity_allowed}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "42",
         "name": "Block - Sensitive",
         "type": "CUSTOM_EVENT",
         "customEventFilter": [
@@ -1608,7 +1675,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "triggerId": "41",
+        "triggerId": "43",
         "name": "Block - Staging",
         "type": "CUSTOM_EVENT",
         "customEventFilter": [
@@ -1654,7 +1721,7 @@
       {
         "accountId": "0",
         "containerId": "0",
-        "triggerId": "42",
+        "triggerId": "44",
         "name": "Block - Internal",
         "type": "CUSTOM_EVENT",
         "customEventFilter": [

@@ -623,9 +623,16 @@ function trackingHead(res: Response, html: string, status: number): string {
 
   if (!GTM_ID) return consent + metadata;
 
-  // Custom HTML tags are how a container turns into an injection point. The
-  // policy blocks them in the browser; this blocks them in the container.
-  const blocklist = `<script>dataLayer.push({'gtm.blocklist':['customScripts']});</script>`;
+  // Custom JavaScript variables run arbitrary code inside every tag that
+  // reads them; the container may not have any.
+  //
+  // Not 'customScripts', and not 'html', although the spec names the first:
+  // tested against the live container, either one also blocks every Gallery
+  // template that loads a script — the CookieYes banner never appeared, and
+  // Clarity would not load either. Custom HTML tags are kept out by
+  // scripts/check-tracking.sh instead, which fails when the *published*
+  // container contains one.
+  const blocklist = `<script>dataLayer.push({'gtm.blocklist':['jsm']});</script>`;
 
   const env = GTM_ENV_PARAMS ? `+'&${GTM_ENV_PARAMS}'` : '';
   const loader =
