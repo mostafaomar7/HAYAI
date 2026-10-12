@@ -28,6 +28,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import compression from 'compression';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { ATTRIBUTION_PARAMS, careCategoryOf, safePageLocation } from './app/features/site/tracking-params';
 import { Readable } from 'node:stream';
 
@@ -35,6 +36,12 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const API_BASE_URL = (process.env['API_BASE_URL'] || 'https://api.hayaihealthcare.com/api/v1').replace(/\/+$/, '');
 const WEBSITE_KEY = process.env['WEBSITE_SERVER_KEY'] || '';
+// A CSP source with a path matches that path and nothing below it, so
+// `https://api…/api/v1` would block `/api/v1/admin/users` the moment the
+// policy stops being report-only. connect-src takes the origin.
+const API_ORIGIN = (() => {
+  try { return new URL(API_BASE_URL).origin; } catch { return API_BASE_URL; }
+})();
 const SITE_URL = (process.env['SITE_URL'] || 'https://hayaihealthcare.com').replace(/\/+$/, '');
 // Bare host (without "www."), so both the bare and the www host are allowed.
 const siteHost = (() => {
@@ -347,7 +354,10 @@ app.use((req, res, next) => {
   if (/^\/(en|ar|preview|login|dashboard)(\/|$)/i.test(req.path)) return next();
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Cache-Control', 'no-cache');
-  res.sendFile(join(browserDistFolder, 'index.csr.html'));
+  // This shell boots the admin app, so it gets the admin policy. It was
+  // going out with no policy at all.
+  applyAdminHeaders(res, randomBytes(16).toString('base64'));
+  res.type('text/html').send(adminShell());
 });
 
 /* ------------------------------------------------------------------------
@@ -399,7 +409,12 @@ app.use((req, res, next) => {
       response.headers.forEach((v, k) => {
         if (k.toLowerCase() !== 'content-length') res.setHeader(k, v);
       });
-      res.setHeader('Content-Security-Policy-Report-Only', contentSecurityPolicy(nonce));
+      if (isAdminShell(req.path)) {
+        applyAdminHeaders(res, nonce);
+        return res.send(withoutDeferredCss(body));
+      } else {
+        res.setHeader('Content-Security-Policy-Report-Only', contentSecurityPolicy(nonce));
+      }
       return res.send(body);
     })
     .catch(next);
@@ -626,6 +641,90 @@ function withNonce(html: string, nonce: string): string {
  * line in a log. Switch the header name to `Content-Security-Policy` once the
  * reports are quiet.
  */
+/**
+ * The policy for the admin shell — `/login`, `/dashboard` and the client
+ * fallback. Sent **enforced**, not report-only.
+ *
+ * The session token lives in localStorage, which any script on the page can
+ * read. Until it moves into an HttpOnly cookie (an API change), the thing
+ * standing between an injected string and an admin session is whether a
+ * script can run at all. So this policy differs from the public one in the
+ * way that matters: no third-party script origin is allowed. Measured first —
+ * the built shell loads two first-party modules and nothing else, and carries
+ * no inline script.
+ *
+ * `style-src` keeps `'unsafe-inline'` on purpose: 39 dashboard templates use
+ * plain `style="…"` attributes, and a nonce in this directive would make the
+ * browser ignore `'unsafe-inline'` and strip the layout. Inline styles are
+ * not the route to a stolen token; inline scripts are.
+ */
+function adminSecurityPolicy(nonce: string): string {
+  return [
+    `default-src 'self'`,
+    `base-uri 'self'`,
+    `object-src 'none'`,
+    `frame-ancestors 'none'`,
+    `frame-src 'none'`,
+    `form-action 'self'`,
+    `script-src 'self' 'nonce-${nonce}'`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    `font-src 'self' https://fonts.gstatic.com data:`,
+    // Uploaded media is served from wherever the CMS points; an image is not
+    // a way to run code, and narrowing this would blank the media library.
+    `img-src 'self' data: blob: https:`,
+    `connect-src 'self' ${API_ORIGIN}`,
+    `upgrade-insecure-requests`
+  ].join('; ');
+}
+
+/**
+ * Angular defers the main stylesheet behind `media="print" onload="this.media='all'"`
+ * so the inlined critical CSS paints first. That `onload` is an inline event
+ * handler, and the admin policy blocks those — which would leave the
+ * dashboard with critical CSS only and nothing else. Measured: Chrome
+ * reports `script-src-attr | blocked=inline` on exactly this tag.
+ *
+ * On admin pages the trick is simply removed. They are behind a login, and
+ * one render-blocking stylesheet on an internal tool costs less than a
+ * policy with a hole in it. The website keeps the optimisation.
+ */
+function withoutDeferredCss(html: string): string {
+  return html.replace(
+    /<link([^>]*?)\s+media="print"\s+onload="this\.media='all'"([^>]*)>/g,
+    '<link$1$2>'
+  );
+}
+
+/**
+ * The client shell, with the deferred-CSS handler removed. Read once: it is
+ * a build artefact and cannot change while the process runs.
+ */
+let adminShellHtml: string | null = null;
+function adminShell(): string {
+  if (adminShellHtml === null) {
+    adminShellHtml = withoutDeferredCss(
+      readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8')
+    );
+  }
+  return adminShellHtml;
+}
+
+/** True for the pages that make up the admin app rather than the website. */
+function isAdminShell(path: string): boolean {
+  return /^\/(login|dashboard)(\/|$)/i.test(path);
+}
+
+/**
+ * Headers for an admin page. `frame-ancestors` already says it, but
+ * X-Frame-Options is what an older browser reads, and an admin panel is
+ * exactly the thing worth framing.
+ */
+function applyAdminHeaders(res: Response, nonce: string): void {
+  res.setHeader('Content-Security-Policy', adminSecurityPolicy(nonce));
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+}
+
 function contentSecurityPolicy(nonce: string): string {
   const google = 'https://www.googletagmanager.com https://*.googletagmanager.com';
   // The chosen CMP. Its banner has to load before anything it gates, so a
@@ -644,7 +743,7 @@ function contentSecurityPolicy(nonce: string): string {
     `font-src 'self' https://fonts.gstatic.com data:`,
     `img-src 'self' data: blob: https: https://*.google-analytics.com ${google} ` +
       `https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.eg https://*.clarity.ms`,
-    `connect-src 'self' ${API_BASE_URL} https://*.google-analytics.com https://*.analytics.google.com ` +
+    `connect-src 'self' ${API_ORIGIN} https://*.google-analytics.com https://*.analytics.google.com ` +
       `https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com ` +
       `https://www.google.com.eg https://pagead2.googlesyndication.com https://*.clarity.ms ${cookieyes}`,
     `frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net`,
