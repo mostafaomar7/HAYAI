@@ -18,6 +18,8 @@ interface StatCard {
   titleKey: string;
   value: string;
   trend: string;
+  /** The exact figure, for the badge's tooltip when the badge rounds it. */
+  trendExact: string;
   trendUp: boolean;
   icon: string;
 }
@@ -128,16 +130,41 @@ export class HomeComponent {
   private toStats(o: OverviewKpis): StatCard[] {
     const fmt = (n: number) => n.toLocaleString('en-US');
     return [
-      { id: 1, titleKey: 'home.total_users', value: fmt(o.totalUsers.value), trend: this.fmtTrend(o.totalUsers.trendPercent), trendUp: o.totalUsers.trendPercent >= 0, icon: 'total-users' },
-      { id: 2, titleKey: 'home.new_users', value: fmt(o.newUsers.value), trend: this.fmtTrend(o.newUsers.trendPercent), trendUp: o.newUsers.trendPercent >= 0, icon: 'new-users' },
-      { id: 3, titleKey: 'home.total_revenue', value: fmt(Number(o.totalRevenue.value)), trend: this.fmtTrend(o.totalRevenue.trendPercent), trendUp: o.totalRevenue.trendPercent >= 0, icon: 'total-revenue' },
-      { id: 4, titleKey: 'home.period_revenue', value: fmt(Number(o.periodRevenue.value)), trend: this.fmtTrend(o.periodRevenue.trendPercent), trendUp: o.periodRevenue.trendPercent >= 0, icon: 'period-revenue' }
+      { id: 1, titleKey: 'home.total_users', value: fmt(o.totalUsers.value), trend: this.fmtTrend(o.totalUsers.trendPercent), trendExact: this.exactTrend(o.totalUsers.trendPercent), trendUp: o.totalUsers.trendPercent >= 0, icon: 'total-users' },
+      { id: 2, titleKey: 'home.new_users', value: fmt(o.newUsers.value), trend: this.fmtTrend(o.newUsers.trendPercent), trendExact: this.exactTrend(o.newUsers.trendPercent), trendUp: o.newUsers.trendPercent >= 0, icon: 'new-users' },
+      { id: 3, titleKey: 'home.total_revenue', value: fmt(Number(o.totalRevenue.value)), trend: this.fmtTrend(o.totalRevenue.trendPercent), trendExact: this.exactTrend(o.totalRevenue.trendPercent), trendUp: o.totalRevenue.trendPercent >= 0, icon: 'total-revenue' },
+      { id: 4, titleKey: 'home.period_revenue', value: fmt(Number(o.periodRevenue.value)), trend: this.fmtTrend(o.periodRevenue.trendPercent), trendExact: this.exactTrend(o.periodRevenue.trendPercent), trendUp: o.periodRevenue.trendPercent >= 0, icon: 'period-revenue' }
     ];
   }
 
+  /**
+   * A percentage an admin can read at a glance.
+   *
+   * The API's figure is right — `periodRevenue` of 1,246,094 against a
+   * previous period of 19,375 really is +6331.5%, and it reconciles to the
+   * decimal. It is just not a number anyone can use: past a certain size a
+   * percentage stops being a comparison and starts being noise, and "+155256.7%"
+   * on a seven-day range is noise.
+   *
+   * So from ten times over, it is shown as a multiple — `×64` — which is
+   * what the percentage was trying to say. The exact figure stays in the
+   * badge's tooltip, so nothing is hidden, only moved.
+   */
   private fmtTrend(pct: number): string {
-    const sign = pct > 0 ? '+' : '';
-    return `${sign}${pct}%`;
+    if (!Number.isFinite(pct)) return '—';
+    // Round first, then choose the form. Deciding before rounding puts 999.9
+    // and 1000 on opposite sides of the same line: "+1000%" and "×11".
+    const rounded = Math.abs(pct) >= 100 ? Math.round(pct) : Math.round(pct * 10) / 10;
+    if (rounded >= 1000) {
+      const times = 1 + rounded / 100;
+      return `×${times >= 100 ? Math.round(times) : times.toFixed(1).replace(/\.0$/, '')}`;
+    }
+    return `${rounded > 0 ? '+' : ''}${rounded}%`;
+  }
+
+  /** The untouched percentage, for the tooltip. */
+  private exactTrend(pct: number): string {
+    return Number.isFinite(pct) ? `${pct > 0 ? '+' : ''}${pct}%` : '';
   }
 
   formatValue(n: number): string {
