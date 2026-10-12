@@ -234,6 +234,26 @@
   text-align: right;
 }
 
+/* The Renew button stays put while the rest of the row scrolls.
+ *
+ * Measured at a 980px viewport: the sidebar leaves this card 621px and the
+ * table needs 710, so the button sat 89px past the edge and had to be
+ * scrolled to before it could be clicked. Above about 1100px there is no
+ * overflow and this changes nothing.
+ *
+ * `inset-inline-end` rather than `right`, so it pins to the correct side in
+ * Arabic as well. */
+.data-table th.action-col,
+.data-table td.action-col {
+  position: sticky;
+  inset-inline-end: 0;
+  background-color: #ffffff;
+  /* `border-collapse: collapse` drops the borders of a sticky cell, so the
+   * row's bottom line is painted here instead of inherited. */
+  box-shadow: inset 0 -1px 0 #E5E7EB;
+  border-inline-start: 1px solid #E5E7EB;
+}
+
 /* User Avatar & Name */
 .user-cell {
   display: flex;
