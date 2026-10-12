@@ -158,6 +158,25 @@ having the two steps.
   `includeSubDomains` is deliberately left off until somebody has confirmed
   every subdomain of hayaihealthcare.com serves HTTPS — it is a year-long
   commitment that no deploy can undo.
+- **The advertisement redirect link needs validating server-side**
+  (BUG-06). `POST`/`PATCH /admin/advertisements` accepts `redirect_link` as
+  free text today — `javascript:alert(1)`, `اهلا يا جماعة` and
+  `https://hayaihealthcare.com@evil.test` all store fine.
+
+  The dashboard now refuses those before sending, but that is a form guard,
+  not a boundary: the same values go straight in with curl and the mobile
+  apps open whatever is stored. The rule we apply, to match:
+
+  | Rejected | Why |
+  |---|---|
+  | any scheme that is not `http`/`https` | `javascript:`, `data:`, `intent:`, `file:` have no business in an advert |
+  | a URL carrying credentials, `https://hayaihealthcare.com@evil.test` | what a person reads is the username; the real host is the last one. Oldest trick there is |
+  | a host with no dot | a typo, or an internal name |
+
+  In Laravel terms: `['required', 'url', 'regex:/^https?:\/\//i']` plus a
+  check that the parsed host contains a dot and the string holds no `@`
+  before the host.
+
 - The website's own CSP is still `Report-Only`. That is deliberate for now —
   the tag container loads third-party tags and enforcing it blind would break
   measurement. It should be tightened once the violation reports are read.

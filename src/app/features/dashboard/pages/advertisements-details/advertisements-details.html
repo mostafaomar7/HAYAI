@@ -51,9 +51,9 @@
 
     <div class="form-group">
       <label>{{ 'ads.redirect_link' | t }} <span style="color:#dc2626;">*</span></label>
-      <input type="text" placeholder="https://yellowpages.com" formControlName="redirect_link" [class.invalid]="redirectInvalid" />
+      <input type="url" inputmode="url" placeholder="https://yellowpages.com" formControlName="redirect_link" [class.invalid]="redirectInvalid" />
       @if (redirectInvalid) {
-        <span class="field-error">{{ 'ads.redirect_required' | t }}</span>
+        <span class="field-error">{{ redirectError | t }}</span>
       }
     </div>
 

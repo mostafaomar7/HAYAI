@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdvertisementsService } from '../../../../core/services/advertisements.service';
 import { ProviderItem, UserResource, UsersService } from '../../../../core/services/users.service';
+import { httpUrlValidator } from '../../../../core/validators/url.validator';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 
 interface OwnerTypeOption {
@@ -62,7 +63,7 @@ export class AdvertisementsDetails {
 
   form = this.fb.group({
     owner_id: [null as number | null, Validators.required],
-    redirect_link: ['', [Validators.required]],
+    redirect_link: ['', [Validators.required, httpUrlValidator()]],
     status: ['active'],
     is_published: [true],
     start_date: [''],
@@ -80,6 +81,15 @@ export class AdvertisementsDetails {
   get redirectInvalid(): boolean {
     const c = this.form.controls.redirect_link;
     return (c.touched || this.showValidation()) && c.invalid;
+  }
+
+  /**
+   * Which message to show. "Required" and "that is not a link we will send
+   * someone" are different mistakes and deserve different wording.
+   */
+  get redirectError(): string {
+    const c = this.form.controls.redirect_link;
+    return c.hasError('url') ? 'ads.redirect_invalid' : 'ads.redirect_required';
   }
 
   constructor() {
@@ -193,7 +203,7 @@ export class AdvertisementsDetails {
     const v = this.form.getRawValue();
     const form = new FormData();
     if (v.owner_id !== null && v.owner_id !== undefined) form.append('owner_id', String(v.owner_id));
-    form.append('redirect_link', v.redirect_link ?? '');
+    form.append('redirect_link', (v.redirect_link ?? '').trim());
     if (v.status) form.append('status', v.status);
     form.append('is_published', v.is_published ? '1' : '0');
     if (v.start_date) form.append('start_date', v.start_date);

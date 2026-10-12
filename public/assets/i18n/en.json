@@ -28,6 +28,7 @@
   "ads.published": "Published",
   "ads.redirect_link": "Redirect link",
   "ads.redirect_required": "Redirect link is required.",
+  "ads.redirect_invalid": "Enter a full web address starting with https:// — the apps open this link directly.",
   "ads.redirect_url": "Redirect URL",
   "ads.saving": "Saving…",
   "ads.search_owner_placeholder": "Search by name or email…",
