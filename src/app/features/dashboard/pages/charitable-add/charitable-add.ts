@@ -32,6 +32,9 @@ export class CharitableAdd {
   loading = signal(false);
   saving = signal(false);
   errorMessage = signal<string | null>(null);
+  /** Set when the organisation behind this URL could not be read — see the
+   *  same field on the advertisement form for why an empty one is worse. */
+  loadError = signal<string | null>(null);
 
   name = '';
   description = '';
@@ -74,7 +77,10 @@ export class CharitableAdd {
         this.contacts.set(org.contacts ?? []);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: (err: HttpErrorResponse) => {
+        this.loadError.set(err.status === 404 ? 'charitable.not_found' : 'charitable.load_failed');
+        this.loading.set(false);
+      }
     });
   }
 

@@ -10,6 +10,9 @@
     <h1 class="page-title">{{ (isEdit() ? 'charitable.edit_org' : 'charitable.add_org') | t }}</h1>
   </header>
 
+  @if (loadError()) {
+    <p class="record-missing">{{ loadError()! | t }}</p>
+  } @else {
   <section class="form-section">
     <h2 class="section-title">{{ 'charitable.basic_info' | t }}</h2>
 
@@ -154,5 +157,6 @@
     <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.cancel' | t }}</button>
     <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
   </footer>
+  }
 
 </div>

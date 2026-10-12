@@ -10,6 +10,9 @@
     <h1>{{ (isEdit() ? 'ads.edit_title' : 'ads.add_new') | t }}</h1>
   </header>
 
+  @if (loadError()) {
+    <p class="record-missing">{{ loadError()! | t }}</p>
+  } @else {
   <form class="form-section" [formGroup]="form" (ngSubmit)="save()">
 
     <div class="form-group">
@@ -117,5 +120,6 @@
     </div>
 
   </form>
+  }
 
 </div>

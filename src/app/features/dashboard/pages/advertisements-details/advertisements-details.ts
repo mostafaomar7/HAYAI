@@ -38,6 +38,15 @@ export class AdvertisementsDetails {
   loading = signal(false);
   saving = signal(false);
   errorMessage = signal<string | null>(null);
+  /**
+   * Set when the record behind this URL could not be read.
+   *
+   * A deleted advert's edit URL still resolves — the route does not know the
+   * row is gone — and the API answers 404. Swallowing that left an empty form
+   * that looked ready to fill in, and saving it would have created a second
+   * advert rather than editing the one the URL names.
+   */
+  loadError = signal<string | null>(null);
 
   uploadedImage = signal<string | null>(null);
   selectedFile: File | null = null;
@@ -127,7 +136,10 @@ export class AdvertisementsDetails {
         }
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: (err: HttpErrorResponse) => {
+        this.loadError.set(err.status === 404 ? 'ads.not_found' : 'ads.load_failed');
+        this.loading.set(false);
+      }
     });
   }
 

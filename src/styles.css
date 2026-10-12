@@ -279,3 +279,16 @@ html[lang="ar"] body {
    styles are injected after this file, so the tie goes to them. */
 .action-dropdown .dropdown-item.danger { color: #B42318; }
 .action-dropdown .dropdown-item.danger:hover { background-color: #FEF3F2; color: #912018; }
+
+/* Shown in place of a form whose record could not be read — a deleted row's
+   edit URL still resolves, and an empty form there looks fillable. */
+.record-missing {
+  margin: 24px 0;
+  padding: 28px 24px;
+  background: #ffffff;
+  border: 1px dashed #E5E7EB;
+  border-radius: 12px;
+  color: #6B7280;
+  font-size: 14px;
+  text-align: center;
+}
