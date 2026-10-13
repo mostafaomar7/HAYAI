@@ -93,6 +93,16 @@ export class I18nService {
    * backend-supplied messages reach the page and those must never be
    * swallowed. After that first load the old behaviour stands — a key with no
    * entry shows itself, so a missing translation is visible rather than blank.
+   *
+   * It is also why the Add button needed two clicks, which the QA round filed
+   * separately. `common.add` is wider than "Add", so the button was painted
+   * 141px wide and then shrank to 79px — and it is the last item in a
+   * right-aligned row, so its left edge jumped 62px to the right. A cursor
+   * resting on the left half of a button a person could plainly see was
+   * clicking the header background by the time the button moved. Blank keeps
+   * the placeholder narrower than the text that replaces it, so a control can
+   * only ever grow, and growing never takes a pixel away from under a cursor.
+   * Anything that restores the key here brings that back.
    */
   private static readonly KEY_SHAPE = /^[a-z0-9_]+(\.[a-z0-9_]+)+$/i;
 
