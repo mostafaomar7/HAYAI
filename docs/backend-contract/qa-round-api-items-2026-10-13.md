@@ -1,5 +1,11 @@
 # What the QA round needs from the API (2026-10-13)
 
+> **Working from this file? Start with `api-open-items-2026-10-13.md` instead.**
+> It carries the eight items that are still open, most consequential first,
+> and leaves out the six you have already shipped. This one stays as the
+> record of the whole round, including what is now closed.
+
+
 Everything from the dashboard QA bugs that cannot be fixed on the website side.
 Each one was measured against the live API, and the commands are here so you
 can repeat them.
