@@ -206,31 +206,33 @@ file behind it:
 ```bash
 curl -sI "https://api.hayaihealthcare.com/storage/profiles/mw9C5d55…png"
 Content-Type: image/png
+Last-Modified: Thu, 27 Aug 2026 18:45:58 GMT
 ETag: "6a9085e6-beae1"
-# 1983 × 793 px, 762 KB — and no Cache-Control header at all
+# 1983 × 793 px, 762 KB
 ```
 
-762 KB is **three quarters of everything a cold dashboard load downloads**, for
-a picture displayed at one two-thousandth of its area. It is fetched again on
-every page of the dashboard.
-
-Two things, and they are independent:
+762 KB is **three quarters of everything a first visit to the dashboard
+downloads** — 1049 KB in total with an empty cache — for a picture displayed at
+about one two-thousandth of its area.
 
 1. **Resize on upload.** A stored avatar does not need to be larger than about
    512px on its longest edge. We now shrink the picture in the browser before
    it is sent — a 7.5 MB photo leaves as a 121 KB JPEG — so new uploads are
    small from today. That does not touch anything already stored, and it is a
-   convenience, not a boundary: anything posted with curl still arrives at full
-   size.
-2. **Cache `/storage/*`.** These files are content-addressed — the name changes
-   when the picture changes — so they can be cached hard:
+   convenience, not a boundary: the apps upload to the same endpoint, and
+   anything posted with curl still arrives at full size.
+2. **Cache `/storage/*`, eventually.** There is no `Cache-Control` header, but
+   we measured what that costs before asking: on three loads in a row the
+   avatar came from the disk cache every time after the first, with no
+   revalidation. `Last-Modified` gives the browser a heuristic of roughly a
+   tenth of the file's age, and this one is seven weeks old. The catch is that
+   a picture uploaded this morning gets almost none of that, and is
+   revalidated on nearly every page for its first few days. Worth setting, not
+   urgent:
 
    ```nginx
    location /storage/ { add_header Cache-Control "public, max-age=31536000, immutable"; }
    ```
-
-   Today there is no `Cache-Control` at all, so the browser revalidates the
-   avatar on every page even when it already has it.
 
 ---
 
@@ -244,4 +246,4 @@ Two things, and they are independent:
 | 4 | no HSTS on the API host | one nginx line |
 | 5 | option lists accept duplicate names | the signup form shows the same option twice |
 | 6 | `Access-Control-Max-Age: 0` — a preflight per request, forever | one config line |
-| 7 | avatars stored at 762 KB and served uncached | one config line + resize on upload |
+| 7 | avatars stored at 762 KB for a 42px circle | resize on upload; caching is a smaller follow-up |
