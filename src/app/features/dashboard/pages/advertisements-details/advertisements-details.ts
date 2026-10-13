@@ -84,30 +84,31 @@ export class AdvertisementsDetails {
   ];
 
   /**
-   * What the API calls this kind of owner, mapped to the value this form
-   * uses. The two vocabularies do not line up: the API answers `doctor`,
-   * `clinic`, `medical_insurance` and `pharmacies` — singular for most,
-   * plural for one — while the owner picker is keyed by the admin route
-   * names. Measured against live records rather than assumed.
+   * The account type, as the API spells it, beside the admin route this form
+   * uses to list owners of that type. They are two different vocabularies and
+   * neither is derivable from the other — `labs` lists from `/admin/labs` but
+   * the account type is `labs_radiology`, and `medical-issuance` is
+   * `medical_insurance`. The ids are the `id` column of
+   * `GET /lookups/user-types`, read from it on 2026-10-13 rather than guessed.
    *
-   * `normaliseType` below also strips separators and a trailing "s", so a
-   * value nobody listed here still lands in the right place as long as the
-   * word matches.
+   * It was a one-way table of spelling variations before, used only to work
+   * out which list to show on an edit. `provider_type` is now required when an
+   * advert is created, and it has to be the owner's account type, so the same
+   * pairing is needed in the other direction as well — hence one table read
+   * both ways instead of a normaliser guessing at plurals.
    */
-  private static readonly PROVIDER_TYPE_ALIASES: Record<string, UserResource> = {
-    doctor: 'doctors',
-    hospital: 'hospitals',
-    clinic: 'clinics',
-    pharmacy: 'pharmacies',
-    lab: 'labs',
-    laboratory: 'labs',
-    medicalinsurance: 'medical-issuance',
-    medicalissuance: 'medical-issuance',
-    homecare: 'home-care',
-    physicaltherapy: 'physical-therapy',
-    employmentoffice: 'employment-offices',
-    medicaldevice: 'medical-devices'
-  };
+  private static readonly OWNER_TYPES: ReadonlyArray<{ api: string; resource: UserResource }> = [
+    { api: 'doctor', resource: 'doctors' },
+    { api: 'hospital', resource: 'hospitals' },
+    { api: 'clinic', resource: 'clinics' },
+    { api: 'pharmacies', resource: 'pharmacies' },
+    { api: 'labs_radiology', resource: 'labs' },
+    { api: 'medical_insurance', resource: 'medical-issuance' },
+    { api: 'home_care', resource: 'home-care' },
+    { api: 'physical_therapy', resource: 'physical-therapy' },
+    { api: 'employment_office', resource: 'employment-offices' },
+    { api: 'medical_devices', resource: 'medical-devices' }
+  ];
 
   form = this.fb.group({
     // Required on create. On edit it is left optional on purpose — see
@@ -221,18 +222,25 @@ export class AdvertisementsDetails {
    */
   private normaliseType(raw: string | null | undefined): UserResource | null {
     if (!raw) return null;
-    const direct = this.ownerTypeOptions.find(o => o.value === raw);
-    if (direct) return direct.value;
-
-    const key = raw.toLowerCase().replace(/[^a-z]/g, '');
-    const alias = AdvertisementsDetails.PROVIDER_TYPE_ALIASES[key]
-      ?? AdvertisementsDetails.PROVIDER_TYPE_ALIASES[key.replace(/s$/, '')];
-    if (alias) return alias;
-
-    const loose = this.ownerTypeOptions.find(
-      o => o.value.replace(/[^a-z]/g, '') === key || o.value.replace(/[^a-z]/g, '') === key + 's'
+    const match = AdvertisementsDetails.OWNER_TYPES.find(
+      t => t.api === raw || t.resource === raw
     );
-    return loose ? loose.value : null;
+    return match ? match.resource : null;
+  }
+
+  /**
+   * The account type to send for the currently picked owner type.
+   *
+   * `provider_type` is required when an advert is created and is checked
+   * against the account behind `owner_id`: a mismatch is a 422 naming both.
+   * We were sending neither, so every create from the dashboard was being
+   * refused — measured against production on 2026-10-13, before this.
+   */
+  private apiProviderType(): string | null {
+    const resource = this.ownerType();
+    if (!resource) return null;
+    const match = AdvertisementsDetails.OWNER_TYPES.find(t => t.resource === resource);
+    return match ? match.api : null;
   }
 
   onOwnerTypeChange(value: string) {
@@ -325,7 +333,15 @@ export class AdvertisementsDetails {
     // Omitted when nothing was picked. On an edit that means the advert keeps
     // the owner it already has — verified against the API: an update carrying
     // only `redirect_link` left `provider_type` untouched.
-    if (v.owner_id !== null && v.owner_id !== undefined) form.append('owner_id', String(v.owner_id));
+    // Sent together or not at all. The API reads them as a pair: an owner with
+    // no type is refused, and a type that does not match the account behind the
+    // owner is refused naming both. Omitting the pair on an edit is what leaves
+    // an advert with the owner it already has.
+    const providerType = this.apiProviderType();
+    if (v.owner_id !== null && v.owner_id !== undefined && providerType) {
+      form.append('owner_id', String(v.owner_id));
+      form.append('provider_type', providerType);
+    }
     form.append('redirect_link', (v.redirect_link ?? '').trim());
     if (v.status) form.append('status', v.status);
     form.append('is_published', v.is_published ? '1' : '0');

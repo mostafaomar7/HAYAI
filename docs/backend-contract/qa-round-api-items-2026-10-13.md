@@ -6,6 +6,10 @@ can repeat them.
 
 Nothing here blocks a deploy. Item 1 is the one that has already affected data.
 
+Their reply of 2026-10-13 and ours are in
+[`qa-round-api-reply-2026-10-13.md`](qa-round-api-reply-2026-10-13.md). Items 1
+to 4, 6 and 7 are answered there; 5, 8, 9 and 10 are still open.
+
 The session-cookie work (BUG-02) is a separate conversation:
 [`auth-session-cookie-2026-10-12.md`](auth-session-cookie-2026-10-12.md) and our
 reply, [`auth-session-cookie-reply-2026-10-12.md`](auth-session-cookie-reply-2026-10-12.md).
@@ -35,6 +39,13 @@ POST /admin/advertisements  owner_id=20  provider_type=doctor
 POST /admin/advertisements  owner_id=90  provider_type=doctor
     -> stored as provider_type "doctor"
 ```
+
+**Corrected 2026-10-13, from the backend's reply:** the edit endpoint never
+read `owner_id` at all, so an admin forced to pick an owner to get past our old
+required field did *not* reassign anything — only creates went wrong. Four of
+the five existing adverts were then proved correct in their data; advert 6 is
+ambiguous and needs whoever created it. The rest of this item is kept as it was
+written.
 
 So **every advertisement created through the dashboard has been attached to
 whichever account happened to hold that number.** Our side is fixed — the picker
@@ -83,7 +94,13 @@ rows hold `doctor`, `clinic`, `medical_insurance` and `pharmacies` — singular
 for three of them and plural for one. We normalise around it; one spelling
 would be better.
 
-## 3. `redirect_link` is not validated server-side
+## 3. `redirect_link` is not validated server-side — **done, and we were partly wrong**
+
+**Corrected 2026-10-13.** The backend checked the code: `javascript:alert(1)`
+and the Arabic text were already refused by Laravel's `url` rule. Only the
+third example stored. We cannot re-measure the old behaviour now, so their
+reading stands over ours. Validation is live, plus three rules we had not
+thought of; our form guard matches it.
 
 BUG-06. `POST`/`PATCH /admin/advertisements` takes it as free text. All three of
 these store fine today:
@@ -110,7 +127,7 @@ The rule we apply, so yours can match:
 In Laravel terms: `['required', 'url', 'regex:/^https?:\/\//i']`, plus a check
 that the parsed host contains a dot and that there is no `@` before the host.
 
-## 4. The API host has no HSTS
+## 4. The API host has no HSTS — **done, live 2026-10-13**
 
 BUG-05 only looked at the website. Measured on 2026-10-12:
 
@@ -343,13 +360,13 @@ dropped from the response, so nothing can read it and be wrong.
 
 | # | Item | Severity |
 |---|---|---|
-| 1 | `owner_id` mismatch stored silently — **existing data affected** | needs checking now |
+| 1 | `owner_id` mismatch stored silently | **live** — 4 of 5 adverts proved correct, **advert 6 needs its creator** |
 | 2 | advert response omits the owner | **done — shipped, verified 2026-10-13** |
-| 3 | `redirect_link` unvalidated server-side | the apps open these links |
-| 4 | no HSTS on the API host | one nginx line |
+| 3 | `redirect_link` unvalidated server-side | **live** — and two of our three examples were already refused |
+| 4 | no HSTS on the API host | **live 2026-10-13** |
 | 5 | option lists accept duplicate names | the signup form shows the same option twice |
-| 6 | `Access-Control-Max-Age: 0` — a preflight per request, forever | one config line |
-| 7 | avatars stored at 762 KB for a 42px circle | resize on upload; caching is a smaller follow-up |
+| 6 | `Access-Control-Max-Age: 0` | built, awaiting release |
+| 7 | avatars stored at 762 KB for a 42px circle | built — 762 KB → 8.2 KB, EXIF stripped, all four endpoints |
 | 8 | `optional_bool` settings accept any string | the force-update switch takes `"no"` and stores something |
 | 9 | advert search covers the owner's name and nothing else | a title cannot be searched for |
 | 10 | advert `status` never expires — all 5 ended, all 5 say `active` | **ask: are the apps still serving them?** |

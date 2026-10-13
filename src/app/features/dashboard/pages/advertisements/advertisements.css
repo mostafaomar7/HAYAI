@@ -272,6 +272,8 @@
   direction: ltr;
 }
 
+.ad-type { color: #9CA3AF; }
+
 .ad-badges {
   display: flex;
   flex-wrap: wrap;

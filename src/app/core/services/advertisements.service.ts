@@ -17,8 +17,15 @@ export interface Advertisement {
   clicks_count: number;
   provider_type?: string;
   owner_id?: number;
-  /** Both arrived with the API change we asked for; see the backend notes. */
+  /** These arrived with the API change we asked for; see the backend notes. */
   owner_name?: string | null;
+  /**
+   * The account type in words, already translated by `Accept-Language`.
+   * Shown instead of `provider_type`, which is an account-type token and is
+   * deliberately spelled as the apps' filter spells it — `pharmacies` plural
+   * next to `doctor` singular. Nothing here should be tidying that up.
+   */
+  provider_type_label?: string | null;
   title?: string | null;
   description?: string | null;
   created_at: string;

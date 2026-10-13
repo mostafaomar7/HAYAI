@@ -131,7 +131,12 @@
               }
             </span>
             @if (ad.owner_name) {
-              <span class="ad-owner">{{ ad.owner_name }}</span>
+              <span class="ad-owner">
+                {{ ad.owner_name }}
+                @if (ad.provider_type_label) {
+                  <span class="ad-type">· {{ ad.provider_type_label }}</span>
+                }
+              </span>
             }
           </div>
 
