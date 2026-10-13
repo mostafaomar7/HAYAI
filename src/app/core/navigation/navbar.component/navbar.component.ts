@@ -1,8 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
+import { Title } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import {
   NotificationsService,
@@ -27,6 +28,7 @@ export class NavbarComponent {
   private router = inject(Router);
   i18n = inject(I18nService);
   layout = inject(LayoutService);
+  private titleService = inject(Title);
 
   /** i18n key of the page being viewed — see `data.title` in the route table. */
   pageTitle = signal('navbar.title');
@@ -49,9 +51,37 @@ export class NavbarComponent {
 
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed())
-      .subscribe(() => this.pageTitle.set(this.resolveTitle()));
+      .subscribe(() => this.applyTitle());
     // The first NavigationEnd fires before this component exists.
-    this.pageTitle.set(this.resolveTitle());
+    this.applyTitle();
+
+    // The heading is translated through the dictionary, which arrives after
+    // the first navigation. Without this the tab would keep whatever the first
+    // page resolved to before the words existed.
+    effect(() => {
+      this.i18n.lang();
+      this.setDocumentTitle(this.pageTitle());
+    });
+  }
+
+  /**
+   * The page name goes to two places: the heading in the bar, and the browser
+   * tab. The tab said "Hayai" on every page of the dashboard — the value baked
+   * into index.html — because nothing ever wrote to it. It is what a person
+   * reads to find the right window among eight, and what a bookmark is named
+   * after.
+   */
+  private applyTitle(): void {
+    const key = this.resolveTitle();
+    this.pageTitle.set(key);
+    this.setDocumentTitle(key);
+  }
+
+  private setDocumentTitle(key: string): void {
+    const name = this.i18n.translate(key);
+    // Before the dictionary lands `translate` answers with nothing, and an
+    // empty tab is worse than a generic one.
+    this.titleService.setTitle(name ? `${name} | HAYAI` : 'HAYAI');
   }
 
   /**

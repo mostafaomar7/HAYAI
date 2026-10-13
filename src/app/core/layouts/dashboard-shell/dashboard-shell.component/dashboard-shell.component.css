@@ -22,6 +22,21 @@ app-sidebar {
   background: #fff;
 }
 
+/* `.dashboard-content` is what scrolls, and the bar was an ordinary child of
+   it, so the page title, the language switch, the notification bell and the
+   profile menu all left the screen on any page longer than the window —
+   which is most of them. Sticky rather than fixed: it stays in the flow, so
+   the page below it needs no compensating padding and nothing to keep in
+   sync with its height. */
+app-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  /* The bar's own background is on .navbar inside it; this host element would
+     otherwise be transparent and the page would scroll through it. */
+  background: #ffffff;
+}
+
 .page-container {
   flex: 1;
   background-color: #F5F7F9;

@@ -6,13 +6,13 @@ import { NotificationsService, BroadcastTarget } from '../../../../core/services
 import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
-  selector: 'app-notfication',
+  selector: 'app-notification',
   standalone: true,
   imports: [CommonModule, FormsModule, TPipe],
-  templateUrl: './notfication.html',
-  styleUrl: './notfication.css'
+  templateUrl: './notification.html',
+  styleUrl: './notification.css'
 })
-export class Notfication {
+export class Notification {
   private svc = inject(NotificationsService);
 
   title = '';

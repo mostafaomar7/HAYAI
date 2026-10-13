@@ -1,6 +1,10 @@
 <aside class="sidebar">
   <div class="logo-container">
-    <img src="logo.png" alt="HAYAI Logo" class="logo" />
+    <!-- The mark in the corner is where people click to get back, on every
+         site they have ever used. It was a bare <img>, so it did nothing. -->
+    <a routerLink="/dashboard" class="logo-link" [attr.aria-label]="'menu.dashboard' | t">
+      <img src="logo.png" alt="HAYAI" class="logo" />
+    </a>
   </div>
 
   <nav class="menu">

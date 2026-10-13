@@ -79,10 +79,19 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () => import('./pages/plans-details/plans-details').then(m => m.PlansDetails)
   },
   {
-    path: 'notfication',
+    path: 'notification',
     data: { title: 'menu.send_notifications' },
-    loadComponent: () => import('./pages/notfication/notfication').then(m => m.Notfication)
+    loadComponent: () => import('./pages/notification/notification').then(m => m.Notification)
   },
+  // The path was `notfication` for as long as this page has existed, so it is
+  // in browser histories and in whatever anyone has pasted to a colleague.
+  // Kept as a redirect rather than deleted: without it those links now land on
+  // the dashboard's 404 page, which is a worse answer than the typo was.
+  // Absolute targets. A relative `redirectTo` is resolved against the segments
+  // already matched, so `notfication/history` -> `notification/history` landed
+  // on `/dashboard/notfication/notification/history` and then on the 404.
+  { path: 'notfication', redirectTo: '/dashboard/notification', pathMatch: 'full' },
+  { path: 'notfication/history', redirectTo: '/dashboard/notification/history', pathMatch: 'full' },
   {
     path: 'patient',
     data: { title: 'menu.users.patients' },
@@ -396,7 +405,7 @@ export const DASHBOARD_ROUTES: Routes = [
     loadChildren: () => import('./pages/website/website.routes').then(m => m.WEBSITE_ROUTES)
   },
   {
-    path: 'notfication/history',
+    path: 'notification/history',
     data: { title: 'menu.notification_history' },
     loadComponent: () =>
       import('./pages/notification-history/notification-history').then(m => m.NotificationHistory)

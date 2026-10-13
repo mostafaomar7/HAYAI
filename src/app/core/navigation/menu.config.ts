@@ -9,8 +9,8 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'RenewalUsers', label: 'menu.renewal', iconName: 'renewal', route: '/dashboard/renewal', roles: ['admin'] },
   { id: 'AccountDeletionRequests', label: 'menu.deletion_requests', iconName: 'renewal', route: '/dashboard/account-deletion-requests', roles: ['admin'] },
   { id: 'PlansManagements', label: 'menu.plans', iconName: 'plans', route: '/dashboard/plans', roles: ['admin'] },
-  { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notfication', roles: ['admin'] },
-  { id: 'NotificationHistory', label: 'menu.notification_history', iconName: 'notifications', route: '/dashboard/notfication/history', roles: ['admin'] },
+  { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notification', roles: ['admin'] },
+  { id: 'NotificationHistory', label: 'menu.notification_history', iconName: 'notifications', route: '/dashboard/notification/history', roles: ['admin'] },
   // Hidden from the sidebar on request. The page, its route and its service are
   // all still in place — restore this line to bring the entry back.
   // { id: 'HospitalVerifications', label: 'menu.hospital_verifications', iconName: 'centers', route: '/dashboard/hospital-verifications', roles: ['admin'] },
