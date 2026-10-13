@@ -227,7 +227,7 @@ export class UserActivity {
         return ['/dashboard/Advertisements/edit', row.id];
       case 'device_order':
       case 'device_order_received':
-        return ['/dashboard/external/orders', row.id];
+        return ['/dashboard/internal-devices/orders', row.id];
       default:
         return ['/dashboard/activity', row.type, row.id];
     }

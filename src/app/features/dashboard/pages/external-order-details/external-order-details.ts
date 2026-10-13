@@ -132,6 +132,6 @@ export class ExternalOrderDetails {
     // history.back keeps the activity timeline's filters and scroll position,
     // which a router navigation to the list would throw away.
     if (window.history.length > 1) window.history.back();
-    else this.router.navigate(['/dashboard/external/orders']);
+    else this.router.navigate(['/dashboard/internal-devices/orders']);
   }
 }

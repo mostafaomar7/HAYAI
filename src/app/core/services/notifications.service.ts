@@ -72,7 +72,7 @@ const LINK_ID_TYPE: Record<string, 'user' | 'organization' | 'facility' | 'docto
 
 /** API segments that have a dashboard screen of their own, not an account. */
 const LINK_DIRECT_ROUTE: Record<string, string> = {
-  'external-device-orders': '/dashboard/external/orders'
+  'external-device-orders': '/dashboard/internal-devices/orders'
 };
 
 /**

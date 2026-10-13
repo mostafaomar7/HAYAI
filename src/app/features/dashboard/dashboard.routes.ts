@@ -232,24 +232,36 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/hospital-verifications/hospital-verifications').then(m => m.HospitalVerifications)
   },
+  // The marketplace under "Internal Medical Devices". Its path said `external`
+  // because the API calls both device modules `external-devices` — the group-
+  // order module alongside it is the one that is actually external, and it is
+  // already at `group-orders`. Two near-identical sections where one of them
+  // says the opposite of its own heading is a trap, which is what the QA round
+  // walked into. The heading was right; the path was the legacy name.
+  //
+  // `external/*` is kept as a redirect: it is in histories, and a notification
+  // sent before today still carries it.
   {
-    path: 'external/devices',
+    path: 'internal-devices/devices',
     data: { title: 'menu.external_devices.devices' },
     loadComponent: () =>
       import('./pages/external-devices/external-devices').then(m => m.ExternalDevices)
   },
   {
-    path: 'external/orders/:id',
+    path: 'internal-devices/orders/:id',
     data: { title: 'external.orders.order' },
     loadComponent: () =>
       import('./pages/external-order-details/external-order-details').then(m => m.ExternalOrderDetails)
   },
   {
-    path: 'external/orders',
+    path: 'internal-devices/orders',
     data: { title: 'menu.external_devices.orders' },
     loadComponent: () =>
       import('./pages/external-orders/external-orders').then(m => m.ExternalOrders)
   },
+  { path: 'external/devices', redirectTo: '/dashboard/internal-devices/devices', pathMatch: 'full' },
+  { path: 'external/orders', redirectTo: '/dashboard/internal-devices/orders', pathMatch: 'full' },
+  { path: 'external/orders/:id', redirectTo: '/dashboard/internal-devices/orders/:id', pathMatch: 'full' },
   // ===================== External device group orders =====================
   // A separate section from `external/*` above: that is the legacy marketplace,
   // which sells a unit and tracks a payment and a shipment. This module does

@@ -60,8 +60,8 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     id: 'ExternalMedicalDevices', label: 'menu.external_devices', iconName: 'devices', route: '', roles: ['admin'], hasDropdown: true,
     children: [
-      { id: 'Devices', label: 'menu.external_devices.devices', route: '/dashboard/external/devices' },
-      { id: 'Orders', label: 'menu.external_devices.orders', route: '/dashboard/external/orders' },
+      { id: 'Devices', label: 'menu.external_devices.devices', route: '/dashboard/internal-devices/devices' },
+      { id: 'Orders', label: 'menu.external_devices.orders', route: '/dashboard/internal-devices/orders' },
     ]
   },
   {
@@ -120,7 +120,13 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'WebCrawlers', label: 'menu.website.crawlers', route: '/dashboard/website/crawlers', permission: 'seo.view' },
       { id: 'WebRedirects', label: 'menu.website.redirects', route: '/dashboard/website/redirects', permission: 'redirects.view' },
       { id: 'WebSettings', label: 'menu.website.settings', route: '/dashboard/website/settings', permission: 'settings.view' },
-      { id: 'WebAudit', label: 'menu.website.audit', route: '/dashboard/website/audit', permission: 'audit.view' },
+      // No audit entry here. `/admin/website/audit-logs` and `/admin/audit-logs`
+      // answer with the same rows — measured 2026-10-13: both report 740
+      // entries and the same ids — so the menu was offering one log twice,
+      // under "Audit log" and "Audit Log". The top-level entry is the one
+      // kept: it is open to every admin, where this route is gated on
+      // `audit.view` and would turn into a dead link for anyone without it.
+      // The page and its route stay, so existing links still work.
       { id: 'WebRoles', label: 'menu.website.roles', route: '/dashboard/website/roles', permission: 'roles.manage' },
     ]
   },
