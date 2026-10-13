@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AdvertisementsService } from '../../../../core/services/advertisements.service';
 import { ProviderItem, UserResource, UsersService } from '../../../../core/services/users.service';
 import { httpUrlValidator } from '../../../../core/validators/url.validator';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 
 interface OwnerTypeOption {
@@ -32,6 +33,7 @@ export class AdvertisementsDetails {
   private fb = inject(FormBuilder);
   private ads = inject(AdvertisementsService);
   private users = inject(UsersService);
+  private i18n = inject(I18nService);
 
   id = signal<number | null>(null);
   isEdit = computed(() => this.id() !== null);
@@ -53,6 +55,13 @@ export class AdvertisementsDetails {
 
   // Owner picker state
   ownerType = signal<UserResource | ''>('');
+  /**
+   * True on an edit whose advert came back without an owner id — which is
+   * every edit today. Drives the notice on the form, so an admin knows that
+   * leaving the field alone keeps the current owner and that picking one
+   * replaces it.
+   */
+  ownerUnknown = signal(false);
   ownersLoading = signal(false);
   ownerSearch = signal('');
   owners = signal<OwnerOption[]>([]);
@@ -73,7 +82,37 @@ export class AdvertisementsDetails {
     { value: 'medical-devices', label: 'users.medical_devices.title' }
   ];
 
+  /**
+   * What the API calls this kind of owner, mapped to the value this form
+   * uses. The two vocabularies do not line up: the API answers `doctor`,
+   * `clinic`, `medical_insurance` and `pharmacies` — singular for most,
+   * plural for one — while the owner picker is keyed by the admin route
+   * names. Measured against live records rather than assumed.
+   *
+   * `normaliseType` below also strips separators and a trailing "s", so a
+   * value nobody listed here still lands in the right place as long as the
+   * word matches.
+   */
+  private static readonly PROVIDER_TYPE_ALIASES: Record<string, UserResource> = {
+    doctor: 'doctors',
+    hospital: 'hospitals',
+    clinic: 'clinics',
+    pharmacy: 'pharmacies',
+    lab: 'labs',
+    laboratory: 'labs',
+    medicalinsurance: 'medical-issuance',
+    medicalissuance: 'medical-issuance',
+    homecare: 'home-care',
+    physicaltherapy: 'physical-therapy',
+    employmentoffice: 'employment-offices',
+    medicaldevice: 'medical-devices'
+  };
+
   form = this.fb.group({
+    // Required on create. On edit it is left optional on purpose — see
+    // `loadAd`: the API does not say who owns an advert, and an update that
+    // omits `owner_id` keeps the owner it already has (verified against the
+    // API). Forcing a choice here is how an advert quietly changes hands.
     owner_id: [null as number | null, Validators.required],
     redirect_link: ['', [Validators.required, httpUrlValidator()]],
     status: ['active'],
@@ -127,12 +166,26 @@ export class AdvertisementsDetails {
         });
         this.uploadedImage.set(ad.image_url);
 
-        // If the API returns the owner type, prefill the type select and load that list.
-        // Otherwise the user can still re-pick.
-        const t = (ad as any).owner_type as UserResource | undefined;
-        if (t) {
-          this.ownerType.set(t);
-          this.loadOwners(t);
+        // The field is `provider_type`, not `owner_type` — which is why the
+        // picker came up blank on every edit. Measured on a live record:
+        // GET /admin/advertisements/6 answers `"provider_type":"doctor"` and
+        // carries no `owner_type` at all.
+        const resource = this.normaliseType(ad.provider_type);
+        if (resource) {
+          this.ownerType.set(resource);
+          this.loadOwners(resource);
+        }
+
+        // The owner itself cannot be prefilled: the advert payload names the
+        // kind of owner but never which one — no `owner_id`, no `user_id`,
+        // nothing. So on edit the field is optional, and an untouched one is
+        // not sent, which leaves the owner as it was. Asked for in the
+        // backend contract; until then this is the only answer that cannot
+        // reassign somebody's advert by accident.
+        this.ownerUnknown.set(ad.owner_id == null);
+        if (ad.owner_id == null) {
+          this.form.controls.owner_id.removeValidators(Validators.required);
+          this.form.controls.owner_id.updateValueAndValidity();
         }
         this.loading.set(false);
       },
@@ -141,6 +194,27 @@ export class AdvertisementsDetails {
         this.loading.set(false);
       }
     });
+  }
+
+  /**
+   * Turns whatever the API called the provider type into one of this form's
+   * values. Case, separators and a trailing "s" are all ignored, because the
+   * API is not consistent about any of them.
+   */
+  private normaliseType(raw: string | null | undefined): UserResource | null {
+    if (!raw) return null;
+    const direct = this.ownerTypeOptions.find(o => o.value === raw);
+    if (direct) return direct.value;
+
+    const key = raw.toLowerCase().replace(/[^a-z]/g, '');
+    const alias = AdvertisementsDetails.PROVIDER_TYPE_ALIASES[key]
+      ?? AdvertisementsDetails.PROVIDER_TYPE_ALIASES[key.replace(/s$/, '')];
+    if (alias) return alias;
+
+    const loose = this.ownerTypeOptions.find(
+      o => o.value.replace(/[^a-z]/g, '') === key || o.value.replace(/[^a-z]/g, '') === key + 's'
+    );
+    return loose ? loose.value : null;
   }
 
   onOwnerTypeChange(value: string) {
@@ -171,10 +245,23 @@ export class AdvertisementsDetails {
       account_status: 'active'
     }).subscribe({
       next: r => {
-        this.owners.set(r.items.map(u => ({
-          id: u.id,
-          label: `${u.name}${u.email ? ' — ' + u.email : ''}`
-        })));
+        // `user_id`, not `id`. A provider row is keyed by its own table —
+        // doctor 20 is user 90 — and `owner_id` on an advert is a user id.
+        // Sending the row id attached the advert to whoever happened to hold
+        // that user id: measured on 2026-10-12, creating an advert with
+        // owner_id=20 for a doctor stored it as `provider_type:
+        // "medical_devices"`, while owner_id=90 stored it as `"doctor"`.
+        //
+        // A row without `user_id` is left out rather than falling back to
+        // `id`, because the fallback is exactly the bug.
+        this.owners.set(
+          r.items
+            .filter(u => u.user_id != null)
+            .map(u => ({
+              id: u.user_id as number,
+              label: `${u.name}${u.email ? ' — ' + u.email : ''}`
+            }))
+        );
         this.ownersLoading.set(false);
       },
       error: () => {
@@ -209,7 +296,7 @@ export class AdvertisementsDetails {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.errorMessage.set('Please fill in the required fields (Owner + Redirect link).');
+      this.errorMessage.set(this.i18n.translate('ads.fill_required'));
       return;
     }
 
@@ -217,6 +304,9 @@ export class AdvertisementsDetails {
 
     const v = this.form.getRawValue();
     const form = new FormData();
+    // Omitted when nothing was picked. On an edit that means the advert keeps
+    // the owner it already has — verified against the API: an update carrying
+    // only `redirect_link` left `provider_type` untouched.
     if (v.owner_id !== null && v.owner_id !== undefined) form.append('owner_id', String(v.owner_id));
     form.append('redirect_link', (v.redirect_link ?? '').trim());
     if (v.status) form.append('status', v.status);

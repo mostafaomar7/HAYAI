@@ -31,6 +31,8 @@
   "ads.redirect_link": "Redirect link",
   "ads.redirect_required": "Redirect link is required.",
   "ads.redirect_invalid": "Enter a full web address starting with https:// — the apps open this link directly.",
+  "ads.fill_required": "Fill in the required fields: owner and redirect link.",
+  "ads.owner_unknown": "The current owner is not returned by the API, so it cannot be shown. Leave this empty and the advertisement keeps its owner — choose someone and it is reassigned to them.",
   "ads.redirect_url": "Redirect URL",
   "ads.saving": "Saving…",
   "ads.search_owner_placeholder": "Search by name or email…",

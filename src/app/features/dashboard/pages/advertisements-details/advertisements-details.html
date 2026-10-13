@@ -26,7 +26,13 @@
     </div>
 
     <div class="form-group">
-      <label>{{ 'ads.owner' | t }} <span style="color:#dc2626;">*</span></label>
+      <label>
+        {{ 'ads.owner' | t }}
+        @if (!ownerUnknown()) { <span style="color:#dc2626;">*</span> }
+      </label>
+      @if (ownerUnknown()) {
+        <p class="owner-unknown-note">{{ 'ads.owner_unknown' | t }}</p>
+      }
       @if (ownerType()) {
         <input
           type="text"
@@ -41,7 +47,7 @@
           [disabled]="ownersLoading()">
           <option value="">{{ (ownersLoading() ? 'common.loading' : 'ads.select_owner') | t }}</option>
           @for (o of owners(); track o.id) {
-            <option [value]="o.id">#{{ o.id }} — {{ o.label }}</option>
+            <option [value]="o.id">{{ o.label }}</option>
           }
         </select>
         @if (ownerIdInvalid) {

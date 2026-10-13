@@ -177,6 +177,40 @@ having the two steps.
   check that the parsed host contains a dot and the string holds no `@`
   before the host.
 
+- **Advertisements: `owner_id` means a user id, and nothing says so**
+  (BUG-21, and something worse found underneath it). Measured 2026-10-13 on
+  live data:
+
+  ```
+  POST /admin/advertisements  owner_id=20  provider_type=doctor
+      -> stored as provider_type "medical_devices"
+  POST /admin/advertisements  owner_id=90  provider_type=doctor
+      -> stored as provider_type "doctor"
+  ```
+
+  Doctor id 20 is user id 90. The dashboard was sending the provider row's own
+  id, so **every advertisement created through it has been attached to
+  whichever account happened to hold that number.** Fixed on our side — the
+  picker sends `user_id` now — but the five adverts already in the database
+  were created the old way and their owners should be checked.
+
+  Two requests, both small:
+
+  1. **`GET /admin/advertisements/{id}` should return the owner.** Today it
+     returns `provider_type` and nothing else — no `owner_id`, no `user_id`,
+     no name. So the edit form cannot show who owns an advert, and an admin
+     who picks one to satisfy a required field silently reassigns it. We have
+     made the field optional on edit and omit it when untouched (verified:
+     an update carrying only `redirect_link` leaves the owner alone), but
+     that is a workaround for a field that should simply be there.
+  2. **Reject an `owner_id` that does not match `provider_type`** rather than
+     storing the mismatch. A 422 would have caught this on the first try.
+
+  While you are in there: `provider_type` is inconsistent — live rows hold
+  `doctor`, `clinic`, `medical_insurance` and `pharmacies`, singular for
+  three and plural for one. We normalise around it, but one spelling would be
+  better.
+
 - The website's own CSP is still `Report-Only`. That is deliberate for now —
   the tag container loads third-party tags and enforcing it blind would break
   measurement. It should be tightened once the violation reports are read.
