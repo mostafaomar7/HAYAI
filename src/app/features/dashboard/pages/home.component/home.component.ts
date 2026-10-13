@@ -12,6 +12,7 @@ import {
 } from '../../../../core/services/analytics.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { SkeletonComponent } from '../../../../shared/ui/skeleton/skeleton';
 
 interface StatCard {
   id: number;
@@ -27,7 +28,7 @@ interface StatCard {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, SkeletonComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
@@ -38,6 +39,9 @@ export class HomeComponent {
   private i18n = inject(I18nService);
 
   loading = signal(true);
+  /** Four stat cards and six bars: the shape the page settles into. */
+  readonly placeholders = [0, 1, 2, 3];
+  readonly chartPlaceholders = ['45%', '72%', '30%', '88%', '58%', '40%'];
   greetingName = computed(() => this.auth.currentUser()?.name ?? 'Admin');
 
   // form-bound date inputs

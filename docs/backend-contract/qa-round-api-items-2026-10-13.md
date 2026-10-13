@@ -1,8 +1,8 @@
 # What the QA round needs from the API (2026-10-13)
 
 Everything from the dashboard QA bugs that cannot be fixed on the website side.
-Four items. Each one was measured against the live API, and the commands are
-here so you can repeat them.
+Each one was measured against the live API, and the commands are here so you
+can repeat them.
 
 Nothing here blocks a deploy. Item 1 is the one that has already affected data.
 
@@ -156,6 +156,82 @@ moment still get through, and so does anything posted with curl.
 `/admin/doctor/specialties`, `/admin/doctor/subspecialties` and the rest of the
 option lists, not only this one.
 
+## 6. Every admin request pays for a CORS preflight, every time
+
+BUG-12, found while measuring the dashboard's cold load.
+
+The dashboard is on `hayaihealthcare.com` and the API on
+`api.hayaihealthcare.com`, so every request carries `Authorization` and is
+therefore not a simple request: the browser sends an `OPTIONS` first and waits
+for the answer before it sends anything. That is normal and unavoidable. What
+is not normal is this:
+
+```bash
+curl -sI -X OPTIONS "$API/admin/advertisements"   -H "Origin: https://hayaihealthcare.com"   -H "Access-Control-Request-Method: GET"   -H "Access-Control-Request-Headers: authorization"
+Access-Control-Max-Age: 0        ← the browser is told not to remember this
+```
+
+`0` means the permission may not be cached, so the preflight is repeated for
+**every single request** for as long as the admin is signed in. Opening the
+dashboard home costs eight of them before a single byte of data moves:
+
+```
+/auth/me                               /admin/analytics/overview
+/admin/website/me                      /admin/analytics/users-by-category
+/admin/notifications/system/unread…    /admin/analytics/revenue-by-plan-type
+/admin/analytics/user-growth           /admin/analytics/revenue-over-time
+```
+
+On a desk in the office the round trip is 20ms and nobody notices. On a phone
+on mobile data it is 150ms or more, and it is spent twice per request for the
+whole session.
+
+**What we are asking for:** a lifetime on the preflight.
+
+```php
+// config/cors.php
+'max_age' => 86400,
+```
+
+Chrome caps it at 2 hours whatever you send, so a day is simply "as long as the
+browser will allow". Nothing else changes, and nothing can break: the only
+thing being cached is the answer to "may this origin call this endpoint", which
+does not vary per request.
+
+## 7. Uploaded profile images are stored and served at full size
+
+Also BUG-12. The admin avatar in the dashboard header is a 42-pixel circle. The
+file behind it:
+
+```bash
+curl -sI "https://api.hayaihealthcare.com/storage/profiles/mw9C5d55…png"
+Content-Type: image/png
+ETag: "6a9085e6-beae1"
+# 1983 × 793 px, 762 KB — and no Cache-Control header at all
+```
+
+762 KB is **three quarters of everything a cold dashboard load downloads**, for
+a picture displayed at one two-thousandth of its area. It is fetched again on
+every page of the dashboard.
+
+Two things, and they are independent:
+
+1. **Resize on upload.** A stored avatar does not need to be larger than about
+   512px on its longest edge. We now shrink the picture in the browser before
+   it is sent — a 7.5 MB photo leaves as a 121 KB JPEG — so new uploads are
+   small from today. That does not touch anything already stored, and it is a
+   convenience, not a boundary: anything posted with curl still arrives at full
+   size.
+2. **Cache `/storage/*`.** These files are content-addressed — the name changes
+   when the picture changes — so they can be cached hard:
+
+   ```nginx
+   location /storage/ { add_header Cache-Control "public, max-age=31536000, immutable"; }
+   ```
+
+   Today there is no `Cache-Control` at all, so the browser revalidates the
+   avatar on every page even when it already has it.
+
 ---
 
 ## Summary
@@ -167,3 +243,5 @@ option lists, not only this one.
 | 3 | `redirect_link` unvalidated server-side | the apps open these links |
 | 4 | no HSTS on the API host | one nginx line |
 | 5 | option lists accept duplicate names | the signup form shows the same option twice |
+| 6 | `Access-Control-Max-Age: 0` — a preflight per request, forever | one config line |
+| 7 | avatars stored at 762 KB and served uncached | one config line + resize on upload |

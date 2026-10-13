@@ -5,12 +5,13 @@ import { Advertisement, AdvertisementsService } from '../../../../core/services/
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
+import { SkeletonComponent } from '../../../../shared/ui/skeleton/skeleton';
 import { debounce } from '../../../../shared/utils/debounce.util';
 
 @Component({
   selector: 'app-advertisements',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, TPipe, PaginationComponent, SkeletonComponent],
   templateUrl: './advertisements.html',
   styleUrl: './advertisements.css'
 })
@@ -24,6 +25,8 @@ export class Advertisements {
   search = signal('');
 
   readonly perPage = 12;
+  /** One placeholder card per row of a full page, so the grid keeps its shape. */
+  readonly placeholders = Array.from({ length: 12 }, (_, i) => i);
   page = signal(1);
   total = signal(0);
 

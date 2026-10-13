@@ -32,6 +32,12 @@ export class I18nService {
 
   readonly lang = signal<Lang>(this.detectInitial());
   private readonly dict = signal<Record<string, string>>({});
+  /**
+   * Whether a dictionary has been answered for — not whether it arrived.
+   * A failed fetch settles this too, so a broken deploy shows the keys rather
+   * than a page of blanks with nothing to go on.
+   */
+  private readonly settled = signal(false);
 
   readonly isRtl = computed(() => this.lang() === 'ar');
   readonly dir = computed<'ltr' | 'rtl'>(() => (this.isRtl() ? 'rtl' : 'ltr'));
@@ -65,11 +71,33 @@ export class I18nService {
    */
   translate(key: string, params?: Record<string, string | number>): string {
     const value = this.dict()[key];
-    const text = value === undefined || value === '' ? key : value;
+    const text = value === undefined || value === '' ? this.fallback(key) : value;
     if (!params) return text;
     return text.replace(/\{(\w+)\}/g, (match, name) =>
       params[name] === undefined ? match : String(params[name])
     );
+  }
+
+  /**
+   * What to show for a key with no translation.
+   *
+   * The dictionary is fetched after the bundle boots, so for the first moment
+   * of a cold load there is nothing to look anything up in. Every label on the
+   * page rendered as its own key — a sidebar reading `menu.advertisements`,
+   * `common.search`, `reports.title`. It looks like a broken build, and it is
+   * what the QA round saw underneath the slow first paint.
+   *
+   * Until the first dictionary settles, a key is rendered as nothing: a label
+   * that has not arrived yet, which is the truth. Anything that is not shaped
+   * like a key still passes through, because `translate` is also how
+   * backend-supplied messages reach the page and those must never be
+   * swallowed. After that first load the old behaviour stands — a key with no
+   * entry shows itself, so a missing translation is visible rather than blank.
+   */
+  private static readonly KEY_SHAPE = /^[a-z0-9_]+(\.[a-z0-9_]+)+$/i;
+
+  private fallback(key: string): string {
+    return !this.settled() && I18nService.KEY_SHAPE.test(key) ? '' : key;
   }
 
   private detectInitial(): Lang {
@@ -103,8 +131,8 @@ export class I18nService {
 
   private load(lang: Lang) {
     this.http.get<Record<string, string>>(`assets/i18n/${lang}.json?v=${this.buildTag()}`).subscribe({
-      next: d => this.dict.set(d),
-      error: () => this.dict.set({})
+      next: d => { this.dict.set(d); this.settled.set(true); },
+      error: () => { this.dict.set({}); this.settled.set(true); }
     });
   }
 }

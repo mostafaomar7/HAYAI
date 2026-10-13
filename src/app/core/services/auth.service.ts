@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, finalize, shareReplay, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { SessionService } from './session.service';
 import { TokenService } from './token.service';
@@ -62,8 +62,28 @@ export class AuthService {
     );
   }
 
+  /**
+   * Two callers ask for the session on a cold dashboard load — `App`, so the
+   * name in the header is right, and `dashboardShellGuard`, so a non-admin
+   * never reaches the shell. Neither can drop its call: the guard must have an
+   * answer before the route opens, and `App` runs first with nothing to wait
+   * on. They fired about twenty milliseconds apart, which was two requests
+   * where one would do, and each one cross-origin with its own preflight.
+   *
+   * Only the in-flight request is shared, never the result. `me()` is also how
+   * the profile page re-reads the account after saving it, and a cached answer
+   * there would show the old name back to whoever just changed it.
+   */
+  private pendingMe: Observable<UserModel> | null = null;
+
   me(): Observable<UserModel> {
-    return this.api.get<UserModel>('/auth/me').pipe(tap(u => this.setUser(u)));
+    if (this.pendingMe) return this.pendingMe;
+    this.pendingMe = this.api.get<UserModel>('/auth/me').pipe(
+      tap(u => this.setUser(u)),
+      finalize(() => { this.pendingMe = null; }),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+    return this.pendingMe;
   }
 
   updateProfile(body: Partial<UserModel>): Observable<UserModel> {

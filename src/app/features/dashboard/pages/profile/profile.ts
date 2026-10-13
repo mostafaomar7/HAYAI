@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { downscaleImage } from '../../../../shared/utils/image-downscale.util';
 
 @Component({
   selector: 'app-profile',
@@ -49,13 +50,16 @@ export class Profile {
     });
   }
 
-  onFileSelected(event: Event) {
+  async onFileSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    this.selectedFile = file;
+    // Shrunk before it is held, not on the way out, so the preview is the same
+    // picture that will be stored. See the note in the utility: the header
+    // avatar is 42px wide and was fetching three quarters of a megabyte.
+    this.selectedFile = await downscaleImage(file);
     const reader = new FileReader();
     reader.onload = e => this.profileImage.set(String(e.target?.result ?? ''));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(this.selectedFile);
   }
 
   save() {

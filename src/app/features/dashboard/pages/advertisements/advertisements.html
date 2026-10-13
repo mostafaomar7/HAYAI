@@ -69,7 +69,21 @@
   </div>
 
   @if (loading()) {
-    <p style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</p>
+    <!-- A page of cards in the real grid, so the layout is settled before the
+         data lands instead of jumping when it does. -->
+    <div class="ads-grid" [attr.aria-label]="'common.loading' | t" aria-busy="true">
+      @for (i of placeholders; track i) {
+        <div class="ad-card">
+          <div class="card-image-wrapper">
+            <app-skeleton h="100%" radius="0" />
+          </div>
+          <div class="card-footer">
+            <app-skeleton w="16px" h="16px" />
+            <app-skeleton w="62%" h="12px" />
+          </div>
+        </div>
+      }
+    </div>
   } @else if (!adsList().length) {
     <p style="padding:24px;color:#6B7280;">{{ 'ads.no_ads' | t }}</p>
   } @else {

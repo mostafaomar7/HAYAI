@@ -81,7 +81,11 @@
 
     <div style="position:relative;">
       <div class="user-profile" style="cursor:pointer;" (click)="toggleUserMenu()">
-        <img [src]="userAvatar()" alt="User Avatar" class="avatar" />
+        <!-- Sized in the markup so the row does not reflow when it lands, and
+             deprioritised: it is a 42px decoration and it was competing for
+             the connection with the chunks and the first API calls. -->
+        <img [src]="userAvatar()" alt="" width="42" height="42" class="avatar"
+             decoding="async" fetchpriority="low" />
         <div class="user-info">
           <span class="user-name">{{ userName() }}</span>
           <span class="user-email">{{ userEmail() }}</span>

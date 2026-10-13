@@ -27,7 +27,24 @@
     </div>
   </header>
 
-  <section class="stats-grid">
+  <section class="stats-grid" [attr.aria-busy]="loading() ? 'true' : null">
+    @if (loading()) {
+      <!-- The cards used to render nothing at all until the figures arrived,
+           so the page opened with four empty frames and then snapped into
+           place. Placeholders of the same size hold the grid steady. -->
+      @for (i of placeholders; track i) {
+        <div class="stat-card">
+          <div class="card-header">
+            <app-skeleton w="36px" h="36px" radius="10px" />
+            <app-skeleton w="52%" h="12px" />
+          </div>
+          <div class="card-body">
+            <app-skeleton w="38%" h="26px" radius="8px" />
+            <app-skeleton w="56px" h="20px" radius="999px" />
+          </div>
+        </div>
+      }
+    } @else {
     @for (stat of stats(); track stat.id) {
       <div class="stat-card">
         <div class="card-header">
@@ -55,6 +72,7 @@
         </div>
       </div>
     }
+    }
   </section>
 
   <section class="charts-grid">
@@ -66,14 +84,18 @@
       <div class="bar-chart-mockup">
         <div class="bars-container">
           <div class="bars">
-            @for (item of usersByCategory()?.items ?? []; track item.label; let i = $index) {
-              <div class="bar-col">
-                <span class="bar-value">{{ formatValue(item.value) }}</span>
-                <div class="bar striped-blue"
-                  [style.height.%]="usersByCategoryHeights()[i]"
-                  [title]="item.label + ': ' + item.value"></div>
-                <span class="x-label">{{ item.label }}</span>
-              </div>
+            @if (loading()) {
+              <ng-container [ngTemplateOutlet]="chartBars" />
+            } @else {
+              @for (item of usersByCategory()?.items ?? []; track item.label; let i = $index) {
+                <div class="bar-col">
+                  <span class="bar-value">{{ formatValue(item.value) }}</span>
+                  <div class="bar striped-blue"
+                    [style.height.%]="usersByCategoryHeights()[i]"
+                    [title]="item.label + ': ' + item.value"></div>
+                  <span class="x-label">{{ item.label }}</span>
+                </div>
+              }
             }
           </div>
         </div>
@@ -87,14 +109,18 @@
       <div class="bar-chart-mockup">
         <div class="bars-container">
           <div class="bars">
-            @for (item of revenueByPlan()?.items ?? []; track item.label; let i = $index) {
-              <div class="bar-col">
-                <span class="bar-value">{{ formatValue(item.value) }}</span>
-                <div class="bar striped-blue"
-                  [style.height.%]="revenueByPlanHeights()[i]"
-                  [title]="item.label + ': ' + item.value"></div>
-                <span class="x-label">{{ item.label }}</span>
-              </div>
+            @if (loading()) {
+              <ng-container [ngTemplateOutlet]="chartBars" />
+            } @else {
+              @for (item of revenueByPlan()?.items ?? []; track item.label; let i = $index) {
+                <div class="bar-col">
+                  <span class="bar-value">{{ formatValue(item.value) }}</span>
+                  <div class="bar striped-blue"
+                    [style.height.%]="revenueByPlanHeights()[i]"
+                    [title]="item.label + ': ' + item.value"></div>
+                  <span class="x-label">{{ item.label }}</span>
+                </div>
+              }
             }
           </div>
         </div>
@@ -108,14 +134,18 @@
       <div class="line-chart-mockup">
         <div class="bars-container">
           <div class="bars">
-            @for (item of userGrowth()?.series ?? []; track item.label; let i = $index) {
-              <div class="bar-col">
-                <span class="bar-value">{{ formatValue(item.value) }}</span>
-                <div class="bar striped-blue"
-                  [style.height.%]="userGrowthHeights()[i]"
-                  [title]="item.label + ': ' + item.value"></div>
-                <span class="x-label">{{ item.label }}</span>
-              </div>
+            @if (loading()) {
+              <ng-container [ngTemplateOutlet]="chartBars" />
+            } @else {
+              @for (item of userGrowth()?.series ?? []; track item.label; let i = $index) {
+                <div class="bar-col">
+                  <span class="bar-value">{{ formatValue(item.value) }}</span>
+                  <div class="bar striped-blue"
+                    [style.height.%]="userGrowthHeights()[i]"
+                    [title]="item.label + ': ' + item.value"></div>
+                  <span class="x-label">{{ item.label }}</span>
+                </div>
+              }
             }
           </div>
         </div>
@@ -129,14 +159,18 @@
       <div class="line-chart-mockup">
         <div class="bars-container">
           <div class="bars">
-            @for (item of revenueOverTime()?.series ?? []; track item.label; let i = $index) {
-              <div class="bar-col">
-                <span class="bar-value">{{ formatValue(item.value) }}</span>
-                <div class="bar striped-blue"
-                  [style.height.%]="revenueOverTimeHeights()[i]"
-                  [title]="item.label + ': ' + item.value"></div>
-                <span class="x-label">{{ item.label }}</span>
-              </div>
+            @if (loading()) {
+              <ng-container [ngTemplateOutlet]="chartBars" />
+            } @else {
+              @for (item of revenueOverTime()?.series ?? []; track item.label; let i = $index) {
+                <div class="bar-col">
+                  <span class="bar-value">{{ formatValue(item.value) }}</span>
+                  <div class="bar striped-blue"
+                    [style.height.%]="revenueOverTimeHeights()[i]"
+                    [title]="item.label + ': ' + item.value"></div>
+                  <span class="x-label">{{ item.label }}</span>
+                </div>
+              }
             }
           </div>
         </div>
@@ -144,4 +178,15 @@
     </div>
 
   </section>
+
+  <!-- One shape for all four charts: bars of differing heights read as a chart
+       that has not drawn yet, where an empty frame reads as no data. -->
+  <ng-template #chartBars>
+    @for (h of chartPlaceholders; track $index) {
+      <div class="bar-col">
+        <app-skeleton w="60%" [h]="h" radius="4px 4px 0 0" />
+        <app-skeleton w="70%" h="10px" />
+      </div>
+    }
+  </ng-template>
 </div>
