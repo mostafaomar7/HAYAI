@@ -43,6 +43,7 @@
             <th>{{ 'audit.admin' | t }}</th>
             <th>{{ 'audit.method' | t }}</th>
             <th>{{ 'audit.path' | t }}</th>
+            <th>{{ 'audit.what' | t }}</th>
             <th>{{ 'audit.fields' | t }}</th>
             <th>{{ 'common.status' | t }}</th>
             <th>{{ 'audit.ip' | t }}</th>
@@ -50,15 +51,15 @@
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td class="table-hint" colspan="7">{{ 'common.loading' | t }}</td></tr>
+            <tr><td class="table-hint" colspan="8">{{ 'common.loading' | t }}</td></tr>
           } @else if (loadError()) {
-            <tr><td class="table-hint" colspan="7">{{ loadError()! | t }}</td></tr>
+            <tr><td class="table-hint" colspan="8">{{ loadError()! | t }}</td></tr>
           } @else if (!rows().length) {
-            <tr><td class="table-hint" colspan="7">{{ 'audit.empty' | t }}</td></tr>
+            <tr><td class="table-hint" colspan="8">{{ 'audit.empty' | t }}</td></tr>
           } @else {
             @for (row of rows(); track row.id) {
               <!-- A refused attempt is the row worth spotting, so it is tinted. -->
-              <tr [class.refused]="isRefused(row)">
+              <tr [class.refused]="isRefused(row)" [class.open]="isOpen(row)">
                 <td class="nowrap">{{ row.created_at | date:'medium' }}</td>
                 <td>
                   @if (row.admin) {
@@ -68,16 +69,74 @@
                 </td>
                 <td><span class="method" [attr.data-method]="row.method">{{ row.method }}</span></td>
                 <td class="path"><bdi dir="ltr">{{ shortPath(row) }}</bdi></td>
+                <!-- What the API understood the request to be, where it classified it. -->
+                <td class="what">
+                  @if (row.action) {
+                    <span class="action">{{ actionLabel(row) }}</span>
+                    @if (entityLabel(row)) {
+                      <span class="entity"><bdi dir="ltr">{{ entityLabel(row) }}</bdi></span>
+                    }
+                  } @else { — }
+                </td>
                 <td class="fields">
-                  <!-- Names only. The log never carries the values. -->
-                  @for (k of row.input_keys ?? []; track k) {
-                    <span class="chip"><bdi dir="ltr">{{ k }}</bdi></span>
-                  }
-                  @if (!(row.input_keys ?? []).length) { — }
+                  <!--
+                    The before/after values when the API recorded them, and the
+                    field names alone when it did not. A row with values is a
+                    button; a row without is plain text, so nothing invites a
+                    click that would open an empty panel.
+                  -->
+                  @if (hasChanges(row)) {
+                    <button type="button" class="changes-toggle" (click)="toggle(row)"
+                            [attr.aria-expanded]="isOpen(row)">
+                      <span class="caret" [class.down]="isOpen(row)" aria-hidden="true">›</span>
+                      {{ 'audit.changed_count' | t : { count: changes(row).length } }}
+                    </button>
+                  } @else if ((row.input_keys ?? []).length) {
+                    @for (k of row.input_keys ?? []; track k) {
+                      <span class="chip"><bdi dir="ltr">{{ k }}</bdi></span>
+                    }
+                  } @else { — }
                 </td>
                 <td><span class="status" [class.bad]="isRefused(row)">{{ row.status }}</span></td>
                 <td class="ip"><bdi dir="ltr">{{ row.ip || '—' }}</bdi></td>
               </tr>
+
+              @if (isOpen(row)) {
+                <tr class="changes-row">
+                  <td colspan="8">
+                    <table class="changes">
+                      <thead>
+                        <tr>
+                          <th>{{ 'audit.field' | t }}</th>
+                          <th>{{ 'audit.before' | t }}</th>
+                          <th>{{ 'audit.after' | t }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (c of changes(row); track c.key) {
+                          <tr [class.unchanged]="c.same">
+                            <td class="ch-key"><bdi dir="ltr">{{ c.key }}</bdi></td>
+                            <td class="ch-before">
+                              @if (c.before === null) {
+                                <span class="absent">{{ 'audit.not_set' | t }}</span>
+                              } @else {
+                                <bdi dir="auto">{{ c.before }}</bdi>
+                              }
+                            </td>
+                            <td class="ch-after">
+                              @if (c.after === null) {
+                                <span class="absent">{{ 'audit.removed' | t }}</span>
+                              } @else {
+                                <bdi dir="auto">{{ c.after }}</bdi>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              }
             }
           }
         </tbody>

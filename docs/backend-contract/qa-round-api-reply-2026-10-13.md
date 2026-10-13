@@ -213,6 +213,48 @@ Items we have raised that these two replies do not cover. Full detail in
 
 Item 10 is the only one of these that may be affecting people right now.
 
+## 11. `Timing-Allow-Origin` on API responses
+
+A QA round raised that real-user monitoring cannot see API timings. Checked:
+
+```
+curl -sI $API/auth/me -H "Origin: https://hayaihealthcare.com"   # no Timing-Allow-Origin
+```
+
+Without it, `performance.getEntriesByType('resource')` still gives us an entry
+for every API call, with `startTime`, `responseEnd` and `duration` — so the
+claim that timings are completely hidden is not right. What is hidden is
+`transferSize`, `encodedBodySize` and the connect/TTFB breakdown, all of which
+read as `0`. That is enough to see that a call was slow and not enough to see
+*why*, which is exactly the half that matters when something regresses.
+
+**What we are asking for:** `Timing-Allow-Origin: https://hayaihealthcare.com`
+on API responses. It exposes timing and size, not content, to one named origin.
+
+## 12. One aggregated analytics call — we looked, and we are not asking for it
+
+Raised with us as "the dashboard fires 7 analytics endpoints per view". The
+count is five, and we measured what they actually cost on a live load:
+
+```
+ 999 -> 1181 ( 182ms)  /admin/analytics/overview
+ 999 -> 1199 ( 200ms)  /admin/analytics/users-by-category
+1000 -> 1199 ( 199ms)  /admin/analytics/revenue-by-plan-type
+1000 -> 1199 ( 199ms)  /admin/analytics/user-growth
+1001 -> 1342 ( 341ms)  /admin/analytics/revenue-over-time
+
+serial would cost 1,121 ms      actual wall clock 343 ms
+```
+
+They already go out together, so the page waits for the slowest one, not for
+the sum. A single aggregated endpoint would save around 140 ms at best, and
+would cost you a new endpoint whose response shape five screens then depend on.
+**Not worth it** — we would rather you spent the time on item 10.
+
+The thing actually on the critical path in that trace is ours: nothing starts
+until `/auth/me` returns at ~973 ms, because it is fetched twice. That is item
+6, and the fix is written.
+
 **One of ours, for completeness.** The cold load above still shows `/auth/me`
 fetched twice. That is our duplicate, the one you answered as item 6, and the
 fix is written but not yet deployed — the measurement was taken against the

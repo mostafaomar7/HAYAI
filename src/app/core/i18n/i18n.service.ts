@@ -121,20 +121,32 @@ export class I18nService {
   }
 
   /**
-   * Per-deploy cache key for the dictionaries.
+   * Cache key for the dictionaries.
    *
    * Angular copies `public/` verbatim, so `en.json` keeps the same URL forever
    * while its contents change every release. Any browser holding a cached copy
    * keeps serving the old strings, and a hard reload does not dislodge it —
    * the file is fetched by XHR after bootstrap, not as part of the navigation.
    *
-   * The main bundle IS content-hashed, so its hash is a free token that moves
-   * on a deploy. It is a nudge, not the guarantee: a build that changes only
-   * translations can leave the bundle hash untouched. Correctness comes from
-   * the `no-cache` header on these files in `.htaccess`; this just retires the
-   * entries browsers cached back when they carried a one-hour lifetime.
+   * `src/server.ts` hashes the dictionary files at startup and stamps the hash
+   * into the page as `hayai-i18n-version`. That token moves if and only if a
+   * string actually changed, which is what lets the server answer these files
+   * with a year-long cache instead of revalidating on every page load — and
+   * because it is read off the files themselves, no build step can leave it
+   * stale.
+   *
+   * The fallback is the main bundle's own content hash, used under `ng serve`
+   * and anywhere the tag was not substituted. It is a weaker token — a build
+   * that changes only translations can leave the bundle hash untouched — but
+   * the server also refuses to cache a request whose token it does not
+   * recognise, so a wrong token costs a revalidation, never stale strings.
    */
   private buildTag(): string {
+    const stamped = this.document
+      .querySelector<HTMLMetaElement>('meta[name="hayai-i18n-version"]')?.content ?? '';
+    // An unsubstituted placeholder still reads as `{{I18N_VERSION}}`.
+    if (stamped && !stamped.includes('{{')) return stamped;
+
     const src = this.document.querySelector<HTMLScriptElement>('script[src*="main-"]')?.src ?? '';
     return /main-([A-Za-z0-9_-]+)\.js/.exec(src)?.[1] ?? 'dev';
   }

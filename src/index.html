@@ -21,6 +21,15 @@
        goes through the one container, and scripts/check-tracking.sh fails the
        build if a second copy appears. -->
   {{TRACKING_HEAD}}
+  <!-- Content hash of assets/i18n/*.json, stamped by src/server.ts from the
+       files on disk at startup. The dictionaries are fetched by XHR after
+       bootstrap, so they are not covered by the bundle's content hashing and
+       a cached copy cannot be dislodged by a reload. This tag is what lets
+       the server cache them for a year instead of revalidating every load:
+       the hash is derived from the file, so it cannot be stale. In `ng serve`
+       the placeholder is left as-is and the app falls back to the bundle
+       hash. -->
+  <meta name="hayai-i18n-version" content="{{I18N_VERSION}}">
   <!-- Inter was already the declared body font but never loaded; Poppins is the
        display face used by the landing page design. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

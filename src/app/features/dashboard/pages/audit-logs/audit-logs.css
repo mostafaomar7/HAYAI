@@ -60,12 +60,53 @@ tr.refused td { background: #FFFBFB; }
 .method[data-method="PUT"]    { background: #EFF6FF; color: #2563EB; }
 .method[data-method="DELETE"] { background: #FEF2F2; color: #B91C1C; }
 
-.path { font-family: Consolas, monospace; font-size: 12px; color: #374151; max-width: 320px; overflow-wrap: anywhere; }
-.fields { max-width: 300px; }
+/* `anywhere` also shrinks the column's min-content width to one character,
+   which is what split `/admin/advertisements` across two lines mid-word.
+   `break-word` breaks only a word that cannot fit on its own line. */
+.path { font-family: Consolas, monospace; font-size: 12px; color: #374151; min-width: 180px; max-width: 320px; overflow-wrap: break-word; }
+/* Adding the "What" column squeezed this one to 146px, which stacked the
+   field chips one per line and made every row three times as tall. The
+   table already scrolls sideways, so the column asks for its width. */
+.fields { min-width: 240px; max-width: 300px; }
 .chip {
   display: inline-block; background: #F1F5F9; color: #475569; border-radius: 5px;
   padding: 1px 6px; margin: 1px 3px 1px 0; font-size: 11px; font-family: Consolas, monospace;
 }
+.what { max-width: 230px; }
+.action { display: block; font-weight: 600; color: #1F2937; }
+.entity { display: block; margin-top: 2px; font-family: Consolas, monospace; font-size: 11px; color: #9CA3AF; }
+
+/* A row with recorded values is a button; one without is plain text. */
+.changes-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 6px;
+  padding: 3px 9px; font-family: inherit; font-size: 12px; font-weight: 600;
+  color: #2563EB; cursor: pointer; white-space: nowrap;
+}
+.changes-toggle:hover { background: #DBEAFE; }
+.changes-toggle:focus-visible { outline: 2px solid #2563EB; outline-offset: 1px; }
+.caret { display: inline-block; transition: transform .15s ease; font-size: 14px; line-height: 1; }
+.caret.down { transform: rotate(90deg); }
+/* The caret points along the reading direction, so it flips with the page. */
+:host-context([dir='rtl']) .caret { transform: rotate(180deg); }
+:host-context([dir='rtl']) .caret.down { transform: rotate(90deg); }
+
+tr.open > td { background: #F8FAFC; }
+.changes-row > td { padding: 0 20px 14px; background: #F8FAFC; border-bottom: 1px solid #F1F5F9; }
+table.changes { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
+table.changes th {
+  padding: 7px 12px; font-size: 11px; font-weight: 600; color: #6B7280;
+  background: #FCFDFE; border-bottom: 1px solid #F1F5F9; text-align: start; white-space: nowrap;
+}
+table.changes td { padding: 7px 12px; font-size: 12px; border-bottom: 1px solid #F8FAFC; vertical-align: top; }
+table.changes tr:last-child td { border-bottom: 0; }
+.ch-key { font-family: Consolas, monospace; color: #475569; white-space: nowrap; }
+.ch-before { color: #9A3412; overflow-wrap: break-word; }
+.ch-after { color: #047857; overflow-wrap: break-word; }
+/* A field the API logged on both sides without actually changing it. */
+tr.unchanged .ch-before, tr.unchanged .ch-after { color: #9CA3AF; }
+.absent { color: #9CA3AF; font-style: italic; }
+
 .status { font-variant-numeric: tabular-nums; font-weight: 600; color: #047857; }
 .status.bad { color: #B91C1C; }
 .ip { font-family: Consolas, monospace; font-size: 12px; color: #6B7280; white-space: nowrap; }

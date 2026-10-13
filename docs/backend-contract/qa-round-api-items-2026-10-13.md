@@ -370,3 +370,31 @@ dropped from the response, so nothing can read it and be wrong.
 | 8 | `optional_bool` settings accept any string | the force-update switch takes `"no"` and stores something |
 | 9 | advert search covers the owner's name and nothing else | a title cannot be searched for |
 | 10 | advert `status` never expires — all 5 ended, all 5 say `active` | **ask: are the apps still serving them?** |
+| 11 | API responses carry no `Timing-Allow-Origin` | we can see that an API call was slow, not why |
+
+## 11. `Timing-Allow-Origin` on API responses
+
+Raised in the QA round as "API timings are hidden from RUM". Measured:
+
+```bash
+curl -sI "$API/auth/me" -H "Origin: https://hayaihealthcare.com"
+# no Timing-Allow-Origin header
+```
+
+Not as total as the report suggests. `performance.getEntriesByType('resource')`
+still gives an entry per API call with `startTime`, `responseEnd` and
+`duration` — that is how we measured the analytics calls above. What comes
+back as `0` is `transferSize`, `encodedBodySize`, and the DNS / connect /
+TTFB breakdown. So we can see a call was slow and not where the time went,
+which is the half that matters when something regresses in production.
+
+**Asked for:**
+
+```
+Timing-Allow-Origin: https://hayaihealthcare.com
+```
+
+It exposes timing and transfer size to one named origin. It exposes no
+response content, and it is not a CORS relaxation — a request that was going
+to be refused is still refused.
+

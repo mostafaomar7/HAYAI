@@ -32,8 +32,8 @@ import {
 import express, { NextFunction, Request, Response } from 'express';
 import compression from 'compression';
 import { join } from 'node:path';
-import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
 import { ATTRIBUTION_PARAMS, careCategoryOf, safePageLocation } from './app/features/site/tracking-params';
 import { Readable } from 'node:stream';
 
@@ -376,9 +376,17 @@ app.get('/', (req, res) => {
 });
 
 /* ------------------------------------------------------------------------
- * Static build output. Hashed bundles are immutable for a year; other public
- * files (logo, favicon, i18n dictionaries) are revalidated so a deploy shows
- * up immediately — the dashboard relies on fresh `assets/i18n/*.json`.
+ * Static build output. Hashed bundles are immutable for a year; everything
+ * else is revalidated so a deploy shows up immediately.
+ *
+ * The i18n dictionaries are the one interesting case. Their URL is fixed
+ * while their contents change every release, so they used to be sent
+ * `no-cache` — correct, but it costs a revalidation round trip on every
+ * single page load. They now carry `?v=<i18nVersion()>`, a hash of the files
+ * themselves, and a request presenting the current token can be cached for a
+ * year: if a string changes the token changes and the URL is new. A request
+ * with no token, or an old one, still revalidates — so a stale bookmark, a
+ * direct fetch or an older tab cannot be pinned to yesterday's strings.
  * --------------------------------------------------------------------- */
 app.use(
   express.static(browserDistFolder, {
@@ -388,7 +396,12 @@ app.use(
       if (/-[A-Z0-9]{8}\.(js|css|mjs)$/i.test(filePath) || /[\\/]media[\\/]/.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       } else if (/[\\/]i18n[\\/].+\.json$/.test(filePath)) {
-        res.setHeader('Cache-Control', 'no-cache');
+        const token = i18nVersion();
+        const asked = new URL(res.req.url ?? '/', 'http://x').searchParams.get('v');
+        res.setHeader(
+          'Cache-Control',
+          token && asked === token ? 'public, max-age=31536000, immutable' : 'no-cache'
+        );
       } else {
         res.setHeader('Cache-Control', 'public, max-age=86400');
       }
@@ -458,7 +471,8 @@ app.use((req, res, next) => {
       const body = withNonce(
         rendered
           .replaceAll('{{TRACKING_HEAD}}', isSite ? trackingHead(res, rendered, response.status) : '')
-          .replaceAll('{{TRACKING_BODY}}', isSite ? trackingBody(res) : ''),
+          .replaceAll('{{TRACKING_BODY}}', isSite ? trackingBody(res) : '')
+          .replaceAll('{{I18N_VERSION}}', i18nVersion()),
         nonce
       );
       res.status(response.status);
@@ -769,6 +783,47 @@ function deferCssWithNonce(html: string, nonce: string): string {
 }
 
 /**
+ * One token covering every translation dictionary, from their contents.
+ *
+ * `assets/i18n/*.json` is copied verbatim out of `public/`, so unlike the
+ * bundles its URL never changes while its contents change every release. The
+ * files are fetched by XHR after bootstrap, which means a browser holding a
+ * cached copy keeps serving the old strings and a hard reload does not shift
+ * it. Until now the answer was `Cache-Control: no-cache`, which is correct but
+ * costs a revalidation round trip on every page load for a file that changes
+ * a few times a month.
+ *
+ * Hashing the files instead gives a token that moves if and only if a string
+ * changed, so the dictionaries can be cached for a year under `?v=<token>`.
+ *
+ * Read from disk at startup rather than written by a build step on purpose: a
+ * build step can be skipped, and a stale token here would pin browsers to old
+ * translations for a year. This cannot be stale — it is the file.
+ */
+let i18nVersionValue: string | null = null;
+function i18nVersion(): string {
+  if (i18nVersionValue === null) {
+    try {
+      const dir = join(browserDistFolder, 'assets', 'i18n');
+      const hash = createHash('sha256');
+      // Sorted, so the token does not depend on the order the directory
+      // happens to be read in.
+      for (const name of readdirSync(dir).filter(n => n.endsWith('.json')).sort()) {
+        hash.update(name);
+        hash.update(readFileSync(join(dir, name)));
+      }
+      i18nVersionValue = hash.digest('hex').slice(0, 16);
+    } catch {
+      // No dictionaries on disk (dev server, or a build that did not copy
+      // them). An empty token makes the client fall back and the server keep
+      // revalidating, which is the behaviour this replaced.
+      i18nVersionValue = '';
+    }
+  }
+  return i18nVersionValue;
+}
+
+/**
  * The client shell. Read once: it is a build artefact and cannot change while
  * the process runs.
  *
@@ -785,7 +840,8 @@ function adminShell(): string {
   if (adminShellHtml === null) {
     adminShellHtml = readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8')
       .replaceAll('{{TRACKING_HEAD}}', '')
-      .replaceAll('{{TRACKING_BODY}}', '');
+      .replaceAll('{{TRACKING_BODY}}', '')
+      .replaceAll('{{I18N_VERSION}}', i18nVersion());
   }
   return adminShellHtml;
 }
