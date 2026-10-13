@@ -371,6 +371,9 @@ dropped from the response, so nothing can read it and be wrong.
 | 9 | advert search covers the owner's name and nothing else | a title cannot be searched for |
 | 10 | advert `status` never expires — all 5 ended, all 5 say `active` | **ask: are the apps still serving them?** |
 | 11 | API responses carry no `Timing-Allow-Origin` | we can see that an API call was slow, not why |
+| 12 | a category whose derived slug is taken returns **500** | the admin sees "Server error. Please try again later." |
+| 13 | a CTA placement cannot be removed once set | `placement: null` is refused, and nothing else clears it |
+| 14 | settings published on the website have no format validation | `bad-email` was stored as the public contact address |
 
 ## 11. `Timing-Allow-Origin` on API responses
 
@@ -398,3 +401,78 @@ It exposes timing and transfer size to one named origin. It exposes no
 response content, and it is not a CORS relaxation — a request that was going
 to be refused is still refused.
 
+## 12. A duplicate category slug returns 500 when the slug was derived
+
+The same collision gives two completely different answers depending on whether
+we sent the slug or let you derive it. Measured on production, 2026-10-13:
+
+```bash
+# we send the slug ourselves
+POST /admin/website/categories {"kind":"product","name_en":"ZZ different name",
+                                "slug_en":"zz-probe-unique-20261013"}
+422 {"errors":{"slug_en":["The slug en has already been taken."]}}      correct
+
+# we leave it blank and you derive it from the name
+POST /admin/website/categories {"kind":"product","name_en":"ZZ probe unique 20261013"}
+500 {"message":"Server error. Please try again later."}                 the bug
+```
+
+The derived slug skips the uniqueness rule and the unique index raises instead.
+The admin gets a red box saying "Server error. Please try again later." with no
+field marked and nothing to act on, which is how it reached QA as a bug.
+
+**What we would like:** the derived slug validated the same way the sent one is,
+so this answers 422 with `slug_en` named. Appending `-2` instead would also be
+defensible, but a 422 is better — the admin chose that name and should be told
+it is taken rather than quietly given a different address.
+
+Our form now predicts the collision and blocks it before you are asked, against
+the list already on screen. That covers the common case, not two admins saving
+at once, and it only works because our slug derivation matches yours — checked
+over accents, apostrophes, punctuation, underscores and repeated spaces, seven
+samples, byte-identical on both sides. We would rather not depend on that
+staying true.
+
+Slugs are unique per `kind`, which we confirmed by creating "ZZ Kind Probe" as
+both a product and an article category. Our check is scoped the same way.
+
+## 13. A CTA placement cannot be removed once it is set
+
+`placement` is optional on the way in — a create with the key absent succeeds —
+but there is no value that clears it afterwards:
+
+```bash
+POST   /admin/website/ctas  (no placement key)        201   created
+PATCH  /admin/website/ctas/8 {"placement":null}       422   "The selected placement is invalid."
+PATCH  /admin/website/ctas/8 {"placement":""}         422   "The selected placement is invalid."
+```
+
+So an admin who picks a placement by mistake cannot undo it. **Asked for:**
+`null` accepted as "no placement", matching what absence already means.
+
+This also caused the QA report: our form offers "—" as the default and was
+sending it as `null`, which came back as a validation error on a field with no
+asterisk. We now omit the key instead, so creating works — but clearing still
+does not.
+
+## 14. Settings published on the website accept any string
+
+`organization.email` is typed `"string"` and stored without a format check. On
+2026-10-12 `bad-email` was saved through the dashboard and the form reported
+"Settings saved". That value is rendered in the site footer and in the
+Organization schema that search engines read.
+
+```json
+{"key":"organization.email","type":"string","value":"islam@hayaihealthcare.com",
+ "description":"Public contact email."}
+```
+
+**Asked for:** a real type on the keys that are published — `email` for
+`organization.email`, `phone` for `organization.phone` and
+`organization.whatsapp`, `url` for the legal links — and a 422 when the value
+does not fit. The `type` field already exists in your payload and we render
+from it; it is the value of `type` that is wrong, not the mechanism.
+
+We have added the same checks on our side, keyed by setting name rather than by
+`type` precisely because `type` is the part that is wrong. They are a guard at
+the keyboard, not a boundary: anyone can still PATCH the value with curl.

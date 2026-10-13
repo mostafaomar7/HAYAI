@@ -297,7 +297,12 @@ export class Ctas {
       sublabel_ar: nullIfEmpty(d.sublabel_ar),
       style: d.style || null,
       icon: nullIfEmpty(d.icon),
-      placement: d.placement || null,
+      // Omitted when empty, never sent as null. The API rejects
+      // `placement: null` and `placement: ""` with "The selected placement is
+      // invalid" but accepts the key being absent — measured 2026-10-13 — so
+      // sending null was turning "no placement", which the form offers as its
+      // default, into a validation error with no asterisk to explain it.
+      ...(d.placement ? { placement: d.placement } : {}),
       tracking_key: nullIfEmpty(d.tracking_key),
       is_enabled: d.is_enabled,
       phone: t === 'phone' ? nullIfEmpty(d.phone) : null,

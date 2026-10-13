@@ -450,7 +450,14 @@ export class FormBuilder {
 
     if (!this.isSystem()) {
       if (!s.key.trim()) e['key'] = req;
-      else if (!/^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)*$/.test(s.key.trim())) e['key'] = 'web.forms.err.form_key';
+      // Hyphens, not underscores — and not both, which is what this used to
+      // allow. The API takes `demo-request` and refuses `demo_request` with
+      // "The key field format is invalid", measured 2026-10-13 against
+      // production, where `abc-def`, `abc123` and `123abc` were accepted and
+      // `ABC`, `-abc`, `abc-` and `abc--def` were not. A *field* key is the
+      // other way round and is snake_case; the two rules are genuinely
+      // different and the checks below keep them apart.
+      else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s.key.trim())) e['key'] = 'web.forms.err.form_key';
       if (!s.type) e['type'] = req;
     }
     if (!s.name_en.trim()) e['name_en'] = req;

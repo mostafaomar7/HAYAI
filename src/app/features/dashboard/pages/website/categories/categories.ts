@@ -226,6 +226,26 @@ export class Categories {
     return this.errors()[field] ?? null;
   }
 
+  /** The category whose slug clashes, so the message can name it. */
+  clashingName = signal<string>('');
+
+  /**
+   * The category already using this slug within the same kind, if any.
+   *
+   * Compared against the loaded list, which is every category of this kind —
+   * the screen does not page. The row being edited is skipped, so saving it
+   * unchanged is not reported as a clash with itself.
+   */
+  private slugTakenBy(candidate: string): string {
+    if (!candidate) return '';
+    const kind = this.editing()?.kind ?? this.draft().kind;
+    const selfId = this.editing()?.id ?? -1;
+    const hit = this.all().find(
+      c => c.id !== selfId && c.kind === kind && (c.slug_en ?? '').toLowerCase() === candidate.toLowerCase()
+    );
+    return hit ? (hit.name_en || hit.name_ar || hit.slug_en || '') : '';
+  }
+
   localeHasError(l: Locale): boolean {
     const e = this.errors();
     return ['name_', 'slug_', 'description_'].some(p => !!e[p + l]);
@@ -257,6 +277,25 @@ export class Categories {
     const slug = /^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u;
     if (body.slug_en && !slug.test(body.slug_en)) e['slug_en'] = 'web.categories.err_slug';
     if (body.slug_ar && !slug.test(body.slug_ar)) e['slug_ar'] = 'web.categories.err_slug';
+    // A slug that is already taken, before the API is asked.
+    //
+    // The API answers a duplicate slug with a clean 422 only when the slug was
+    // sent to it. When the field is left blank it derives one from the name,
+    // does not check it, and the unique index raises — measured on production
+    // 2026-10-13: a second category with the same name returns 500 "Server
+    // error. Please try again later." with nothing to show the admin.
+    //
+    // So the collision is caught here instead, against the list already on
+    // screen. Slugs are unique per kind, not globally — "ZZ Kind Probe" was
+    // accepted as both a product and an article category — so the comparison
+    // is scoped the same way.
+    if (!e['name_en'] && !e['slug_en']) {
+      const taken = this.slugTakenBy(body.slug_en || slugify(body.name_en));
+      if (taken) {
+        e[body.slug_en ? 'slug_en' : 'name_en'] = 'web.categories.err_slug_taken';
+        this.clashingName.set(taken);
+      }
+    }
     this.errors.set(e);
     this.formError.set(null);
     if (Object.keys(e).length) {
@@ -337,4 +376,24 @@ export class Categories {
   onSearch(v: string): void {
     this.q.set(v.trim());
   }
+}
+
+/**
+ * The slug the API derives from a name when the slug field is left blank.
+ *
+ * Checked against production on 2026-10-13 over accents, apostrophes,
+ * punctuation, underscores and repeated spaces — "ZZ Probe's Gamma",
+ * "ZZ Probe Delta & Co.", "ZZ Probe Ãccent" and four more all produced
+ * byte-identical slugs on both sides. Nothing here is sent to the API; it
+ * exists only to predict the collision the API would raise on.
+ */
+function slugify(text: string): string {
+  return text
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9؀-ۿ]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

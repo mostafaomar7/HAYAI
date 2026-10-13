@@ -285,7 +285,9 @@ export class WebsiteSettings {
       const row = byKey.get(k);
       if (!row) continue;
       try {
-        body[k] = this.fromDraft(row, this.draft()[k]);
+        const value = this.fromDraft(row, this.draft()[k]);
+        const bad = formatProblem(k, value);
+        if (bad) local[k] = bad; else body[k] = value;
       } catch {
         local[k] = 'web.settings.invalid_json';
       }
@@ -353,4 +355,39 @@ export class WebsiteSettings {
       }
     });
   }
+}
+
+/**
+ * Format checks for the handful of settings that are published, keyed by name.
+ *
+ * `organization.email` reaches the public site footer and the Organization
+ * schema that search engines read. The API types it `"string"` and stores
+ * whatever arrives: `bad-email` was saved on production on 2026-10-12 and the
+ * form reported "Settings saved", which is what this is here to stop. The
+ * backend has been asked to type these keys properly; until then this is the
+ * only thing standing between a typo and the live site.
+ *
+ * Matched on the key, not on `row.type`, precisely because the type is the
+ * part that is wrong. Nothing is rejected that the API would accept — these
+ * are stricter, and a value that passes here is still the API's to judge.
+ */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// E.164-ish: an optional +, then 7 to 15 digits, with spaces and dashes
+// tolerated because that is how a phone number is written down.
+const PHONE = /^\+?[\d][\d\s-]{5,20}$/;
+
+function formatProblem(key: string, value: unknown): string | null {
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const v = value.trim();
+  if (/(^|\.)email$/.test(key) && !EMAIL.test(v)) return 'web.settings.err_email';
+  if (/(^|\.)(phone|whatsapp)$/.test(key) && !PHONE.test(v)) return 'web.settings.err_phone';
+  if (/(^|\.)url$/.test(key) || /_url$/.test(key)) {
+    try {
+      const u = new URL(v);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return 'web.settings.err_url';
+    } catch {
+      return 'web.settings.err_url';
+    }
+  }
+  return null;
 }
