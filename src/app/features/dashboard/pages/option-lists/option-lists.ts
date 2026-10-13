@@ -340,6 +340,70 @@ export class OptionLists {
     this.formError.set(null);
     this.saving.set(true);
 
+    // Nothing stops a second row with the same name. Measured against the live
+    // API on 2026-10-13: posting "ZZ Duplicate Probe" twice, identical in both
+    // languages, gave ids 33 and 34 with codes `zz_duplicate_probe` and
+    // `zz_duplicate_probe_2`. Only the code is kept unique, so the doctor
+    // signup form ends up offering the same specialty twice with no way to
+    // tell them apart.
+    //
+    // The whole list is fetched rather than the page on screen: a duplicate
+    // two pages down is still a duplicate, and these lists are a hundred-odd
+    // rows. If the check itself fails we go ahead and save — a network hiccup
+    // should not stand between an admin and their work, and that leaves us
+    // exactly where we were before.
+    this.svc.list(config, { per_page: 'all' }).subscribe({
+      next: existing => {
+        const clash = this.findDuplicate(config, draft, existing.items);
+        if (clash) {
+          this.saving.set(false);
+          this.fieldErrors.set(clash);
+          return;
+        }
+        this.submit(config, draft);
+      },
+      error: () => this.submit(config, draft)
+    });
+  }
+
+  /** Trim, collapse runs of whitespace, fold case. Arabic is unaffected by the last. */
+  private normaliseName(value: string | null | undefined): string {
+    return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  /**
+   * The field errors for a name already taken, or null when it is free.
+   * Both languages are checked: two rows reading the same in Arabic are just
+   * as unusable in the app as two reading the same in English.
+   */
+  private findDuplicate(
+    config: OptionListConfig,
+    draft: Draft,
+    rows: OptionRow[]
+  ): Record<string, string> | null {
+    const others = rows.filter(row => row.id !== draft.id);
+    const errors: Record<string, string> = {};
+
+    if (config.bilingual) {
+      const en = this.normaliseName(draft.name_en);
+      const ar = this.normaliseName(draft.name_ar);
+      if (others.some(row => this.normaliseName(row.name_en) === en)) {
+        errors['name_en'] = 'lists.duplicate_name_en';
+      }
+      if (others.some(row => this.normaliseName(row.name_ar) === ar)) {
+        errors['name_ar'] = 'lists.duplicate_name_ar';
+      }
+    } else {
+      const name = this.normaliseName(draft.name);
+      if (others.some(row => this.normaliseName(row.name) === name)) {
+        errors['name'] = 'lists.duplicate_name';
+      }
+    }
+
+    return Object.keys(errors).length ? errors : null;
+  }
+
+  private submit(config: OptionListConfig, draft: Draft) {
     const body = config.hasLogo ? this.buildForm(config, draft) : this.buildJson(config, draft);
     const req$ = draft.id === null
       ? this.svc.create(config, body)

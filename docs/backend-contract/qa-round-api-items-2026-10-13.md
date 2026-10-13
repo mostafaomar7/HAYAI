@@ -129,6 +129,33 @@ add_header Strict-Transport-Security "max-age=31536000" always;
 subdomain of hayaihealthcare.com serves HTTPS. It is a year-long commitment that
 no deploy can undo, so it is a decision to take on purpose rather than inherit.
 
+## 5. Option lists accept duplicate names
+
+BUG-29. Only `code` is kept unique; the names are not checked at all.
+Reproduced on 2026-10-13 against the live API with a throwaway row, since
+deleted — the same body posted twice, identical in both languages:
+
+```
+POST /admin/doctor/specialties  {"name_en":"ZZ Duplicate Probe","name_ar":"فحص التكرار"}
+    -> id 33, code "zz_duplicate_probe"
+
+POST /admin/doctor/specialties  {"name_en":"ZZ Duplicate Probe","name_ar":"فحص التكرار"}
+    -> id 34, code "zz_duplicate_probe_2"      ← accepted
+```
+
+The suffix keeps the database happy and leaves the doctor signup form offering
+the same specialty twice, with nothing on screen to tell them apart. Whichever
+one a doctor picks is a coin toss, and the two then report separately.
+
+The dashboard now checks every name against the whole list before saving, in
+both languages. That is a form guard and no more: two admins saving at the same
+moment still get through, and so does anything posted with curl.
+
+**What we are asking for:** a unique index on the name columns, per list, and a
+422 rather than a silent `_2`. It applies to every list behind
+`/admin/doctor/specialties`, `/admin/doctor/subspecialties` and the rest of the
+option lists, not only this one.
+
 ---
 
 ## Summary
@@ -139,3 +166,4 @@ no deploy can undo, so it is a decision to take on purpose rather than inherit.
 | 2 | advert response omits the owner | blocks a proper fix, workaround in place |
 | 3 | `redirect_link` unvalidated server-side | the apps open these links |
 | 4 | no HSTS on the API host | one nginx line |
+| 5 | option lists accept duplicate names | the signup form shows the same option twice |
