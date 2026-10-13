@@ -1,0 +1,13 @@
+<div class="page-container">
+  <section class="not-found-card">
+    <div class="code">404</div>
+    <h2>{{ 'notfound.title' | t }}</h2>
+    <p class="lead">{{ 'notfound.text' | t }}</p>
+    <p class="path" dir="ltr">{{ path }}</p>
+
+    <div class="actions">
+      <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.back' | t }}</button>
+      <a class="btn-primary" routerLink="/dashboard">{{ 'notfound.go_home' | t }}</a>
+    </div>
+  </section>
+</div>

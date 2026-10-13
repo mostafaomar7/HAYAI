@@ -401,4 +401,14 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/notification-history/notification-history').then(m => m.NotificationHistory)
   },
+  // Last, and it has to be last: a dashboard URL that matches nothing stops
+  // here instead of falling through to the app's top-level wildcard. That
+  // wildcard redirects, and the redirect is resolved on the server, which
+  // cannot see a session in localStorage and so answered `302 /` — landing a
+  // signed-in admin on the public marketing site.
+  {
+    path: '**',
+    data: { title: 'notfound.title' },
+    loadComponent: () => import('./pages/not-found/not-found').then(m => m.DashboardNotFound)
+  }
 ];
