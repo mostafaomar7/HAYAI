@@ -40,6 +40,17 @@ fi
 for URL in "$@"; do
   H=$(curl -fsS --max-time 30 "$URL" 2>/dev/null) || { echo "FAIL $URL (request failed)"; FAILED=1; continue; }
 
+  # 0. No placeholder survived to the browser. Always checked, on every URL.
+  # The two placeholders live in src/index.html and are substituted while the
+  # page is rendered. A path that serves the shell without that pass prints
+  # them as visible text in the top-left corner, which is how this check came
+  # to exist.
+  if grep -q "{{TRACKING_" <<<"$H"; then
+    echo "FAIL $URL — a tracking placeholder reached the browser unsubstituted"
+    FAILED=1
+    continue
+  fi
+
   # 1. Nothing hard-coded. Always checked.
   DIRECT=$(grep -oE "gtag/js\?id=G-|fbevents\.js|clarity\.ms/tag|connect\.facebook\.net|hotjar" <<<"$H" | wc -l | tr -d ' ')
   if [[ "$DIRECT" -ne 0 ]]; then

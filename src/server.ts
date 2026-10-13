@@ -769,13 +769,23 @@ function deferCssWithNonce(html: string, nonce: string): string {
 }
 
 /**
- * The client shell, with the deferred-CSS handler removed. Read once: it is
- * a build artefact and cannot change while the process runs.
+ * The client shell. Read once: it is a build artefact and cannot change while
+ * the process runs.
+ *
+ * `index.csr.html` is built straight from `src/index.html`, so it still holds
+ * the two tracking placeholders. The rendered path substitutes them; this one
+ * never did, so every unknown URL printed the literal text `{{TRACKING_HEAD}}
+ * {{TRACKING_BODY}}` into the top-left of the page — `{{TRACKING_BODY}}` sits
+ * before `<app-root>`, and the one in `<head>` is text, so the parser moves it
+ * into the body as well. Stripped rather than filled: this shell boots the
+ * admin app, which is an internal tool and is not measured.
  */
 let adminShellHtml: string | null = null;
 function adminShell(): string {
   if (adminShellHtml === null) {
-    adminShellHtml = readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8');
+    adminShellHtml = readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8')
+      .replaceAll('{{TRACKING_HEAD}}', '')
+      .replaceAll('{{TRACKING_BODY}}', '');
   }
   return adminShellHtml;
 }
