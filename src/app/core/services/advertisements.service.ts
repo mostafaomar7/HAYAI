@@ -17,6 +17,10 @@ export interface Advertisement {
   clicks_count: number;
   provider_type?: string;
   owner_id?: number;
+  /** Both arrived with the API change we asked for; see the backend notes. */
+  owner_name?: string | null;
+  title?: string | null;
+  description?: string | null;
   created_at: string;
   updated_at: string;
 }

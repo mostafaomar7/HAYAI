@@ -50,7 +50,12 @@ the old way.
    instead of storing the mismatch. A validation error would have caught this on
    the first try instead of silently reassigning adverts for weeks.
 
-## 2. `GET /admin/advertisements/{id}` does not return the owner
+## 2. `GET /admin/advertisements/{id}` does not return the owner — **done, thank you**
+
+Checked again on 2026-10-13 and both `owner_id` and `owner_name` are now on the
+single-advert response *and* on the list. The edit form shows the real owner,
+and the list shows who each advert belongs to. Nothing further needed here; the
+rest of this section is kept for the record.
 
 Also BUG-21. The payload names the *kind* of owner and never *which* one:
 
@@ -268,6 +273,31 @@ Worth confirming separately: that `"no"` and `"0"` were each read as `false`
 rather than as PHP truthiness. We did not keep probing, because every probe
 writes.
 
+## 9. Advertisement search only matches the owner's name
+
+BUG-19. `GET /admin/advertisements?search=` looks at one field. Measured on
+2026-10-13 against the five live adverts — advert 5 is titled "Test",
+described "Hdhdus ssbjj", owned by "clinic 22" and links to
+`https://youtu.be/G0RCe4YQzwo`:
+
+```
+search=clinic 22   -> 1 result  (advert 5)    <- the owner's name
+search=Test        -> 0 results               <- its own title
+search=Hdhdus      -> 0 results               <- its own description
+search=youtu.be    -> 0 results               <- its own link
+search=20%         -> 0 results               <- advert 6's title
+```
+
+The QA report filed it as "search doesn't match visible link text", and until
+today the link was the only text on the card, so the one thing on screen was
+the one thing not searched. We have put the title and the owner on the card,
+which makes the search at least consistent with what is shown — but a title
+still cannot be searched for, and a title is what an advert is called.
+
+**What we are asking for:** `search` over `title`, `description` and
+`redirect_link` as well as the owner's name. The link matters on its own: it is
+how somebody finds every advert pointing at a campaign URL that has moved.
+
 ---
 
 ## Summary
@@ -275,10 +305,11 @@ writes.
 | # | Item | Severity |
 |---|---|---|
 | 1 | `owner_id` mismatch stored silently — **existing data affected** | needs checking now |
-| 2 | advert response omits the owner | blocks a proper fix, workaround in place |
+| 2 | advert response omits the owner | **done — shipped, verified 2026-10-13** |
 | 3 | `redirect_link` unvalidated server-side | the apps open these links |
 | 4 | no HSTS on the API host | one nginx line |
 | 5 | option lists accept duplicate names | the signup form shows the same option twice |
 | 6 | `Access-Control-Max-Age: 0` — a preflight per request, forever | one config line |
 | 7 | avatars stored at 762 KB for a 42px circle | resize on upload; caching is a smaller follow-up |
 | 8 | `optional_bool` settings accept any string | the force-update switch takes `"no"` and stores something |
+| 9 | advert search covers the owner's name and nothing else | a title cannot be searched for |

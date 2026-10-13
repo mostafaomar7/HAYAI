@@ -85,12 +85,20 @@
               <span class="status-badge">{{ item.status }}</span>
             </div>
 
+            <!-- The line next to a map pin had `location_label || name`, so an
+                 organisation with no location was shown as being located at
+                 itself — the same words twice on one card, one of them above a
+                 pin. Nothing is known, so nothing is claimed. -->
             <div class="card-info-row">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span class="info-text">{{ item.location_label || item.name }}</span>
+              @if (item.location_label) {
+                <span class="info-text">{{ item.location_label }}</span>
+              } @else {
+                <span class="info-text muted">{{ 'charitable.no_location' | t }}</span>
+              }
             </div>
 
             <div class="card-stats-row">

@@ -107,6 +107,17 @@
             </div>
           </div>
 
+          <!-- The card used to be a picture and a raw URL, so the one piece
+               of text on it was the one field the search does not look at,
+               and the title and the owner — which it does look at — were
+               nowhere. Searching for what is on screen found nothing. -->
+          <div class="card-heading">
+            <span class="ad-title">{{ ad.title || ('ads.untitled' | t) }}</span>
+            @if (ad.owner_name) {
+              <span class="ad-owner">{{ ad.owner_name }}</span>
+            }
+          </div>
+
           <div class="card-footer">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

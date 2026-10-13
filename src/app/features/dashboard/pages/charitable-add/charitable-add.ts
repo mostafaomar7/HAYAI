@@ -3,6 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { apiErrorText } from '../../../../shared/utils/api-error.util';
 import { CharitableService } from '../../../../core/services/charitable.service';
 import { ContactItem, DEFAULT_SCHEDULE, ScheduleSlot, Weekday } from '../../../../core/models/scheduled-entity.model';
 import {
@@ -13,6 +14,7 @@ import {
   appendServices
 } from '../../../../shared/utils/form-data.util';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-charitable-add',
@@ -26,12 +28,15 @@ export class CharitableAdd {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private svc = inject(CharitableService);
+  private i18n = inject(I18nService);
 
   id = signal<number | null>(null);
   isEdit = computed(() => this.id() !== null);
   loading = signal(false);
   saving = signal(false);
   errorMessage = signal<string | null>(null);
+  /** Flipped on the first save, so the form is not red before it is tried. */
+  showValidation = signal(false);
   /** Set when the organisation behind this URL could not be read — see the
    *  same field on the advertisement form for why an empty one is worse. */
   loadError = signal<string | null>(null);
@@ -142,8 +147,18 @@ export class CharitableAdd {
   }
 
   save() {
-    this.saving.set(true);
+    this.showValidation.set(true);
     this.errorMessage.set(null);
+
+    // The name is the only thing the API insists on, and the form never said
+    // so. Pressing save on an empty form spent a round trip to be told
+    // "Validation failed" with nothing to act on.
+    if (!this.name.trim()) {
+      this.errorMessage.set(this.i18n.translate('charitable.name_required'));
+      return;
+    }
+
+    this.saving.set(true);
 
     const form = new FormData();
     appendScalar(form, 'name', this.name);
@@ -164,7 +179,9 @@ export class CharitableAdd {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.errorMessage.set(err.error?.message ?? 'Save failed');
+        // The field messages, not just the heading: a 422 here answers
+        // "Validation failed" at the top and names the field underneath.
+        this.errorMessage.set(apiErrorText(err, this.i18n.translate('charitable.save_failed')));
       }
     });
   }

@@ -272,6 +272,12 @@
   color: #6B7280;
 }
 
+/* "No location" is the absence of a fact, not a fact. */
+.info-text.muted {
+  color: #9CA3AF;
+  font-style: italic;
+}
+
 .dot-separator {
   color: #2563EB;
   font-size: 18px;

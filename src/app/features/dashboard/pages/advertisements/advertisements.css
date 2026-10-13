@@ -238,6 +238,40 @@
 .action-btn:hover { transform: scale(1.05); }
 .action-btn.delete:hover svg { stroke: #EF4444; } /* يحمر لما تعمل هافر ع المسح */
 
+/* Name first, owner under it, then the link. The link stays — it is what an
+   admin checks before publishing — but it is no longer the whole card. */
+.card-heading {
+  padding: 14px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ad-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ad-owner {
+  font-size: 12px;
+  color: #6B7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-footer span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+}
+
 .card-footer {
   padding: 16px;
   display: flex;
