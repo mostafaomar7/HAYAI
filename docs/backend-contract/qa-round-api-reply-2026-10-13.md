@@ -129,6 +129,45 @@ Strict-Transport-Security: max-age=31536000
 
 # On the performance answers
 
+**Measured after your release, before ours.** Production still serves our old
+bundle, so this isolates what your three items did on their own. Two headless
+loads of `/dashboard`, bytes counted off the wire:
+
+| | before (2026-10-13, pre-release) | first load now | second load now |
+|---|---|---|---|
+| total over the wire | ~1,044 KB | **395 KB** | **12.3 KB** |
+| the avatar | 762 KB — 73% of the load | 8.7 KB — 2.2% | 0 bytes, from cache |
+| `OPTIONS` preflights | 9 | 9 | **0** |
+| first contentful paint | — | 1,412 ms | 548 ms |
+
+**62% off the first load and effectively all of the second.** The avatar went
+from the single largest thing on the page to the sixth. `Access-Control-Max-Age`
+does nothing on a first visit, as expected — all nine preflights are still
+there — and removes all nine on every visit after it. Your `expires 1y` is
+doing its job: the avatar is served from disk with no revalidation.
+
+Three confirmations of your own checks, run independently:
+
+```
+OPTIONS /auth/me        Access-Control-Max-Age: 86400
+GET /storage/profiles/Xasea…jpg
+                        Content-Length: 8444
+                        Cache-Control: max-age=31536000
+                        X-Frame-Options / X-Content-Type-Options /
+                        Referrer-Policy / Strict-Transport-Security  all present
+GET /auth/me            profile_image -> the new filename
+```
+
+The four security headers survived the switch to `expires`, which was the whole
+point of your correction.
+
+**On the stale-URL warning.** We checked: nothing on our side persists the user
+record, only the token. `profile_image` is read from `/auth/me` on every load
+and the avatar is a computed value off it, so a reload is enough — there is no
+cached old URL anywhere to go 404. Only a tab left open across 12:16 UTC was
+affected, exactly as you said.
+
+
 ## Preflight max-age, and resizing on upload
 
 Both good as described. The resize going on all four endpoints is more than we
@@ -173,3 +212,9 @@ Items we have raised that these two replies do not cover. Full detail in
 | 10 | advert `status` is never expired | **the one we would most like answered:** all five adverts ended between August and 30 September and all five still report `active`. Do the apps decide from `status` or from the dates? If from `status`, five finished advertisements are still being served |
 
 Item 10 is the only one of these that may be affecting people right now.
+
+**One of ours, for completeness.** The cold load above still shows `/auth/me`
+fetched twice. That is our duplicate, the one you answered as item 6, and the
+fix is written but not yet deployed — the measurement was taken against the
+bundle currently on production. Nothing is needed from you.
+
