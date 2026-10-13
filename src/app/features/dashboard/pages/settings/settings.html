@@ -11,16 +11,18 @@
     @for (group of groups(); track group.name) {
       <div class="card">
         <div class="card-head">
-          <!-- The group name comes from the API; an unknown one falls back to
-               itself rather than showing a raw key that looks broken. -->
-          <h2>{{ ('settings.group.' + group.name) | t }}</h2>
+          <!-- Groups and keys are named by the API, so it can introduce one we
+               have no translation for. Falling back to the key printed
+               `settings.group.app_version` on the page; `label()` reads the
+               key instead. -->
+          <h2>{{ groupLabel(group.name) }}</h2>
         </div>
 
         <div class="panel">
           @for (row of group.rows; track row.key) {
             <div class="setting" [class.dirty]="isDirty(row)">
               <div class="setting-text">
-                <span class="setting-name">{{ ('settings.key.' + row.key) | t }}</span>
+                <span class="setting-name">{{ keyLabel(row.key) }}</span>
                 @if (row.description) {
                   <span class="setting-desc">{{ row.description }}</span>
                 }
@@ -61,6 +63,26 @@
                         }
                       }
                     </div>
+                  }
+                  @case ('optional_bool') {
+                    <!-- Three states, and the empty one is not the same as No:
+                         empty leaves min_supported_build to decide, No is an
+                         emergency switch that unblocks everybody. As a text
+                         box this was whatever the admin happened to type. -->
+                    <select class="tri" [value]="optionalBoolValue(row)"
+                            (change)="setOptionalBool(row, $any($event.target).value)">
+                      <option value="">{{ 'settings.optional_bool_empty' | t }}</option>
+                      <option value="true">{{ 'settings.optional_bool_true' | t }}</option>
+                      <option value="false">{{ 'settings.optional_bool_false' | t }}</option>
+                    </select>
+                  }
+                  @case ('build') {
+                    <!-- A versionCode. Sent as a number; the box used to send
+                         the characters that were typed. -->
+                    <input type="number" min="1" max="2100000000" step="1"
+                           [value]="textValue(row)"
+                           [placeholder]="'settings.build_placeholder' | t"
+                           (input)="setBuild(row, $any($event.target).value)">
                   }
                   @case ('int') {
                     <input type="number" step="1" [value]="textValue(row)"

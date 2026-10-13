@@ -7,6 +7,7 @@ import {
 } from '../../../../core/services/settings.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface SettingGroup {
   name: string;
@@ -15,6 +16,19 @@ interface SettingGroup {
 
 /** Roughly what a monthly allowance buys, so the number means something. */
 const TOKENS_PER_ANSWER = 1667;
+
+/**
+ * `app_version.patient.force_update` -> `Patient · Force update`.
+ *
+ * Only ever used for a key nobody has translated yet. Two segments, because
+ * the first is the group and the group is already the heading above.
+ */
+function humanise(key: string): string {
+  const words = (s: string) =>
+    s.replace(/[_-]+/g, ' ').replace(/^./, c => c.toUpperCase());
+  const parts = key.split('.').filter(Boolean);
+  return parts.slice(-2).map(words).join(' · ');
+}
 
 /**
  * The platform switches.
@@ -33,6 +47,7 @@ const TOKENS_PER_ANSWER = 1667;
 export class Settings {
   private svc = inject(SettingsService);
   private dialog = inject(DialogService);
+  private i18n = inject(I18nService);
 
   loading = signal(true);
   saving = signal(false);
@@ -66,6 +81,37 @@ export class Settings {
       next: rows => { this.rows.set(rows); this.edits.set({}); this.loading.set(false); },
       error: () => { this.loadError.set('settings.load_failed'); this.loading.set(false); }
     });
+  }
+
+  // ------------------------------------------------------------ naming
+
+  /**
+   * The name to print for a group or a switch.
+   *
+   * Both are named by the API, which is the point of this page — a switch
+   * added server-side appears here on its own. The cost is that it appears
+   * before anyone has translated it, and until now that meant the page printed
+   * `settings.key.app_version.patient.force_update` next to a control that
+   * changes whether every patient is forced to update. Eleven of them at once,
+   * which is what the QA round found.
+   *
+   * So an untranslated key is read rather than shown: the last two segments,
+   * underscores opened out. `app_version.patient.force_update` becomes
+   * "Patient · Force update" — not the wording somebody would choose, but a
+   * sentence instead of a symbol, and the API's own description is printed
+   * underneath it either way.
+   */
+  groupLabel(name: string): string {
+    return this.label('settings.group.' + name, name);
+  }
+
+  keyLabel(key: string): string {
+    return this.label('settings.key.' + key, key);
+  }
+
+  private label(token: string, raw: string): string {
+    const translated = this.i18n.translate(token);
+    return translated === token ? humanise(raw) : translated;
   }
 
   // ------------------------------------------------------------ reading
@@ -137,6 +183,27 @@ export class Settings {
 
   setText(row: PlatformSetting, raw: string): void {
     this.setValue(row, raw === '' ? null : raw);
+  }
+
+  /** '' | 'true' | 'false', matching the three options in the select. */
+  optionalBoolValue(row: PlatformSetting): string {
+    const v = this.valueOf(row);
+    return v === true ? 'true' : v === false ? 'false' : '';
+  }
+
+  /**
+   * Empty is not "no". Empty leaves the decision to `min_supported_build`;
+   * `false` is an emergency switch that unblocks everybody, including builds
+   * below the minimum. They were both reachable by typing into a text box.
+   */
+  setOptionalBool(row: PlatformSetting, raw: string): void {
+    this.setValue(row, raw === 'true' ? true : raw === 'false' ? false : null);
+  }
+
+  /** A versionCode is a number; the text box was sending the typed string. */
+  setBuild(row: PlatformSetting, raw: string): void {
+    const trimmed = raw.trim();
+    this.setValue(row, trimmed === '' ? null : Number(trimmed));
   }
 
   reset(): void {

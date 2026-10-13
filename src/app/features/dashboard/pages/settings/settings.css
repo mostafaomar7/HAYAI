@@ -51,7 +51,8 @@
 
 .setting-control { flex: 0 0 auto; }
 .setting-control input[type="text"],
-.setting-control input[type="number"] {
+.setting-control input[type="number"],
+.setting-control select.tri {
   border: 1px solid #E5E7EB;
   border-radius: 8px;
   padding: 9px 12px;
@@ -63,7 +64,9 @@
   width: 190px;
   max-width: 100%;
 }
-.setting-control input:focus { border-color: #3B82F6; }
+.setting-control input:focus,
+.setting-control select.tri:focus { border-color: #3B82F6; }
+.setting-control select.tri { cursor: pointer; }
 
 .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; }
 .switch input { width: 18px; height: 18px; accent-color: #2563EB; }
@@ -99,7 +102,8 @@
 @media (max-width: 640px) {
   :host { padding: 16px; }
   .card-head, .panel { padding-inline: 16px; }
-  .setting-control input[type="text"], .setting-control input[type="number"] { width: 100%; }
+  .setting-control input[type="text"], .setting-control input[type="number"],
+  .setting-control select.tri { width: 100%; }
   .setting-control { width: 100%; }
   .footer-bar .btn-primary, .footer-bar .btn-secondary { flex: 1; }
 }

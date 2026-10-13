@@ -234,6 +234,40 @@ about one two-thousandth of its area.
    location /storage/ { add_header Cache-Control "public, max-age=31536000, immutable"; }
    ```
 
+## 8. `optional_bool` settings accept any string
+
+BUG-30. `app_version.*.force_update` is typed `optional_bool` and has three
+meanings: `true` forces an update, `false` is an emergency switch that unblocks
+everybody including builds below the minimum, and empty leaves the decision to
+`min_supported_build`.
+
+`PATCH /admin/settings` takes whatever is sent. Measured on 2026-10-13 against
+`app_version.patient.force_update`, which was empty before and after — we set
+it back the moment we saw it had been stored:
+
+```
+{"app_version.patient.force_update": "true"}   -> 422, but on the business rule
+                                                  ("needs latest_build or
+                                                  min_supported_build"), so the
+                                                  string was already read as true
+{"app_version.patient.force_update": "false"}  -> 200, stored
+{"app_version.patient.force_update": "no"}     -> 200, stored
+{"app_version.patient.force_update": "0"}      -> 200, stored
+```
+
+None of those three is a boolean, and none was refused. The dashboard was part
+of the problem — the field had no control of its own, so it was edited as free
+text — and that is fixed: it is a three-state select now and sends `true`,
+`false` or `null` and nothing else.
+
+**What we are asking for:** refuse anything that is not a boolean or null, with
+a 422. The apps and any script post here too, and this is the setting that
+decides whether every user of an app is locked out of it until they update.
+
+Worth confirming separately: that `"no"` and `"0"` were each read as `false`
+rather than as PHP truthiness. We did not keep probing, because every probe
+writes.
+
 ---
 
 ## Summary
@@ -247,3 +281,4 @@ about one two-thousandth of its area.
 | 5 | option lists accept duplicate names | the signup form shows the same option twice |
 | 6 | `Access-Control-Max-Age: 0` — a preflight per request, forever | one config line |
 | 7 | avatars stored at 762 KB for a 42px circle | resize on upload; caching is a smaller follow-up |
+| 8 | `optional_bool` settings accept any string | the force-update switch takes `"no"` and stores something |
