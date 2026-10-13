@@ -51,6 +51,7 @@
   "ads.upload_click": "Click to upload image",
   "ads.upload_hint": "PNG, JPG up to 10MB",
   "ads.untitled": "Untitled advertisement",
+  "ads.delete_title_named": "Delete “{name}”?",
   "approval.approve_failed": "Approve failed",
   "approval.approve_success": "Provider approved",
   "approval.approve_title": "Approve this provider?",
@@ -135,6 +136,8 @@
   "charitable.no_location": "No location recorded",
   "charitable.name_required": "A name is required.",
   "charitable.save_failed": "Could not save the organization.",
+  "charitable.delete_title_named": "Delete “{name}”?",
+  "charitable.schedule_needs_times": "Give opening and closing times for the days that are on, or switch them off: {days}.",
   "coming_soon.around_you": "Healthcare, connected around you.",
   "coming_soon.badge": "Launching Soon",
   "coming_soon.cta": "Be among the first to experience a simpler, smarter, more connected way to access healthcare.",
@@ -3241,5 +3244,14 @@
   "web.versions.save_named": "Save a named version",
   "web.versions.saved": "Version saved",
   "web.versions.version": "Version",
-  "web.versions.working_copy": "Working copy"
+  "web.versions.working_copy": "Working copy",
+  "weekday.saturday": "Saturday",
+  "weekday.sunday": "Sunday",
+  "weekday.monday": "Monday",
+  "weekday.tuesday": "Tuesday",
+  "weekday.wednesday": "Wednesday",
+  "weekday.thursday": "Thursday",
+  "weekday.friday": "Friday",
+  "ads.running": "Running",
+  "ads.scheduled": "Scheduled"
 }

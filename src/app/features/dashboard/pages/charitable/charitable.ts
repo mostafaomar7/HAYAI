@@ -79,10 +79,14 @@ export class Charitable {
     this.router.navigate(['/dashboard/charitable/edit', id]);
   }
 
-  async onDelete(id: number, event: Event) {
+  async onDelete(id: number, event: Event, name?: string | null) {
     event.stopPropagation();
+    // Named, like the option-list dialog already does. "Delete organization?"
+    // is the same question whichever card was clicked, and the card behind the
+    // dialog is the one thing it covers up.
     const ok = await this.dialog.confirm({
-      title: 'charitable.delete_title',
+      title: name ? 'charitable.delete_title_named' : 'charitable.delete_title',
+      params: name ? { name } : undefined,
       text: 'dialog.delete_text',
       icon: 'warning',
       confirmText: 'common.delete',

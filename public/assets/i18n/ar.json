@@ -51,6 +51,7 @@
   "ads.upload_click": "اضغط لرفع صورة",
   "ads.upload_hint": "PNG, JPG حتى 10MB",
   "ads.untitled": "إعلان بدون عنوان",
+  "ads.delete_title_named": "حذف “{name}”؟",
   "approval.approve_failed": "فشل الاعتماد",
   "approval.approve_success": "تم اعتماد مقدم الخدمة",
   "approval.approve_title": "اعتماد مقدم الخدمة؟",
@@ -135,6 +136,8 @@
   "charitable.no_location": "لا يوجد موقع مسجَّل",
   "charitable.name_required": "الاسم مطلوب.",
   "charitable.save_failed": "تعذّر حفظ المنظمة.",
+  "charitable.delete_title_named": "حذف “{name}”؟",
+  "charitable.schedule_needs_times": "حدِّد مواعيد الفتح والإغلاق للأيام المفعَّلة أو اقفلها: {days}.",
   "coming_soon.around_you": "رعاية صحية متصلة من حولك.",
   "coming_soon.badge": "الإطلاق قريبًا",
   "coming_soon.cta": "كن من أوائل من يجرّبون طريقة أبسط وأذكى وأكثر اتصالًا للوصول إلى الرعاية الصحية.",
@@ -3241,5 +3244,14 @@
   "web.versions.save_named": "حفظ نسخة باسم",
   "web.versions.saved": "تم حفظ النسخة",
   "web.versions.version": "النسخة",
-  "web.versions.working_copy": "مسودة العمل"
+  "web.versions.working_copy": "مسودة العمل",
+  "weekday.saturday": "السبت",
+  "weekday.sunday": "الأحد",
+  "weekday.monday": "الاثنين",
+  "weekday.tuesday": "الثلاثاء",
+  "weekday.wednesday": "الأربعاء",
+  "weekday.thursday": "الخميس",
+  "weekday.friday": "الجمعة",
+  "ads.running": "جارٍ",
+  "ads.scheduled": "مجدوَل"
 }

@@ -67,6 +67,24 @@ export class Advertisements {
     });
   }
 
+  /**
+   * Whether the advert's dates place it before, during or after its run.
+   *
+   * Computed here rather than read from `status`, because `status` is a stored
+   * flag that nothing expires: measured on 2026-10-13, all five live adverts
+   * ended between August and 30 September and every one of them still reports
+   * `active`, while `?status=expired` returns nothing at all. A badge repeating
+   * that would say "Active" on an advert that finished a fortnight ago, which
+   * is worse than the blank card the QA round complained about. The dates are
+   * plain facts and they are on the row already.
+   */
+  adState(ad: Advertisement): 'expired' | 'scheduled' | 'running' {
+    const today = new Date().toISOString().slice(0, 10);
+    if (ad.end_date && ad.end_date < today) return 'expired';
+    if (ad.start_date && ad.start_date > today) return 'scheduled';
+    return 'running';
+  }
+
   /** Search and filters change the result set — restart from page 1. */
   private reload() { this.page.set(1); this.load(); }
 
@@ -102,10 +120,11 @@ export class Advertisements {
   onAdd() { this.router.navigate(['/dashboard/Advertisements/add']); }
   onEdit(id: number) { this.router.navigate(['/dashboard/Advertisements/edit', id]); }
 
-  async onDelete(id: number, event: Event) {
+  async onDelete(id: number, event: Event, name?: string | null) {
     event.stopPropagation();
     const ok = await this.dialog.confirm({
-      title: 'ads.delete_title',
+      title: name ? 'ads.delete_title_named' : 'ads.delete_title',
+      params: name ? { name } : undefined,
       text: 'dialog.delete_text',
       icon: 'warning',
       confirmText: 'common.delete',

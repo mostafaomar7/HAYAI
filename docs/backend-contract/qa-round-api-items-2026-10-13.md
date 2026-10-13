@@ -298,6 +298,45 @@ still cannot be searched for, and a title is what an advert is called.
 `redirect_link` as well as the owner's name. The link matters on its own: it is
 how somebody finds every advert pointing at a campaign URL that has moved.
 
+## 10. An advertisement's `status` is never expired
+
+BUG-27. The QA round asked why a finished advert looks the same as a running
+one in the dashboard. We went to put a badge on the card and found that the
+field it would come from does not mean what its name says. Measured on
+2026-10-13:
+
+```
+id  status   is_published   start_date    end_date
+ 6  active   true           2026-09-26    2026-09-30
+ 5  active   true           2026-09-06    2026-09-23
+ 3  active   true           2026-08-28    2026-08-28
+ 2  active   true           2026-08-27    2026-08-27
+ 1  active   true           2026-08-26    2026-08-27
+```
+
+Every one of them ended — the most recent a fortnight ago — and every one of
+them still reports `active`. And:
+
+```
+GET /admin/advertisements?status=active    -> 5 results
+GET /admin/advertisements?status=expired   -> 0 results
+```
+
+So `status` is a flag that is written once and never recomputed, and the
+`expired` filter the dashboard offers can never match a row.
+
+Our badge is worked out from `start_date` and `end_date` instead, because those
+are facts: the cards now read **Expired** where `status` says active. That is a
+display decision and it does not answer the question that matters:
+
+**What we need to know:** do the patient and partner apps decide what to show
+from `status`, or from the dates? If from `status`, five advertisements that
+finished in August and September are still being served, and that is the real
+bug here rather than a missing badge.
+
+**What we are asking for either way:** `status` computed from the dates — or
+dropped from the response, so nothing can read it and be wrong.
+
 ---
 
 ## Summary
@@ -313,3 +352,4 @@ how somebody finds every advert pointing at a campaign URL that has moved.
 | 7 | avatars stored at 762 KB for a 42px circle | resize on upload; caching is a smaller follow-up |
 | 8 | `optional_bool` settings accept any string | the force-update switch takes `"no"` and stores something |
 | 9 | advert search covers the owner's name and nothing else | a title cannot be searched for |
+| 10 | advert `status` never expires — all 5 ended, all 5 say `active` | **ask: are the apps still serving them?** |

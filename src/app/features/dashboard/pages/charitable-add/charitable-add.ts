@@ -158,6 +158,18 @@ export class CharitableAdd {
       return;
     }
 
+    // A day that is on and has no hours is an opening time of "sometime".
+    // The payload sends the switch and the two blanks exactly as they are, so
+    // this is caught here rather than stored.
+    const vague = this.schedule().filter(d => d.active && (!d.from || !d.to));
+    if (vague.length) {
+      const days = vague.map(d => this.i18n.translate(`weekday.${d.day}`)).join(', ');
+      this.errorMessage.set(
+        this.i18n.translate('charitable.schedule_needs_times', { days })
+      );
+      return;
+    }
+
     this.saving.set(true);
 
     const form = new FormData();
