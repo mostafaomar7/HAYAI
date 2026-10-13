@@ -824,10 +824,23 @@ function contentSecurityPolicy(nonce: string): string {
     // did is now a nonced script. Saying so explicitly means an injected
     // `onclick` has nowhere to land.
     `script-src-attr 'none'`,
-    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com ${cookieyes} https://*.clarity.ms`,
+    // `'unsafe-inline'` and no nonce, deliberately, and this was learned the
+    // hard way: a nonce in this directive makes the browser ignore
+    // `'unsafe-inline'` and demand one on every `<style>` element. CookieYes
+    // injects its banner's entire stylesheet as a `<style>` element from its
+    // own script and has no way to be handed our per-request nonce, so the
+    // consent banner rendered with no CSS at all — unstyled markup pushing
+    // the page down. Measured live: every cookieyes request returned 200
+    // while `document.styleSheets` held none of them, the banner computed
+    // `position: static`, and the console read "Applying inline style
+    // violates … style-src".
+    //
+    // The trade is worth naming: an injected `<style>` can restyle the page,
+    // it cannot run code. `script-src` is where an XSS becomes a stolen
+    // session, and that keeps its nonce and its closed list of origins.
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${cookieyes} https://*.clarity.ms`,
     // Server-rendered style bindings land as real `style="…"` attributes —
     // `<site-block style="display: contents">`, `<div style="--cols: 3">`.
-    // They cannot execute anything; blocking them would only break layout.
     `style-src-attr 'unsafe-inline'`,
     `font-src 'self' https://fonts.gstatic.com data: ${cookieyes}`,
     `img-src 'self' data: blob: https: https://*.google-analytics.com ${google} ` +
