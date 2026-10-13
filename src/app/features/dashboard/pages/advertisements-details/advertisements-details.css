@@ -141,7 +141,12 @@
 .btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
 
 /* Upload Box (Dashed) */
-.upload-box {
+
+/* Scoped through .form-group so it beats `.form-group label`, which is a
+   class and an element and would otherwise force this one back to
+   `display: block`. That is what the inline styles on the element were
+   working around, at the cost of making the invalid state unstyleable. */
+.form-group .upload-box {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -154,8 +159,20 @@
   transition: background-color 0.2s;
 }
 
-.upload-box:hover {
+.form-group .upload-box:hover {
   background-color: #DBEAFE;
+}
+
+/* The picture is required to create an advertisement, and the box is the
+   field — there is no input to outline. */
+.form-group .upload-box.invalid {
+  border-color: #DC2626;
+  background-color: #FEF2F2;
+}
+
+.form-group .upload-box.invalid .upload-title,
+.form-group .upload-box.invalid .upload-subtitle {
+  color: #991B1B;
 }
 
 .upload-title {

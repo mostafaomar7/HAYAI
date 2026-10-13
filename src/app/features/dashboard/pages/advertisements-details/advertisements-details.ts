@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { apiErrorText } from '../../../../shared/utils/api-error.util';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdvertisementsService } from '../../../../core/services/advertisements.service';
 import { ProviderItem, UserResource, UsersService } from '../../../../core/services/users.service';
@@ -127,6 +128,23 @@ export class AdvertisementsDetails {
   get ownerIdInvalid(): boolean {
     const c = this.form.controls.owner_id;
     return (c.touched || this.showValidation()) && c.invalid;
+  }
+
+  /**
+   * The picture is required to create an advertisement and optional to change
+   * one — an edit that leaves it alone keeps the picture already stored, which
+   * is why the form only omits it rather than clearing it.
+   *
+   * The server has always enforced this; the form simply never said so, so the
+   * only way to find out was to fill everything in, press save and read
+   * "Validation failed".
+   */
+  get imageRequired(): boolean {
+    return this.id() === null;
+  }
+
+  get imageInvalid(): boolean {
+    return this.imageRequired && this.showValidation() && !this.uploadedImage();
   }
 
   get redirectInvalid(): boolean {
@@ -294,7 +312,7 @@ export class AdvertisementsDetails {
     this.showValidation.set(true);
     this.errorMessage.set(null);
 
-    if (this.form.invalid) {
+    if (this.form.invalid || this.imageInvalid) {
       this.form.markAllAsTouched();
       this.errorMessage.set(this.i18n.translate('ads.fill_required'));
       return;
@@ -324,7 +342,9 @@ export class AdvertisementsDetails {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.errorMessage.set(err.error?.message ?? 'Save failed');
+        // The field messages, not just the heading: a 422 here says
+        // "Validation failed" at the top and names the field underneath.
+        this.errorMessage.set(apiErrorText(err, this.i18n.translate('ads.save_failed')));
       }
     });
   }
