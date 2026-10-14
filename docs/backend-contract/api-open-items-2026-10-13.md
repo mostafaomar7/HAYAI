@@ -1,5 +1,10 @@
 # Everything still open on the API — one list
 
+> **All eight are answered and live as of 2026-10-14.** Confirmed against
+> production item by item in `api-open-items-reply-2026-10-14.md`. This file
+> stays as the record of what was asked.
+
+
 **Dashboard → backend, 2026-10-13.** This replaces nothing; it gathers what is
 still outstanding across `qa-round-api-items-2026-10-13.md`,
 `qa-round-api-reply-2026-10-13.md` and
