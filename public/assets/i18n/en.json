@@ -1008,7 +1008,8 @@
   "plans.modules_update_failed": "Could not update the modules",
   "plans.modules_updated": "Modules updated",
   "plans.months": "Months",
-  "plans.months_unit": "months",
+  "plans.months_unit": "{count} months",
+  "plans.months_unit#one": "1 month",
   "plans.months_zero_hint": "0 means open-ended — the plan has no end date.",
   "plans.name": "Plan name",
   "plans.new_badge": "New",
@@ -3281,5 +3282,8 @@
   "ads.scheduled": "Scheduled",
   "dialog.choose_one": "Choose one to continue.",
   "gorders.duplicate_name": "Another entry in this list already has this name.",
-  "renewal.amount": "Charged"
+  "renewal.amount": "Charged",
+  "gorders.category_name_en": "Category name (EN)",
+  "gorders.category_name_ar": "Category name (AR)",
+  "plans.inactive_badge": "Inactive"
 }

@@ -160,6 +160,13 @@
               @if (plan.is_default) {
                 <span class="default-badge">{{ 'plans.default_badge' | t }}</span>
               }
+              <!--
+                An inactive plan looked identical to a live one here, and the
+                status was only on the details page behind a click.
+              -->
+              @if (plan.status === 'inactive') {
+                <span class="inactive-badge">{{ 'plans.inactive_badge' | t }}</span>
+              }
             </div>
           </div>
 

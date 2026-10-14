@@ -1024,7 +1024,12 @@
   "plans.modules_update_failed": "مقدرناش نحدّث الوحدات",
   "plans.modules_updated": "اتحدّثت الوحدات",
   "plans.months": "عدد الشهور",
-  "plans.months_unit": "شهر",
+  "plans.months_unit": "{count} شهر",
+  "plans.months_unit#zero": "بدون مدة",
+  "plans.months_unit#one": "شهر واحد",
+  "plans.months_unit#two": "شهرين",
+  "plans.months_unit#few": "{count} شهور",
+  "plans.months_unit#many": "{count} شهر",
   "plans.months_zero_hint": "الرقم 0 يعني اشتراك مفتوح بدون تاريخ انتهاء.",
   "plans.name": "اسم الخطة",
   "plans.new_badge": "جديد",
@@ -3309,5 +3314,8 @@
   "ads.scheduled": "مجدوَل",
   "dialog.choose_one": "اختار واحد عشان تكمّل.",
   "gorders.duplicate_name": "فيه عنصر تاني في القايمة شايل نفس الاسم.",
-  "renewal.amount": "المبلغ"
+  "renewal.amount": "المبلغ",
+  "gorders.category_name_en": "اسم الفئة (إنجليزي)",
+  "gorders.category_name_ar": "اسم الفئة (عربي)",
+  "plans.inactive_badge": "موقوفة"
 }

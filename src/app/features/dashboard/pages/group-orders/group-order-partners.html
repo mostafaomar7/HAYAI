@@ -140,14 +140,19 @@
       @if (formError()) { <p class="form-error">{{ formError()! | t }}</p> }
 
       @if (isCategories() && categoryDraft(); as d) {
+        <!--
+          Its own labels, not the device form's. This drawer and
+          group-order-device-form both used `gorders.name_en`, so adding a
+          category asked for a "Device Name".
+        -->
         <div class="form-group">
-          <label>{{ 'gorders.name_en' | t }} <span class="req">*</span></label>
+          <label>{{ 'gorders.category_name_en' | t }} <span class="req">*</span></label>
           <input type="text" [value]="d.name_en" (input)="setCategory('name_en', $any($event.target).value)">
           @if (errorFor('name_en')) { <span class="field-error">{{ errorFor('name_en')! | t }}</span> }
         </div>
 
         <div class="form-group">
-          <label>{{ 'gorders.name_ar' | t }} <span class="req">*</span></label>
+          <label>{{ 'gorders.category_name_ar' | t }} <span class="req">*</span></label>
           <input type="text" [value]="d.name_ar" (input)="setCategory('name_ar', $any($event.target).value)">
           @if (errorFor('name_ar')) { <span class="field-error">{{ errorFor('name_ar')! | t }}</span> }
         </div>
