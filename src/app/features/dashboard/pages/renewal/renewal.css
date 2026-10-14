@@ -372,3 +372,10 @@
   margin: 0; padding: 10px 24px; background: #F8FAFC;
   border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #4B5563;
 }
+
+.amount-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.price-was { margin-inline-start: 7px; color: #9CA3AF; text-decoration: line-through; font-size: 12px; }
+.price-off {
+  margin-inline-start: 5px; padding: 1px 6px; border-radius: 5px;
+  background: #ECFDF5; color: #047857; font-size: 11px; font-weight: 700;
+}

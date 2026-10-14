@@ -1263,9 +1263,10 @@
   "users.default_plan": "Default plan",
   "users.delete_account.action": "Delete account",
   "users.delete_account.deleted_toast": "Account deleted.",
-  "users.delete_account.erased_toast": "Account closed and erased. Its patients' orders and records were kept.",
+  "users.delete_account.erased_toast": "Account deleted. Its patients' records ({count}) were kept.",
+  "users.delete_account.erased_toast#one": "Account deleted. One record of its patients was kept.",
   "users.delete_account.failed": "Could not delete the account",
-  "users.delete_account.text": "This cannot be undone. A patient account is removed completely; a provider is closed for good and its name, email, phone and photo are wiped, while its patients' orders and records are kept. The account can never be unblocked afterwards. Type DELETE to confirm.",
+  "users.delete_account.text": "This cannot be undone. The account is removed from the database completely. The one exception is a provider that patients actually used: that one is closed for good and its name, email, phone and photo are wiped, while its patients' orders and records are kept so they are not orphaned. Either way the email and phone are free to register again. Type DELETE to confirm.",
   "users.delete_account.title": "Delete this account permanently?",
   "users.doctor.title": "Doctors",
   "users.doctor_name": "Doctor name",
@@ -3279,5 +3280,6 @@
   "ads.running": "Running",
   "ads.scheduled": "Scheduled",
   "dialog.choose_one": "Choose one to continue.",
-  "gorders.duplicate_name": "Another entry in this list already has this name."
+  "gorders.duplicate_name": "Another entry in this list already has this name.",
+  "renewal.amount": "Charged"
 }

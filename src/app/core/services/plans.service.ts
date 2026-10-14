@@ -109,7 +109,22 @@ export interface Plan {
   /** Emitted as a constant ("EGP") today — read it rather than hardcoding. */
   currency: string;
   months: number;
+  /**
+   * The discount as a percentage, 0-100, exactly as an admin typed it. 50 means
+   * half off, not 50 currency units — which is what it used to be read as.
+   */
   discount: number;
+  /**
+   * Added by the API on 2026-10-14 so nothing has to work the price out.
+   *
+   * `final_price` is what a subscriber is charged, and the three fields are
+   * computed server-side from `price` and `discount`. Showing `price` where a
+   * discount exists overstates what anybody pays, so `final_price` is the one
+   * to render, with `price` struck through beside it.
+   */
+  discount_percent?: number;
+  discount_amount?: number | string;
+  final_price?: number | string;
   description: string | null;
   status: 'active' | 'inactive';
   modules: PlanModule[];

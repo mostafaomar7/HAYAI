@@ -136,7 +136,23 @@
           <div class="card-header">
             <div class="title-area">
               <span class="plan-super-title">{{ plan.name }}</span>
-              <h3 class="plan-main-title">@if (plan.price === 0 || plan.price === '0' || plan.price === '0.00') { {{ 'plans.free' | t }} } @else { {{ plan.price }} {{ plan.currency }} }</h3>
+              <!--
+                `final_price` is what a subscriber is charged; `price` is the
+                list price. The API works both out from the percentage, so
+                there is no arithmetic here — showing `price` where a discount
+                exists would overstate what anybody pays.
+              -->
+              <h3 class="plan-main-title">
+                @if (isFree(plan)) {
+                  {{ 'plans.free' | t }}
+                } @else {
+                  {{ payable(plan) }} {{ plan.currency }}
+                  @if (plan.discount_percent) {
+                    <span class="price-was">{{ plan.price }}</span>
+                    <span class="price-off">-{{ plan.discount_percent }}%</span>
+                  }
+                }
+              </h3>
               <p class="plan-desc">{{ plan.description }}</p>
             </div>
             <div class="badge-stack">

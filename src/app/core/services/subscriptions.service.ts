@@ -15,7 +15,15 @@ export interface RenewalItem {
   ended_at: string;
   status: 'active' | 'expired' | 'renewed' | 'cancelled';
   auto_renew: boolean;
+  /** What was actually charged for this term, after any discount. */
   amount: string;
+  /**
+   * The plan's price and discount as they stood when the term started, so a
+   * later change to the plan does not rewrite history. Both are null on terms
+   * that began before the API started recording them (2026-10-14).
+   */
+  list_price?: string | null;
+  discount_percent?: number | null;
   currency: string;
 }
 

@@ -284,9 +284,16 @@ export abstract class UserListBase<T extends { id: number }> {
     if (!ok) return;
     this.svc.deleteAccount(this.resource, id).subscribe({
       next: res => {
-        this.dialog.toast('success', res.mode === 'erased'
-          ? 'users.delete_account.erased_toast'
-          : 'users.delete_account.deleted_toast');
+        // `erased` means the account held patients' records, so it was closed
+        // and wiped rather than removed. The admin is told how many were kept;
+        // `kept_records` keys them by table name, which means nothing to them,
+        // so only the total is shown.
+        if (res.mode === 'erased') {
+          this.dialog.toast('success', 'users.delete_account.erased_toast',
+            { count: keptRecordCount(res.kept_records) });
+        } else {
+          this.dialog.toast('success', 'users.delete_account.deleted_toast');
+        }
         this.load();
       },
       error: err =>
@@ -548,4 +555,16 @@ export abstract class UserListBase<T extends { id: number }> {
     for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
     return palette[h % palette.length];
   }
+}
+
+/**
+ * How many of other people's records kept an account from being deleted.
+ *
+ * The API answers `{"patient_doctor_requests": 3, "medical_orders": 1}`. The
+ * keys are its own table names and are not worth putting in front of an admin;
+ * the total is the part that answers "how much is being kept".
+ */
+export function keptRecordCount(kept: Record<string, number> | null | undefined): number {
+  if (!kept) return 0;
+  return Object.values(kept).reduce((sum, n) => sum + (Number(n) || 0), 0);
 }

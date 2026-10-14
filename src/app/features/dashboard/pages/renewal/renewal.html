@@ -89,14 +89,15 @@
             <th>{{ 'renewal.user_type' | t }}</th>
             <th>{{ 'renewal.expired_plan' | t }}</th>
             <th>{{ 'renewal.ended_at' | t }}</th>
+            <th>{{ 'renewal.amount' | t }}</th>
             <th class="action-col"></th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="6" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
+            <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
           } @else if (!renewalUsers().length) {
-            <tr><td colspan="6" style="padding:24px;color:#6B7280;">{{ 'renewal.no_users' | t }}</td></tr>
+            <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'renewal.no_users' | t }}</td></tr>
           } @else {
             @for (user of renewalUsers(); track user.id) {
               <tr>
@@ -124,6 +125,20 @@
                     <span class="broken-term" [title]="'renewal.zero_length_hint' | t">
                       {{ 'renewal.zero_length' | t }}
                     </span>
+                  }
+                </td>
+                <!--
+                  What was charged for the term, with the list price beside it
+                  where a discount applied. Both come from the API as they stood
+                  when the term started, so changing the plan later does not
+                  rewrite what this subscriber actually paid. Terms that began
+                  before the API recorded them carry neither.
+                -->
+                <td class="amount-cell">
+                  <bdi dir="ltr">{{ user.amount }} {{ user.currency }}</bdi>
+                  @if (user.discount_percent && user.list_price) {
+                    <span class="price-was"><bdi dir="ltr">{{ user.list_price }}</bdi></span>
+                    <span class="price-off">-{{ user.discount_percent }}%</span>
                   }
                 </td>
                 <td class="action-col">

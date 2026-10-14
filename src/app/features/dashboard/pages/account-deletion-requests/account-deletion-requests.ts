@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { keptRecordCount } from '../users/user-list.base';
 import { CommonModule } from '@angular/common';
 import {
   AccountDeletionRequest,
@@ -115,9 +116,16 @@ export class AccountDeletionRequests {
 
     this.svc.complete(r.id, { user_id: Number(chosen) }).subscribe({
       next: res => {
-        this.dialog.toast('success', res.mode === 'erased'
-          ? 'users.delete_account.erased_toast'
-          : 'users.delete_account.deleted_toast');
+        // `erased` means the account held patients' records, so it was closed
+        // and wiped rather than removed. The admin is told how many were kept;
+        // `kept_records` keys them by table name, which means nothing to them,
+        // so only the total is shown.
+        if (res.mode === 'erased') {
+          this.dialog.toast('success', 'users.delete_account.erased_toast',
+            { count: keptRecordCount(res.kept_records) });
+        } else {
+          this.dialog.toast('success', 'users.delete_account.deleted_toast');
+        }
         this.load();
       },
       error: err =>

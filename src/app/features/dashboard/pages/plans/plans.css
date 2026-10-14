@@ -135,3 +135,14 @@
 .danger-btn:hover { background: #FEF2F2; }
 .danger-btn:disabled, .bulk-actions .apply-btn:disabled { opacity: .5; cursor: not-allowed; }
 .bulk-actions .apply-btn { padding: 9px 16px; font-size: 13px; }
+
+/* The list price, struck through, and how much is off it. */
+.price-was {
+  margin-inline-start: 8px; font-size: 14px; font-weight: 500;
+  color: #9CA3AF; text-decoration: line-through;
+}
+.price-off {
+  margin-inline-start: 6px; padding: 2px 7px; border-radius: 6px;
+  background: #ECFDF5; color: #047857; font-size: 12px; font-weight: 700;
+  vertical-align: middle; white-space: nowrap;
+}

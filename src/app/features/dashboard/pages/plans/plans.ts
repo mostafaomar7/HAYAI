@@ -405,6 +405,25 @@ export class Plans {
     });
   }
 
+  /**
+   * What a subscriber is charged.
+   *
+   * `final_price` is computed by the API from the price and the percentage.
+   * Nothing is worked out here on purpose: a discount of 50 used to be read as
+   * 50 currency units off rather than half off, and the way that stays fixed is
+   * for one side to own the arithmetic. The fallback to `price` covers a plan
+   * fetched before the field existed.
+   */
+  payable(plan: Plan): string {
+    const value = plan.final_price ?? plan.price;
+    return String(value);
+  }
+
+  /** Free means nothing is payable, which a full-discount plan also satisfies. */
+  isFree(plan: Plan): boolean {
+    return Number(this.payable(plan)) === 0;
+  }
+
   goToDetails(id: number) {
     this.router.navigate(['/dashboard/plans/details', id]);
   }

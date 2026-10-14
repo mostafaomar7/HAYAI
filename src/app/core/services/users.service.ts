@@ -119,6 +119,13 @@ export interface PasswordResetResult {
 export interface AccountDeleteResult {
   user_id: number;
   mode: 'deleted' | 'erased';
+  /**
+   * What kept the account from being removed outright, keyed by what the rows
+   * are: `{"patient_doctor_requests": 3, "medical_orders": 1}`. Null on a
+   * `deleted`. The sum is what to tell the admin — the table names are the
+   * API's own and mean nothing to them.
+   */
+  kept_records?: Record<string, number> | null;
 }
 
 export type UserResource =
