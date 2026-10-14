@@ -160,13 +160,28 @@ export class Renewal {
     return palette[h % palette.length];
   }
 
-  async renewOne(id: number) {
+  /**
+   * Renew one subscription.
+   *
+   * The row is passed in rather than just its id so the confirmation can name
+   * what it is about to change. It used to ask "Renew subscription?" and
+   * nothing else — with fifteen rows on screen and the dialog covering the
+   * table, there was no way to check you had pressed the right button.
+   */
+  async renewOne(row: RenewalItem) {
     const ok = await this.dialog.confirm({
       title: 'renewal.renew_title',
+      text: 'renewal.renew_text',
+      params: {
+        name: row.user?.name ?? String(row.id),
+        plan: row.plan?.name ?? '—',
+        date: String(row.ended_at ?? '').slice(0, 10) || '—'
+      },
       icon: 'question',
       confirmText: 'common.renew'
     });
     if (!ok) return;
+    const id = row.id;
     this.svc.renew(id).subscribe({
       next: () => { this.dialog.toast('success', 'renewal.renewed'); this.load(); },
       error: err => this.dialog.error('renewal.renew_failed', err.error?.message ?? 'dialog.try_again')

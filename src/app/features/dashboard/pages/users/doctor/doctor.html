@@ -4,7 +4,7 @@
     <div class="table-header">
       <div class="title-area">
         <h2>{{ 'users.doctor.title' | t }}</h2>
-        <span class="badge">{{ total() }} {{ 'users.users_count' | t }}</span>
+        <span class="badge">{{ 'users.users_count' | t : { count: total() } }}</span>
       </div>
 
       <div class="actions-area">

@@ -70,12 +70,34 @@ export class I18nService {
    * `translate` is safe (used for backend-supplied messages).
    */
   translate(key: string, params?: Record<string, string | number>): string {
-    const value = this.dict()[key];
+    const lookup = typeof params?.['count'] === 'number'
+      ? this.pluralKey(key, params['count'] as number)
+      : key;
+    const value = this.dict()[lookup] ?? this.dict()[key];
     const text = value === undefined || value === '' ? this.fallback(key) : value;
     if (!params) return text;
     return text.replace(/\{(\w+)\}/g, (match, name) =>
       params[name] === undefined ? match : String(params[name])
     );
+  }
+
+  /**
+   * The key to look up when a `count` is being substituted.
+   *
+   * A badge built as `{{ n }} {{ 'x.users' | t }}` reads "1 users", which is
+   * what the QA round found on the renewals page — and the same construction
+   * is on eighteen screens. Arabic makes it worse than a stray "s": the number
+   * and the noun have to agree, and the noun changes shape at one, two, and
+   * again past ten.
+   *
+   * So a key may carry extra forms alongside it, suffixed with the CLDR
+   * category: `renewal.users_count#one`, `#two`, `#few`. The base key is the
+   * `other` form and is what is used when no suffixed form exists, which keeps
+   * every one of the forty-seven existing `{count}` strings working untouched.
+   */
+  private pluralKey(key: string, count: number): string {
+    const form = this.lang() === 'ar' ? arabicPlural(count) : englishPlural(count);
+    return form === 'other' ? key : `${key}#${form}`;
   }
 
   /**
@@ -157,4 +179,32 @@ export class I18nService {
       error: () => { this.dict.set({}); this.settled.set(true); }
     });
   }
+}
+
+type PluralForm = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+
+/** English has two forms, and only an exact 1 takes the singular. */
+function englishPlural(count: number): PluralForm {
+  return count === 1 ? 'one' : 'other';
+}
+
+/**
+ * Arabic, following CLDR.
+ *
+ * Six categories, and the three in the middle are the ones a naive
+ * implementation gets wrong: 2 is a dual with its own word form, 3 to 10 take
+ * one shape, and 11 to 99 take another. The modulo is what makes 111 read like
+ * 11 rather than like 100. Note that the dual is an exact 2 and nothing else —
+ * 102 falls through to `other`, which is why the check above it is `n === 2`
+ * and not on the remainder.
+ */
+function arabicPlural(count: number): PluralForm {
+  const n = Math.abs(count);
+  if (n === 0) return 'zero';
+  if (n === 1) return 'one';
+  if (n === 2) return 'two';
+  const mod100 = n % 100;
+  if (mod100 >= 3 && mod100 <= 10) return 'few';
+  if (mod100 >= 11 && mod100 <= 99) return 'many';
+  return 'other';
 }

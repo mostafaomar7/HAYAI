@@ -4,7 +4,7 @@
     <div class="table-header">
       <div class="title-area">
         <h2>{{ 'notif.history.title' | t }}</h2>
-        <span class="badge">{{ total() }} {{ 'notif.history.count' | t }}</span>
+        <span class="badge">{{ 'notif.history.count' | t : { count: total() } }}</span>
       </div>
     </div>
 

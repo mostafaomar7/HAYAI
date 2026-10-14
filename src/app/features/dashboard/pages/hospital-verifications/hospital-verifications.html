@@ -4,7 +4,7 @@
     <div class="table-header">
       <div class="title-area">
         <h2>{{ 'hospitals_verify.title' | t }}</h2>
-        <span class="badge">{{ total() }} {{ 'hospitals_verify.hospitals_count' | t }}</span>
+        <span class="badge">{{ 'hospitals_verify.hospitals_count' | t : { count: total() } }}</span>
       </div>
 
       <div class="tab-group">

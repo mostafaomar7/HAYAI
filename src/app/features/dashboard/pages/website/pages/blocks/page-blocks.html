@@ -230,7 +230,7 @@
                 <button type="button" class="picker-item" (click)="addBlock(d)">
                   <span class="picker-name">{{ blockLabel(d.type) }}</span>
                   @if (blockDescription(d)) { <span class="picker-desc">{{ blockDescription(d) }}</span> }
-                  <span class="picker-meta mono" dir="ltr">{{ d.type }} · {{ d.fields.length }} {{ 'web.blocks.fields' | t }}</span>
+                  <span class="picker-meta mono" dir="ltr">{{ d.type }} · {{ 'web.blocks.fields' | t : { count: d.fields.length } }}</span>
                 </button>
               }
             </div>

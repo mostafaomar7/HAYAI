@@ -367,3 +367,8 @@
   color: #6B7280;
   margin: 0 4px;
 }
+
+.hint-bar {
+  margin: 0; padding: 10px 24px; background: #F8FAFC;
+  border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #4B5563;
+}
