@@ -75,11 +75,12 @@ export class Dialysis {
     this.router.navigate(['/dashboard/dialysis/edit', id]);
   }
 
-  async deleteCenter(event: Event, id: number) {
+  async deleteCenter(event: Event, id: number, name?: string) {
     event.stopPropagation();
     const ok = await this.dialog.confirm({
-      title: 'centers.delete_title',
+      title: name ? 'centers.delete_title_named' : 'centers.delete_title',
       text: 'dialog.delete_text',
+      params: { name: name ?? '' },
       icon: 'warning',
       confirmText: 'common.delete',
       danger: true

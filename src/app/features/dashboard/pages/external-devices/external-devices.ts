@@ -99,11 +99,12 @@ export class ExternalDevices {
     this.reload();
   }
 
-  async deleteDevice(id: number, event: Event) {
+  async deleteDevice(id: number, event: Event, name?: string) {
     event.stopPropagation();
     const ok = await this.dialog.confirm({
-      title: 'external.devices.delete_title',
+      title: name ? 'external.devices.delete_title_named' : 'external.devices.delete_title',
       text: 'dialog.delete_text',
+      params: { name: name ?? '' },
       icon: 'warning',
       confirmText: 'common.delete',
       danger: true

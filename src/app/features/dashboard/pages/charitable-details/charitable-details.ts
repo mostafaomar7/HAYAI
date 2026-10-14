@@ -44,9 +44,11 @@ export class CharitableDetails {
   async onDelete() {
     const id = this.org()?.id;
     if (!id) return;
+    const name = this.org()?.name;
     const ok = await this.dialog.confirm({
-      title: 'charitable.delete_title',
+      title: name ? 'charitable.delete_title_named' : 'charitable.delete_title',
       text: 'dialog.delete_text',
+      params: { name: name ?? '' },
       icon: 'warning',
       confirmText: 'common.delete',
       danger: true

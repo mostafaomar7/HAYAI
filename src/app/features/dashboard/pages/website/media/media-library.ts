@@ -403,7 +403,24 @@ export class MediaLibrary {
     const m = this.selected();
     if (!m) return;
     const d = this.detail();
-    const num = (v: string) => (v === '' ? null : this.clamp(Math.round(Number(v))));
+
+    // A focal point is a percentage of the image. Typing 150 used to be saved
+    // as 100 with nothing said, so the field read back a number nobody chose.
+    // The click-to-pick path still clamps — that is geometry, not a typo.
+    const bad: Record<string, string> = {};
+    for (const f of ['focal_x', 'focal_y'] as const) {
+      const raw = d[f].trim();
+      if (raw === '') continue;
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0 || n > 100) bad[f] = 'web.medialib.focal_range';
+    }
+    if (Object.keys(bad).length) {
+      this.detailErrors.set(bad);
+      this.detailError.set('web.medialib.fix_errors');
+      return;
+    }
+
+    const num = (v: string) => (v === '' ? null : Math.round(Number(v)));
     const body = {
       alt_en: nullIfEmpty(d.alt_en.trim()),
       alt_ar: nullIfEmpty(d.alt_ar.trim()),

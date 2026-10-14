@@ -356,6 +356,37 @@ export class Menus {
     return this.itemErrors()[path] ?? null;
   }
 
+  /**
+   * Takes the request's own field path out of a server message.
+   *
+   * Laravel builds its sentence around the attribute name, so an invalid link
+   * came back as "The items.0.url must be an http(s) URL…" — which tells the
+   * admin how our request body is shaped and nothing else. The message already
+   * renders under the right input, and that input carries its own label, so
+   * the leading "The <path>" is dropped rather than translated: splicing an
+   * Arabic field name into an English sentence reads worse than either.
+   * A path anywhere else in the sentence falls back to the field's label.
+   */
+  private humanize(bag: Record<string, string>): Record<string, string> {
+    const FIELDS: Record<string, string> = {
+      url: 'web.menus.field_url',
+      label: 'web.menus.field_label',
+      page_id: 'web.menus.field_page',
+      target: 'web.menus.field_target'
+    };
+    const PATH = 'items\\.\\d+(?:\\.children\\.\\d+)?\\.(url|label|page_id|target)';
+    const leading = new RegExp(`^The ${PATH}(?: field)? `);
+    const anywhere = new RegExp(PATH, 'g');
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(bag)) {
+      const stripped = v.replace(leading, '');
+      out[k] = stripped === v
+        ? v.replace(anywhere, (_m, f: string) => this.i18n.translate(FIELDS[f]))
+        : stripped.charAt(0).toUpperCase() + stripped.slice(1);
+    }
+    return out;
+  }
+
   // ── saving items ────────────────────────────────────────────────
 
   private serialize(n: EditNode, withChildren: boolean): MenuItemNode {
@@ -384,9 +415,22 @@ export class Menus {
     return e;
   }
 
-  saveItems(): void {
+  async saveItems(): Promise<void> {
     const key = this.activeKey();
     if (!key) return;
+    // Saving a hand-typed key is what creates the menu, and the API has no way
+    // to delete one (DELETE /admin/website/menus/{key} answers 405, measured
+    // 2026-10-14), so a typo here is permanent. Asked once, before it happens.
+    if (this.activeIsNew()) {
+      const ok = await this.dialog.confirm({
+        title: 'web.menus.create_title',
+        text: 'web.menus.create_text',
+        params: { key },
+        icon: 'warning',
+        confirmText: 'web.menus.create_confirm'
+      });
+      if (!ok) return;
+    }
     const l = this.locale();
     const tree = this.trees()[l];
     const local = this.validateTree(tree);
@@ -414,7 +458,7 @@ export class Menus {
         error: err => {
           this.savingItems.set(false);
           if (err?.status === 422) {
-            this.itemErrors.set(fieldErrors(err));
+            this.itemErrors.set(this.humanize(fieldErrors(err)));
             this.itemsError.set(errorMessage(err, 'web.menus.save_failed'));
           } else {
             this.dialog.error('common.error', errorMessage(err, 'web.menus.save_failed'));

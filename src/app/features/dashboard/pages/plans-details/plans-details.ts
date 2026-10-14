@@ -52,9 +52,11 @@ export class PlansDetails {
 
     const subscribers = plan.subscribers_count ?? 0;
     const ok = await this.dialog.confirm({
-      title: 'plans.delete_title',
+      // Named, like every other delete in the dashboard: "Delete plan?" over a
+      // list of twenty-eight plans does not say which one is about to go.
+      title: plan.name ? 'plans.delete_title_named' : 'plans.delete_title',
       text: subscribers > 0 ? 'plans.delete_text_subscribers' : 'plans.delete_text',
-      params: { count: subscribers },
+      params: { count: subscribers, name: plan.name ?? '' },
       icon: 'warning',
       confirmText: 'common.delete',
       danger: true

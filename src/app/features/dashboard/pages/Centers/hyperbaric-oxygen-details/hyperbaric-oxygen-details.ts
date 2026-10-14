@@ -43,9 +43,11 @@ export class HyperbaricOxygenDetails {
   async onDelete() {
     const id = this.center()?.id;
     if (!id) return;
+    const name = this.center()?.name;
     const ok = await this.dialog.confirm({
-      title: 'centers.delete_title',
+      title: name ? 'centers.delete_title_named' : 'centers.delete_title',
       text: 'dialog.delete_text',
+      params: { name: name ?? '' },
       icon: 'warning',
       confirmText: 'common.delete',
       danger: true
