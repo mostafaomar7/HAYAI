@@ -2,7 +2,7 @@ import { MenuItem } from '../models/menu-item.model';
 
 export const MENU_ITEMS: MenuItem[] = [
   { id: 'dashboard', label: 'menu.dashboard', iconName: 'dashboard', route: '/dashboard', roles: ['admin'] },
-  { id: 'Advertisements', label: 'menu.advertisements', iconName: 'advertisements', route: '/dashboard/Advertisements', roles: ['admin'] },
+  { id: 'Advertisements', label: 'menu.advertisements', iconName: 'advertisements', route: '/dashboard/advertisements', roles: ['admin'] },
   { id: 'CharitableOrganizations', label: 'menu.charitable', iconName: 'charitable', route: '/dashboard/charitable', roles: ['admin'] },
   // There is no admin-wide transactions endpoint — `/api/v1/transactions` is
   // scoped to the caller. A menu entry will need a new endpoint first.
@@ -36,8 +36,8 @@ export const MENU_ITEMS: MenuItem[] = [
     id: 'Centers', label: 'menu.centers', iconName: 'centers', route: '', roles: ['admin'], hasDropdown: true,
     children: [
       { id: 'Dialysis', label: 'menu.centers.dialysis', route: '/dashboard/dialysis' },
-      { id: 'Hyperbaric', label: 'menu.centers.hyperbaric', route: '/dashboard/HyperbaricOxygen' },
-      { id: 'Oncology', label: 'menu.centers.oncology', route: '/dashboard/Oncology' },
+      { id: 'Hyperbaric', label: 'menu.centers.hyperbaric', route: '/dashboard/hyperbaric-oxygen' },
+      { id: 'Oncology', label: 'menu.centers.oncology', route: '/dashboard/oncology' },
     ]
   },
   // The option lists a provider's forms read and can never write. Adding one

@@ -14,7 +14,7 @@ import { TPipe } from '../../../../../core/i18n/t.pipe';
 })
 export class OncologyAdd extends CenterAddBase {
   override category: CenterCategory = 'oncology';
-  override listRoute = '/dashboard/Oncology';
+  override listRoute = '/dashboard/oncology';
 
   constructor() {
     super();

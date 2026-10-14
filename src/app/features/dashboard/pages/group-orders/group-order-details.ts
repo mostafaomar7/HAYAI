@@ -469,17 +469,26 @@ export class GroupOrderDetails {
     const ok = await this.dialog.confirm({
       title: 'gorders.close_title',
       text: 'gorders.close_text',
-      confirmText: 'gorders.close_round'
+      confirmText: 'gorders.close_round',
+      cancelText: 'gorders.keep_open'
     });
     if (!ok) return;
     this.run(this.svc.close(this.id()), 'gorders.round_closed');
   }
 
   async cancel(): Promise<void> {
+    // The two buttons used to read "Cancel Round" and "Cancel" — one ends the
+    // round and notifies every member, the other just shuts the dialog, and
+    // nothing on screen said which was which. The dismiss button now names
+    // what it preserves instead of repeating the verb.
     const reason = await this.dialog.prompt({
       title: 'gorders.cancel_title',
       text: 'gorders.cancel_text',
-      confirmText: 'gorders.cancel_round'
+      confirmText: 'gorders.cancel_round',
+      cancelText: 'gorders.keep_round',
+      danger: true,
+      required: true,
+      requiredText: 'gorders.reason_required'
     });
     if (!reason || !reason.trim()) return;
     this.run(this.svc.cancel(this.id(), reason.trim()), 'gorders.round_cancelled');

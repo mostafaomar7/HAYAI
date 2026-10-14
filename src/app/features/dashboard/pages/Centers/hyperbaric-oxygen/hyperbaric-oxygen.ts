@@ -67,12 +67,12 @@ export class HyperbaricOxygen {
 
   onStatusChange(value: string) { this.statusFilter.set(value as any); this.reload(); }
 
-  goToAdd() { this.router.navigate(['/dashboard/HyperbaricOxygen-add']); }
-  goToDetails(id: number) { this.router.navigate(['/dashboard/HyperbaricOxygen-details', id]); }
+  goToAdd() { this.router.navigate(['/dashboard/hyperbaric-oxygen-add']); }
+  goToDetails(id: number) { this.router.navigate(['/dashboard/hyperbaric-oxygen-details', id]); }
 
   editCenter(event: Event, id: number) {
     event.stopPropagation();
-    this.router.navigate(['/dashboard/HyperbaricOxygen/edit', id]);
+    this.router.navigate(['/dashboard/hyperbaric-oxygen/edit', id]);
   }
 
   async deleteCenter(event: Event, id: number) {

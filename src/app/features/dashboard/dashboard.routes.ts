@@ -16,19 +16,19 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/home.component/home.component').then(m => m.HomeComponent)
   },
   {
-    path: 'Advertisements',
+    path: 'advertisements',
     data: { title: 'menu.advertisements' },
     loadComponent: () =>
       import('./pages/advertisements/advertisements').then(m => m.Advertisements)
   },
   {
-    path: 'Advertisements/add',
+    path: 'advertisements/add',
     data: { title: 'menu.advertisements' },
     loadComponent: () =>
       import('./pages/advertisements-details/advertisements-details').then(m => m.AdvertisementsDetails)
   },
   {
-    path: 'Advertisements/edit/:id',
+    path: 'advertisements/edit/:id',
     data: { title: 'menu.advertisements' },
     loadComponent: () =>
       import('./pages/advertisements-details/advertisements-details').then(m => m.AdvertisementsDetails)
@@ -175,45 +175,45 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/Centers/dialysis-add/dialysis-add').then(m => m.DialysisAdd)
   },
   {
-    path: 'HyperbaricOxygen',
+    path: 'hyperbaric-oxygen',
     data: { title: 'menu.centers.hyperbaric' },
     loadComponent: () => import('./pages/Centers/hyperbaric-oxygen/hyperbaric-oxygen').then(m => m.HyperbaricOxygen)
   },
   {
-    path: 'HyperbaricOxygen-details/:id',
+    path: 'hyperbaric-oxygen-details/:id',
     data: { title: 'menu.centers.hyperbaric' },
     loadComponent: () => import('./pages/Centers/hyperbaric-oxygen-details/hyperbaric-oxygen-details').then(m => m.HyperbaricOxygenDetails)
   },
   {
-    path: 'HyperbaricOxygen-add',
+    path: 'hyperbaric-oxygen-add',
     data: { title: 'menu.centers.hyperbaric' },
     loadComponent: () =>
       import('./pages/Centers/hyperbaric-oxygen-add/hyperbaric-oxygen-add').then(m => m.HyperbaricOxygenAdd)
   },
   {
-    path: 'HyperbaricOxygen/edit/:id',
+    path: 'hyperbaric-oxygen/edit/:id',
     data: { title: 'menu.centers.hyperbaric' },
     loadComponent: () =>
       import('./pages/Centers/hyperbaric-oxygen-add/hyperbaric-oxygen-add').then(m => m.HyperbaricOxygenAdd)
   },
   {
-    path: 'Oncology',
+    path: 'oncology',
     data: { title: 'menu.centers.oncology' },
     loadComponent: () => import('./pages/Centers/oncology/oncology').then(m => m.Oncology)
   },
   {
-    path: 'Oncology-details/:id',
+    path: 'oncology-details/:id',
     data: { title: 'menu.centers.oncology' },
     loadComponent: () => import('./pages/Centers/oncology-details/oncology-details').then(m => m.OncologyDetails)
   },
   {
-    path: 'Oncology-add',
+    path: 'oncology-add',
     data: { title: 'menu.centers.oncology' },
     loadComponent: () =>
       import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
   },
   {
-    path: 'Oncology/edit/:id',
+    path: 'oncology/edit/:id',
     data: { title: 'menu.centers.oncology' },
     loadComponent: () =>
       import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
@@ -261,7 +261,7 @@ export const DASHBOARD_ROUTES: Routes = [
   },
   { path: 'external/devices', redirectTo: '/dashboard/internal-devices/devices', pathMatch: 'full' },
   { path: 'external/orders', redirectTo: '/dashboard/internal-devices/orders', pathMatch: 'full' },
-  { path: 'external/orders/:id', redirectTo: '/dashboard/internal-devices/orders/:id', pathMatch: 'full' },
+  { path: 'external/orders/:id', redirectTo: r => `/dashboard/internal-devices/orders/${r.params['id']}`, pathMatch: 'full' },
   // ===================== External device group orders =====================
   // A separate section from `external/*` above: that is the legacy marketplace,
   // which sells a unit and tracks a payment and a shipment. This module does
@@ -427,6 +427,26 @@ export const DASHBOARD_ROUTES: Routes = [
   // wildcard redirects, and the redirect is resolved on the server, which
   // cannot see a session in localStorage and so answered `302 /` — landing a
   // signed-in admin on the public marketing site.
+  // ===================== Legacy mixed-case aliases =====================
+  // These sections shipped with capitalised segments while every other route
+  // in the dashboard is kebab-case, so the same screen was reachable as
+  // `/Oncology-add` right next to `/dialysis-add`. The canonical paths above
+  // are lower-case now; the old spellings stay as redirects because they are
+  // in browser histories, in bookmarks, and in links already sent out.
+  // `redirectTo` is a function wherever the path carries an `:id`: an
+  // absolute redirect string does NOT substitute positional parameters,
+  // and `/dashboard/Oncology/edit/1` landed on a literal `.../edit/:id`.
+  { path: 'Advertisements', redirectTo: '/dashboard/advertisements', pathMatch: 'full' },
+  { path: 'Advertisements/add', redirectTo: '/dashboard/advertisements/add', pathMatch: 'full' },
+  { path: 'Advertisements/edit/:id', redirectTo: r => `/dashboard/advertisements/edit/${r.params['id']}`, pathMatch: 'full' },
+  { path: 'HyperbaricOxygen', redirectTo: '/dashboard/hyperbaric-oxygen', pathMatch: 'full' },
+  { path: 'HyperbaricOxygen-details/:id', redirectTo: r => `/dashboard/hyperbaric-oxygen-details/${r.params['id']}`, pathMatch: 'full' },
+  { path: 'HyperbaricOxygen-add', redirectTo: '/dashboard/hyperbaric-oxygen-add', pathMatch: 'full' },
+  { path: 'HyperbaricOxygen/edit/:id', redirectTo: r => `/dashboard/hyperbaric-oxygen/edit/${r.params['id']}`, pathMatch: 'full' },
+  { path: 'Oncology', redirectTo: '/dashboard/oncology', pathMatch: 'full' },
+  { path: 'Oncology-details/:id', redirectTo: r => `/dashboard/oncology-details/${r.params['id']}`, pathMatch: 'full' },
+  { path: 'Oncology-add', redirectTo: '/dashboard/oncology-add', pathMatch: 'full' },
+  { path: 'Oncology/edit/:id', redirectTo: r => `/dashboard/oncology/edit/${r.params['id']}`, pathMatch: 'full' },
   {
     path: '**',
     data: { title: 'notfound.title' },

@@ -37,7 +37,7 @@ export class OncologyDetails {
   goBack() { this.location.back(); }
   goToEdit() {
     const id = this.center()?.id;
-    if (id) this.router.navigate(['/dashboard/Oncology/edit', id]);
+    if (id) this.router.navigate(['/dashboard/oncology/edit', id]);
   }
 
   async onDelete() {
@@ -54,7 +54,7 @@ export class OncologyDetails {
     this.svc.delete(id).subscribe({
       next: () => {
         this.dialog.toast('success', 'centers.deleted');
-        this.router.navigate(['/dashboard/Oncology']);
+        this.router.navigate(['/dashboard/oncology']);
       },
       error: () => this.dialog.error('dialog.delete_failed', 'dialog.try_again')
     });

@@ -224,7 +224,7 @@ export class UserActivity {
     if (!row.id) return null;
     switch (row.type) {
       case 'advertisement':
-        return ['/dashboard/Advertisements/edit', row.id];
+        return ['/dashboard/advertisements/edit', row.id];
       case 'device_order':
       case 'device_order_received':
         return ['/dashboard/internal-devices/orders', row.id];

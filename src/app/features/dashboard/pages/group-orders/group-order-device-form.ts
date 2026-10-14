@@ -268,6 +268,19 @@ export class GroupOrderDeviceForm {
     });
   }
 
+  /**
+   * Leave the device in the catalogue with no round on it.
+   *
+   * Step 1 already created the device, so this only has to stop here. Until it
+   * existed, the only way out of step 3 was to open a live round or to abandon
+   * the wizard — an admin who just wanted to list a device had to publish one.
+   * The devices list already renders this state as "Not started".
+   */
+  saveWithoutRound(): void {
+    if (!this.deviceId()) return;
+    this.finishEdit();
+  }
+
   createRound(): void {
     const id = this.deviceId();
     if (!id) return;

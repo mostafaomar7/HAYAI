@@ -47,6 +47,19 @@
 
 .step-body { padding: 24px; }
 
+/* Amber rather than red: opening the round is the normal path, not a mistake. */
+.step-notice {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #92400E;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-inline-start: 3px solid #F59E0B;
+  border-radius: 8px;
+}
+
 .step-footer {
   display: flex;
   justify-content: flex-end;

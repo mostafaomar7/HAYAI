@@ -67,12 +67,12 @@ export class Oncology {
 
   onStatusChange(value: string) { this.statusFilter.set(value as any); this.reload(); }
 
-  goToAdd() { this.router.navigate(['/dashboard/Oncology-add']); }
-  goToDetails(id: number) { this.router.navigate(['/dashboard/Oncology-details', id]); }
+  goToAdd() { this.router.navigate(['/dashboard/oncology-add']); }
+  goToDetails(id: number) { this.router.navigate(['/dashboard/oncology-details', id]); }
 
   editCenter(event: Event, id: number) {
     event.stopPropagation();
-    this.router.navigate(['/dashboard/Oncology/edit', id]);
+    this.router.navigate(['/dashboard/oncology/edit', id]);
   }
 
   async deleteCenter(event: Event, id: number) {

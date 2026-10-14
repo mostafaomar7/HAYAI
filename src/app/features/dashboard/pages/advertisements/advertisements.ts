@@ -117,8 +117,8 @@ export class Advertisements {
     this.reload();
   }
 
-  onAdd() { this.router.navigate(['/dashboard/Advertisements/add']); }
-  onEdit(id: number) { this.router.navigate(['/dashboard/Advertisements/edit', id]); }
+  onAdd() { this.router.navigate(['/dashboard/advertisements/add']); }
+  onEdit(id: number) { this.router.navigate(['/dashboard/advertisements/edit', id]); }
 
   async onDelete(id: number, event: Event, name?: string | null) {
     event.stopPropagation();

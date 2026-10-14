@@ -14,7 +14,7 @@ import { TPipe } from '../../../../../core/i18n/t.pipe';
 })
 export class HyperbaricOxygenAdd extends CenterAddBase {
   override category: CenterCategory = 'hyperbaric_oxygen';
-  override listRoute = '/dashboard/HyperbaricOxygen';
+  override listRoute = '/dashboard/hyperbaric-oxygen';
 
   constructor() {
     super();

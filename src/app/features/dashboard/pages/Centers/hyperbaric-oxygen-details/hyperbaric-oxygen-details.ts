@@ -37,7 +37,7 @@ export class HyperbaricOxygenDetails {
   goBack() { this.location.back(); }
   goToEdit() {
     const id = this.center()?.id;
-    if (id) this.router.navigate(['/dashboard/HyperbaricOxygen/edit', id]);
+    if (id) this.router.navigate(['/dashboard/hyperbaric-oxygen/edit', id]);
   }
 
   async onDelete() {
@@ -54,7 +54,7 @@ export class HyperbaricOxygenDetails {
     this.svc.delete(id).subscribe({
       next: () => {
         this.dialog.toast('success', 'centers.deleted');
-        this.router.navigate(['/dashboard/HyperbaricOxygen']);
+        this.router.navigate(['/dashboard/hyperbaric-oxygen']);
       },
       error: () => this.dialog.error('dialog.delete_failed', 'dialog.try_again')
     });

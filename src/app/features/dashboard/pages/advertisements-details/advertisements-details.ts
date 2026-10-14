@@ -413,7 +413,7 @@ export class AdvertisementsDetails {
     req$.subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/dashboard/Advertisements']);
+        this.router.navigate(['/dashboard/advertisements']);
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);

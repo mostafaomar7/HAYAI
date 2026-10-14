@@ -54,6 +54,11 @@ export class DialogService {
     inputType?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'textarea';
     confirmText?: string;
     cancelText?: string;
+    /** Red confirm button, for a prompt whose action cannot be undone. */
+    danger?: boolean;
+    /** Keeps the dialog open on an empty value instead of closing silently. */
+    required?: boolean;
+    requiredText?: string;
     params?: DialogParams;
   }): Promise<string | null> {
     const result: SweetAlertResult = await Swal.fire({
@@ -65,9 +70,14 @@ export class DialogService {
       showCancelButton: true,
       confirmButtonText: this.t(opts.confirmText ?? 'common.confirm'),
       cancelButtonText: this.t(opts.cancelText ?? 'common.cancel'),
-      confirmButtonColor: '#2563eb',
+      confirmButtonColor: opts.danger ? '#dc2626' : '#2563eb',
       cancelButtonColor: '#6b7280',
-      reverseButtons: true
+      reverseButtons: true,
+      // Without this the caller's own `if (!reason) return;` closes the dialog
+      // and does nothing at all, which reads as a dead button.
+      inputValidator: opts.required
+        ? (value: string) => (value && value.trim() ? undefined : this.t(opts.requiredText ?? 'dialog.required'))
+        : undefined
     });
     return result.isConfirmed ? (result.value ?? '') : null;
   }

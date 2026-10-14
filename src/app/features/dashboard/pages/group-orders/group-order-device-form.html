@@ -177,6 +177,11 @@
 
       <!-- ============================ step 3 ============================ -->
       @if (step() === 3 && !loading()) {
+        <!-- Said before the fields, not after: filling this step opens a round
+             that users can see and join straight away. The button used to read
+             "Add Device", which described step 1 and hid what this one does. -->
+        <p class="step-notice">{{ 'gorders.round_goes_live' | t }}</p>
+
         <div class="form-grid">
           <div class="form-group">
             <label>{{ 'gorders.target_size' | t }} <span class="req">*</span></label>
@@ -216,8 +221,11 @@
 
         <div class="step-footer">
           <button class="btn-secondary" (click)="step.set(2)">{{ 'common.back' | t }}</button>
+          <button class="btn-secondary" [disabled]="saving()" (click)="saveWithoutRound()">
+            {{ 'gorders.save_without_round' | t }}
+          </button>
           <button class="btn-primary" [disabled]="saving()" (click)="createRound()">
-            {{ (saving() ? 'common.saving' : 'gorders.add_device') | t }}
+            {{ (saving() ? 'common.saving' : 'gorders.open_round') | t }}
           </button>
         </div>
       }
