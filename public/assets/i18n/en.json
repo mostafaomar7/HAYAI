@@ -3268,5 +3268,7 @@
   "weekday.thursday": "Thursday",
   "weekday.friday": "Friday",
   "ads.running": "Running",
-  "ads.scheduled": "Scheduled"
+  "ads.scheduled": "Scheduled",
+  "dialog.choose_one": "Choose one to continue.",
+  "gorders.duplicate_name": "Another entry in this list already has this name."
 }

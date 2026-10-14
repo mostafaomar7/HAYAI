@@ -219,6 +219,16 @@ export class GroupOrderPartners {
     const keys = d.fields.map(f => f.key.trim()).filter(Boolean);
     if (d.fields.some(f => !f.key.trim())) errors['fields'] = 'gorders.field_key_required';
     else if (new Set(keys).size !== keys.length) errors['fields'] = 'gorders.field_key_duplicate';
+    // A name this list already holds. The API takes it and appends `-1` to the
+    // slug, so the admin gets a second category reading exactly like the first
+    // — measured on production 2026-10-14: the same name posted twice gave
+    // ids 8 and 9, the second with slug `zz-dup-1014d-1`. The option lists
+    // started refusing this on 2026-10-13; these two screens sit in a
+    // different module and were not covered.
+    const dupe = this.duplicateName(this.categories(), d.id, {
+      name_en: d.name_en, name_ar: d.name_ar
+    });
+    Object.assign(errors, dupe);
     if (Object.keys(errors).length) { this.fieldErrors.set(errors); return; }
 
     const body: Partial<DeviceCategory> = {
@@ -254,6 +264,10 @@ export class GroupOrderPartners {
     const errors: Record<string, string> = {};
     if (!d.name.trim()) errors['name'] = 'gorders.required';
     if (!d.phone.trim()) errors['phone'] = 'gorders.required';
+    // Same as categories: the API accepts a second company with the same name
+    // outright — measured 2026-10-14, two rows created, both named identically
+    // and nothing to tell them apart in the picker on an order.
+    Object.assign(errors, this.duplicateName(this.companies(), d.id, { name: d.name }));
     if (Object.keys(errors).length) { this.fieldErrors.set(errors); return; }
 
     const body: Partial<ShippingCompany> = {
@@ -271,6 +285,40 @@ export class GroupOrderPartners {
       next: () => this.done(),
       error: err => this.handleError(err)
     });
+  }
+
+  /** Trim, collapse runs of whitespace, fold case. Arabic is unaffected by the last. */
+  private normaliseName(value: string | null | undefined): string {
+    return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  /**
+   * Field errors for a name the list already holds, keyed by the field it
+   * belongs to. The row being edited is skipped so saving it unchanged is not
+   * a clash with itself.
+   *
+   * Both languages are checked where there are two: two categories reading the
+   * same in Arabic are as unusable in the picker as two reading the same in
+   * English. The comparison is against the list already on screen — these two
+   * screens load theirs whole, so there is no second page to miss.
+   */
+  private duplicateName(
+    rows: ReadonlyArray<{ id?: number }>,
+    selfId: number | null | undefined,
+    fields: Record<string, string>
+  ): Record<string, string> {
+    const read = (row: { id?: number }, field: string): string =>
+      String((row as unknown as Record<string, unknown>)[field] ?? '');
+    const others = rows.filter(r => r.id !== (selfId ?? -1));
+    const errors: Record<string, string> = {};
+    for (const [field, value] of Object.entries(fields)) {
+      const wanted = this.normaliseName(value);
+      if (!wanted) continue;
+      if (others.some(r => this.normaliseName(read(r, field)) === wanted)) {
+        errors[field] = 'gorders.duplicate_name';
+      }
+    }
+    return errors;
   }
 
   private done(): void {

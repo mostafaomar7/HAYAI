@@ -3268,5 +3268,7 @@
   "weekday.thursday": "الخميس",
   "weekday.friday": "الجمعة",
   "ads.running": "جارٍ",
-  "ads.scheduled": "مجدوَل"
+  "ads.scheduled": "مجدوَل",
+  "dialog.choose_one": "اختار واحد عشان تكمّل.",
+  "gorders.duplicate_name": "فيه عنصر تاني في القايمة شايل نفس الاسم."
 }

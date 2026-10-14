@@ -110,6 +110,14 @@ export class DialogService {
   /**
    * Single-choice select. Returns the chosen option key, or null if cancelled.
    * Option labels are translated; dynamic labels fall through unchanged.
+   *
+   * Confirming without choosing keeps the dialog open and says so. It used to
+   * close and resolve `null`, which every caller reads as "cancelled" and
+   * returns on — so pressing Update on the change-plan dialog with nothing
+   * selected closed it, sent no request and showed no message, and the admin
+   * had every reason to think the plan had changed. All five callers treat an
+   * empty choice as nothing to do, so none of them wants the old behaviour;
+   * the two that pass no `defaultValue` are the ones that could hit it.
    */
   async select(opts: {
     title: string;
@@ -118,6 +126,8 @@ export class DialogService {
     placeholder?: string;
     confirmText?: string;
     cancelText?: string;
+    /** Shown when confirm is pressed with nothing chosen. */
+    requiredText?: string;
   }): Promise<string | null> {
     const labels = Object.entries(opts.options).reduce<Record<string, string>>((acc, [k, v]) => {
       acc[k] = this.i18n.translate(v);
@@ -135,7 +145,11 @@ export class DialogService {
       cancelButtonText: this.t(opts.cancelText ?? 'common.cancel'),
       confirmButtonColor: '#2563eb',
       cancelButtonColor: '#6b7280',
-      reverseButtons: true
+      reverseButtons: true,
+      // Returning a string keeps the dialog open and prints it under the
+      // field; returning nothing lets the confirm through.
+      inputValidator: value =>
+        value ? undefined : this.t(opts.requiredText ?? 'dialog.choose_one')
     });
     return result.isConfirmed && result.value ? String(result.value) : null;
   }
