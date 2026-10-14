@@ -70,8 +70,18 @@
       <label>{{ 'common.status' | t }}</label>
       <select formControlName="status">
         <option value="active">{{ 'common.active' | t }}</option>
-        <option value="expired">{{ 'ads.expired' | t }}</option>
+        <option value="expired">{{ 'ads.stopped' | t }}</option>
       </select>
+      <!--
+        The dates decide on their own; this control is only the manual stop.
+        Said out loud when the end date has already passed, because then the
+        advert is not running whatever this says.
+      -->
+      @if (expiredByDate()) {
+        <span class="field-hint">{{ 'ads.expired_by_date' | t }}</span>
+      } @else {
+        <span class="field-hint">{{ 'ads.status_hint' | t }}</span>
+      }
     </div>
 
     <div class="form-group">

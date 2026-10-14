@@ -236,13 +236,15 @@ export class Categories {
    * the screen does not page. The row being edited is skipped, so saving it
    * unchanged is not reported as a clash with itself.
    */
-  private slugTakenBy(candidate: string): string {
+  private slugTakenBy(locale: Locale, candidate: string): string {
     if (!candidate) return '';
     const kind = this.editing()?.kind ?? this.draft().kind;
     const selfId = this.editing()?.id ?? -1;
-    const hit = this.all().find(
-      c => c.id !== selfId && c.kind === kind && (c.slug_en ?? '').toLowerCase() === candidate.toLowerCase()
-    );
+    const hit = this.all().find(c => {
+      if (c.id === selfId || c.kind !== kind) return false;
+      const slug = (locale === 'ar' ? c.slug_ar : c.slug_en) ?? '';
+      return slug.toLowerCase() === candidate.toLowerCase();
+    });
     return hit ? (hit.name_en || hit.name_ar || hit.slug_en || '') : '';
   }
 
@@ -290,9 +292,19 @@ export class Categories {
     // accepted as both a product and an article category — so the comparison
     // is scoped the same way.
     if (!e['name_en'] && !e['slug_en']) {
-      const taken = this.slugTakenBy(body.slug_en || slugify(body.name_en));
+      const taken = this.slugTakenBy('en', body.slug_en || slugify(body.name_en));
       if (taken) {
         e[body.slug_en ? 'slug_en' : 'name_en'] = 'web.categories.err_slug_taken';
+        this.clashingName.set(taken);
+      }
+    }
+    // The Arabic side has its own slug and its own unique rule — the API
+    // answers a derived Arabic clash on `slug_ar` — so it is checked
+    // separately rather than assumed to follow the English one.
+    if (!e['slug_ar'] && (body.slug_ar || body.name_ar)) {
+      const taken = this.slugTakenBy('ar', body.slug_ar || slugify(body.name_ar ?? ''));
+      if (taken) {
+        e[body.slug_ar ? 'slug_ar' : 'name_ar'] = 'web.categories.err_slug_taken';
         this.clashingName.set(taken);
       }
     }
@@ -387,6 +399,8 @@ export class Categories {
  * byte-identical slugs on both sides. Nothing here is sent to the API; it
  * exists only to predict the collision the API would raise on.
  */
+// Arabic letters are kept (the ؀-ۿ range below), so an Arabic
+// name produces an Arabic slug rather than an empty one.
 function slugify(text: string): string {
   return text
     .normalize('NFKD')

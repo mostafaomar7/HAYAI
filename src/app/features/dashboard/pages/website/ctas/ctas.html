@@ -135,7 +135,13 @@
           <div class="form-group">
             <label>{{ 'web.ctas.placement' | t }}</label>
             <select [value]="draft().placement" (change)="set('placement', $any($event.target).value)">
-              <option value="">—</option>
+              <!--
+                Not "no placement": the column is NOT NULL with the default
+                `inline`, and the renderers fall back to `inline` as well, so
+                leaving this alone stores `inline`. It used to read "—",
+                which is what made a stored default look like an empty value.
+              -->
+              <option value="">{{ 'web.ctas.placement_default' | t }}</option>
               @for (v of placements(); track v) {
                 <option [value]="v" [selected]="draft().placement === v">{{ enumLabel('cta_placement', v) }}</option>
               }

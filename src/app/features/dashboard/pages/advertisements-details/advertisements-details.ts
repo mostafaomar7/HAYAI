@@ -123,6 +123,13 @@ export class AdvertisementsDetails {
     end_date: ['']
   });
 
+  /**
+   * The `status` the form was loaded with, and whether the dates already
+   * explain it. Both exist for one reason — see `statusToSend`.
+   */
+  private loadedStatus: string | null = null;
+  expiredByDate = signal(false);
+
   // For inline validation
   showValidation = signal(false);
 
@@ -171,6 +178,50 @@ export class AdvertisementsDetails {
     }
   }
 
+  /** Today in UTC as `YYYY-MM-DD`, which is how the API compares these dates. */
+  private todayUtc(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private endDateHasPassed(endDate: string): boolean {
+    return !!endDate && endDate < this.todayUtc();
+  }
+
+  /**
+   * What the status dropdown should show for a loaded advert.
+   *
+   * An advert whose `end_date` has passed reads `expired` whether or not an
+   * admin ever stopped it, so showing `expired` there would put a choice in
+   * front of the admin that they did not make. The control shows `active` in
+   * that case and the date is explained beside it instead; `expired` is left
+   * for the one thing it still means on its own — an admin stopped this.
+   */
+  private statusForControl(ad: { status?: string | null; end_date?: string | null }): string {
+    const stored = ad.status ?? 'active';
+    if (stored !== 'expired') return stored;
+    return this.endDateHasPassed(ad.end_date ?? '') ? 'active' : 'expired';
+  }
+
+  /**
+   * The `status` to put in the request, or `''` to leave it out.
+   *
+   * From 2026-10-14 the API recomputes `status` from the dates when an edit
+   * sends new dates and no `status`, and keeps whatever it is given when one
+   * is sent. A form that always posts back the status it loaded would
+   * therefore re-send `expired` for a finished advert and pin it there — so
+   * extending the end date of a finished advert, the obvious way to bring one
+   * back, would silently do nothing. The field is sent only when the admin
+   * moved it.
+   *
+   * On create there is nothing to compare against and the API needs a value,
+   * so it always goes.
+   */
+  private statusToSend(current: string): string {
+    if (!this.id()) return current;                       // create
+    if (this.loadedStatus === null) return current;       // never loaded
+    return current === this.loadedStatus ? '' : current;
+  }
+
   private loadAd(id: number) {
     this.loading.set(true);
     this.ads.get(id).subscribe({
@@ -178,11 +229,18 @@ export class AdvertisementsDetails {
         this.form.patchValue({
           owner_id: ad.owner_id ?? null,
           redirect_link: ad.redirect_link,
-          status: ad.status,
+          // `status` is not a stored fact any more. From the API change of
+          // 2026-10-14 it reads `expired` when an admin stopped the advert OR
+          // when `end_date` is in the past, and the two are indistinguishable
+          // in the payload. Only the first is the admin's choice, so only the
+          // first belongs in this control.
+          status: this.statusForControl(ad),
           is_published: ad.is_published,
           start_date: ad.start_date ?? '',
           end_date: ad.end_date ?? ''
         });
+        this.expiredByDate.set(this.endDateHasPassed(ad.end_date ?? ''));
+        this.loadedStatus = this.statusForControl(ad);
         this.uploadedImage.set(ad.image_url);
 
         // The field is `provider_type`, not `owner_type` — which is why the
@@ -343,7 +401,8 @@ export class AdvertisementsDetails {
       form.append('provider_type', providerType);
     }
     form.append('redirect_link', (v.redirect_link ?? '').trim());
-    if (v.status) form.append('status', v.status);
+    const status = this.statusToSend(v.status ?? '');
+    if (status) form.append('status', status);
     form.append('is_published', v.is_published ? '1' : '0');
     if (v.start_date) form.append('start_date', v.start_date);
     if (v.end_date) form.append('end_date', v.end_date);

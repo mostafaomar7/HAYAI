@@ -128,7 +128,14 @@ export class WebsiteSettings {
     const type = (row.type || '').toLowerCase();
     const sample = row.value ?? row.default;
     switch (type) {
-      case 'string': case 'url': case 'email': return 'string';
+      // `email` and `phone` arrived with the API change of 2026-10-14:
+      // organization.email became `email`, and organization.phone and
+      // organization.whatsapp became `phone`. All three are one line of text
+      // to type, so they share the widget; what differs is the check in
+      // `formatProblem`, which is keyed by setting name and already covers
+      // them. Listed explicitly so a new type cannot fall through to the
+      // sample-shape guesswork below and silently become a textarea.
+      case 'string': case 'url': case 'email': case 'phone': return 'string';
       case 'text': return 'text';
       case 'bool': case 'boolean': return 'bool';
       case 'int': case 'integer': case 'float': case 'number': return 'number';
