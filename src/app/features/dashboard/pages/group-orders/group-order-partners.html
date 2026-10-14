@@ -161,6 +161,7 @@
           @if (d.id && d.devices_count > 0) {
             <span class="warn">{{ 'gorders.slug_warning' | t : { count: d.devices_count } }}</span>
           }
+          @if (errorFor('slug')) { <span class="field-error">{{ errorFor('slug')! | t }}</span> }
         </div>
 
         <div class="form-group">
@@ -168,6 +169,7 @@
           <input type="number" min="0" step="1" [value]="d.sort_order"
                  (input)="setCategory('sort_order', $any($event.target).value)">
           <span class="hint">{{ 'gorders.order_hint' | t }}</span>
+          @if (errorFor('sort_order')) { <span class="field-error">{{ errorFor('sort_order')! | t }}</span> }
         </div>
 
         <div class="form-group">

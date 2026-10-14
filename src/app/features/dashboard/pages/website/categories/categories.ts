@@ -28,7 +28,17 @@ interface CategoryDraft {
 function emptyDraft(kind: Kind): CategoryDraft {
   return {
     kind, name_en: '', name_ar: '', slug_en: '', slug_ar: '', description_en: '', description_ar: '',
-    parent_id: '', sort_order: '0', is_active: true
+    // A new record starts switched off. This screen published immediately on save
+    // while pages, articles, products and FAQs all start as drafts — the same
+    // product making opposite choices depending on which screen you are on. Off is
+    // the safer half of that inconsistency: the toggle is right there in the form, so
+    // turning it on is one click, where un-publishing something half-typed means
+    // first noticing it went live.
+    //
+    // Not applied to the option lists, where a row is a name and nothing else: there
+    // is no half-finished state to protect anyone from, and those screens are used to
+    // add many rows at a sitting.
+    parent_id: '', sort_order: '0', is_active: false
   };
 }
 

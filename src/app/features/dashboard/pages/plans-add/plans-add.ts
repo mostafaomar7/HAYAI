@@ -3,6 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { apiErrorText } from '../../../../shared/utils/api-error.util';
 import {
   ModuleGroup,
   Plan,
@@ -330,7 +331,12 @@ export class PlansAdd {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.errorMessage.set(err.error?.message ?? 'dialog.try_again');
+        // `message` on a 422 is the heading, "Validation failed", and on its own
+        // it tells an admin nothing. The API does name the field — measured
+        // 2026-10-14: a price of -100 answers `price: ["The price field must be
+        // at least 0."]` and a discount of 150 explains that it is a percentage.
+        // All of that was being thrown away.
+        this.errorMessage.set(apiErrorText(err, 'dialog.try_again'));
       }
     });
   }

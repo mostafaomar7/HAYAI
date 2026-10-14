@@ -328,15 +328,37 @@ export class GroupOrderPartners {
     this.load();
   }
 
+  /**
+   * Fields that have a control on screen to hang an error on. Anything the API
+   * names that is not in here has nowhere to appear, so it goes in the banner
+   * instead of being swallowed — the QA round typed spaces into the slug, which
+   * the API refuses by name, and the form showed only "Validation failed".
+   *
+   * Listing them rather than putting everything in the banner keeps the same
+   * sentence from appearing twice, once under the field and once above it.
+   */
+  private static readonly INLINE_FIELDS = new Set([
+    'name', 'name_en', 'name_ar', 'slug', 'sort_order', 'phone', 'fields'
+  ]);
+
   private handleError(err: HttpErrorResponse): void {
     this.saving.set(false);
     const bag = err?.error?.errors as Record<string, string[]> | undefined;
+    const homeless: string[] = [];
     if (bag) {
       this.fieldErrors.set(
         Object.fromEntries(Object.entries(bag).map(([k, v]) => [k, Array.isArray(v) ? v[0] : String(v)]))
       );
+      for (const [key, value] of Object.entries(bag)) {
+        if (GroupOrderPartners.INLINE_FIELDS.has(key)) continue;
+        const first = Array.isArray(value) ? value[0] : String(value);
+        if (first && !homeless.includes(first)) homeless.push(first);
+      }
     }
-    this.formError.set(err?.error?.message ?? 'gorders.save_failed');
+    // Only what had nowhere else to go.
+    this.formError.set(
+      homeless.length ? homeless.join(' ') : (err?.error?.message ?? 'gorders.save_failed')
+    );
   }
 
   // ------------------------------------------------------------------ delete

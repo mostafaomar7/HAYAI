@@ -87,7 +87,17 @@ export class ClinicalGuidelineForm {
     title_en: '', title_ar: '', summary_en: '', summary_ar: '',
     subspecialty_id: '', sections: [emptySection()],
     source: '', source_url: '', last_reviewed_at: '',
-    is_published: true, sort_order: ''
+    // A new record starts switched off. This screen published immediately on save
+    // while pages, articles, products and FAQs all start as drafts — the same
+    // product making opposite choices depending on which screen you are on. Off is
+    // the safer half of that inconsistency: the toggle is right there in the form, so
+    // turning it on is one click, where un-publishing something half-typed means
+    // first noticing it went live.
+    //
+    // Not applied to the option lists, where a row is a name and nothing else: there
+    // is no half-finished state to protect anyone from, and those screens are used to
+    // add many rows at a sitting.
+    is_published: false, sort_order: ''
   });
 
   isEdit = computed(() => this.id() !== null);
