@@ -55,8 +55,9 @@ three places outside that sweep:
 | device categories | 6, 7 | `QA-TEST-MM Category UPDATED`, `QA-TEST-MM Category` |
 | shipping companies | 3, 4 | `QA-TEST-MM Shipping UPDATED`, `QA-TEST-MM Shipping` |
 | website redirects | 1, 2 | `/en/qa-test-mm-old` ↔ `/en/qa-test-mm-new`, both inactive |
+| subscription plans | 67 | `QA-TEST-MM Plan`, inactive, 0 subscribers |
 
-The first four appear in the pickers on a group order. **Please delete them, or
+The first four appear in the pickers on a group order. Plan 67 was found later, on the same sweep widened to the plans list; it is inactive with no subscribers, so it is only clutter. **Please delete them, or
 tell us to** — same answer as last time is fine.
 
 The two redirects are harmless and worth keeping as a test case if you like:
