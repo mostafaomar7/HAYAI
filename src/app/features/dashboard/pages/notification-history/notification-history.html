@@ -27,7 +27,14 @@
           } @else {
             @for (b of items(); track b.id) {
               <tr>
-                <td><strong>{{ b.title }}</strong></td>
+                <td>
+                  <strong>{{ b.title }}</strong>
+                  <!-- Only on broadcasts sent after the field existed. -->
+                  @if (b.link) {
+                    <a class="sent-link" [href]="b.link" target="_blank" rel="noopener noreferrer"
+                       dir="ltr" [title]="b.link">{{ b.link }}</a>
+                  }
+                </td>
                 <td class="text-gray">
                   <div class="body-cell">{{ b.body }}</div>
                 </td>

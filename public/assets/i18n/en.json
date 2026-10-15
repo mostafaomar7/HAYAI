@@ -3332,5 +3332,12 @@
   "notif.send.queued#zero": "Sent — but it reached nobody.",
   "notif.send.queued#one": "Sent to 1 account.",
   "notif.send.reach_nobody": "This selection reaches nobody.",
-  "notif.send.type.admin": "Admin accounts"
+  "notif.send.type.admin": "Admin accounts",
+  "notif.send.link_label": "Link",
+  "notif.send.link_hint": "Optional. Recipients get an \"Open link\" button for it. Must start with http:// or https://.",
+  "notif.send.link_invalid": "The link must be a full address starting with http:// or https://.",
+  "notif.send.link_too_long": "The link is too long — 255 characters at most.",
+  "notif.history.audience_none": "Nobody",
+  "notif.history.specialties": "{count} specialties",
+  "notif.history.specialties#one": "1 specialty"
 }

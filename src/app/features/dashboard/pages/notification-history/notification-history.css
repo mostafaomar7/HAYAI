@@ -120,3 +120,19 @@
   font-weight: 600;
   color: #111827;
 }
+
+/* The destination a broadcast carried, under its title. */
+.sent-link {
+  display: block;
+  margin-top: 4px;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2563EB;
+  text-decoration: none;
+}
+
+.sent-link:hover { text-decoration: underline; }

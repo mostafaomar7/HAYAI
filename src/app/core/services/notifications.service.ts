@@ -24,6 +24,33 @@ export interface UnreadCount {
 
 export type BroadcastGender = 'male' | 'female';
 
+/**
+ * The API's account-type id, and the name this dashboard already uses for it.
+ *
+ * `/lookups/user-types` answers English labels and ignores `Accept-Language`
+ * (measured 2026-10-15), so its `label` cannot be shown on an Arabic screen.
+ * The ids come from the API, which is the half that has to be right; the
+ * words come from us, which is the half that has to be readable.
+ *
+ * Note the three that do not match the names used elsewhere in this
+ * dashboard: `pharmacies`, `labs_radiology` and `medical_insurance`.
+ */
+export const USER_TYPE_LABEL: Record<string, string> = {
+  patient: 'users.patient.title',
+  tourist: 'users.tourist.title',
+  doctor: 'users.doctor.title',
+  hospital: 'users.hospital.title',
+  clinic: 'users.clinic.title',
+  pharmacies: 'users.pharmacy.title',
+  labs_radiology: 'users.lab.title',
+  medical_insurance: 'users.issuance.title',
+  home_care: 'users.home_care.title',
+  physical_therapy: 'users.therapy.title',
+  employment_office: 'users.employment.title',
+  medical_devices: 'users.medical_devices.title',
+  admin: 'notif.send.type.admin'
+};
+
 export interface BroadcastTarget {
   type: 'all' | 'user_type' | 'segment';
   /** Values from `/lookups/user-types` — NOT the names this dashboard uses
@@ -69,6 +96,14 @@ export interface BroadcastPreview {
 export interface BroadcastRequest {
   title: string;
   body: string;
+  /**
+   * Optional. A full `http(s)` URL, at most 255 characters; the apps show an
+   * "Open link" button for it. The API had no rule for this field as of
+   * 2026-10-15 — `not-a-url` and a 270-character link both passed while the
+   * request failed on another field — so until that ships, the check in the
+   * form is the only one there is.
+   */
+  link?: string | null;
   target_audience: BroadcastTarget;
 }
 
@@ -76,6 +111,9 @@ export interface BroadcastResponse {
   id: number;
   title: string;
   body: string;
+  /** `null` when none was sent; absent entirely on a broadcast stored before
+   *  the field existed, which is every row on production today. */
+  link?: string | null;
   target_audience: BroadcastTarget;
   queued_recipients: number;
   sent_by: number;

@@ -7,7 +7,8 @@ import {
   BroadcastGender,
   BroadcastTarget,
   DoctorSpecialty,
-  NotificationsService
+  NotificationsService,
+  USER_TYPE_LABEL
 } from '../../../../core/services/notifications.service';
 import { LookupItem, LookupsService } from '../../../../core/services/lookups.service';
 import { apiErrorText } from '../../../../shared/utils/api-error.util';
@@ -18,6 +19,10 @@ import { TPipe } from '../../../../core/i18n/t.pipe';
 /** The API's own limits. Enforced here so a long title is caught before send. */
 const TITLE_MAX = 200;
 const BODY_MAX = 5000;
+const LINK_MAX = 255;
+
+/** `http`/`https` only: the apps hand this to the system browser. */
+const LINK_OK = /^https?:\/\/\S+$/i;
 
 /** Only these two take a gender; the rest are organisations. */
 const GENDERED = new Set(['patient', 'tourist']);
@@ -34,31 +39,6 @@ const DOCTOR = 'doctor';
  * zero recipients and said so in a number nobody reads. Measured against
  * `/broadcast/preview` on 2026-10-15: `pharmacy` 0, `pharmacies` 7.
  */
-/**
- * The API's id, and the name this dashboard already uses for it.
- *
- * `/lookups/user-types` answers English labels and ignores `Accept-Language`
- * (measured 2026-10-15), so taking its `label` straight put "Pharmacies" and
- * "Labs & Radiology" on an otherwise Arabic screen. The ids come from the API,
- * which is the half that has to be right; the words come from us, which is the
- * half that has to be readable.
- */
-const TYPE_LABEL: Record<string, string> = {
-  patient: 'users.patient.title',
-  tourist: 'users.tourist.title',
-  doctor: 'users.doctor.title',
-  hospital: 'users.hospital.title',
-  clinic: 'users.clinic.title',
-  pharmacies: 'users.pharmacy.title',
-  labs_radiology: 'users.lab.title',
-  medical_insurance: 'users.issuance.title',
-  home_care: 'users.home_care.title',
-  physical_therapy: 'users.therapy.title',
-  employment_office: 'users.employment.title',
-  medical_devices: 'users.medical_devices.title',
-  admin: 'notif.send.type.admin'
-};
-
 const FALLBACK_TYPES: LookupItem[] = [
   { id: 'patient', label: 'Patients' },
   { id: 'tourist', label: 'Tourists' },
@@ -88,10 +68,12 @@ export class Notification {
 
   readonly titleMax = TITLE_MAX;
   readonly bodyMax = BODY_MAX;
+  readonly linkMax = LINK_MAX;
   readonly genders: BroadcastGender[] = ['male', 'female'];
 
   title = signal('');
   body = signal('');
+  link = signal('');
 
   /** `all` ignores the type list; `user_type` sends to exactly what is ticked. */
   everyone = signal(true);
@@ -122,6 +104,19 @@ export class Notification {
   /** `user_type` with nothing ticked reaches nobody — measured, total 0. */
   nobodySelected = computed(() => !this.everyone() && this.selectedTypes().size === 0);
 
+  /**
+   * Checked here because the API does not check it. Measured 2026-10-15: a
+   * `link` of `not-a-url`, and one of 270 characters, were both accepted while
+   * the same request failed on its title. An app handed `not-a-url` opens
+   * nothing, and the admin would have no way to know.
+   */
+  linkError = computed<string | null>(() => {
+    const v = this.link().trim();
+    if (!v) return null;
+    if (v.length > LINK_MAX) return 'notif.send.link_too_long';
+    return LINK_OK.test(v) ? null : 'notif.send.link_invalid';
+  });
+
   titleLeft = computed(() => TITLE_MAX - this.title().length);
   bodyLeft = computed(() => BODY_MAX - this.body().length);
   tooLong = computed(() => this.titleLeft() < 0 || this.bodyLeft() < 0);
@@ -131,6 +126,7 @@ export class Notification {
     !!this.title().trim() &&
     !!this.body().trim() &&
     !this.tooLong() &&
+    !this.linkError() &&
     !this.nobodySelected()
   );
 
@@ -148,7 +144,7 @@ export class Notification {
 
   /** An account type: our word for the API's id, falling back to its own. */
   label(item: LookupItem): string {
-    const key = TYPE_LABEL[String(item.id)];
+    const key = USER_TYPE_LABEL[String(item.id)];
     if (key) {
       const text = this.i18n.translate(key);
       if (text !== key) return text;
@@ -292,11 +288,13 @@ export class Notification {
 
   setTitle(value: string): void { this.title.set(value); }
   setBody(value: string): void { this.body.set(value); }
+  setLink(value: string): void { this.link.set(value); }
 
   sendNotification(): void {
     if (!this.canSend()) {
       this.errorMsg.set(
-        this.nobodySelected() ? 'notif.send.pick_audience' : 'notif.send.required_fields'
+        this.nobodySelected() ? 'notif.send.pick_audience'
+          : this.linkError() ?? 'notif.send.required_fields'
       );
       return;
     }
@@ -305,8 +303,16 @@ export class Notification {
     this.errorMsg.set(null);
     this.successMsg.set(null);
 
+    const link = this.link().trim();
     this.svc
-      .broadcast({ title: this.title().trim(), body: this.body().trim(), target_audience: this.target() })
+      .broadcast({
+        title: this.title().trim(),
+        body: this.body().trim(),
+        // Omitted rather than sent empty: a server that does not know the
+        // field yet should not be handed a blank one to store.
+        ...(link ? { link } : {}),
+        target_audience: this.target()
+      })
       .subscribe({
         next: r => {
           this.sending.set(false);
@@ -314,6 +320,7 @@ export class Notification {
           this.successMsg.set('notif.send.queued');
           this.title.set('');
           this.body.set('');
+          this.link.set('');
         },
         error: (err: HttpErrorResponse) => {
           this.sending.set(false);

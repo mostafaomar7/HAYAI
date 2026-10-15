@@ -22,6 +22,15 @@
       </span>
     </div>
 
+    <!-- Optional. The apps turn it into an "Open link" button. -->
+    <div class="form-group">
+      <label>{{ 'notif.send.link_label' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+      <input type="url" dir="ltr" placeholder="https://…" [attr.maxlength]="linkMax"
+             [value]="link()" (input)="setLink($any($event.target).value)" />
+      @if (linkError()) { <span class="field-error">{{ linkError()! | t }}</span> }
+      @else { <span class="hint">{{ 'notif.send.link_hint' | t }}</span> }
+    </div>
+
     <!-- ========================= audience ========================= -->
     <div class="form-group">
       <label>{{ 'notif.send.target_audience' | t }}</label>

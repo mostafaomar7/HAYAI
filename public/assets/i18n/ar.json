@@ -3373,5 +3373,14 @@
   "notif.send.queued#two": "اتبعت لحسابين.",
   "notif.send.queued#few": "اتبعت لـ {count} حسابات.",
   "notif.send.reach_nobody": "الاختيار ده مش هيوصل لحد.",
-  "notif.send.type.admin": "حسابات الأدمن"
+  "notif.send.type.admin": "حسابات الأدمن",
+  "notif.send.link_label": "الرابط",
+  "notif.send.link_hint": "اختياري. المستقبلين هيلاقوا زرار «افتح الرابط». لازم يبدأ بـ http:// أو https://.",
+  "notif.send.link_invalid": "الرابط لازم يكون عنوان كامل يبدأ بـ http:// أو https://.",
+  "notif.send.link_too_long": "الرابط طويل أوي — ٢٥٥ حرف كحد أقصى.",
+  "notif.history.audience_none": "محدش",
+  "notif.history.specialties": "{count} تخصص",
+  "notif.history.specialties#one": "تخصص واحد",
+  "notif.history.specialties#two": "تخصصين",
+  "notif.history.specialties#few": "{count} تخصصات"
 }
