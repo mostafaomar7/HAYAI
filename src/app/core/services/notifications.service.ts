@@ -22,9 +22,48 @@ export interface UnreadCount {
   total: number;
 }
 
+export type BroadcastGender = 'male' | 'female';
+
 export interface BroadcastTarget {
   type: 'all' | 'user_type' | 'segment';
+  /** Values from `/lookups/user-types` — NOT the names this dashboard uses
+   *  elsewhere. The API calls them `pharmacies`, `labs_radiology` and
+   *  `medical_insurance`; sending `pharmacy`, `lab` or `medical_issuance` is
+   *  accepted and reaches nobody. */
   userTypes?: string[];
+  /** Narrows `patient` and `tourist` only; every other selected type is
+   *  untouched. An account with no gender recorded matches neither value. */
+  genders?: BroadcastGender[];
+  /** Both narrow `doctor` only, and a doctor matches either one. */
+  specialtyIds?: number[];
+  subspecialtyIds?: number[];
+}
+
+/**
+ * A doctor specialty or subspecialty as `/doctor/specialties` serves it.
+ *
+ * Not `/lookups/doctor-specialties`, which answers `{id, name}` in English
+ * only and ignores `Accept-Language` — measured 2026-10-15. This is the one
+ * source that carries both languages, which is why the API prompt named it.
+ */
+export interface DoctorSpecialty {
+  id: number;
+  code?: string;
+  name: string;
+  name_en?: string;
+  name_ar?: string;
+  specialty_id?: number;
+  has_subspecialties?: boolean;
+}
+
+export interface BroadcastPreview {
+  total: number;
+  /**
+   * Per type. Comes back as an empty JSON array rather than an empty object
+   * when nothing matches, so it is read through `Object.entries`, which is
+   * right either way.
+   */
+  by_user_type: Record<string, number> | never[];
 }
 
 export interface BroadcastRequest {
@@ -138,6 +177,26 @@ export class NotificationsService {
 
   broadcast(body: BroadcastRequest): Observable<BroadcastResponse> {
     return this.api.post<BroadcastResponse>('/admin/notifications/broadcast', body);
+  }
+
+  specialties(): Observable<DoctorSpecialty[]> {
+    return this.api.get<DoctorSpecialty[]>('/doctor/specialties');
+  }
+
+  subspecialties(specialtyId: number): Observable<DoctorSpecialty[]> {
+    return this.api.get<DoctorSpecialty[]>(`/doctor/specialties/${specialtyId}/subspecialties`);
+  }
+
+  /**
+   * The count a send would reach, before sending. Same rules and same query as
+   * the broadcast itself, so the number shown is the number delivered. Sends
+   * nothing.
+   */
+  broadcastPreview(target: BroadcastTarget): Observable<BroadcastPreview> {
+    return this.api.post<BroadcastPreview>(
+      '/admin/notifications/broadcast/preview',
+      { target_audience: target }
+    );
   }
 
   broadcastHistory(query: { page?: number; per_page?: number } = {}): Observable<PagedResult<BroadcastResponse>> {

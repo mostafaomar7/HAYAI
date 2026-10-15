@@ -4,30 +4,128 @@
 
     <div class="form-group">
       <label>{{ 'notif.send.title_label' | t }}</label>
-      <input type="text" [placeholder]="'notif.send.title_placeholder' | t" [(ngModel)]="title" name="title" />
+      <input type="text" [placeholder]="'notif.send.title_placeholder' | t"
+             [value]="title()" (input)="setTitle($any($event.target).value)" />
+      <span class="counter" [class.over]="titleLeft() < 0">
+        {{ (titleLeft() < 0 ? 'notif.send.chars_over' : 'notif.send.chars_left')
+             | t : { count: titleLeft() < 0 ? -titleLeft() : titleLeft() } }}
+      </span>
     </div>
 
     <div class="form-group">
       <label>{{ 'notif.send.body_label' | t }}</label>
-      <textarea [placeholder]="'notif.send.body_placeholder' | t" rows="6" [(ngModel)]="body" name="body"></textarea>
+      <textarea [placeholder]="'notif.send.body_placeholder' | t" rows="6"
+                [value]="body()" (input)="setBody($any($event.target).value)"></textarea>
+      <span class="counter" [class.over]="bodyLeft() < 0">
+        {{ (bodyLeft() < 0 ? 'notif.send.chars_over' : 'notif.send.chars_left')
+             | t : { count: bodyLeft() < 0 ? -bodyLeft() : bodyLeft() } }}
+      </span>
     </div>
 
+    <!-- ========================= audience ========================= -->
     <div class="form-group">
       <label>{{ 'notif.send.target_audience' | t }}</label>
-      <div class="custom-select">
-        <select [(ngModel)]="audience" name="audience">
-          @for (a of audiences; track a.value) {
-            <option [value]="a.value">{{ a.label | t }}</option>
-          }
-        </select>
+
+      <div class="scope-switch">
+        <button type="button" class="scope" [class.active]="everyone()" (click)="setEveryone(true)">
+          {{ 'notif.send.audience.all' | t }}
+        </button>
+        <button type="button" class="scope" [class.active]="!everyone()" (click)="setEveryone(false)">
+          {{ 'notif.send.audience.pick' | t }}
+        </button>
       </div>
+
+      @if (!everyone()) {
+        <div class="chips">
+          @for (t of userTypes(); track t.id) {
+            <label class="chip" [class.on]="selectedTypes().has($any(t.id))">
+              <input type="checkbox" [checked]="selectedTypes().has($any(t.id))"
+                     (change)="toggleType($any(t.id))">
+              <span>{{ label(t) }}</span>
+            </label>
+          }
+        </div>
+        @if (nobodySelected()) {
+          <p class="warn">{{ 'notif.send.pick_audience' | t }}</p>
+        }
+      }
     </div>
 
-    @if (errorMsg()) { <div style="color:#dc2626;font-size:13px;">{{ errorMsg() }}</div> }
-    @if (successMsg()) { <div style="color:#10b981;font-size:13px;">{{ successMsg() }}</div> }
+    <!-- Gender narrows patients and tourists only; every other selected type
+         is untouched, which is worth saying because the control sits on its
+         own and otherwise reads as a filter over the whole audience. -->
+    @if (showGender()) {
+      <div class="form-group sub-filter">
+        <label>{{ 'notif.send.gender' | t }}</label>
+        <div class="chips">
+          @for (g of genders; track g) {
+            <label class="chip" [class.on]="selectedGenders().has(g)">
+              <input type="checkbox" [checked]="selectedGenders().has(g)" (change)="toggleGender(g)">
+              <span>{{ ('notif.send.gender.' + g) | t }}</span>
+            </label>
+          }
+        </div>
+        <p class="hint">{{ 'notif.send.gender_hint' | t }}</p>
+      </div>
+    }
+
+    @if (showDoctorFilters()) {
+      <div class="form-group sub-filter">
+        <label>{{ 'notif.send.specialty' | t }}</label>
+        <div class="chips scroll">
+          @for (s of specialties(); track s.id) {
+            <label class="chip" [class.on]="selectedSpecialties().has($any(s.id))">
+              <input type="checkbox" [checked]="selectedSpecialties().has($any(s.id))"
+                     (change)="toggleSpecialty($any(s.id))">
+              <span>{{ specialtyLabel(s) }}</span>
+            </label>
+          }
+        </div>
+
+        @if (subspecialties().length) {
+          <label class="sub-label">{{ 'notif.send.subspecialty' | t }}</label>
+          <div class="chips scroll">
+            @for (s of subspecialties(); track s.id) {
+              <label class="chip" [class.on]="selectedSubspecialties().has($any(s.id))">
+                <input type="checkbox" [checked]="selectedSubspecialties().has($any(s.id))"
+                       (change)="toggleSubspecialty($any(s.id))">
+                <span>{{ specialtyLabel(s) }}</span>
+              </label>
+            }
+          </div>
+        }
+        <p class="hint">{{ 'notif.send.doctor_hint' | t }}</p>
+      </div>
+    }
+
+    <!-- ===================== how many it reaches ===================== -->
+    <!-- From the API's own counting endpoint, which runs the same query as
+         the send, so this is the number that will actually be delivered. -->
+    <div class="reach" [class.empty]="reach() === 0">
+      @if (reachLoading()) {
+        <span class="reach-count">{{ 'notif.send.counting' | t }}</span>
+      } @else if (reachFailed()) {
+        <span class="reach-count">{{ 'notif.send.count_failed' | t }}</span>
+      } @else if (reach() !== null) {
+        <span class="reach-count">
+          {{ (reach() === 0 ? 'notif.send.reach_nobody' : 'notif.send.will_reach')
+               | t : { count: reach()! } }}
+        </span>
+        @if (reachByType().length > 1) {
+          <span class="reach-breakdown">
+            @for (r of reachByType(); track r.type) {
+              <span class="reach-pill">{{ typeLabel(r.type) }} {{ r.count }}</span>
+            }
+          </span>
+        }
+      }
+    </div>
+
+    @if (errorMsg()) { <div class="form-error">{{ errorMsg()! | t }}</div> }
+    @if (successMsg()) { <div class="form-success">{{ successMsg()! | t : successParams() }}</div> }
 
     <div class="form-actions">
-      <button class="send-btn" [disabled]="sending()" (click)="sendNotification()">
+      <button class="send-btn" [disabled]="!canSend()" (click)="sendNotification()">
         {{ (sending() ? 'notif.send.sending' : 'notif.send.send') | t }}
       </button>
     </div>

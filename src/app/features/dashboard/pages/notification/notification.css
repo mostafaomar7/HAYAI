@@ -116,3 +116,140 @@ textarea::placeholder {
 .send-btn:hover {
   background-color: #1D4ED8; /* بيغمق شوية لما تعمل Hover */
 }
+.send-btn:disabled {
+  background-color: #CBD5E1;
+  cursor: not-allowed;
+}
+
+/* ================= Character counters ================= */
+.counter {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6B7280;
+  text-align: end;
+}
+
+.counter.over { color: #DC2626; font-weight: 600; }
+
+/* ================= Audience ================= */
+.scope-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #F1F5F9;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.scope {
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.scope.active { background: #ffffff; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* The specialty list runs to 29 entries, which would push the send button off
+   a laptop screen; the gender and type lists are short and are not capped. */
+.chips.scroll {
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #F8FAFC;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border: 1px solid #E5E7EB;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.chip input { accent-color: #2563EB; margin: 0; cursor: pointer; }
+.chip.on { border-color: #2563EB; background: #EFF6FF; color: #1D4ED8; }
+
+.sub-filter {
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid #E5E7EB;
+}
+
+.sub-label {
+  display: block;
+  margin: 14px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.hint { margin: 8px 0 0; font-size: 12px; color: #6B7280; line-height: 1.6; }
+.warn { margin: 10px 0 0; font-size: 13px; color: #B45309; }
+
+/* ================= Reach ================= */
+.reach {
+  margin-top: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+}
+
+/* Reaching nobody is not an error, but it must not look like a success. */
+.reach.empty { background: #FFF7ED; border-color: #FED7AA; }
+
+.reach-count { font-size: 14px; font-weight: 600; color: #065F46; }
+.reach.empty .reach-count { color: #9A3412; }
+
+.reach-breakdown { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.reach-pill {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #D1FAE5;
+  color: #047857;
+}
+
+.reach.empty .reach-pill { border-color: #FED7AA; color: #9A3412; }
+
+/* ================= Messages ================= */
+.form-error {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #B91C1C;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.form-success {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+  font-size: 13px;
+}
