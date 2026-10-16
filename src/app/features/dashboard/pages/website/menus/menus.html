@@ -51,6 +51,11 @@
             <p class="sub">{{ 'web.menus.items_hint' | t }}</p>
           </div>
           <div class="actions-area">
+            @if (canDelete()) {
+              <button type="button" class="btn-secondary btn-sm danger-outline" [disabled]="deleting()" (click)="deleteMenu()">
+                {{ 'web.menus.delete' | t }}
+              </button>
+            }
             <div class="locale-switch">
               <button type="button" [class.active]="locale() === 'en'" (click)="setLocale('en')">
                 EN @if (dirty().en) { <span class="dirty-dot"></span> }

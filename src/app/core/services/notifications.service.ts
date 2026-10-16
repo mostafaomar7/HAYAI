@@ -27,10 +27,12 @@ export type BroadcastGender = 'male' | 'female';
 /**
  * The API's account-type id, and the name this dashboard already uses for it.
  *
- * `/lookups/user-types` answers English labels and ignores `Accept-Language`
- * (measured 2026-10-15), so its `label` cannot be shown on an Arabic screen.
- * The ids come from the API, which is the half that has to be right; the
- * words come from us, which is the half that has to be readable.
+ * The ids come from `/lookups/user-types`. Since backend `5d94459`
+ * (2026-10-15) its `label` follows `Accept-Language` too, and the screen
+ * falls back to it for any id missing here; these keys stay so the words
+ * match the rest of this dashboard. The API now rejects an unknown id (422
+ * under `target_audience.userTypes.{i}`), and its accepted values and this
+ * lookup come from one list on the server.
  *
  * Note the three that do not match the names used elsewhere in this
  * dashboard: `pharmacies`, `labs_radiology` and `medical_insurance`.
@@ -69,9 +71,9 @@ export interface BroadcastTarget {
 /**
  * A doctor specialty or subspecialty as `/doctor/specialties` serves it.
  *
- * Not `/lookups/doctor-specialties`, which answers `{id, name}` in English
- * only and ignores `Accept-Language` — measured 2026-10-15. This is the one
- * source that carries both languages, which is why the API prompt named it.
+ * `/doctor/specialties`, which the backend confirmed as the picker's source.
+ * `/lookups/doctor-specialties` is localized too since `5d94459`, but this
+ * one carries both names and `has_subspecialties`.
  */
 export interface DoctorSpecialty {
   id: number;
@@ -98,10 +100,9 @@ export interface BroadcastRequest {
   body: string;
   /**
    * Optional. A full `http(s)` URL, at most 255 characters; the apps show an
-   * "Open link" button for it. The API had no rule for this field as of
-   * 2026-10-15 — `not-a-url` and a 270-character link both passed while the
-   * request failed on another field — so until that ships, the check in the
-   * form is the only one there is.
+   * "Open link" button for it. The API enforces the same rule since
+   * `5d94459` (422 under `link`); the form checks it first so the error
+   * appears before the request.
    */
   link?: string | null;
   target_audience: BroadcastTarget;

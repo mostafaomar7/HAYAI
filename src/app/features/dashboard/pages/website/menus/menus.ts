@@ -39,6 +39,9 @@ const LOCALES: Locale[] = ['en', 'ar'];
  * replaces that language's whole tree). Two levels only: the site's header
  * renders one dropdown level and nothing deeper.
  */
+/** Rendered by the site template; the API will not delete them. */
+const TEMPLATE_MENUS = ['header', 'footer'];
+
 @Component({
   selector: 'app-website-menus',
   standalone: true,
@@ -80,6 +83,16 @@ export class Menus {
   placements = signal<string[]>([]);
 
   canUpdate = computed(() => this.ctx.can('cms.update'));
+  /**
+   * A saved menu other than the two the site template renders. The API
+   * refuses `header` and `footer` (422); offering the button there would
+   * only lead to that error.
+   */
+  canDelete = computed(() => {
+    const key = this.activeKey();
+    return !!key && !this.activeIsNew() && !TEMPLATE_MENUS.includes(key) && this.ctx.can('cms.delete');
+  });
+  deleting = signal(false);
   tree = computed(() => this.trees()[this.locale()]);
   /** A key opened by hand that has never been saved (not in `GET /menus`). */
   activeIsNew = computed(() => !!this.activeKey() && !this.menus().some(m => m.key === this.activeKey()));
@@ -137,6 +150,38 @@ export class Menus {
     const key = raw.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_');
     if (!key) return;
     await this.select(key);
+  }
+
+  async deleteMenu(): Promise<void> {
+    const key = this.activeKey();
+    if (!key || !this.canDelete()) return;
+    const found = this.menus().find(m => m.key === key);
+    const ok = await this.dialog.confirm({
+      title: 'web.menus.delete_title',
+      text: 'web.menus.delete_text',
+      params: { name: found ? this.menuName(found) : key, key },
+      confirmText: 'common.delete',
+      danger: true
+    });
+    if (!ok) return;
+    this.deleting.set(true);
+    this.api.deleteMenu(key).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.dialog.toast('success', 'web.menus.deleted');
+        // Nothing left to edit: drop the editor state, then reopen the list
+        // on `header` as on first load.
+        this.dirty.set({ en: false, ar: false });
+        this.ctasDirty.set(false);
+        this.menu.set(null);
+        this.activeKey.set(null);
+        this.loadMenus();
+      },
+      error: err => {
+        this.deleting.set(false);
+        this.dialog.error('common.error', errorMessage(err, 'web.menus.delete_failed'));
+      }
+    });
   }
 
   hasUnsaved(): boolean {

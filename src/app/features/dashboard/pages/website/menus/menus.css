@@ -58,3 +58,6 @@
   .node-fields, .cta-row { grid-template-columns: 1fr; }
   .children { margin-inline-start: 6px; padding-inline-start: 10px; }
 }
+
+.danger-outline { color: #B91C1C; border-color: #FECACA; }
+.danger-outline:hover:not(:disabled) { background: #FEF2F2; }

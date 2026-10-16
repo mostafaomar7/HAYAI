@@ -458,6 +458,15 @@ export class WebsiteApiService {
     return this.api.put<WebsiteMenu>(`${BASE}/menus/${encodeURIComponent(key)}/items`, { locale, items });
   }
 
+  /**
+   * Removes a menu with its items in every language and its CTA attachments.
+   * `header` and `footer` answer 422 — the site template renders them; to
+   * empty one, save it with no items instead.
+   */
+  deleteMenu(key: string): Observable<unknown> {
+    return this.api.delete(`${BASE}/menus/${encodeURIComponent(key)}`);
+  }
+
   saveMenuCtas(key: string, ctas: { cta_id: number; placement: string; is_enabled?: boolean }[]): Observable<WebsiteMenu> {
     return this.api.put<WebsiteMenu>(`${BASE}/menus/${encodeURIComponent(key)}/ctas`, { ctas });
   }
