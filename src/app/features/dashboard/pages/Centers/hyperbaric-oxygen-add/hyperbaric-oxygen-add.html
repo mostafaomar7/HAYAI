@@ -139,6 +139,6 @@
 
   <footer class="form-footer">
     <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.cancel' | t }}</button>
-    <button type="button" class="btn-primary" [disabled]="saving() || !ready()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
+    <button type="button" class="btn-primary" *appCanManage [disabled]="saving() || !ready()" (click)="save()">{{ (saving() ? 'ads.saving' : 'plans.save_changes') | t }}</button>
   </footer>
 </div>

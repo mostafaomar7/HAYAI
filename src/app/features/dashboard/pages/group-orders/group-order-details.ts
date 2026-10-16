@@ -21,6 +21,7 @@ import {
 import { DialogService } from '../../../../core/services/dialog.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 type Tab = 'joined' | 'pending' | 'activity';
 
@@ -64,7 +65,7 @@ interface RoundDraft {
 @Component({
   selector: 'app-group-order-details',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './group-order-details.html',
   styleUrls: ['./group-orders.shared.css', './group-order-details.css']
 })

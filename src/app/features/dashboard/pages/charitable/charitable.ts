@@ -4,13 +4,14 @@ import { Router } from '@angular/router';
 import { CharitableOrganization, CharitableService } from '../../../../core/services/charitable.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../shared/utils/debounce.util';
 
 @Component({
   selector: 'app-charitable',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './charitable.html',
   styleUrl: './charitable.css'
 })

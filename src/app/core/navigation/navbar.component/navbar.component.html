@@ -96,6 +96,11 @@
         <div style="position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.08);width:200px;z-index:50;overflow:hidden;">
           <button (click)="goToProfile()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#111827;">{{ 'navbar.my_profile' | t }}</button>
           <button (click)="goToChangePassword()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#111827;border-top:1px solid #f3f4f6;">{{ 'navbar.change_password' | t }}</button>
+          @if (push.state() !== 'unsupported' && push.state() !== 'unconfigured') {
+            <button (click)="togglePush()" [disabled]="push.busy() || push.state() === 'on'" class="push-item" [class.on]="push.state() === 'on'" [class.blocked]="push.state() === 'blocked'">
+              {{ ('navbar.push.' + push.state()) | t }}
+            </button>
+          }
           <button (click)="logout()" style="display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;color:#dc2626;border-top:1px solid #f3f4f6;">{{ 'navbar.logout' | t }}</button>
         </div>
       }

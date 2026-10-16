@@ -14,6 +14,8 @@ import {
 import { I18nService } from '../../i18n/i18n.service';
 import { TPipe } from '../../i18n/t.pipe';
 import { LayoutService } from '../../layouts/layout.service';
+import { PushService } from '../../services/push.service';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-navbar',
@@ -29,6 +31,8 @@ export class NavbarComponent {
   i18n = inject(I18nService);
   layout = inject(LayoutService);
   private titleService = inject(Title);
+  private dialog = inject(DialogService);
+  push = inject(PushService);
 
   /** i18n key of the page being viewed — see `data.title` in the route table. */
   pageTitle = signal('navbar.title');
@@ -48,6 +52,17 @@ export class NavbarComponent {
 
   constructor() {
     this.refreshUnreadCount();
+
+    // Browser notifications: re-register where the admin already allowed
+    // them (a rotated token has to reach the API), and while a dashboard tab
+    // has focus Firebase hands the push here instead of showing it — so the
+    // bell catches up and a toast says what arrived.
+    void this.push.resume();
+    this.push.foreground.pipe(takeUntilDestroyed()).subscribe(msg => {
+      this.refreshUnreadCount();
+      if (this.isNotificationOpen) this.loadFeed();
+      if (msg.title) this.dialog.toast('info', msg.title);
+    });
 
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed())
@@ -131,7 +146,7 @@ export class NavbarComponent {
 
   /** Null for a notification with nowhere to go — the row stays unclickable. */
   targetFor(notif: SystemNotification): string | null {
-    return notificationTarget(notif.link);
+    return notificationTarget(notif.link, notif.data?.dashboard_path);
   }
 
   markRead(notif: SystemNotification) {
@@ -176,8 +191,27 @@ export class NavbarComponent {
     this.router.navigate(['/dashboard/change-password']);
   }
 
-  logout() {
+  /**
+   * "Turn on notifications". The browser only shows its permission prompt
+   * for a click, which is why this is a button and not something done on
+   * load. Once refused, only the browser's site settings can undo it.
+   */
+  async togglePush() {
+    if (this.push.state() === 'blocked') {
+      this.dialog.info('navbar.push.blocked_title', 'navbar.push.blocked_text');
+      return;
+    }
+    const state = await this.push.enable();
+    if (state === 'on') this.dialog.toast('success', 'navbar.push.enabled');
+    else if (state === 'blocked') this.dialog.info('navbar.push.blocked_title', 'navbar.push.blocked_text');
+    else if (state === 'off') this.dialog.toast('warning', 'navbar.push.failed');
+  }
+
+  async logout() {
     this.isUserMenuOpen = false;
+    // Before the session ends: the API needs it to drop this browser's
+    // token, or the next admin here would get this one's alerts.
+    await this.push.unregister();
     this.auth.logout().subscribe({
       next: () => this.router.navigate(['/login']),
       error: () => this.router.navigate(['/login'])

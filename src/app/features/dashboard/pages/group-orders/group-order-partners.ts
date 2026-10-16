@@ -11,6 +11,7 @@ import {
 } from '../../../../core/services/device-group-orders.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 type Kind = 'categories' | 'shipping-companies';
 
@@ -55,7 +56,7 @@ interface CompanyDraft {
 @Component({
   selector: 'app-group-order-partners',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './group-order-partners.html',
   styleUrls: ['./group-orders.shared.css', './group-order-partners.css']
 })

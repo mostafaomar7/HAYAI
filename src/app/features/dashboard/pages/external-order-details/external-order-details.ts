@@ -8,6 +8,7 @@ import {
 } from '../../../../core/services/external-devices.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 /**
  * One device order, opened from the activity timeline.
@@ -24,7 +25,7 @@ import { TPipe } from '../../../../core/i18n/t.pipe';
 @Component({
   selector: 'app-external-order-details',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './external-order-details.html',
   styleUrl: './external-order-details.css'
 })

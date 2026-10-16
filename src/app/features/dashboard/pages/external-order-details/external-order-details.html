@@ -21,7 +21,7 @@
             <span class="pill pill-quiet">{{ o.purchase_type_label || o.purchase_type }}</span>
           }
         </div>
-        <button class="btn-primary" [disabled]="busy()" (click)="updateStatus()">
+        <button class="btn-primary" *appCanManage [disabled]="busy()" (click)="updateStatus()">
           {{ 'external.orders.update_status' | t }}
         </button>
       </div>

@@ -4,11 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CharitableOrganization, CharitableService } from '../../../../core/services/charitable.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 @Component({
   selector: 'app-charitable-details',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './charitable-details.html',
   styleUrl: './charitable-details.css'
 })

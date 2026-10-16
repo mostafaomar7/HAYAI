@@ -65,7 +65,7 @@
       </div>
     </div>
 
-    <button class="add-btn" (click)="onAdd()">{{ 'common.add' | t }}</button>
+    <button class="add-btn" *appCanManage (click)="onAdd()">{{ 'common.add' | t }}</button>
   </div>
 
   @if (loading()) {
@@ -93,7 +93,7 @@
           <div class="card-image-wrapper">
             <img [src]="ad.image_url" alt="Healthcare Ad" class="ad-image" />
 
-            <div class="card-actions">
+            <div class="card-actions" *appCanManage>
               <button class="action-btn" (click)="onEdit(ad.id)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#374151" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5z" />

@@ -68,7 +68,7 @@
           }
         </div>
 
-        <button class="renew-all-btn" (click)="renewAll()">{{ (selectedIds().size ? 'renewal.renew_selected' : 'renewal.renew_all') | t }}</button>
+        <button class="renew-all-btn" *appCanManage (click)="renewAll()">{{ (selectedIds().size ? 'renewal.renew_selected' : 'renewal.renew_all') | t }}</button>
       </div>
     </div>
 
@@ -142,7 +142,7 @@
                   }
                 </td>
                 <td class="action-col">
-                  <button class="renew-btn" (click)="renewOne(user)">{{ 'renewal.renew' | t }}</button>
+                  <button class="renew-btn" *appCanManage (click)="renewOne(user)">{{ 'renewal.renew' | t }}</button>
                 </td>
               </tr>
             }

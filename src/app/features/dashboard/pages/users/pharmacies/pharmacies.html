@@ -3,7 +3,7 @@
     <div class="table-header">
       <div class="title-area"><h2>{{ 'users.pharmacy.title' | t }}</h2><span class="badge">{{ 'users.users_count' | t : { count: total() } }}</span></div>
       <div class="actions-area">
-        <button class="add-pharmacy-btn" (click)="createPharmacy()">{{ 'pharm.create_account' | t }}</button>
+        <button class="add-pharmacy-btn" *appCanManage (click)="createPharmacy()">{{ 'pharm.create_account' | t }}</button>
         <div class="search-box"><input type="text" [placeholder]="'common.search' | t" [value]="search()" (input)="onSearch($any($event.target).value)" /></div>
         <div class="filter-wrapper">
           <button class="filter-btn" (click)="toggleFilter($event)">{{ 'common.filter' | t }}</button>
@@ -69,20 +69,20 @@
                   @if (openActionMenuId === p.id) {
                     <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
                       @if (p.status === 'pending') {
-                        <button class="dropdown-item" (click)="approve(p.id)">{{ 'common.approve' | t }}</button>
-                        <button class="dropdown-item" (click)="reject(p.id)">{{ 'common.reject' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="approve(p.id)">{{ 'common.approve' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="reject(p.id)">{{ 'common.reject' | t }}</button>
                       }
                       @if (p.account_status === 'blocked') {
-                        <button class="dropdown-item" (click)="unblockProvider(p.id)">{{ 'users.actions.unblock_account' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="unblockProvider(p.id)">{{ 'users.actions.unblock_account' | t }}</button>
                       } @else {
-                        <button class="dropdown-item" (click)="blockProvider(p.id)">{{ 'users.actions.block_account' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="blockProvider(p.id)">{{ 'users.actions.block_account' | t }}</button>
                       }
                       <button class="dropdown-item" (click)="goToActivity(p)">{{ 'activity.title' | t }}</button>
-                      <button class="dropdown-item" (click)="resetPassword(p)">{{ 'users.reset_password.action' | t }}</button>
+                      <button class="dropdown-item" *appCanManage (click)="resetPassword(p)">{{ 'users.reset_password.action' | t }}</button>
                       <button class="dropdown-item" (click)="managePharmacy(p)">{{ 'pharm.manage' | t }}</button>
-                      <button class="dropdown-item" (click)="changePlan(p.id)">{{ 'users.actions.change_plan' | t }}</button>
+                      <button class="dropdown-item" *appCanManage (click)="changePlan(p.id)">{{ 'users.actions.change_plan' | t }}</button>
                                           <!-- Last in the menu, and separated: it is the one action with no undo. -->
-                      <button class="dropdown-item danger" (click)="deleteAccount(p.id, p.name)">{{ 'users.delete_account.action' | t }}</button>
+                      <button class="dropdown-item danger" *appCanManage (click)="deleteAccount(p.id, p.name)">{{ 'users.delete_account.action' | t }}</button>
 </div>
                   }
                 </td>

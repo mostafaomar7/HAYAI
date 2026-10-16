@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { UserListBase } from '../user-list.base';
 import { ProviderItem, UserResource } from '../../../../../core/services/users.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-home-care',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './home-care.html',
   styleUrl: './home-care.css'
 })

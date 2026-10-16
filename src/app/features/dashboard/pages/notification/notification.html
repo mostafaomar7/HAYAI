@@ -134,7 +134,7 @@
     @if (successMsg()) { <div class="form-success">{{ successMsg()! | t : successParams() }}</div> }
 
     <div class="form-actions">
-      <button class="send-btn" [disabled]="!canSend()" (click)="sendNotification()">
+      <button class="send-btn" *appCanManage [disabled]="!canSend()" (click)="sendNotification()">
         {{ (sending() ? 'notif.send.sending' : 'notif.send.send') | t }}
       </button>
     </div>

@@ -76,7 +76,7 @@
                 <td class="text-gray">{{ o.tracking_number || '—' }}</td>
                 <td class="text-gray">{{ o.created_at | date:'mediumDate' }}</td>
                 <td>
-                  <button class="action-btn" (click)="changeOrderStatus(o)">{{ 'external.orders.update_status' | t }}</button>
+                  <button class="action-btn" *appCanManage (click)="changeOrderStatus(o)">{{ 'external.orders.update_status' | t }}</button>
                 </td>
               </tr>
             }

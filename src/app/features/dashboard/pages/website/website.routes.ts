@@ -81,6 +81,8 @@ export const WEBSITE_ROUTES: Routes = [
     () => import('./settings/website-settings').then(m => m.WebsiteSettings)),
   r('audit', 'menu.website.audit', 'audit.view',
     () => import('./audit/website-audit').then(m => m.WebsiteAudit)),
-  r('roles', 'menu.website.roles', 'roles.manage',
-    () => import('./roles/website-roles').then(m => m.WebsiteRoles)),
+  // Retired 2026-10-16. The API made the website role screens super-admin
+  // only, and Access → Roles edits the same roles with their website
+  // permissions alongside the dashboard ones. Kept as a redirect for links.
+  { path: 'roles', redirectTo: '/dashboard/access/roles', pathMatch: 'full' },
 ];

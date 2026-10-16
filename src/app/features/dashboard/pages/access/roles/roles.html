@@ -1,0 +1,168 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'access.roles.title' | t }}</h2>
+        <p class="sub">{{ 'access.roles.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        <button class="btn-primary" (click)="open(null)" [disabled]="!catalog()">+ {{ 'access.roles.add' | t }}</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'access.roles.role' | t }}</th>
+              <th>{{ 'access.roles.reaches' | t }}</th>
+              <th>{{ 'access.roles.website' | t }}</th>
+              <th>{{ 'access.roles.admins_count' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of roles(); track r.id) {
+              <tr>
+                <td>
+                  <div class="name-cell">{{ label(r.name) }}</div>
+                  <div class="row">
+                    <code class="mono text-gray small" dir="ltr">{{ r.name }}</code>
+                    @if (r.is_super_admin) { <span class="chip super small">{{ 'access.roles.locked' | t }}</span> }
+                    @else if (r.is_system) { <span class="chip system small">{{ 'access.roles.preset' | t }}</span> }
+                  </div>
+                </td>
+                <td class="small">
+                  @if (r.is_super_admin) { <span class="pill pill-active">{{ 'access.roles.everything' | t }}</span> }
+                  @else { {{ summary(r) || ('access.roles.no_dashboard' | t) }} }
+                </td>
+                <td class="num">{{ r.is_super_admin ? ('access.roles.all' | t) : r.website_permissions.length }}</td>
+                <td class="num">{{ r.admins_count }}</td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    <button class="link-btn" (click)="open(r)" [disabled]="!catalog()">
+                      {{ (r.is_super_admin ? 'common.view' : 'common.edit') | t }}
+                    </button>
+                    @if (!r.is_super_admin) {
+                      <button class="link-btn danger" (click)="remove(r)" [disabled]="r.admins_count > 0"
+                              [title]="r.admins_count > 0 ? ('access.roles.delete_held' | t: { n: r.admins_count }) : ''">
+                        {{ 'common.delete' | t }}
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (modalOpen() && catalog(); as cat) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal wide" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>
+          @if (readOnly()) { {{ label(editing()!.name) }} }
+          @else { {{ (editing() ? 'access.roles.edit' : 'access.roles.add') | t }} }
+        </h3>
+        <button class="modal-close" (click)="close()">×</button>
+      </div>
+      <form (ngSubmit)="save()">
+        <div class="modal-body">
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+          @if (readOnly()) { <div class="notice info">{{ 'access.roles.super_admin_note' | t }}</div> }
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'access.roles.name' | t }} <span class="req">*</span></label>
+              <input type="text" dir="ltr" name="roleName" placeholder="pharmacy-desk" autocomplete="off"
+                     [readonly]="readOnly()" [ngModel]="roleName()" (ngModelChange)="roleName.set($event)">
+              <span class="hint">{{ 'access.roles.name_rule' | t }}</span>
+              @if (errors()['name']) { <span class="field-error">{{ errors()['name'] }}</span> }
+            </div>
+          </div>
+
+          <div class="row perm-head">
+            <h4 class="section-title">{{ 'access.roles.dashboard' | t }}</h4>
+            <span class="spacer"></span>
+            @if (!readOnly()) {
+              <button type="button" class="link-btn" (click)="setAll('view')">{{ 'access.roles.all_view' | t }}</button>
+              <button type="button" class="link-btn" (click)="setAll('manage')">{{ 'access.roles.all_manage' | t }}</button>
+              <button type="button" class="link-btn danger" (click)="setAll('none')">{{ 'access.roles.clear' | t }}</button>
+            }
+          </div>
+          @if (errors()['permissions']) { <span class="field-error">{{ errors()['permissions'] }}</span> }
+
+          <fieldset [disabled]="readOnly()" class="no-border">
+            <table class="matrix">
+              <thead>
+                <tr>
+                  <th>{{ 'access.roles.area' | t }}</th>
+                  <th class="cb">{{ 'access.roles.view' | t }}</th>
+                  <th class="cb">{{ 'access.roles.manage' | t }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (a of cat.dashboard; track a.area) {
+                  <tr [class.on]="readOnly() || viewOn(a)">
+                    <td>{{ areaLabel(a) }}</td>
+                    <td class="cb">
+                      <input type="checkbox" [attr.aria-label]="areaLabel(a) + ' — ' + ('access.roles.view' | t)"
+                             [checked]="readOnly() || viewOn(a)" (change)="setView(a, $any($event.target).checked)">
+                    </td>
+                    <td class="cb">
+                      @if (hasManage(a)) {
+                        <input type="checkbox" [attr.aria-label]="areaLabel(a) + ' — ' + ('access.roles.manage' | t)"
+                               [checked]="readOnly() || manageOn(a)" (change)="setManage(a, $any($event.target).checked)">
+                      } @else {
+                        <span class="dash" [title]="'access.roles.view_only' | t">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <details class="website-block">
+              <summary>
+                {{ 'access.roles.website' | t }}
+                <span class="muted small">{{ readOnly() ? ('access.roles.all' | t) : ('access.roles.n_selected' | t: { n: websiteCount() }) }}</span>
+              </summary>
+              <div class="perm-groups">
+                @for (g of websiteGroups(); track g.name) {
+                  <fieldset class="perm-group">
+                    <legend>{{ group(g.name) }}</legend>
+                    @for (p of g.perms; track p) {
+                      <label class="checkbox perm">
+                        <input type="checkbox" [checked]="readOnly() || hasPerm(p)" (change)="togglePerm(p, $any($event.target).checked)">
+                        <span>{{ perm(p) }} <code class="mono text-gray small" dir="ltr">{{ p }}</code></span>
+                      </label>
+                    }
+                  </fieldset>
+                }
+              </div>
+            </details>
+          </fieldset>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" (click)="close()">{{ (readOnly() ? 'common.close' : 'common.cancel') | t }}</button>
+          @if (!readOnly()) {
+            <button type="submit" class="btn-primary" [disabled]="saving() || !roleName().trim()">
+              {{ (saving() ? 'common.saving' : 'common.save') | t }}
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,4 +1,11 @@
 import { UserRole } from './role.type';
+import type { AdminArea, SUPER_ADMIN_ONLY } from '../services/admin-access.service';
+
+/**
+ * The dashboard area an entry belongs to. Hidden when the admin cannot view
+ * it; `super-admin` entries only show to super-admins.
+ */
+export type MenuArea = AdminArea | typeof SUPER_ADMIN_ONLY;
 
 export interface MenuChild {
   id: string;
@@ -10,6 +17,7 @@ export interface MenuChild {
    * rather than left to 403. Entries without one are always shown.
    */
   permission?: string;
+  area?: MenuArea;
 }
 
 export interface MenuItem {
@@ -27,4 +35,5 @@ export interface MenuItem {
     children?: MenuChild[];
   /** Same as `MenuChild.permission`, for a top-level entry. */
   permission?: string;
+  area?: MenuArea;
 }

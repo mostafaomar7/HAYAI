@@ -15,6 +15,7 @@ import {
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LookupsService } from '../../../../core/services/lookups.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface ModuleRow {
@@ -53,7 +54,7 @@ const UNGROUPED = '__ungrouped__';
 @Component({
   selector: 'app-plans-add',
   standalone: true,
-  imports: [CommonModule, FormsModule, TPipe],
+  imports: [CommonModule, CanManageDirective, FormsModule, TPipe],
   templateUrl: './plans-add.html',
   styleUrl: './plans-add.css'
 })

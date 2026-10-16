@@ -32,7 +32,7 @@
           </select>
         </div>
 
-        <button class="btn-primary" (click)="add()">{{ 'guidelines.add' | t }}</button>
+        <button class="btn-primary" *appCanManage (click)="add()">{{ 'guidelines.add' | t }}</button>
       </div>
     </div>
 
@@ -84,7 +84,7 @@
                   </span>
                 </td>
                 <td class="actions-col">
-                  <button class="link-danger" (click)="remove(row, $event)">{{ 'common.delete' | t }}</button>
+                  <button class="link-danger" *appCanManage (click)="remove(row, $event)">{{ 'common.delete' | t }}</button>
                 </td>
               </tr>
             }

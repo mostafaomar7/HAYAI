@@ -91,6 +91,7 @@
                 <td class="actions-col">
                   <!-- Labelled by effect, not by status name. -->
                   @if (row.status === 'open' || row.status === 'reviewing') {
+                    <ng-container *appCanManage>
                     <button class="link-btn danger" [disabled]="busy() === row.id"
                             (click)="decide(row, 'actioned', $event)">
                       {{ (isRating(row) ? 'reports.remove_review' : 'reports.mark_actioned') | t }}
@@ -99,6 +100,7 @@
                             (click)="decide(row, 'dismissed', $event)">
                       {{ (isRating(row) ? 'reports.keep_review' : 'reports.dismiss') | t }}
                     </button>
+                    </ng-container>
                   } @else { — }
                 </td>
               </tr>

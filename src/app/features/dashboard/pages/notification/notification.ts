@@ -15,6 +15,7 @@ import { apiErrorText } from '../../../../shared/utils/api-error.util';
 import { debounce } from '../../../../shared/utils/debounce.util';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 /** The API's own limits. Enforced here so a long title is caught before send. */
 const TITLE_MAX = 200;
@@ -57,7 +58,7 @@ const FALLBACK_TYPES: LookupItem[] = [
 @Component({
   selector: 'app-notification',
   standalone: true,
-  imports: [CommonModule, FormsModule, TPipe],
+  imports: [CommonModule, CanManageDirective, FormsModule, TPipe],
   templateUrl: './notification.html',
   styleUrl: './notification.css'
 })

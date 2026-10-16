@@ -105,9 +105,9 @@
     <div class="footer-bar">
       @if (dirtyCount() > 0) {
         <span class="dirty-count">{{ 'settings.unsaved' | t : { count: dirtyCount() } }}</span>
-        <button class="btn-secondary" [disabled]="saving()" (click)="reset()">{{ 'settings.discard' | t }}</button>
+        <button class="btn-secondary" *appCanManage [disabled]="saving()" (click)="reset()">{{ 'settings.discard' | t }}</button>
       }
-      <button class="btn-primary" [disabled]="saving() || dirtyCount() === 0" (click)="save()">
+      <button class="btn-primary" *appCanManage [disabled]="saving() || dirtyCount() === 0" (click)="save()">
         {{ (saving() ? 'common.saving' : 'common.save') | t }}
       </button>
     </div>

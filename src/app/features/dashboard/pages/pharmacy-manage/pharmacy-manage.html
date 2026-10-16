@@ -28,7 +28,7 @@
             <input type="text" [placeholder]="'pharm.search_products' | t"
                    (input)="onSearch($any($event.target).value)">
           </div>
-          <button class="btn-primary" (click)="addProduct()">{{ 'pharm.add_product' | t }}</button>
+          <button class="btn-primary" *appCanManage (click)="addProduct()">{{ 'pharm.add_product' | t }}</button>
         </div>
       </div>
 
@@ -68,8 +68,10 @@
                   </td>
                   <td>{{ row.prescription_required ? '✓' : '—' }}</td>
                   <td class="actions-col">
+                    <ng-container *appCanManage>
                     <button class="link-btn" (click)="editProduct(row)">{{ 'common.edit' | t }}</button>
                     <button class="link-btn danger" (click)="removeProduct(row)">{{ 'common.delete' | t }}</button>
+                    </ng-container>
                   </td>
                 </tr>
               }
@@ -87,7 +89,7 @@
     <div class="card">
       <div class="card-head">
         <div class="title-area"><h2>{{ 'pharm.branches' | t }}</h2></div>
-        <button class="btn-primary" (click)="addBranch()">{{ 'pharm.add_branch' | t }}</button>
+        <button class="btn-primary" *appCanManage (click)="addBranch()">{{ 'pharm.add_branch' | t }}</button>
       </div>
 
       <div class="table-scroll">
@@ -116,8 +118,10 @@
                   <td><bdi>{{ row.address || '—' }}</bdi></td>
                   <td><bdi dir="ltr">{{ row.hotline || '—' }}</bdi></td>
                   <td class="actions-col">
+                    <ng-container *appCanManage>
                     <button class="link-btn" (click)="editBranch(row)">{{ 'common.edit' | t }}</button>
                     <button class="link-btn danger" (click)="removeBranch(row)">{{ 'common.delete' | t }}</button>
+                    </ng-container>
                   </td>
                 </tr>
               }
@@ -153,7 +157,7 @@
             </select>
           }
 
-          <button class="btn-primary" [disabled]="!file() || uploading()" (click)="runPreview()">
+          <button class="btn-primary" *appCanManage [disabled]="!file() || uploading()" (click)="runPreview()">
             {{ (uploading() ? 'common.loading' : 'pharm.preview') | t }}
           </button>
           @if (file()) {
@@ -239,7 +243,7 @@
                 <option value="append">{{ 'pharm.mode_append' | t }}</option>
                 <option value="replace">{{ 'pharm.mode_replace' | t }}</option>
               </select>
-              <button class="btn-primary" [disabled]="uploading() || !p.ready" (click)="confirmUpload()">
+              <button class="btn-primary" *appCanManage [disabled]="uploading() || !p.ready" (click)="confirmUpload()">
                 {{ (uploading() ? 'common.saving' : 'pharm.confirm_upload') | t }}
               </button>
               <span class="hint">{{ ('pharm.mode_hint.' + mode()) | t }}</span>
@@ -302,7 +306,7 @@
       </div>
       <footer>
         <button class="btn-secondary" (click)="productDraft.set(null)">{{ 'common.cancel' | t }}</button>
-        <button class="btn-primary" [disabled]="saving()" (click)="saveProduct()">
+        <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="saveProduct()">
           {{ (saving() ? 'common.saving' : 'common.save') | t }}
         </button>
       </footer>
@@ -342,7 +346,7 @@
       </div>
       <footer>
         <button class="btn-secondary" (click)="branchDraft.set(null)">{{ 'common.cancel' | t }}</button>
-        <button class="btn-primary" [disabled]="saving()" (click)="saveBranch()">
+        <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="saveBranch()">
           {{ (saving() ? 'common.saving' : 'common.save') | t }}
         </button>
       </footer>

@@ -11,7 +11,8 @@
     "seo:gate": "node scripts/seo-gate.mjs",
     "track:check": "bash scripts/check-tracking.sh",
     "seo:lighthouse": "lhci autorun",
-    "track:test": "playwright test"
+    "track:test": "playwright test",
+    "build:push-sw": "node scripts/build-push-sw.mjs"
   },
   "prettier": {
     "printWidth": 100,
@@ -37,6 +38,7 @@
     "@angular/ssr": "^20.3.24",
     "compression": "^1.8.2",
     "express": "^5.1.0",
+    "firebase": "12.19.0",
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.26.25",
     "tslib": "^2.3.0",

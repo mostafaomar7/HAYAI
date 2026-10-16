@@ -57,7 +57,7 @@
                 <td class="text-gray">{{ h.created_at | date:'mediumDate' }}</td>
                 <td>
                   @if (h.verification_status === 'pending') {
-                    <div class="action-row">
+                    <div class="action-row" *appCanManage>
                       <button class="btn-approve" (click)="approve(h.id)">{{ 'common.approve' | t }}</button>
                       <button class="btn-reject" (click)="reject(h.id)">{{ 'common.reject' | t }}</button>
                     </div>

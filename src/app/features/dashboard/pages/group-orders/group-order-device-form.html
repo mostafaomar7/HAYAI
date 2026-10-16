@@ -122,7 +122,7 @@
 
         <div class="step-footer">
           <button class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | t }}</button>
-          <button class="btn-primary" [disabled]="saving()" (click)="saveBasic()">
+          <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="saveBasic()">
             {{ (saving() ? 'common.saving' : 'common.next') | t }}
           </button>
         </div>
@@ -169,7 +169,7 @@
 
         <div class="step-footer">
           <button class="btn-secondary" (click)="step.set(1)">{{ 'common.back' | t }}</button>
-          <button class="btn-primary" [disabled]="saving()" (click)="saveSpecs()">
+          <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="saveSpecs()">
             {{ (saving() ? 'common.saving' : (editingExisting() && hasRound() ? 'common.save' : 'common.next')) | t }}
           </button>
         </div>
@@ -221,10 +221,10 @@
 
         <div class="step-footer">
           <button class="btn-secondary" (click)="step.set(2)">{{ 'common.back' | t }}</button>
-          <button class="btn-secondary" [disabled]="saving()" (click)="saveWithoutRound()">
+          <button class="btn-secondary" *appCanManage [disabled]="saving()" (click)="saveWithoutRound()">
             {{ 'gorders.save_without_round' | t }}
           </button>
-          <button class="btn-primary" [disabled]="saving()" (click)="createRound()">
+          <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="createRound()">
             {{ (saving() ? 'common.saving' : 'gorders.open_round') | t }}
           </button>
         </div>

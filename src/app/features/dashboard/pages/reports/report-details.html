@@ -97,7 +97,7 @@
           <p class="decided">{{ 'reports.already_decided' | t }}</p>
         }
 
-        <div class="actions">
+        <div class="actions" *appCanManage>
           <!-- Named by what they do, not by the status they write. -->
           <button class="btn-danger" [disabled]="busy()" (click)="decide('actioned')">
             {{ (isRating() ? 'reports.remove_review' : 'reports.mark_actioned') | t }}

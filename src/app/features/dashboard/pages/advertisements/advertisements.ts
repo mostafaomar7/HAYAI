@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Advertisement, AdvertisementsService } from '../../../../core/services/advertisements.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 import { SkeletonComponent } from '../../../../shared/ui/skeleton/skeleton';
 import { debounce } from '../../../../shared/utils/debounce.util';
@@ -11,7 +12,7 @@ import { debounce } from '../../../../shared/utils/debounce.util';
 @Component({
   selector: 'app-advertisements',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent, SkeletonComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent, SkeletonComponent],
   templateUrl: './advertisements.html',
   styleUrl: './advertisements.css'
 })

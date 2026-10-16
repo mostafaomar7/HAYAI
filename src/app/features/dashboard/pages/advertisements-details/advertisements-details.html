@@ -134,7 +134,7 @@
 
     <div class="form-actions">
       <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.cancel' | t }}</button>
-      <button type="submit" class="btn-primary" [disabled]="saving()">
+      <button type="submit" class="btn-primary" *appCanManage [disabled]="saving()">
         {{ (saving() ? 'ads.saving' : 'common.save') | t }}
       </button>
     </div>

@@ -33,7 +33,13 @@ export class AuthService {
     return this.api.post<LoginResponse>('/auth/login', body).pipe(
       tap(res => {
         if (!this.session.isCookieMode) this.tokens.setToken(res.token);
-        this.setUser(res.user);
+        // The API answers with the account itself, `token` beside its fields,
+        // not under `user`. Reading `res.user` left the session empty until
+        // `/auth/me` came back, and with it `must_change_password` and
+        // `admin_access`, which the first route now needs.
+        // `token` is left out of what is kept, for the reason above.
+        const { token: _token, ...account } = res as LoginResponse & UserModel;
+        this.setUser(res.user ?? (account as UserModel));
       })
     );
   }

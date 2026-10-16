@@ -4,12 +4,13 @@ import { UserListBase } from '../user-list.base';
 import { PatientItem, UserResource } from '../../../../../core/services/users.service';
 import { LookupItem, LookupsService } from '../../../../../core/services/lookups.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './patients.html',
   styleUrl: './patients.css'
 })

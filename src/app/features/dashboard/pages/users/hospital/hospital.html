@@ -118,19 +118,19 @@
                   @if (openActionMenuId === h.id) {
                     <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
                       @if (h.status === 'pending') {
-                        <button class="dropdown-item" (click)="approve(h.id)">{{ 'common.approve' | t }}</button>
-                        <button class="dropdown-item" (click)="reject(h.id)">{{ 'common.reject' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="approve(h.id)">{{ 'common.approve' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="reject(h.id)">{{ 'common.reject' | t }}</button>
                       }
                       @if (h.account_status === 'blocked') {
-                        <button class="dropdown-item" (click)="unblockProvider(h.id)">{{ 'users.actions.unblock_account' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="unblockProvider(h.id)">{{ 'users.actions.unblock_account' | t }}</button>
                       } @else {
-                        <button class="dropdown-item" (click)="blockProvider(h.id)">{{ 'users.actions.block_account' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="blockProvider(h.id)">{{ 'users.actions.block_account' | t }}</button>
                       }
                       <button class="dropdown-item" (click)="goToActivity(h)">{{ 'activity.title' | t }}</button>
-                      <button class="dropdown-item" (click)="resetPassword(h)">{{ 'users.reset_password.action' | t }}</button>
-                      <button class="dropdown-item" (click)="changePlan(h.id)">{{ 'users.actions.change_plan' | t }}</button>
+                      <button class="dropdown-item" *appCanManage (click)="resetPassword(h)">{{ 'users.reset_password.action' | t }}</button>
+                      <button class="dropdown-item" *appCanManage (click)="changePlan(h.id)">{{ 'users.actions.change_plan' | t }}</button>
                                           <!-- Last in the menu, and separated: it is the one action with no undo. -->
-                      <button class="dropdown-item danger" (click)="deleteAccount(h.id, h.name)">{{ 'users.delete_account.action' | t }}</button>
+                      <button class="dropdown-item danger" *appCanManage (click)="deleteAccount(h.id, h.name)">{{ 'users.delete_account.action' | t }}</button>
 </div>
                   }
                 </td>

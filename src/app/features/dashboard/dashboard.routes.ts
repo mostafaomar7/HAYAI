@@ -321,6 +321,23 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/profile/profile').then(m => m.Profile)
   },
   {
+    path: 'no-access',
+    data: { title: 'access.no_access_title' },
+    loadComponent: () => import('./pages/no-access/no-access').then(m => m.NoAccess)
+  },
+  // Admin accounts and roles. Super-admin only — `adminAreaGuard` closes
+  // `access/*` to everyone else, as the API does.
+  {
+    path: 'access/admins',
+    data: { title: 'menu.access.admins' },
+    loadComponent: () => import('./pages/access/admins/admins').then(m => m.Admins)
+  },
+  {
+    path: 'access/roles',
+    data: { title: 'menu.access.roles' },
+    loadComponent: () => import('./pages/access/roles/roles').then(m => m.Roles)
+  },
+  {
     path: 'change-password',
     data: { title: 'navbar.change_password' },
     loadComponent: () =>

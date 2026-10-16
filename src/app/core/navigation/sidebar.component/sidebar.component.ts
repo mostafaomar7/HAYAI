@@ -3,10 +3,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { MENU_ITEMS } from '../menu.config';
+import { MenuItem } from '../../models/menu-item.model';
 import { UserRole } from '../../models/role.type';
 import { TPipe } from '../../i18n/t.pipe';
 import { LayoutService } from '../../layouts/layout.service';
 import { WebsiteContextService } from '../../services/website/website-context.service';
+import { AdminAccessService } from '../../services/admin-access.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -20,6 +22,7 @@ export class SidebarComponent {
   private auth = inject(AuthService);
   private layout = inject(LayoutService);
   private website = inject(WebsiteContextService);
+  private access = inject(AdminAccessService);
   currentUser = this.auth.currentUser;
 
   openDropdownId: string | null = null;
@@ -33,14 +36,18 @@ export class SidebarComponent {
     // anything else would 403 behind every link, so show no menu at all.
     const role = this.currentUser()?.user_type;
     if (role !== 'admin') return [];
+    // A temporary password closes every screen but change-password.
+    if (this.currentUser()?.must_change_password) return [];
     // Website CMS entries are gated on granular permissions from `/admin/website/me`.
     // Until that answers, `can()` is false for all of them, so they appear once
     // it does rather than flashing in and then disappearing.
+    // Dashboard entries follow the admin's areas (`admin_access`): one the
+    // admin cannot view is hidden rather than left to open on a 403.
+    const shows = (e: { area?: MenuItem['area']; permission?: string }) =>
+      this.access.can(e.area) && this.website.can(e.permission);
     return MENU_ITEMS.filter(item => item.roles.includes(role satisfies UserRole))
-      .filter(item => this.website.can(item.permission))
-      .map(item => item.children
-        ? { ...item, children: item.children.filter(c => this.website.can(c.permission)) }
-        : item)
+      .filter(shows)
+      .map(item => item.children ? { ...item, children: item.children.filter(shows) } : item)
       .filter(item => !item.hasDropdown || (item.children?.length ?? 0) > 0);
   });
 

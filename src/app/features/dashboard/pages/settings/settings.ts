@@ -7,6 +7,7 @@ import {
 } from '../../../../core/services/settings.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface SettingGroup {
@@ -40,7 +41,7 @@ function humanise(key: string): string {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './settings.html',
   styleUrl: './settings.css'
 })

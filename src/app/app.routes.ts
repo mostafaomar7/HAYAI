@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Route, Routes, UrlSegment } from '@angular/router';
 import { dashboardShellGuard, signedOutOnlyGuard } from './core/guards/auth.guard';
+import { adminAreaGuard } from './core/guards/admin-area.guard';
 import { TokenService } from './core/services/token.service';
 import { DashboardShellComponent } from './core/layouts/dashboard-shell/dashboard-shell.component/dashboard-shell.component';
 import { isSiteLocale } from './features/site/site-paths';
@@ -80,6 +81,8 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
+        // Per-area access and the forced password change; see the guard.
+        canActivateChild: [adminAreaGuard],
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES)
       }

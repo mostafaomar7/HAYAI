@@ -172,7 +172,7 @@
 
     <div class="footer-bar">
       <button class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | t }}</button>
-      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+      <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="save()">
         {{ (saving() ? 'common.saving' : 'common.save') | t }}
       </button>
     </div>

@@ -6,11 +6,13 @@ import {
   HttpInterceptorFn,
   HttpRequest
 } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { Injector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { SessionService } from '../services/session.service';
+import { AdminAccessService } from '../services/admin-access.service';
+import { DialogService } from '../services/dialog.service';
 
 /**
  * Marks a request this interceptor has already retried after a CSRF
@@ -19,10 +21,21 @@ import { SessionService } from '../services/session.service';
  */
 const CSRF_RETRIED = new HttpContextToken<boolean>(() => false);
 
+/**
+ * A screen that loads four lists can be refused four times at once. One
+ * toast says it; four stacked ones read as something breaking.
+ */
+let lastDeniedToast = 0;
+
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const session = inject(SessionService);
   const auth = inject(AuthService);
+  // Resolved only when a 403 needs them, never up front: DialogService
+  // needs I18nService, which loads its dictionaries through this very
+  // interceptor, so injecting it here made every request a circular
+  // dependency — the dictionaries and the login included.
+  const injector = inject(Injector);
 
   const handle = (request: HttpRequest<unknown>, forward: HttpHandlerFn): Observable<HttpEvent<unknown>> =>
     forward(request).pipe(
@@ -64,6 +77,20 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               request.clone({ headers: request.headers.set('X-XSRF-TOKEN', xsrf) }),
               forward
             );
+          }
+        }
+
+        // 403 `ADMIN_PERMISSION_DENIED`: the admin's role does not cover this
+        // area. Never a sign-out — 401 is the only one. Say so once, and
+        // re-read the admin's access: a super-admin may have just changed the
+        // role, and the sidebar and buttons should catch up with the server.
+        // The error still reaches the caller, so a form stops its spinner.
+        if (err.status === 403 && err.error?.error_code === 'ADMIN_PERMISSION_DENIED') {
+          const now = Date.now();
+          if (now - lastDeniedToast > 3000) {
+            lastDeniedToast = now;
+            injector.get(DialogService).toast('warning', 'access.denied');
+            injector.get(AdminAccessService).refresh().subscribe();
           }
         }
 

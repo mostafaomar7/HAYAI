@@ -405,3 +405,5 @@
   .stats-grid { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; gap: 16px; }
 }
+/* An admin without statistics.view sees the greeting and this line. */
+.no-stats { margin: 24px 0; padding: 16px 20px; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; color: #6B7280; font-size: 14px; }

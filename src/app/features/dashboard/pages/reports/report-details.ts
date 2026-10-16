@@ -9,6 +9,7 @@ import {
 } from '../../../../core/services/reports.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 /**
  * One report, with the copy of what was reported and the decision.
@@ -19,7 +20,7 @@ import { TPipe } from '../../../../core/i18n/t.pipe';
 @Component({
   selector: 'app-report-details',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './report-details.html',
   styleUrl: './report-details.css'
 })

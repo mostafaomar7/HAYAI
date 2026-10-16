@@ -9,6 +9,7 @@ import {
 } from '../../../../core/services/reports.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 
 const STATUSES: ReportStatus[] = ['open', 'reviewing', 'actioned', 'dismissed'];
@@ -25,7 +26,7 @@ const REASONS = ['offensive', 'incorrect', 'spam', 'privacy', 'other'];
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './reports.html',
   styleUrl: './reports.css'
 })

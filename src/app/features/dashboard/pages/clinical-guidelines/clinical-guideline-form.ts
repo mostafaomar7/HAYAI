@@ -15,6 +15,7 @@ import {
 } from '../../../../core/services/option-lists.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 /** A section as the form holds it: bullets are one textarea per language. */
 interface SectionDraft {
@@ -52,7 +53,7 @@ const emptySection = (): SectionDraft => ({ title_en: '', title_ar: '', items_en
 @Component({
   selector: 'app-clinical-guideline-form',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './clinical-guideline-form.html',
   styleUrl: './clinical-guideline-form.css'
 })

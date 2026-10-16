@@ -6,6 +6,7 @@
       <p>{{ 'home.overview_subtitle' | t }}</p>
     </div>
 
+    @if (showStats) {
     <div class="date-picker">
       <div class="preset-row">
         <button type="button" class="preset-btn" (click)="applyPreset(7)">{{ 'home.7d' | t }}</button>
@@ -25,8 +26,10 @@
         <button type="button" class="apply-btn" (click)="applyDateRange()">{{ 'common.apply' | t }}</button>
       </div>
     </div>
+    }
   </header>
 
+  @if (showStats) {
   <section class="stats-grid" [attr.aria-busy]="loading() ? 'true' : null">
     @if (loading()) {
       <!-- The cards used to render nothing at all until the figures arrived,
@@ -178,6 +181,9 @@
     </div>
 
   </section>
+  } @else {
+    <p class="no-stats">{{ 'home.no_stats' | t }}</p>
+  }
 
   <!-- One shape for all four charts: bars of differing heights read as a chart
        that has not drawn yet, where an empty frame reads as no data. -->

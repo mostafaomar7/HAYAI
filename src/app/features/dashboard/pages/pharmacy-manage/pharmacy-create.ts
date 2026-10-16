@@ -6,6 +6,7 @@ import { AdminPharmaciesService } from '../../../../core/services/admin-pharmaci
 import { PlansService, Plan } from '../../../../core/services/plans.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 interface Draft {
   name: string;
@@ -26,7 +27,7 @@ interface Draft {
 @Component({
   selector: 'app-pharmacy-create',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './pharmacy-create.html',
   styleUrl: './pharmacy-create.css'
 })

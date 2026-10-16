@@ -24,7 +24,7 @@
           </select>
         </div>
 
-        <button class="btn-primary" (click)="addDevice()">+ {{ 'gorders.add_device' | t }}</button>
+        <button class="btn-primary" *appCanManage (click)="addDevice()">+ {{ 'gorders.add_device' | t }}</button>
       </div>
     </div>
 
@@ -75,8 +75,10 @@
                   <div class="row-actions">
                     <button class="link-btn" [disabled]="!row.active_group_order"
                             (click)="viewRound(row)">{{ 'common.view' | t }}</button>
+                    <ng-container *appCanManage>
                     <button class="link-btn" (click)="edit(row)">{{ 'common.edit' | t }}</button>
                     <button class="link-btn danger" (click)="remove(row)">{{ 'common.delete' | t }}</button>
+                    </ng-container>
                   </div>
                 </td>
               </tr>

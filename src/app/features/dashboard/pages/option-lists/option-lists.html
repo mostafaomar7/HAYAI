@@ -51,7 +51,7 @@
           </div>
         }
 
-        <button class="add-btn" (click)="openCreate()">{{ 'common.add' | t }}</button>
+        <button class="add-btn" *appCanManage (click)="openCreate()">{{ 'common.add' | t }}</button>
       </div>
     </div>
 
@@ -135,7 +135,7 @@
                   </td>
                 }
                 <td class="action-col">
-                  <div class="row-actions">
+                  <div class="row-actions" *appCanManage>
                     <button class="link-btn" (click)="openEdit(row)">{{ 'common.edit' | t }}</button>
                     @if (config().hasIsActive) {
                       @if (row.is_active === false) {
@@ -287,7 +287,7 @@
 
     <footer class="drawer-footer">
       <button class="btn-cancel" (click)="closeDrawer()">{{ 'common.cancel' | t }}</button>
-      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+      <button class="btn-primary" *appCanManage [disabled]="saving()" (click)="save()">
         {{ (saving() ? 'ads.saving' : 'common.save') | t }}
       </button>
     </footer>

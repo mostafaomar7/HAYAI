@@ -5,11 +5,12 @@ import { Plan, PlansService, formatAmount } from '../../../../core/services/plan
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 @Component({
   selector: 'app-plans-details',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, CanManageDirective, TPipe],
   templateUrl: './plans-details.html',
   styleUrl: './plans-details.css'
 })

@@ -14,6 +14,21 @@ export interface SystemNotification {
   unread: boolean;
   category: NotificationCategory;
   link: string | null;
+  data?: SystemNotificationData | null;
+}
+
+/**
+ * Since 2026-10-16 every admin alert carries the dashboard route it opens and
+ * the permission it was routed by. Older rows have neither.
+ */
+export interface SystemNotificationData {
+  /** `/dashboard/activity/pharmacy_order/12`, `/dashboard/reports/4`, … */
+  dashboard_path?: string | null;
+  /** `pharmacies.view`; null means super-admins only. */
+  permission?: string | null;
+  record_type?: string;
+  record_id?: number | string;
+  [key: string]: unknown;
 }
 
 export interface UnreadCount {
@@ -158,7 +173,15 @@ const LINK_DIRECT_ROUTE: Record<string, string> = {
  * go. Null is deliberate: staying put beats redirecting to the dashboard home,
  * which is what made a notification look like it did nothing.
  */
-export function notificationTarget(link: string | null | undefined): string | null {
+export function notificationTarget(
+  link: string | null | undefined,
+  dashboardPath?: string | null
+): string | null {
+  // The backend's own answer, when the alert has one (every alert since
+  // 2026-10-16). It also covers reports, support tickets, deletion requests,
+  // website leads and purchases, which the mapping below has no route for.
+  // Only a dashboard route is followed; anything else falls back to the map.
+  if (typeof dashboardPath === 'string' && dashboardPath.startsWith('/dashboard/')) return dashboardPath;
   if (!link) return null;
   // Already a dashboard route — pass it through, so this keeps working if the
   // backend starts sending real routes.

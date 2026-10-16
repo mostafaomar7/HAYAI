@@ -9,6 +9,7 @@ import {
 } from '../../../../core/services/account-deletion-requests.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 
 /**
@@ -23,7 +24,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination.component/
 @Component({
   selector: 'app-account-deletion-requests',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './account-deletion-requests.html',
   styleUrl: './account-deletion-requests.css'
 })

@@ -9,6 +9,7 @@ import {
 } from '../../../../core/services/device-group-orders.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../shared/utils/debounce.util';
 
@@ -20,7 +21,7 @@ import { debounce } from '../../../../shared/utils/debounce.util';
 @Component({
   selector: 'app-group-order-devices',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './group-order-devices.html',
   styleUrls: ['./group-orders.shared.css', './group-order-devices.css']
 })

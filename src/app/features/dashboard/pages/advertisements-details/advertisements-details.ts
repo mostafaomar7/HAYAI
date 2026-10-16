@@ -9,6 +9,7 @@ import { ProviderItem, UserResource, UsersService } from '../../../../core/servi
 import { httpUrlValidator } from '../../../../core/validators/url.validator';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
 interface OwnerTypeOption {
   value: UserResource;
@@ -23,7 +24,7 @@ interface OwnerOption {
 @Component({
   selector: 'app-advertisements-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TPipe],
+  imports: [CommonModule, CanManageDirective, ReactiveFormsModule, TPipe],
   templateUrl: './advertisements-details.html',
   styleUrl: './advertisements-details.css'
 })

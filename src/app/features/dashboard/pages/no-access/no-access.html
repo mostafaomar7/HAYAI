@@ -1,0 +1,13 @@
+<div class="page-container">
+  <section class="not-found-card">
+    <div class="code">403</div>
+    <h2>{{ 'access.no_access_title' | t }}</h2>
+    <p class="lead">{{ 'access.no_access_text' | t }}</p>
+    @if (from) { <p class="path" dir="ltr">{{ from }}</p> }
+
+    <div class="actions">
+      <button type="button" class="btn-cancel" (click)="goBack()">{{ 'common.back' | t }}</button>
+      <a class="btn-primary" routerLink="/dashboard">{{ 'notfound.go_home' | t }}</a>
+    </div>
+  </section>
+</div>

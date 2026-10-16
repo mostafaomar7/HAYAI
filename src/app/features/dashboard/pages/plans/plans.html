@@ -59,7 +59,7 @@
     </div>
 
 
-    <div class="bulk-wrapper">
+    <div class="bulk-wrapper" *appCanManage>
       <button class="bulk-btn" [class.has-active]="bulkSelected().length > 0"
               [disabled]="!canBulkEdit()"
               [title]="(canBulkEdit() ? 'plans.bulk_hint' : 'plans.bulk_pick_tab') | t"
@@ -121,7 +121,7 @@
     </div>
 
     @if (canAddPlan()) {
-      <button class="add-btn" (click)="goToAdd()">{{ 'common.add' | t }}</button>
+      <button class="add-btn" *appCanManage (click)="goToAdd()">{{ 'common.add' | t }}</button>
     }
   </div>
 
@@ -198,7 +198,7 @@
           </ul>
 
           <!-- Change what the plan grants without leaving the list. -->
-          <div class="card-actions" (click)="preventClose($event)">
+          <div class="card-actions" *appCanManage (click)="preventClose($event)">
             <button class="modules-btn" (click)="openModules(plan, $event)">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />

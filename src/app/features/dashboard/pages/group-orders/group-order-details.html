@@ -32,12 +32,12 @@
           <!-- Correcting the terms beats cancelling: a cancel throws away
                everyone who already joined. Offered only until a quote exists. -->
           @if (canEditRound()) {
-            <button class="btn-secondary" [disabled]="busy()" (click)="openEditForm()">
+            <button class="btn-secondary" *appCanManage [disabled]="busy()" (click)="openEditForm()">
               {{ 'gorders.edit_round' | t }}
             </button>
           }
           @if (canCancel()) {
-            <button class="btn-danger" [disabled]="busy()" (click)="cancel()">
+            <button class="btn-danger" *appCanManage [disabled]="busy()" (click)="cancel()">
               {{ 'gorders.cancel_round' | t }}
             </button>
           }
@@ -169,7 +169,7 @@
 
           <div class="panel-footer">
             <button class="btn-secondary" (click)="editOpen.set(false)">{{ 'common.cancel' | t }}</button>
-            <button class="btn-primary" [disabled]="busy()" (click)="saveRound()">
+            <button class="btn-primary" *appCanManage [disabled]="busy()" (click)="saveRound()">
               {{ (busy() ? 'common.saving' : 'common.save') | t }}
             </button>
           </div>
@@ -186,7 +186,7 @@
             <p class="sub">{{ 'gorders.cost_step_hint' | t }}</p>
           </div>
           @if (!costFormOpen()) {
-            <button class="btn-primary" (click)="openCostForm()">{{ 'gorders.add_cost' | t }}</button>
+            <button class="btn-primary" *appCanManage (click)="openCostForm()">{{ 'gorders.add_cost' | t }}</button>
           }
         </div>
 
@@ -312,7 +312,7 @@
 
             <div class="panel-footer">
               <button class="btn-secondary" (click)="costFormOpen.set(false)">{{ 'common.cancel' | t }}</button>
-              <button class="btn-primary" [disabled]="busy()" (click)="submitCost()">
+              <button class="btn-primary" *appCanManage [disabled]="busy()" (click)="submitCost()">
                 {{ (busy() ? 'common.saving' : 'gorders.send_for_approval') | t }}
               </button>
             </div>
@@ -387,17 +387,17 @@
           <div class="title-area"><h2>{{ 'gorders.approval_summary' | t }}</h2></div>
           <div class="actions-area">
             @if (canRemind()) {
-              <button class="btn-secondary" [disabled]="busy()" (click)="sendReminder()">
+              <button class="btn-secondary" *appCanManage [disabled]="busy()" (click)="sendReminder()">
                 {{ 'gorders.send_reminder' | t }}
               </button>
             }
             @if (canShareContacts()) {
-              <button class="btn-success" [disabled]="busy()" (click)="shareContacts()">
+              <button class="btn-success" *appCanManage [disabled]="busy()" (click)="shareContacts()">
                 {{ 'gorders.share_contacts' | t }}
               </button>
             }
             @if (canClose()) {
-              <button class="btn-secondary" [disabled]="busy()" (click)="close()">
+              <button class="btn-secondary" *appCanManage [disabled]="busy()" (click)="close()">
                 {{ 'gorders.close_round' | t }}
               </button>
             }
@@ -519,7 +519,7 @@
                   }
 
                   <td class="action-col">
-                    <div class="row-actions">
+                    <div class="row-actions" *appCanManage>
                       @if (p.membership_status === 'pending') {
                         <button class="link-btn" [disabled]="busy()" (click)="approve(p)">
                           {{ 'gorders.approve' | t }}

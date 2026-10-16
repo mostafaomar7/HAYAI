@@ -359,3 +359,8 @@
     font-size: 16px;
   }
 }
+/* "Turn on notifications" in the user menu. */
+.push-item { display: block; width: 100%; text-align: start; padding: 10px 14px; background: none; border: none; border-top: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; color: #111827; }
+.push-item.on { color: #047857; cursor: default; }
+.push-item.blocked { color: #B45309; }
+.push-item:disabled { opacity: 1; }

@@ -153,19 +153,19 @@
                   @if (openActionMenuId === user.id) {
                     <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
                       @if (user.status === 'blocked') {
-                        <button class="dropdown-item" (click)="unblockUser(user.id)">{{ 'users.actions.unblock' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="unblockUser(user.id)">{{ 'users.actions.unblock' | t }}</button>
                       } @else {
-                        <button class="dropdown-item" (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
                       }
                       <button class="dropdown-item" (click)="goToActivity(user)">{{ 'activity.title' | t }}</button>
-                      <button class="dropdown-item" (click)="resetPassword(user)">{{ 'users.reset_password.action' | t }}</button>
+                      <button class="dropdown-item" *appCanManage (click)="resetPassword(user)">{{ 'users.reset_password.action' | t }}</button>
                       @if (isVerified(user)) {
-                        <button class="dropdown-item" (click)="unverify(user)">{{ 'tourists.unverify' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="unverify(user)">{{ 'tourists.unverify' | t }}</button>
                       } @else {
-                        <button class="dropdown-item" (click)="verify(user)">{{ 'tourists.verify' | t }}</button>
+                        <button class="dropdown-item" *appCanManage (click)="verify(user)">{{ 'tourists.verify' | t }}</button>
                       }
                                           <!-- Last in the menu, and separated: it is the one action with no undo. -->
-                      <button class="dropdown-item danger" (click)="deleteAccount(user.id, user.name)">{{ 'users.delete_account.action' | t }}</button>
+                      <button class="dropdown-item danger" *appCanManage (click)="deleteAccount(user.id, user.name)">{{ 'users.delete_account.action' | t }}</button>
 </div>
                   }
                 </td>

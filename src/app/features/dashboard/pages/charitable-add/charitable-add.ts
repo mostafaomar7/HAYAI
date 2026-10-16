@@ -14,12 +14,13 @@ import {
   appendServices
 } from '../../../../shared/utils/form-data.util';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 @Component({
   selector: 'app-charitable-add',
   standalone: true,
-  imports: [CommonModule, FormsModule, TPipe],
+  imports: [CommonModule, CanManageDirective, FormsModule, TPipe],
   templateUrl: './charitable-add.html',
   styleUrl: './charitable-add.css'
 })

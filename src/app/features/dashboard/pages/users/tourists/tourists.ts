@@ -6,6 +6,7 @@ import { TouristItem, UserResource } from '../../../../../core/services/users.se
 import { SettingsService } from '../../../../../core/services/settings.service';
 import { LookupsService } from '../../../../../core/services/lookups.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 
 /** '' = everyone, 'false' = the queue, 'true' = already verified. */
@@ -22,7 +23,7 @@ type VerifiedTab = '' | 'true' | 'false';
 @Component({
   selector: 'app-tourists',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './tourists.html',
   styleUrl: './tourists.css'
 })

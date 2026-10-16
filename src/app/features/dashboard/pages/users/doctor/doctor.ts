@@ -5,12 +5,13 @@ import { UserListBase } from '../user-list.base';
 import { DoctorItem, UserResource } from '../../../../../core/services/users.service';
 import { LookupItem, LookupsService } from '../../../../../core/services/lookups.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-doctor',
   standalone: true,
-  imports: [CommonModule, FormsModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, FormsModule, TPipe, PaginationComponent],
   templateUrl: './doctor.html',
   styleUrl: './doctor.css'
 })

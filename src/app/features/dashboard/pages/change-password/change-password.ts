@@ -1,8 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AdminAccessService } from '../../../../core/services/admin-access.service';
+import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 
 @Component({
@@ -14,6 +17,16 @@ import { TPipe } from '../../../../core/i18n/t.pipe';
 })
 export class ChangePassword {
   private auth = inject(AuthService);
+  private access = inject(AdminAccessService);
+  private dialog = inject(DialogService);
+  private router = inject(Router);
+
+  /**
+   * Signed in with a temporary password — a new account, or one a
+   * super-admin reset. Every other screen is closed until this is done
+   * (`adminAreaGuard`), so the page says why the admin is here.
+   */
+  readonly forced = computed(() => !!this.auth.currentUser()?.must_change_password);
 
   current_password = '';
   new_password = '';
@@ -28,19 +41,19 @@ export class ChangePassword {
     this.successMsg.set(null);
 
     if (!this.current_password || !this.new_password || !this.new_password_confirmation) {
-      this.errorMsg.set('All fields are required.');
+      this.errorMsg.set('password.err_required');
       return;
     }
     if (this.new_password.length < 8) {
-      this.errorMsg.set('New password must be at least 8 characters.');
+      this.errorMsg.set('password.err_length');
       return;
     }
     if (this.new_password !== this.new_password_confirmation) {
-      this.errorMsg.set('New password and confirmation do not match.');
+      this.errorMsg.set('password.err_mismatch');
       return;
     }
     if (this.new_password === this.current_password) {
-      this.errorMsg.set('New password must differ from current.');
+      this.errorMsg.set('password.err_same');
       return;
     }
 
@@ -52,14 +65,25 @@ export class ChangePassword {
     }).subscribe({
       next: () => {
         this.saving.set(false);
-        this.successMsg.set('Password changed successfully.');
+        if (this.forced()) {
+          // The API has cleared the flag and signed out the admin's other
+          // sessions; this one carries on. Clear it here too, re-read the
+          // access, and open the dashboard the role allows.
+          const user = this.auth.currentUser();
+          if (user) this.auth.setUser({ ...user, must_change_password: false });
+          this.access.refresh().subscribe();
+          this.dialog.toast('success', 'password.changed');
+          this.router.navigateByUrl('/dashboard');
+          return;
+        }
+        this.successMsg.set('password.changed');
         this.current_password = '';
         this.new_password = '';
         this.new_password_confirmation = '';
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.errorMsg.set(err.error?.message ?? 'Change password failed.');
+        this.errorMsg.set(err.error?.message ?? 'password.err_failed');
       }
     });
   }

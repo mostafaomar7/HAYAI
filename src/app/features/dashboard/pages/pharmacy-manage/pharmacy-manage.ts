@@ -12,6 +12,7 @@ import {
 } from '../../../../core/services/admin-pharmacies.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../shared/utils/debounce.util';
 
@@ -53,7 +54,7 @@ const emptyBranch = (): BranchDraft => ({ id: null, name: '', city: '', area: ''
 @Component({
   selector: 'app-pharmacy-manage',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './pharmacy-manage.html',
   styleUrl: './pharmacy-manage.css'
 })

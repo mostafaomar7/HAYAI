@@ -63,7 +63,7 @@
 
                 <td>
                   @if (r.status === 'pending') {
-                    <div class="action-row">
+                    <div class="action-row" *appCanManage>
                       <button class="btn-danger" [disabled]="!matches(r).length" (click)="complete(r)">
                         {{ 'deletion_requests.complete_action' | t }}
                       </button>

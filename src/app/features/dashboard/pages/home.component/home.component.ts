@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AdminAccessService } from '../../../../core/services/admin-access.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import {
   AnalyticsService,
@@ -75,8 +76,16 @@ export class HomeComponent {
     return values.map(v => Math.max(2, Math.round((v / max) * 100)));
   }
 
+  /**
+   * The charts read `/admin/analytics/*`, which needs `statistics.view`.
+   * Home is every admin's landing page, so it stays open to all; without the
+   * permission it shows the greeting and nothing it would only fail to load.
+   */
+  readonly showStats = inject(AdminAccessService).can('statistics');
+
   constructor() {
-    this.refresh();
+    if (this.showStats) this.refresh();
+    else this.loading.set(false);
   }
 
   refresh() {

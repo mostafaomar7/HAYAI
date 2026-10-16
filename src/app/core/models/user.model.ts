@@ -1,3 +1,5 @@
+import type { AdminAccess } from '../services/admin-access.service';
+
 /** Mirrors the `users.user_type` enum on the backend. */
 export type UserType =
   | 'admin'
@@ -26,6 +28,14 @@ export interface UserModel {
   profile_image: string | null;
   profile_complete: boolean;
   last_login_at: string | null;
+  /**
+   * True after an admin signs in with a temporary password (new account, or
+   * one a super-admin reset). Every screen but change-password is closed
+   * until it is false.
+   */
+  must_change_password?: boolean;
+  /** Admin accounts only. See AdminAccessService. */
+  admin_access?: AdminAccess;
 }
 
 export interface LoginRequest {
@@ -34,6 +44,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user: UserModel;
+  /** Older shape. The live API sends the account's fields at the top level. */
+  user?: UserModel;
   token: string;
 }

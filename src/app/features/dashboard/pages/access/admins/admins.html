@@ -1,0 +1,249 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'access.admins.title' | t }}</h2>
+        <p class="sub">{{ 'access.admins.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'common.search_placeholder' | t" [value]="search()"
+                 (input)="onSearch($any($event.target).value)">
+        </div>
+        <div class="custom-select">
+          <select [value]="status()" (change)="setStatus($any($event.target).value)" [attr.aria-label]="'common.status' | t">
+            <option value="">{{ 'access.admins.all_statuses' | t }}</option>
+            <option value="active">{{ 'access.admins.status.active' | t }}</option>
+            <option value="blocked">{{ 'access.admins.status.blocked' | t }}</option>
+          </select>
+        </div>
+        <div class="custom-select">
+          <select [value]="roleFilter()" (change)="setRoleFilter($any($event.target).value)" [attr.aria-label]="'access.admins.roles_col' | t">
+            <option value="">{{ 'access.admins.all_roles' | t }}</option>
+            @for (r of roles(); track r.id) {
+              <option [value]="r.name">{{ roleName(r.name) }}</option>
+            }
+          </select>
+        </div>
+        <button class="btn-primary" (click)="openCreate()">+ {{ 'access.admins.add' | t }}</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="table-hint">{{ 'common.loading' | t }}</p>
+    } @else if (loadError()) {
+      <p class="table-hint">{{ loadError()! | t }}</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'common.name' | t }}</th>
+              <th>{{ 'common.email' | t }}</th>
+              <th>{{ 'common.status' | t }}</th>
+              <th>{{ 'access.admins.roles_col' | t }}</th>
+              <th>{{ 'access.admins.last_login' | t }}</th>
+              <th class="action-col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of rows(); track a.id) {
+              <tr>
+                <td>
+                  <span class="name-cell">{{ a.name }}</span>
+                  @if (isSelf(a)) { <span class="chip you-chip">{{ 'access.admins.you' | t }}</span> }
+                  @if (a.must_change_password) {
+                    <div><span class="chip warn small">{{ 'access.admins.pending_password' | t }}</span></div>
+                  }
+                </td>
+                <td class="text-gray" dir="ltr">{{ a.email }}</td>
+                <td>
+                  <span class="pill" [class.pill-active]="a.status === 'active'" [class.pill-blocked]="a.status === 'blocked'">
+                    {{ ('access.admins.status.' + a.status) | t }}
+                  </span>
+                </td>
+                <td>
+                  <div class="chips">
+                    @for (r of a.roles; track r) {
+                      <span class="chip" [class.super]="r === 'super-admin'">{{ roleName(r) }}</span>
+                    } @empty {
+                      <span class="text-gray small">{{ 'access.admins.no_role' | t }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="text-gray small">{{ a.last_login_at ? (a.last_login_at | date: 'medium') : ('access.admins.never' | t) }}</td>
+                <td class="action-col">
+                  <div class="row-actions">
+                    <button class="link-btn" [disabled]="busyId() === a.id" (click)="openEdit(a)">{{ 'common.edit' | t }}</button>
+                    @if (!isSelf(a)) {
+                      <button class="link-btn" [disabled]="busyId() === a.id" (click)="openRoles(a)">{{ 'access.admins.change_roles' | t }}</button>
+                    }
+                    @if (a.must_change_password && a.status === 'active') {
+                      <button class="link-btn" [disabled]="busyId() === a.id" (click)="resendInvitation(a)">{{ 'access.admins.resend' | t }}</button>
+                    }
+                    @if (!a.is_super_admin && a.status === 'active') {
+                      <button class="link-btn" [disabled]="busyId() === a.id" (click)="resetPassword(a)">{{ 'access.admins.reset' | t }}</button>
+                    }
+                    @if (!isSelf(a)) {
+                      @if (a.status === 'active') {
+                        <button class="link-btn danger" [disabled]="busyId() === a.id" (click)="deactivate(a)">{{ 'access.admins.deactivate' | t }}</button>
+                      } @else {
+                        <button class="link-btn" [disabled]="busyId() === a.id" (click)="reactivate(a)">{{ 'access.admins.reactivate' | t }}</button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'common.no_data' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+    }
+  </div>
+</div>
+
+<!-- ═══════════════ create / edit ═══════════════ -->
+@if (modal() === 'create' || modal() === 'edit') {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (modal() === 'create' ? 'access.admins.add' : 'access.admins.edit') | t }}</h3>
+        <button class="modal-close" (click)="close()">×</button>
+      </div>
+      <form (ngSubmit)="modal() === 'create' ? create() : saveEdit()">
+        <div class="modal-body">
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'common.name' | t }} <span class="req">*</span></label>
+              <input type="text" name="name" [(ngModel)]="name" autocomplete="off">
+              @if (errors()['name']) { <span class="field-error">{{ errors()['name'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'common.email' | t }} <span class="req">*</span></label>
+              <input type="email" name="email" dir="ltr" [(ngModel)]="email" autocomplete="off">
+              @if (errors()['email']) { <span class="field-error">{{ errors()['email'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'access.admins.phone' | t }}</label>
+              <input type="text" name="phone" dir="ltr" [(ngModel)]="phone" autocomplete="off">
+              @if (errors()['phone']) { <span class="field-error">{{ errors()['phone'] }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'access.admins.language' | t }}</label>
+              <select name="language" [(ngModel)]="language">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+              </select>
+              <span class="hint">{{ 'access.admins.language_hint' | t }}</span>
+            </div>
+          </div>
+
+          @if (modal() === 'create') {
+            <h4 class="section-title">{{ 'access.admins.roles_col' | t }} <span class="req">*</span></h4>
+            <div class="stack">
+              @for (r of roles(); track r.id) {
+                <label class="checkbox role-option">
+                  <input type="checkbox" [checked]="hasRole(r.name)" (change)="toggleRole(r.name, $any($event.target).checked)">
+                  <span>
+                    <strong>{{ roleName(r.name) }}</strong>
+                    <span class="muted small">
+                      @if (r.is_super_admin) { {{ 'access.roles.everything' | t }} }
+                      @else { {{ 'access.roles.n_permissions' | t: { n: r.permissions.length + r.website_permissions.length } }} }
+                    </span>
+                  </span>
+                </label>
+              } @empty {
+                <p class="muted">{{ 'common.loading' | t }}</p>
+              }
+            </div>
+            @if (errors()['roles']) { <span class="field-error">{{ errors()['roles'] }}</span> }
+            <p class="notice info">{{ 'access.admins.create_note' | t }}</p>
+          }
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ (saving() ? 'common.saving' : (modal() === 'create' ? 'access.admins.create' : 'common.save')) | t }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════ roles ═══════════════ -->
+@if (modal() === 'roles') {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ 'access.admins.roles_of' | t: { name: editing()?.name ?? '' } }}</h3>
+        <button class="modal-close" (click)="close()">×</button>
+      </div>
+      <div class="modal-body">
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+        <div class="stack">
+          @for (r of roles(); track r.id) {
+            <label class="checkbox role-option">
+              <input type="checkbox" [checked]="hasRole(r.name)" (change)="toggleRole(r.name, $any($event.target).checked)">
+              <span>
+                <strong>{{ roleName(r.name) }}</strong>
+                <span class="muted small">
+                  @if (r.is_super_admin) { {{ 'access.roles.everything' | t }} }
+                  @else { {{ 'access.roles.n_permissions' | t: { n: r.permissions.length + r.website_permissions.length } }} }
+                </span>
+              </span>
+            </label>
+          }
+        </div>
+        @if (errors()['roles']) { <span class="field-error">{{ errors()['roles'] }}</span> }
+        <p class="notice info">{{ 'access.admins.roles_note' | t }}</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+        <button type="button" class="btn-primary" (click)="saveRoles()" [disabled]="saving()">
+          {{ (saving() ? 'common.saving' : 'common.save') | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════ the one-time password ═══════════════ -->
+@if (modal() === 'password' && shown(); as p) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ ('access.admins.password_title.' + p.kind) | t }}</h3>
+        <button class="modal-close" (click)="closePassword()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>{{ 'access.admins.password_for' | t: { name: p.name } }} <span class="text-gray" dir="ltr">{{ p.email }}</span></p>
+        <div class="secret">
+          <code class="mono" dir="ltr">{{ p.password }}</code>
+          <button type="button" class="btn-secondary btn-sm" (click)="copyPassword()">
+            {{ (copied() ? 'access.admins.copied' : 'access.admins.copy') | t }}
+          </button>
+        </div>
+        <p class="notice warn">{{ 'access.admins.password_once' | t }}</p>
+        @if (emailNotSent(p)) {
+          <p class="notice error">{{ 'access.admins.email_not_sent' | t }}</p>
+        } @else if (p.emailStatus === 'sent') {
+          <p class="notice info">{{ 'access.admins.email_sent' | t }}</p>
+        } @else {
+          <p class="notice info">{{ 'access.admins.reset_note' | t }}</p>
+        }
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-primary" (click)="closePassword()">{{ 'common.done' | t }}</button>
+      </div>
+    </div>
+  </div>
+}

@@ -7,12 +7,13 @@ import {
 } from '../../../../core/services/hospital-verifications.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 
 @Component({
   selector: 'app-hospital-verifications',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, CanManageDirective, TPipe, PaginationComponent],
   templateUrl: './hospital-verifications.html',
   styleUrl: './hospital-verifications.css'
 })

@@ -21,6 +21,10 @@
  *                       HttpOnly cookie; anything else keeps today's bearer
  *                       token. Default bearer
  *   CSP_REPORT_ONLY     `1` stops enforcing the content policy
+ *   FIREBASE_WEB_CONFIG the Firebase web app's config as one line of JSON,
+ *                       with `vapidKey` added — turns on browser
+ *                       notifications for admins. Unset: the dashboard does
+ *                       not offer them. Public by design, not a secret
  *   HSTS_INCLUDE_SUBDOMAINS  `1` extends HSTS to every subdomain
  */
 import {
@@ -55,6 +59,22 @@ const WEBSITE_KEY = process.env['WEBSITE_SERVER_KEY'] || '';
 // goes wrong, every admin is locked out of the dashboard, and the way back
 // should be a Supervisor line and a restart, not a rebuild and a redeploy.
 const AUTH_MODE = process.env['AUTH_MODE'] === 'cookie' ? 'cookie' : 'bearer';
+
+/**
+ * Browser notifications for admins. The JSON is checked here so a typo in a
+ * Supervisor line turns the feature off with a log line, instead of
+ * printing something the dashboard cannot parse.
+ */
+const FIREBASE_WEB_CONFIG = (() => {
+  const raw = process.env['FIREBASE_WEB_CONFIG'];
+  if (!raw) return '';
+  try {
+    const c = JSON.parse(raw);
+    if (c && c.apiKey && c.messagingSenderId && c.appId && c.vapidKey) return JSON.stringify(c);
+  } catch { /* reported below */ }
+  console.error('FIREBASE_WEB_CONFIG is set but is not JSON with apiKey, messagingSenderId, appId and vapidKey; browser notifications stay off.');
+  return '';
+})();
 
 const CSP_HEADER = process.env['CSP_REPORT_ONLY'] === '1'
   ? 'Content-Security-Policy-Report-Only'
@@ -395,6 +415,10 @@ app.use(
     setHeaders: (res, filePath) => {
       if (/-[A-Z0-9]{8}\.(js|css|mjs)$/i.test(filePath) || /[\\/]media[\\/]/.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (/[\\/]firebase-messaging-sw\.js$/.test(filePath)) {
+        // A service worker. Its URL never changes, so a cached copy would
+        // keep an old one running; browsers check it on every navigation.
+        res.setHeader('Cache-Control', 'no-cache');
       } else if (/[\\/]i18n[\\/].+\.json$/.test(filePath)) {
         const token = i18nVersion();
         const asked = new URL(res.req.url ?? '/', 'http://x').searchParams.get('v');
@@ -750,7 +774,9 @@ function adminSecurityPolicy(nonce: string): string {
     // Uploaded media is served from wherever the CMS points; an image is not
     // a way to run code, and narrowing this would blank the media library.
     `img-src 'self' data: blob: https:`,
-    `connect-src 'self' ${API_ORIGIN}`,
+    // The two Firebase hosts are browser notifications for admins: getting
+    // this browser's push token. Firebase itself is bundled, not loaded.
+    `connect-src 'self' ${API_ORIGIN} https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com`,
     `upgrade-insecure-requests`
   ].join('; ');
 }
@@ -855,7 +881,12 @@ function adminShell(): string {
  * stamped per response.
  */
 function withAuthMode(html: string): string {
-  const tag = `<meta name="hayai-auth-mode" content="${AUTH_MODE}">`;
+  // The Firebase config rides along: an admin-shell setting, in a meta tag
+  // for the same reason as the auth mode. Attribute-escaped JSON.
+  const firebase = FIREBASE_WEB_CONFIG
+    ? `<meta name="hayai-firebase" content="${FIREBASE_WEB_CONFIG.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}">`
+    : '';
+  const tag = `<meta name="hayai-auth-mode" content="${AUTH_MODE}">${firebase}`;
   return html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : tag + html;
 }
 
