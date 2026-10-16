@@ -18,3 +18,4 @@
 .module-detail-item:last-child { margin-bottom: 0; }
 .module-detail-item h4 { margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #111827; }
 .module-detail-item p { margin: 0; font-size: 14px; color: #6B7280; }
+.price-after { color: #047857; font-weight: 700; }

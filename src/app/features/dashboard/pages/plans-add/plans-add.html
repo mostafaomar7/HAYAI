@@ -54,6 +54,14 @@
           <input type="number" min="0" max="100" [placeholder]="'plans.enter_discount' | t" [(ngModel)]="discount" name="discount">
         </div>
       </div>
+      @if (discountPreview(); as d) {
+        <p class="discount-preview">
+          {{ 'plans.preview_before' | t }}: <b>{{ d.before }}</b>
+          <span class="sep">·</span>
+          {{ 'plans.preview_after' | t : { pct: d.pct } }}: <b class="after">{{ d.after }}</b>
+          <span class="muted">({{ 'plans.preview_saved' | t : { amount: d.saved } }})</span>
+        </p>
+      }
     </section>
 
     <section class="form-section">

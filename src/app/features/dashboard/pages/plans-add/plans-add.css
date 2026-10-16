@@ -91,3 +91,9 @@
 @media (max-width: 992px) { .modules-grid { grid-template-columns: repeat(2, 1fr) !important; } }
 
 .patient-hint { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 10px 14px; color: #1E3A8A; margin-bottom: 16px; }
+
+.discount-preview { margin: 12px 0 0; padding: 10px 14px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; font-size: 13px; color: #374151; }
+.discount-preview b { color: #111827; }
+.discount-preview b.after { color: #047857; }
+.discount-preview .sep { margin: 0 8px; color: #9CA3AF; }
+.discount-preview .muted { color: #6B7280; margin-inline-start: 6px; }

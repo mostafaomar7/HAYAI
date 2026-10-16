@@ -47,6 +47,23 @@ export const PLAN_TYPE_OPTIONS: { value: PlanType; label: string }[] = [
  * optional on purpose: the dashboard has to keep working against a server that
  * has not run the new migrations yet. Read them defensively.
  */
+/**
+ * The price after a percentage discount — the same formula as the server's
+ * `Plan::finalPrice()`. For the form's preview while the admin types only;
+ * anything saved shows the API's `final_price`.
+ */
+export function discountedPrice(price: number, discountPercent: number): number {
+  const pct = Math.min(Math.max(discountPercent, 0), 100);
+  return Math.round(price * (1 - pct / 100) * 100) / 100;
+}
+
+/** A plain amount in the dashboard's language: 50000 → "50,000" / "٥٠٬٠٠٠". */
+export function formatAmount(value: number | string | null | undefined, lang: string): string {
+  const n = Number(value);
+  if (value === null || value === undefined || value === '' || !Number.isFinite(n)) return '—';
+  return new Intl.NumberFormat(lang === 'ar' ? 'ar-EG' : 'en-US', { maximumFractionDigits: 2 }).format(n);
+}
+
 export interface PlanModule {
   id?: number;
   module_name: string;

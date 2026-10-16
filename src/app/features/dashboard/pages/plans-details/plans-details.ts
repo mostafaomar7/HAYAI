@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Plan, PlansService } from '../../../../core/services/plans.service';
+import { Plan, PlansService, formatAmount } from '../../../../core/services/plans.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 
@@ -18,6 +19,7 @@ export class PlansDetails {
   private router = inject(Router);
   private svc = inject(PlansService);
   private dialog = inject(DialogService);
+  private i18n = inject(I18nService);
 
   loading = signal(true);
   plan = signal<Plan | null>(null);
@@ -35,6 +37,16 @@ export class PlansDetails {
   }
 
   goBack() { this.location.back(); }
+
+  /** The API's numeric percentage; `discount` is the same value as a string. */
+  pct(p: Plan): number {
+    return Number(p.discount_percent ?? p.discount) || 0;
+  }
+
+  /** `final_price` is the API's, never worked out here. */
+  amount(value: number | string | null | undefined): string {
+    return formatAmount(value, this.i18n.lang());
+  }
 
   goToEdit() {
     const id = this.plan()?.id;

@@ -11,11 +11,11 @@ import {
   PlanModuleCatalog,
   PLAN_TYPE_OPTIONS,
   PlansService,
-  PlanType
-} from '../../../../core/services/plans.service';
+  PlanType, discountedPrice, formatAmount } from '../../../../core/services/plans.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { LookupsService } from '../../../../core/services/lookups.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 interface ModuleRow {
   module_key: string;
@@ -64,6 +64,7 @@ export class PlansAdd {
   private svc = inject(PlansService);
   private dialog = inject(DialogService);
   private lookups = inject(LookupsService);
+  private i18n = inject(I18nService);
 
   id = signal<number | null>(null);
   isEdit = computed(() => this.id() !== null);
@@ -76,7 +77,8 @@ export class PlansAdd {
   status: 'active' | 'inactive' = 'active';
   price: number | null = null;
   months: number | null = null;
-  discount = 0;
+  /** A percentage, 0–100. Empty means no discount. */
+  discount: number | null = null;
   description = '';
   /** Set from the loaded plan when editing; the backend owns it on create. */
   currency = signal('');
@@ -220,7 +222,9 @@ export class PlansAdd {
         this.price = Number(p.price);
         this.currency.set(p.currency ?? '');
         this.months = p.months;
-        this.discount = p.discount;
+        // `discount` arrives as the string "50.00" (or null); the input needs
+        // the number. `discount_percent` is the API's own numeric copy.
+        this.discount = Number(p.discount_percent ?? p.discount) || null;
         this.description = p.description ?? '';
         this.subscribersCount.set(p.subscribers_count ?? 0);
         this.savedAt = p.modules_saved_at ?? null;
@@ -278,9 +282,39 @@ export class PlansAdd {
 
   goBack() { this.location.back(); }
 
+  /**
+   * Before / after while the admin types. Hidden without a price or with no
+   * discount. Computed here because it has to follow the keyboard; the saved
+   * plan shows the API's `final_price`.
+   */
+  discountPreview(): { before: string; after: string; saved: string; pct: number } | null {
+    const price = Number(this.price);
+    const pct = Math.min(Math.max(Number(this.discount) || 0, 0), 100);
+    if (this.price === null || !Number.isFinite(price) || price <= 0 || pct === 0) return null;
+    const after = discountedPrice(price, pct);
+    const lang = this.i18n.lang();
+    const cur = this.currency() || 'EGP';
+    return {
+      before: `${formatAmount(price, lang)} ${cur}`,
+      after: `${formatAmount(after, lang)} ${cur}`,
+      saved: `${formatAmount(price - after, lang)} ${cur}`,
+      pct
+    };
+  }
+
   async save() {
     if (!this.name || !this.planType || this.price === null || this.months === null) {
       this.errorMessage.set('plans.required_fields');
+      return;
+    }
+    // A cleared price used to go out as 0 and save the plan as free, with no
+    // warning (plans 17, 20, 36 and 52–60 on production, 2026-10-14).
+    if (!Number.isFinite(Number(this.price)) || Number(this.price) < 0) {
+      this.errorMessage.set('plans.price_invalid');
+      return;
+    }
+    if (this.discount !== null && (Number(this.discount) < 0 || Number(this.discount) > 100)) {
+      this.errorMessage.set('plans.discount_invalid');
       return;
     }
 
@@ -308,9 +342,9 @@ export class PlansAdd {
       name: this.name,
       plan_type: this.planType as PlanType,
       status: this.status,
-      price: this.price ?? 0,
+      price: Number(this.price),
       months: this.months ?? 1,
-      discount: this.discount,
+      discount: this.discount === null ? 0 : Number(this.discount),
       description: this.description,
       modules: this.modules().map(m => ({
         module_key: m.module_key,
