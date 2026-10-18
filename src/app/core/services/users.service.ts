@@ -133,6 +133,12 @@ export type UserResource =
   | 'tourists'
   | 'doctors'
   | 'hospitals'
+  /**
+   * A hospital profile tagged `facility_type: "senior_care"`. Same row shape,
+   * same actions, its own path segment and its own section — never folded
+   * into the hospitals list.
+   */
+  | 'senior-care'
   | 'clinics'
   | 'pharmacies'
   | 'labs'

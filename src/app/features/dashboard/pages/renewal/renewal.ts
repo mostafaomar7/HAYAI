@@ -41,6 +41,7 @@ export class Renewal {
   readonly defaultUserTypes: LookupItem[] = [
     { id: 'doctor', label: 'Doctor' },
     { id: 'hospital', label: 'Hospital' },
+    { id: 'senior_care', label: 'Senior Care' },
     { id: 'clinic', label: 'Clinic' },
     { id: 'pharmacy', label: 'Pharmacy' },
     { id: 'lab', label: 'Lab / Radiology' },

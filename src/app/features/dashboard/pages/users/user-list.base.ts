@@ -28,6 +28,7 @@ const ACTIVITY_ID_TYPE: Record<UserResource, ActivityIdType> = {
   tourists: 'user',
   doctors: 'doctor',
   hospitals: 'organization',
+  'senior-care': 'organization',
   clinics: 'organization',
   pharmacies: 'facility',
   labs: 'facility',

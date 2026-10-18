@@ -5,6 +5,8 @@ import { UserResource } from './users.service';
 
 export type PlanType =
   | 'hospital'
+  /** Same feature set as `hospital` today, priced and sold separately. */
+  | 'senior_care'
   | 'clinic'
   | 'doctor'
   | 'general_practitioner'
@@ -27,6 +29,7 @@ export type PlanType =
 /** Single source for the plan-type dropdowns (list filter and the editor). */
 export const PLAN_TYPE_OPTIONS: { value: PlanType; label: string }[] = [
   { value: 'hospital', label: 'Hospital' },
+  { value: 'senior_care', label: 'Senior Care' },
   { value: 'clinic', label: 'Clinic' },
   { value: 'doctor', label: 'Doctor' },
   { value: 'general_practitioner', label: 'General Practitioner' },
@@ -172,6 +175,9 @@ export interface Plan {
  */
 export const PLAN_TYPES_FOR_RESOURCE: Partial<Record<UserResource, PlanType[]>> = {
   hospitals: ['hospital'],
+  // The server does not refuse a hospital plan on a senior-care account, so
+  // this scoping is the only thing keeping the two apart.
+  'senior-care': ['senior_care'],
   clinics: ['clinic'],
   doctors: ['doctor', 'general_practitioner', 'specialist', 'consultant'],
   pharmacies: ['pharmacies'],

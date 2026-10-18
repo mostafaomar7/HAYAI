@@ -12,6 +12,14 @@
         <button class="tab-btn" [class.active]="status() === 'verified'" (click)="setStatus('verified')">{{ 'hospitals_verify.tab.verified' | t }}</button>
         <button class="tab-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">{{ 'hospitals_verify.tab.rejected' | t }}</button>
       </div>
+
+      <!-- Senior-care homes are hospital profiles with another facility type,
+           so they arrive in this same queue. Unfiltered shows both, as before. -->
+      <div class="tab-group secondary">
+        <button class="tab-btn" [class.active]="facilityType() === ''" (click)="setFacilityType('')">{{ 'common.all' | t }}</button>
+        <button class="tab-btn" [class.active]="facilityType() === 'hospital'" (click)="setFacilityType('hospital')">{{ 'users.hospital.title' | t }}</button>
+        <button class="tab-btn" [class.active]="facilityType() === 'senior_care'" (click)="setFacilityType('senior_care')">{{ 'users.senior_care.title' | t }}</button>
+      </div>
     </div>
 
     <div class="table-responsive">

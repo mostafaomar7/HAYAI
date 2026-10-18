@@ -45,6 +45,7 @@ const FALLBACK_TYPES: LookupItem[] = [
   { id: 'tourist', label: 'Tourists' },
   { id: 'doctor', label: 'Doctors' },
   { id: 'hospital', label: 'Hospitals' },
+  { id: 'senior_care', label: 'Senior Care' },
   { id: 'clinic', label: 'Clinics' },
   { id: 'pharmacies', label: 'Pharmacies' },
   { id: 'labs_radiology', label: 'Labs & Radiology' },

@@ -107,6 +107,13 @@ export const DASHBOARD_ROUTES: Routes = [
     data: { title: 'menu.users.hospitals' },
     loadComponent: () => import('./pages/users/hospital/hospital').then(m => m.Hospital)
   },
+  // The API's own segment, so a `/admin/senior-care/{id}` notification link
+  // maps onto it without a translation table.
+  {
+    path: 'senior-care',
+    data: { title: 'menu.users.senior_care' },
+    loadComponent: () => import('./pages/users/senior-care/senior-care').then(m => m.SeniorCare)
+  },
   {
     path: 'clinics',
     data: { title: 'menu.users.clinics' },

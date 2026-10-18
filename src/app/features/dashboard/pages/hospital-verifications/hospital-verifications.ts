@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   HospitalVerification,
   HospitalVerificationsService,
+  VerificationFacilityType,
   VerificationStatus
 } from '../../../../core/services/hospital-verifications.service';
 import { DialogService } from '../../../../core/services/dialog.service';
@@ -25,6 +26,12 @@ export class HospitalVerifications {
   items = signal<HospitalVerification[]>([]);
   total = signal(0);
   status = signal<VerificationStatus>('pending');
+  /**
+   * Senior-care homes share this queue. `''` leaves the parameter off and
+   * returns both, which is how the screen behaved before the type existed and
+   * stays the default here.
+   */
+  facilityType = signal<VerificationFacilityType | ''>('');
 
   readonly perPage = 15;
   page = signal(1);
@@ -35,6 +42,7 @@ export class HospitalVerifications {
     this.loading.set(true);
     this.svc.list({
       verification_status: this.status(),
+      facility_type: this.facilityType() || undefined,
       page: this.page(),
       per_page: this.perPage
     }).subscribe({
@@ -63,6 +71,12 @@ export class HospitalVerifications {
   setStatus(s: VerificationStatus) {
     this.status.set(s);
     // A different tab is a different result set — restart from page 1.
+    this.page.set(1);
+    this.load();
+  }
+
+  setFacilityType(t: VerificationFacilityType | '') {
+    this.facilityType.set(t);
     this.page.set(1);
     this.load();
   }

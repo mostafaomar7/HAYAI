@@ -101,6 +101,7 @@ export class AdvertisementsDetails {
   private static readonly OWNER_TYPES: ReadonlyArray<{ api: string; resource: UserResource }> = [
     { api: 'doctor', resource: 'doctors' },
     { api: 'hospital', resource: 'hospitals' },
+    { api: 'senior_care', resource: 'senior-care' },
     { api: 'clinic', resource: 'clinics' },
     { api: 'pharmacies', resource: 'pharmacies' },
     { api: 'labs_radiology', resource: 'labs' },

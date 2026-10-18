@@ -15,6 +15,7 @@ export type ApprovalGroup = 'facilities' | 'doctors' | 'organizations';
  */
 export const APPROVAL_GROUP: Partial<Record<UserResource, ApprovalGroup>> = {
   hospitals: 'facilities',
+  'senior-care': 'facilities',
   clinics: 'facilities',
   doctors: 'doctors',
   pharmacies: 'organizations',
@@ -30,7 +31,7 @@ export interface PendingQuery {
   page?: number;
   per_page?: number;
   search?: string;
-  /** `facilities` only — `hospital` | `clinic`. */
+  /** `facilities` only — `hospital` | `clinic` | `senior_care`. */
   type?: string;
   /** `organizations` only. */
   org_type?: string;

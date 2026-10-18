@@ -209,3 +209,13 @@
   text-overflow: ellipsis;
   cursor: help;
 }
+
+/* The second tab row: which kind of facility, not which review state. */
+.tab-group.secondary {
+  margin-top: 10px;
+}
+
+.tab-group.secondary .tab-btn {
+  font-size: 12px;
+  padding: 6px 14px;
+}

@@ -1,0 +1,151 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'users.senior_care.title' | t }}</h2>
+        <span class="badge">{{ 'users.users_count' | t : { count: total() } }}</span>
+      </div>
+
+      <div class="actions-area">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" [placeholder]="'common.search' | t" [value]="search()" (input)="onSearch($any($event.target).value)" />
+        </div>
+
+        <div class="filter-wrapper">
+          <button class="filter-btn" (click)="toggleFilter($event)">{{ 'common.filter' | t }}</button>
+
+          @if (showFilter) {
+            <div class="filter-popup" (click)="preventClose($event)">
+              <div class="popup-header">
+                <h3>{{ 'common.filter' | t }}</h3>
+                <button class="close-icon" (click)="toggleFilter($event)">×</button>
+              </div>
+              <div class="popup-body">
+                <div class="form-group">
+                  <label>{{ 'common.plan' | t }}</label>
+                  <div class="custom-select">
+                    <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value)">
+                      <option value="">{{ 'common.any' | t }}</option>
+                      @for (pl of plansList(); track pl.id) {
+                        <option [value]="pl.id">{{ pl.name }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>{{ 'approval.status' | t }}</label>
+                  <div class="custom-select">
+                    <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+                      <option value="">{{ 'common.any' | t }}</option>
+                      <option value="pending">{{ 'approval.pending' | t }}</option>
+                      <option value="approved">{{ 'approval.approved' | t }}</option>
+                      <option value="rejected">{{ 'approval.rejected' | t }}</option>
+                      <option value="blocked">{{ 'approval.blocked' | t }}</option>
+                      <option value="closed">{{ 'approval.closed' | t }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>{{ 'users.account_status' | t }}</label>
+                  <div class="custom-select">
+                    <select [value]="accountStatusFilter()" (change)="accountStatusFilter.set($any($event.target).value)">
+                      <option value="">{{ 'common.any' | t }}</option>
+                      <option value="active">{{ 'common.active' | t }}</option>
+                      <option value="blocked">{{ 'common.blocked' | t }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="popup-footer">
+                <button class="reset-btn" (click)="resetFilters()">{{ 'common.reset' | t }}</button>
+                <button class="apply-btn" (click)="applyFilters()">{{ 'common.apply_filters' | t }}</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="checkbox-col"><input type="checkbox"></th>
+            <th>{{ 'common.name' | t }}</th>
+            <th>{{ 'approval.status' | t }}</th>
+            <th>{{ 'common.email_address' | t }}</th>
+            <th>{{ 'common.phone' | t }}</th>
+            <th>{{ 'common.plan' | t }}</th>
+            <th class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="7" style="padding:24px;color:#6B7280;">{{ 'users.no_users' | t }}</td></tr>
+          } @else {
+            @for (h of items(); track h.id) {
+              <tr>
+                <td class="checkbox-col"><input type="checkbox"></td>
+                <td>
+                  <div class="user-cell">
+                    @if (h.logo || h.profile_image) {
+                      <img [src]="h.logo || h.profile_image" alt="Avatar" class="avatar">
+                    } @else {
+                      <span class="avatar-initials" [style.background-color]="avatarColor(h.name)">{{ initials(h.name) }}</span>
+                    }
+                    <span class="user-name">{{ h.name }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="status-badge" [attr.data-status]="h.status" [title]="h.rejection_reason || ''">
+                    <span class="dot"></span>{{ approvalLabel(h.status) | t }}
+                  </div>
+                  @if (h.account_status === 'blocked') {
+                    <span class="account-flag">{{ 'users.account_blocked' | t }}</span>
+                  }
+                </td>
+                <td class="text-gray">{{ h.email }}</td>
+                <td class="text-gray">{{ h.phone }}</td>
+                <td class="text-gray">{{ h.plan?.name }}</td>
+                <td class="action-col relative-cell">
+                  <button class="dots-btn" (click)="toggleActionMenu(h.id, $event)">⋮</button>
+                  @if (openActionMenuId === h.id) {
+                    <div class="action-dropdown" [class.flip]="menuPos.flip" [style.top.px]="menuPos.top" [style.left.px]="menuPos.left" (click)="preventClose($event)">
+                      @if (h.status === 'pending') {
+                        <button class="dropdown-item" (click)="approve(h.id)">{{ 'common.approve' | t }}</button>
+                        <button class="dropdown-item" (click)="reject(h.id)">{{ 'common.reject' | t }}</button>
+                      }
+                      @if (h.account_status === 'blocked') {
+                        <button class="dropdown-item" (click)="unblockProvider(h.id)">{{ 'users.actions.unblock_account' | t }}</button>
+                      } @else {
+                        <button class="dropdown-item" (click)="blockProvider(h.id)">{{ 'users.actions.block_account' | t }}</button>
+                      }
+                      <button class="dropdown-item" (click)="goToActivity(h)">{{ 'activity.title' | t }}</button>
+                      <button class="dropdown-item" (click)="resetPassword(h)">{{ 'users.reset_password.action' | t }}</button>
+                      <button class="dropdown-item" (click)="changePlan(h.id)">{{ 'users.actions.change_plan' | t }}</button>
+                                          <!-- Last in the menu, and separated: it is the one action with no undo. -->
+                      <button class="dropdown-item danger" (click)="deleteAccount(h.id, h.name)">{{ 'users.delete_account.action' | t }}</button>
+</div>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [total]="total()"
+      [perPage]="perPage"
+      (pageChange)="goToPage($event)"
+    />
+  </div>
+</div>

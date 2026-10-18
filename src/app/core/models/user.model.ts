@@ -7,6 +7,7 @@ export type UserType =
   | 'tourist'
   | 'doctor'
   | 'hospital'
+  | 'senior_care'
   | 'clinic'
   | 'pharmacies'
   | 'labs_radiology'

@@ -22,6 +22,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'Patients', label: 'menu.users.patients', route: '/dashboard/patient', area: 'patients' },
       { id: 'Tourists', label: 'menu.users.tourists', route: '/dashboard/tourist', area: 'patients' },
       { id: 'Hospitals', label: 'menu.users.hospitals', route: '/dashboard/hospital', area: 'hospitals' },
+      { id: 'SeniorCare', label: 'menu.users.senior_care', route: '/dashboard/senior-care', area: 'senior_care' },
       { id: 'Clinics', label: 'menu.users.clinics', route: '/dashboard/clinics', area: 'hospitals' },
       { id: 'Doctors', label: 'menu.users.doctors', route: '/dashboard/doctor', area: 'doctors' },
       { id: 'Pharmacies', label: 'menu.users.pharmacies', route: '/dashboard/pharmacies', area: 'pharmacies' },
