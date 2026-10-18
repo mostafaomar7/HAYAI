@@ -35,10 +35,14 @@ const DOCTOR = 'doctor';
  * These are the API's spellings, which are not the ones the rest of this
  * dashboard uses: `pharmacies` not `pharmacy`, `labs_radiology` not `lab`,
  * `medical_insurance` not `medical_issuance`. The list this screen shipped
- * with was written from the sidebar's names, and the API accepts an unknown
- * type without complaint and matches nobody — so "Send to pharmacies" queued
- * zero recipients and said so in a number nobody reads. Measured against
- * `/broadcast/preview` on 2026-10-15: `pharmacy` 0, `pharmacies` 7.
+ * with was written from the sidebar's names instead, and four broadcasts went
+ * out to nobody before anyone noticed — `pharmacy` counted 0 where
+ * `pharmacies` counted 7, and the screen called that a successful send.
+ *
+ * Since backend `5d94459` an unknown id is a 422 under
+ * `target_audience.userTypes.{i}`, so that failure mode is now loud. These
+ * spellings still have to be right: a 422 is better than silence, but it is
+ * not a working Send button.
  */
 const FALLBACK_TYPES: LookupItem[] = [
   { id: 'patient', label: 'Patients' },
@@ -107,10 +111,10 @@ export class Notification {
   nobodySelected = computed(() => !this.everyone() && this.selectedTypes().size === 0);
 
   /**
-   * Checked here because the API does not check it. Measured 2026-10-15: a
-   * `link` of `not-a-url`, and one of 270 characters, were both accepted while
-   * the same request failed on its title. An app handed `not-a-url` opens
-   * nothing, and the admin would have no way to know.
+   * The API enforces this too since `5d94459` (422 under `link`). Checking
+   * first means the admin sees it against the field, before a round trip,
+   * rather than in the banner afterwards — and an app handed `not-a-url`
+   * opens nothing, so this is worth catching twice.
    */
   linkError = computed<string | null>(() => {
     const v = this.link().trim();

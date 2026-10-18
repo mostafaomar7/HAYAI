@@ -106,15 +106,42 @@ so if that public picker is showing homes among hospitals, it may be showing
 that one now rather than waiting for a first approval. Worth a look at your
 end before the fix ships.
 
+## 6. Four older items closed by the same release — checked, not assumed
+
+`5d94459` is the release that brought senior care, and it quietly closed
+everything else we had open. We re-measured each one rather than take the
+note for it:
+
+| We asked for | Now |
+|---|---|
+| a 422 on an unknown `userTypes[]` value | `{"target_audience.userTypes.0": ["… is invalid."]}` |
+| `link` validated server-side | 422 under `link` for `not-a-url` |
+| `/lookups/user-types` localized | `Accept-Language: ar` → المرضى، السياح |
+| `/lookups/doctor-specialties` localized | → الباطنة، طب الأسرة |
+| `DELETE /admin/website/menus/{key}` | 404 on an unknown key, not 405 — the route exists |
+
+Thank you for the first one in particular. It is the one that had already cost
+four undelivered broadcasts, and it was the hardest to see from your side.
+
+Two notes that follow from it:
+
+- The unknown-type 422 means that failure is loud now, so it cannot recur
+  silently. We kept our own spellings correct anyway: a 422 is better than
+  silence, but it is still a Send button that does not work.
+- We had comments in our code asserting the opposite of all four. They are
+  corrected. We mention it because a stale comment of ours has caused a real
+  bug on this project before — the audit log sat on `old_values` for weeks
+  because a comment said the API did not send them.
+
+`qa-test-mm` can now be deleted from the dashboard, so that leftover is ours
+to clear rather than yours.
+
 ## What we need from you
 
 1. **Can hospitals and senior-care homes be rated?** Section 3, last item.
    It is the only thing we knowingly left unfinished.
 2. **The hash for the public-picker fix**, so the approval hold can lift.
 3. **Plan 74** — delete it or keep it as a fixture? It is the ninth QA
-   leftover, and the first one that has a subscriber and a zero-month term.
-4. Still open and unrelated:
-   [`api-reply-broadcast-2026-10-15.md`](api-reply-broadcast-2026-10-15.md)
-   item 1 — a 422 on an unknown `userTypes[]` value — and
-   [`api-items-round5-2026-10-14.md`](api-items-round5-2026-10-14.md) item 18,
-   `DELETE /admin/website/menus/{key}`.
+   leftover, and the first one with a subscriber and a zero-month term.
+4. **`months: 0`** (item 16, filed 2026-10-14) is still open, and plan 74 is
+   a live example of what it produces.
