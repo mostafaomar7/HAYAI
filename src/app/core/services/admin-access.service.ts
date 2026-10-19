@@ -36,6 +36,13 @@ export type AccessLevel = 'view' | 'manage';
  * Read only while a server predates the split: the backend gives the new area
  * to every role that held the old one, so until `areas` carries the new key,
  * the old key is the same answer. Once it does, this table is never reached.
+ *
+ * As of backend `bf7c1b3` (2026-10-19) it is **already unreachable** —
+ * `/admin/access/me` returns 25 areas including both, and all twelve roles
+ * were measured to hold the new area wherever they hold the parent, at the
+ * same level. It is kept deliberately: it costs one lookup, it is what saves
+ * us if that deploy is rolled back, and the next split reuses it. Do not read
+ * it as live behaviour.
  */
 const AREA_SPLIT_FROM: Partial<Record<AdminArea, AdminArea>> = {
   clinical_guidelines: 'doctors',
