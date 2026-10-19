@@ -18,10 +18,29 @@ export type AdminArea =
   | 'patients' | 'doctors' | 'hospitals' | 'icu' | 'pharmacies' | 'labs'
   | 'home_care' | 'physical_therapy' | 'senior_care' | 'medical_tourism'
   | 'medical_insurance' | 'medical_devices' | 'charities' | 'employment'
+  /**
+   * Split out of `doctors` and `medical_devices` respectively, so a
+   * super-admin can grant one section without the other (backend of
+   * 2026-10-19). `medical_devices` now means the internal marketplace and
+   * the device-company accounts only.
+   */
+  | 'clinical_guidelines' | 'external_devices'
   | 'subscriptions' | 'advertisements' | 'notifications' | 'support'
   | 'account_deletion' | 'statistics' | 'ai' | 'platform_settings' | 'audit_log';
 
 export type AccessLevel = 'view' | 'manage';
+
+/**
+ * An area that was carved out of another, and the one it came from.
+ *
+ * Read only while a server predates the split: the backend gives the new area
+ * to every role that held the old one, so until `areas` carries the new key,
+ * the old key is the same answer. Once it does, this table is never reached.
+ */
+const AREA_SPLIT_FROM: Partial<Record<AdminArea, AdminArea>> = {
+  clinical_guidelines: 'doctors',
+  external_devices: 'medical_devices'
+};
 
 /** Marks a screen for super-admins only (admin accounts, roles). */
 export const SUPER_ADMIN_ONLY = 'super-admin';
@@ -79,7 +98,8 @@ export const RECORD_TYPE_AREA: Record<string, AdminArea> = {
 const PATH_AREAS: [RegExp, AdminArea | typeof SUPER_ADMIN_ONLY][] = [
   [/^access(\/|$)/, SUPER_ADMIN_ONLY],
   [/^(patient|tourist)(\/|$)/, 'patients'],
-  [/^(doctor|lists\/clinical-guidelines|lists\/doctor-)/, 'doctors'],
+  [/^lists\/clinical-guidelines/, 'clinical_guidelines'],
+  [/^(doctor|lists\/doctor-)/, 'doctors'],
   [/^(hospital|clinics|hospital-verifications)(\/|$)/, 'hospitals'],
   [/^lists\/icu-/, 'icu'],
   [/^(pharmacies|records\/pharmacy-orders)(\/|$)/, 'pharmacies'],
@@ -88,7 +108,8 @@ const PATH_AREAS: [RegExp, AdminArea | typeof SUPER_ADMIN_ONLY][] = [
   [/^(therapy|records\/physical-therapy-requests)(\/|$)/, 'physical_therapy'],
   [/^lists\/mt-/, 'medical_tourism'],
   [/^(issuance|lists\/insurance-providers|records\/insurance-(limit-)?requests)(\/|$)/, 'medical_insurance'],
-  [/^(medical-devices|external|internal-devices|group-orders)(\/|$)/, 'medical_devices'],
+  [/^group-orders(\/|$)/, 'external_devices'],
+  [/^(medical-devices|external|internal-devices)(\/|$)/, 'medical_devices'],
   [/^(charitable|dialysis|hyperbaric-oxygen|oncology)/, 'charities'],
   [/^(employment|records\/jobs|records\/job-applications)(\/|$)/, 'employment'],
   [/^(plans|renewal)(\/|$)/, 'subscriptions'],
@@ -146,7 +167,16 @@ export class AdminAccessService {
     if (!a) return false;
     if (a.is_super_admin) return true;
     if (area === SUPER_ADMIN_ONLY) return false;
-    return !!a.areas[area]?.[level];
+    const own = a.areas[area]?.[level];
+    if (own !== undefined) return own;
+    // An area this server has not shipped yet is absent from `areas`, and an
+    // absent key would otherwise read as "denied" — which would take Clinical
+    // guidelines and Group orders away from every limited admin between this
+    // release and the backend's. Both were carved out of an older area, and
+    // the backend grants the new one to everyone who held the old one, so
+    // falling back to the parent is what that same admin already has.
+    const parent = AREA_SPLIT_FROM[area];
+    return parent ? !!a.areas[parent]?.[level] : false;
   }
 
   canWebsite(permission: string): boolean {

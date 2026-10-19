@@ -49,7 +49,7 @@ export const MENU_ITEMS: MenuItem[] = [
     children: [
       { id: 'DoctorSpecialties', label: 'lists.doctor_specialties', route: '/dashboard/lists/doctor-specialties', area: 'doctors' },
       { id: 'DoctorSubspecialties', label: 'lists.doctor_subspecialties', route: '/dashboard/lists/doctor-subspecialties', area: 'doctors' },
-      { id: 'ClinicalGuidelines', label: 'guidelines.title', route: '/dashboard/lists/clinical-guidelines', area: 'doctors' },
+      { id: 'ClinicalGuidelines', label: 'guidelines.title', route: '/dashboard/lists/clinical-guidelines', area: 'clinical_guidelines' },
       { id: 'IcuGroups', label: 'lists.icu_groups', route: '/dashboard/lists/icu-specialty-groups', area: 'icu' },
       { id: 'IcuCategories', label: 'lists.icu_categories', route: '/dashboard/lists/icu-specialty-categories', area: 'icu' },
       { id: 'IcuSpecialties', label: 'lists.icu_specialties', route: '/dashboard/lists/icu-specialties', area: 'icu' },
@@ -95,12 +95,17 @@ export const MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    // Its own permission area since 2026-10-19, separate from the internal
+    // marketplace above. Note the key names: `menu.external_devices_section`
+    // renders "External Medical Devices" and `menu.external_devices` renders
+    // "Internal Medical Devices" — legacy spellings that say the opposite of
+    // the words they produce. The routes are what to trust.
     id: 'GroupOrders', label: 'menu.external_devices_section', iconName: 'devices', route: '', roles: ['admin'], hasDropdown: true,
     children: [
-      { id: 'GroupOrdersOverview', label: 'menu.group_orders.overview', route: '/dashboard/group-orders', area: 'medical_devices' },
-      { id: 'GroupOrderDevices', label: 'menu.group_orders.devices', route: '/dashboard/group-orders/devices', area: 'medical_devices' },
-      { id: 'GroupOrderCategories', label: 'menu.group_orders.categories', route: '/dashboard/group-orders/categories', area: 'medical_devices' },
-      { id: 'GroupOrderCompanies', label: 'menu.group_orders.companies', route: '/dashboard/group-orders/shipping-companies', area: 'medical_devices' },
+      { id: 'GroupOrdersOverview', label: 'menu.group_orders.overview', route: '/dashboard/group-orders', area: 'external_devices' },
+      { id: 'GroupOrderDevices', label: 'menu.group_orders.devices', route: '/dashboard/group-orders/devices', area: 'external_devices' },
+      { id: 'GroupOrderCategories', label: 'menu.group_orders.categories', route: '/dashboard/group-orders/categories', area: 'external_devices' },
+      { id: 'GroupOrderCompanies', label: 'menu.group_orders.companies', route: '/dashboard/group-orders/shipping-companies', area: 'external_devices' },
     ]
   },
   // Website CMS (the public site at hayaihealthcare.com). Each entry carries the granular
