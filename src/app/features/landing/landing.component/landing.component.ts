@@ -1,8 +1,9 @@
-import { Component, ElementRef, inject, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ElementRef, PLATFORM_ID, inject, signal, viewChild } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TPipe } from '../../../core/i18n/t.pipe';
+import { PARTNER_WINDOWS_PAGE, PartnerAppService } from '../../../core/services/partner-app.service';
 
 interface IconCard {
   key: string;
@@ -37,6 +38,32 @@ export class LandingComponent {
    */
   readonly appStoreUrl = '';
   readonly googlePlayUrl = '';
+
+  /**
+   * The Windows Partner build, beside the store badges.
+   *
+   * Unlike those two it is live, so it is the only download on this page that
+   * goes anywhere. It points at the download *page*, never at the installer:
+   * the filename carries its version and changed twice in one day, so a
+   * hard-coded `.exe` is a 404 by the next release. The version underneath is
+   * read from the API's version gate for the same reason — a number typed
+   * into markup is wrong the day after.
+   */
+  readonly partnerWindowsUrl = PARTNER_WINDOWS_PAGE;
+  readonly partnerWindowsVersion = signal<string | null>(null);
+
+  constructor() {
+    // Browser only: on the server this would be one more blocking request per
+    // page view, for a label nobody can read before hydration. The button is
+    // already complete without it.
+    if (isPlatformBrowser(inject(PLATFORM_ID))) {
+      inject(PartnerAppService).windows().subscribe({
+        next: build => this.partnerWindowsVersion.set(build.version_name || null),
+        // The label simply stays off. Never hide or block the button for this.
+        error: () => this.partnerWindowsVersion.set(null)
+      });
+    }
+  }
 
   readonly currentYear = new Date().getFullYear();
 

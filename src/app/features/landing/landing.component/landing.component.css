@@ -118,6 +118,50 @@
 .badge img { height: 46px; display: block; }
 .badge.is-inactive { cursor: default; opacity: 0.9; }
 
+/* The Windows Partner download. The two badges beside it are images at a
+   fixed 46px; this one is built in CSS at the same height so the row stays
+   level, and it has to read on both the light hero and the gradient band in
+   the download section - hence the second block below. */
+.badge-win {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 9px;
+  background: #0F172A;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid #0F172A;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.badge-win:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.28); }
+.badge-win-logo { flex: none; }
+.badge-win-text { display: flex; flex-direction: column; line-height: 1.15; text-align: start; }
+.badge-win-top { font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.72; }
+.badge-win-main { font-size: 14px; font-weight: 600; }
+.badge-win-version { font-size: 9px; opacity: 0.6; }
+
+/* Sits with the button on purpose: without it people meet the blue
+   SmartScreen, assume the file is infected, and stop. */
+.win-note {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.72;
+  max-width: 440px;
+  margin-inline: auto;
+}
+
+/* Inside the gradient band the dark pill disappears, so it inverts. */
+.download .badge-win {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(2px);
+}
+.download .badge-win:hover { background: rgba(255, 255, 255, 0.22); box-shadow: none; }
+.download .win-note { margin-inline: 0; opacity: 0.85; }
+
 /* Phone placement is measured off the design. On its 1440px artboard the card
    spans x=26..1414 (1388 wide) and the phones sit at x=248/520/817 with the
    card clipping them at y=995. The values below are those coordinates as

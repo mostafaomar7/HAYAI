@@ -46,7 +46,24 @@
       <a class="badge" [attr.href]="googlePlayUrl || null" [class.is-inactive]="!googlePlayUrl">
         <img src="assets/landing/badge-googleplay.png" alt="Get it on Google Play" />
       </a>
+      <!-- A different app from the two above: the Partner desktop build, for
+           clinics, hospitals, labs and doctors. The label says so, because the
+           badges beside it are the patient app. Links to the download page and
+           never to the installer - the filename carries its version. -->
+      <a class="badge badge-win" [href]="partnerWindowsUrl" target="_blank" rel="noopener">
+        <svg class="badge-win-logo" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path fill="currentColor" d="M3 5.6 10.2 4.6v6.7H3V5.6Zm0 12.8 7.2 1V12.7H3v5.7Zm8.5 1.2L21 21V12.7h-9.5v6.9Zm0-15.2v7h9.5V3l-9.5 1.4Z" />
+        </svg>
+        <span class="badge-win-text">
+          <span class="badge-win-top">{{ 'landing.win.for' | t }}</span>
+          <span class="badge-win-main">{{ 'landing.win.title' | t }}</span>
+          @if (partnerWindowsVersion(); as v) {
+            <span class="badge-win-version">{{ 'landing.win.version' | t : { version: v } }}</span>
+          }
+        </span>
+      </a>
     </div>
+    <p class="win-note">{{ 'landing.win.smartscreen' | t }}</p>
 
     <div class="hero-phones">
       <img class="phone phone-side" src="assets/landing/hero-phone-left.webp" alt="" />
@@ -216,7 +233,24 @@
           <a class="badge" [attr.href]="googlePlayUrl || null" [class.is-inactive]="!googlePlayUrl">
             <img src="assets/landing/badge-googleplay.png" alt="Get it on Google Play" />
           </a>
+          <!-- A different app from the two above: the Partner desktop build, for
+               clinics, hospitals, labs and doctors. The label says so, because the
+               badges beside it are the patient app. Links to the download page and
+               never to the installer - the filename carries its version. -->
+          <a class="badge badge-win" [href]="partnerWindowsUrl" target="_blank" rel="noopener">
+            <svg class="badge-win-logo" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path fill="currentColor" d="M3 5.6 10.2 4.6v6.7H3V5.6Zm0 12.8 7.2 1V12.7H3v5.7Zm8.5 1.2L21 21V12.7h-9.5v6.9Zm0-15.2v7h9.5V3l-9.5 1.4Z" />
+            </svg>
+            <span class="badge-win-text">
+              <span class="badge-win-top">{{ 'landing.win.for' | t }}</span>
+              <span class="badge-win-main">{{ 'landing.win.title' | t }}</span>
+              @if (partnerWindowsVersion(); as v) {
+                <span class="badge-win-version">{{ 'landing.win.version' | t : { version: v } }}</span>
+              }
+            </span>
+          </a>
         </div>
+        <p class="win-note">{{ 'landing.win.smartscreen' | t }}</p>
       </div>
       <img class="download-phone" src="assets/landing/hero-phone-center.webp" alt="" />
     </div>
