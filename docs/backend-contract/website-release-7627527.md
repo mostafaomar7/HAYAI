@@ -1,4 +1,4 @@
-# Website release `ed6e36a` — deploy guide (2026-10-22)
+# Website release `7627527` — deploy guide (2026-10-22)
 
 Follows `4121bd1`, which is **on the server** — we checked before building
 this: the deployed bundle is `main-HP5Z63A7.js` and it carries the senior-care
@@ -19,13 +19,13 @@ calls already answers on production; we measured each one today. See section 5.
 
 ## 1. The package
 
-`hayai-web-ed6e36a.tar.gz` (also as `.zip`, identical content):
+`hayai-web-7627527.tar.gz` (also as `.zip`, identical content):
 
 ```
 hayai-web/
   browser/     static files
   server/      server.mjs and its chunks
-  RELEASE      ed6e36a…
+  RELEASE      7627527…
   DEPLOY.md    this file
 ```
 
@@ -35,7 +35,7 @@ Self-contained: no `npm install`, no `node_modules`. Node 20 or newer.
 ## 2. Deploy
 
 ```bash
-cd /tmp && tar -xzf hayai-web-ed6e36a.tar.gz
+cd /tmp && tar -xzf hayai-web-7627527.tar.gz
 
 sudo rm -rf /var/www/hayai-web.prev
 sudo cp -r /var/www/hayai-web /var/www/hayai-web.prev
@@ -65,7 +65,7 @@ A plain `restart` is enough here: no `environment=` line changes, so no
 S=https://hayaihealthcare.com
 
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4000/en    # 200
-cat /var/www/hayai-web/RELEASE                                       # ed6e36a…
+cat /var/www/hayai-web/RELEASE                                       # 7627527…
 
 curl -s $S/login | grep -o '<meta name="hayai-i18n-version" content="[^"]*">'
 #   content="<16 hex characters>"   — if it says {{I18N_VERSION}}, stop and tell us
@@ -100,6 +100,9 @@ curl -s $S/ar | grep -c badge-win                        # 0 — the parked page
   instead, tell us, because those are different screens. We already ran
   **this exact build** against the live endpoint in both languages before
   packaging it, so this check is a confirmation, not a first look.
+- The queue should look like the rest of the dashboard: a white card, a tab
+  group top-right, a grey note bar above the table. If it reads as plain
+  unstyled text, the deploy did not take — that is what `7627527` fixed.
 - Open `/dashboard/ai/token-requests/1` by hand. With nothing in the queue it
   must say **"No request with that number."**
 - **Settings → App versions** now names the eight Windows partner rows. The
@@ -112,7 +115,7 @@ somebody presses Approve on a row — of which there are none.
 
 ## 4. What changed since `4121bd1`
 
-Four code commits. 1,149 lines added across 18 files, and two lines removed.
+Five code commits.
 
 **The AI token-request queue** (`5e52ab9`) — built from the backend brief of
 2026-10-22.
@@ -142,6 +145,22 @@ returns 0 both before and after. It is in the diff so the diff is accounted
 for. The button people can actually see is the CMS CTA
 `get-app-partners-windows`, which was already live on three published pages in
 both languages before this release.
+
+**The AI screens had almost no styling** (`7627527`) — found by looking at
+them, after everything above had been measured.
+
+Dashboard styles are component-scoped: every screen carries its own copy of
+the table-card look, and these two were written against `styles.css` as if it
+were shared. The queue rendered as unstyled text — no card, no table padding,
+the tabs as three bare words. It behaved correctly the whole time, which is
+exactly why no measurement caught it. Both stylesheets now carry the house
+copy.
+
+The screenshots then showed three more: the account type printed raw (a
+literal `patient` in an Arabic table), a grant read `50000` rather than
+`50,000`, and the Arabic badge read `3 طلب` — Arabic agrees the noun with the
+number at zero, one, two and again past ten, so it now says `3 طلبات`, and an
+empty queue says `لا توجد طلبات` instead of `0 طلب`.
 
 The four other commits in the range are documents only.
 
