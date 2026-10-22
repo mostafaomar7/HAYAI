@@ -225,6 +225,24 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/Centers/oncology-add/oncology-add').then(m => m.OncologyAdd)
   },
+  {
+    path: 'ai/overview',
+    data: { title: 'ai.overview.title' },
+    loadComponent: () =>
+      import('./pages/ai/overview/ai-overview').then(m => m.AiOverview)
+  },
+  {
+    path: 'ai/usage',
+    data: { title: 'ai.usage.title' },
+    loadComponent: () =>
+      import('./pages/ai/usage/ai-usage').then(m => m.AiUsage)
+  },
+  {
+    path: 'ai/allocations',
+    data: { title: 'ai.grants.title' },
+    loadComponent: () =>
+      import('./pages/ai/grants/ai-grants').then(m => m.AiGrants)
+  },
   // The bell links straight to `/dashboard/ai/token-requests/{id}`, so the
   // detail route has to exist on its own, not only as a row the list opens.
   {

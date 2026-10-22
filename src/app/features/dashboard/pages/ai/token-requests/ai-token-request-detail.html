@@ -30,6 +30,23 @@
         <blockquote class="patient-note">{{ r.note }}</blockquote>
       }
 
+      <!-- Where the rest of this account's AI history is. Before deciding,
+           the refusals are the useful half; after approving, the grant the
+           decision created. -->
+      @if (r.user?.id) {
+        <div class="cross-links">
+          <a class="link-btn" routerLink="/dashboard/ai/usage" [queryParams]="usageParams(true)">
+            {{ 'ai.requests.see_refusals' | t }}
+          </a>
+          <a class="link-btn" routerLink="/dashboard/ai/usage" [queryParams]="usageParams()">
+            {{ 'ai.requests.see_usage' | t }}
+          </a>
+          <a class="link-btn" routerLink="/dashboard/ai/allocations" [queryParams]="grantsParams()">
+            {{ 'ai.requests.see_grants' | t }}
+          </a>
+        </div>
+      }
+
       <!-- ============ what it looked like when they asked ============ -->
       <h3>{{ 'ai.requests.at_request_time' | t }}</h3>
       <dl class="facts">

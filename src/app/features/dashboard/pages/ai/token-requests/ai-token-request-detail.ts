@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   AiTokenRequest,
@@ -29,7 +29,7 @@ const NOTE_MAX = 500;
 @Component({
   selector: 'app-ai-token-request-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TPipe, CanManageDirective],
+  imports: [CommonModule, FormsModule, TPipe, RouterLink, CanManageDirective],
   templateUrl: './ai-token-request-detail.html',
   styleUrl: './ai-token-request-detail.css'
 })
@@ -114,6 +114,32 @@ export class AiTokenRequestDetail {
 
   num(v: number | null | undefined): string {
     return typeof v === 'number' ? v.toLocaleString('en') : '—';
+  }
+
+  /**
+   * Where this account's grants are. After an approval, `allocation_id` names
+   * the row the decision created, so the list opens pointing at it rather
+   * than at fifteen other people's grants.
+   */
+  grantsParams(): Record<string, string> {
+    const r = this.request();
+    return {
+      user_id: String(r?.user?.id ?? ''),
+      user_name: this.who(),
+      ...(r?.allocation_id ? { highlight: String(r.allocation_id) } : {})
+    };
+  }
+
+  /**
+   * This account's AI requests. `quota_exceeded` is the refusal that made the
+   * button appear in their app, which is the half worth reading first.
+   */
+  usageParams(refusalsOnly = false): Record<string, string> {
+    return {
+      user_id: String(this.request()?.user?.id ?? ''),
+      user_name: this.who(),
+      ...(refusalsOnly ? { status: 'quota_exceeded' } : {})
+    };
   }
 
   /** Same rule as the queue: translated when known, as it arrived when not. */

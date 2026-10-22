@@ -1,0 +1,62 @@
+/* Only what this screen adds on top of the shared dashboard styles. */
+
+.range { align-items: flex-end; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 600;
+}
+.date-field input {
+  padding: 7px 10px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #374151;
+  background: #fff;
+}
+
+.tiles { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+/* The small line under a tile's number: what it is measured against. */
+.tile-foot {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.5;
+}
+
+.tile-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.tile-link:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.small { font-size: 12px; line-height: 1.7; margin: 12px 0 0; }
+
+.data-table .num { text-align: start; white-space: nowrap; }
+.data-table .name-cell a { color: #2563EB; text-decoration: none; }
+.data-table .name-cell a:hover { text-decoration: underline; }
+
+.pill-failed { background: #FEF2F2; color: #B91C1C; }
+.data-table .pill { margin-inline-start: 8px; }
+
+@media (max-width: 900px) {
+  .two-col { grid-template-columns: 1fr; }
+}

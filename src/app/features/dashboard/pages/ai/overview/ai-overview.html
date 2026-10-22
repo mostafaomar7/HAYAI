@@ -1,0 +1,200 @@
+<div class="page-container">
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'ai.overview.title' | t }}</h2>
+        <p class="sub">{{ 'ai.overview.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area range">
+        <div class="presets">
+          <button class="btn-secondary btn-sm" (click)="preset(7)">{{ 'ai.overview.days' | t : { n: 7 } }}</button>
+          <button class="btn-secondary btn-sm" (click)="preset(30)">{{ 'ai.overview.days' | t : { n: 30 } }}</button>
+          <button class="btn-secondary btn-sm" (click)="preset(90)">{{ 'ai.overview.days' | t : { n: 90 } }}</button>
+        </div>
+        <label class="date-field">
+          <span>{{ 'common.from' | t }}</span>
+          <input type="date" dir="ltr" [value]="from()" [max]="to()"
+                 (change)="setRange('from', $any($event.target).value)" />
+        </label>
+        <label class="date-field">
+          <span>{{ 'common.to' | t }}</span>
+          <input type="date" dir="ltr" [value]="to()" [min]="from()"
+                 (change)="setRange('to', $any($event.target).value)" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (failed()) {
+    <div class="card">
+      <p class="table-hint">{{ 'ai.overview.load_failed' | t }}</p>
+      <div class="card-body">
+        <button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button>
+      </div>
+    </div>
+  } @else if (data(); as d) {
+
+    <!-- ============ the window ============ -->
+    <div class="tiles">
+      <div class="tile">
+        <p class="tile-label">{{ 'ai.overview.requests' | t }}</p>
+        <div class="tile-value">{{ num(d.requests) }}</div>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'ai.overview.billed_tokens' | t }}</p>
+        <div class="tile-value blue">{{ num(d.billed_tokens) }}</div>
+        <!-- Two different numbers: what the provider counted, and what we
+             charged for. Only shown when they disagree. -->
+        @if (d.provider_tokens !== d.billed_tokens) {
+          <p class="tile-foot">{{ 'ai.overview.provider_tokens' | t : { value: num(d.provider_tokens) } }}</p>
+        }
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'ai.overview.cost' | t }}</p>
+        <div class="tile-value">{{ usd(d.estimated_cost_usd) }}</div>
+        <p class="tile-foot">{{ 'ai.overview.cost_estimate' | t }}</p>
+      </div>
+      <a class="tile tile-link" routerLink="/dashboard/ai/usage" [queryParams]="rangeParams()">
+        <p class="tile-label">{{ 'ai.overview.failed' | t }}</p>
+        <div class="tile-value amber">{{ num(d.failed_requests) }}</div>
+        @if (failureRate(); as r) {
+          <p class="tile-foot">{{ 'ai.overview.failed_rate' | t : { pct: r } }}</p>
+        }
+      </a>
+      <div class="tile">
+        <p class="tile-label">{{ 'ai.overview.emergencies' | t }}</p>
+        <div class="tile-value">{{ num(d.emergencies_detected) }}</div>
+      </div>
+    </div>
+
+    <!-- ============ the shared pool — not windowed ============ -->
+    @if (d.patients; as p) {
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>{{ 'ai.overview.pool' | t }}</h2>
+            <!-- Said on the screen: these three do not move with the dates
+                 above them. -->
+            <p class="sub">{{ 'ai.overview.pool_not_windowed' | t }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="progress">
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="poolPercent()"></div>
+            </div>
+            <span class="progress-value">{{ poolPercent() }}%</span>
+          </div>
+          <dl class="detail-grid">
+            <div><dt>{{ 'ai.overview.pool_used' | t }}</dt><dd dir="ltr">{{ num(p.free_pool_used) }}</dd></div>
+            <div><dt>{{ 'ai.overview.pool_remaining' | t }}</dt><dd dir="ltr">{{ num(p.free_pool_remaining) }}</dd></div>
+            <div><dt>{{ 'ai.overview.pool_total' | t }}</dt><dd dir="ltr">{{ num(p.free_pool_total) }}</dd></div>
+          </dl>
+        </div>
+      </div>
+    }
+
+    <div class="two-col">
+      <!-- ============ patients and tourists ============ -->
+      @if (d.patients; as p) {
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>{{ 'ai.overview.patients' | t }}</h2>
+              <p class="sub">{{ 'ai.overview.patients_sub' | t }}</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <dl class="detail-grid">
+              <div><dt>{{ 'ai.overview.active_patients' | t }}</dt><dd dir="ltr">{{ num(p.active_patients) }}</dd></div>
+              <div><dt>{{ 'ai.overview.tokens_used_window' | t }}</dt><dd dir="ltr">{{ num(p.tokens_used) }}</dd></div>
+              <div><dt>{{ 'ai.overview.avg_per_patient' | t }}</dt><dd dir="ltr">{{ num(p.average_tokens_per_patient) }}</dd></div>
+              <div>
+                <dt>{{ 'ai.overview.paid_allocation' | t }}</dt>
+                <dd dir="ltr">{{ num(p.paid_allocation_tokens) }}</dd>
+              </div>
+            </dl>
+            <p class="muted small">{{ 'ai.overview.paid_allocation_hint' | t }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- ============ doctors ============ -->
+      @if (d.doctors; as doc) {
+        <div class="card">
+          <div class="card-head">
+            <div><h2>{{ 'ai.overview.doctors' | t }}</h2></div>
+          </div>
+          <div class="card-body">
+            <dl class="detail-grid">
+              <div><dt>{{ 'ai.overview.active_doctors' | t }}</dt><dd dir="ltr">{{ num(doc.active_doctors) }}</dd></div>
+              <div><dt>{{ 'ai.overview.tokens_used_window' | t }}</dt><dd dir="ltr">{{ num(doc.tokens_used) }}</dd></div>
+              <!-- These two are the lifetime of the grants, not this window.
+                   Unlabelled they contradict the number above them. -->
+              <div><dt>{{ 'ai.overview.allocated_all_time' | t }}</dt><dd dir="ltr">{{ num(doc.allocated_tokens) }}</dd></div>
+              <div><dt>{{ 'ai.overview.remaining_all_time' | t }}</dt><dd dir="ltr">{{ num(doc.remaining_tokens) }}</dd></div>
+            </dl>
+            <p class="muted small">{{ 'ai.overview.doctors_mixed_periods' | t }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- ============ per module ============ -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>{{ 'ai.overview.by_module' | t }}</h2>
+          <p class="sub">{{ 'ai.overview.by_module_sub' | t }}</p>
+        </div>
+      </div>
+
+      @if (modulesLoading()) {
+        <p class="table-hint">{{ 'common.loading' | t }}</p>
+      } @else if (modulesFailed()) {
+        <p class="table-hint">{{ 'ai.overview.modules_failed' | t }}</p>
+      } @else if (!modules().length) {
+        <p class="table-hint">{{ 'ai.overview.no_modules' | t }}</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'ai.usage.module' | t }}</th>
+                <th>{{ 'ai.overview.requests' | t }}</th>
+                <th>{{ 'ai.overview.billed_tokens' | t }}</th>
+                <th>{{ 'ai.overview.avg_response' | t }}</th>
+                <th>{{ 'ai.overview.cost' | t }}</th>
+                <th>{{ 'ai.overview.errors' | t }}</th>
+                <th>{{ 'ai.overview.emergencies' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of modules(); track m.module) {
+                <tr>
+                  <td class="name-cell">
+                    <a [routerLink]="moduleLink(m)" [queryParams]="moduleParams(m)">{{ moduleLabel(m.module) }}</a>
+                  </td>
+                  <td class="num">{{ num(m.requests) }}</td>
+                  <td class="num">{{ num(m.billed_tokens) }}</td>
+                  <td class="num">{{ num(m.average_response_tokens) }}</td>
+                  <td class="num">{{ usd(m.estimated_cost_usd) }}</td>
+                  <td class="num">
+                    {{ num(m.errors) }}
+                    @if (m.error_rate) {
+                      <span class="pill" [class.pill-failed]="m.error_rate >= 0.5">{{ rate(m.error_rate) }}</span>
+                    }
+                  </td>
+                  <td class="num">{{ num(m.emergencies_detected) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

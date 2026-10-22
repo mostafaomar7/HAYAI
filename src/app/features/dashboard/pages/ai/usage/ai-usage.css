@@ -1,0 +1,51 @@
+/* Only what this screen adds on top of the shared dashboard styles. */
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 600;
+}
+.date-field input,
+.date-field select {
+  padding: 7px 10px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #374151;
+  background: #fff;
+  min-width: 150px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 0;
+}
+
+.data-table .num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.data-table .nowrap { white-space: nowrap; }
+
+/* The in/out split under the billed figure: there when wanted, quiet when
+   scanning the column. */
+.sub {
+  display: block;
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+.pill + .pill { margin-inline-start: 6px; }
+.pill-failed { background: #FEF2F2; color: #B91C1C; }

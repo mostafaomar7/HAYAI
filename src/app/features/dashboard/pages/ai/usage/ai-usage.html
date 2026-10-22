@@ -1,0 +1,111 @@
+<div class="page-container">
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'ai.usage.title' | t }}</h2>
+        <p class="sub">{{ 'ai.usage.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <label class="date-field">
+          <span>{{ 'common.from' | t }}</span>
+          <input type="date" dir="ltr" [value]="from()" (change)="setFrom($any($event.target).value)" />
+        </label>
+        <label class="date-field">
+          <span>{{ 'common.to' | t }}</span>
+          <input type="date" dir="ltr" [value]="to()" (change)="setTo($any($event.target).value)" />
+        </label>
+        <label class="date-field">
+          <span>{{ 'ai.usage.module' | t }}</span>
+          <div class="custom-select">
+            <select [value]="module()" (change)="setModule($any($event.target).value)">
+              <option value="">{{ 'ai.usage.all_modules' | t }}</option>
+              @for (m of modules(); track m.key) {
+                <option [value]="m.key">{{ moduleLabel(m.key) }}</option>
+              }
+            </select>
+          </div>
+        </label>
+        <label class="date-field">
+          <span>{{ 'common.status' | t }}</span>
+          <div class="custom-select">
+            <select [value]="status()" (change)="setStatus($any($event.target).value)">
+              <option value="">{{ 'ai.usage.all_statuses' | t }}</option>
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ ('ai.usage.status.' + s) | t }}</option>
+              }
+            </select>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    @if (hasFilters()) {
+      <div class="card-body filter-row">
+        @if (userId(); as uid) {
+          <span class="chip">
+            {{ 'ai.usage.for_account' | t : { who: userName() || ('#' + uid) } }}
+            <button type="button" (click)="clearUser()">×</button>
+          </span>
+        }
+        <button class="link-btn" (click)="clearAll()">{{ 'ai.usage.clear_filters' | t }}</button>
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'common.created' | t }}</th>
+            <th>{{ 'ai.usage.account' | t }}</th>
+            <th>{{ 'ai.usage.module' | t }}</th>
+            <th>{{ 'ai.usage.tokens' | t }}</th>
+            <th>{{ 'ai.usage.cost' | t }}</th>
+            <th>{{ 'ai.usage.charged_to' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'ai.usage.duration' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="8" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <!-- A log that cannot be read is not a quiet day. -->
+            <tr><td colspan="8" class="table-hint">{{ 'ai.usage.load_failed' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="8" class="table-hint">{{ 'ai.usage.empty' | t }}</td></tr>
+          } @else {
+            @for (r of items(); track r.id) {
+              <tr>
+                <td class="nowrap">{{ r.created_at | date:'short' }}</td>
+                <td dir="ltr">#{{ r.user_id }}</td>
+                <td>{{ moduleLabel(r.module) }}</td>
+                <td class="num">
+                  {{ num(r.billed_tokens) }}
+                  <span class="sub" dir="ltr">
+                    {{ 'ai.usage.in_out' | t : { in: num(r.input_tokens), out: num(r.output_tokens) } }}
+                  </span>
+                </td>
+                <td class="num">{{ usd(r.estimated_cost_usd) }}</td>
+                <td>{{ chargedKey(r) | t }}</td>
+                <td class="nowrap">
+                  <span class="pill" [ngClass]="statusClass(r)">{{ statusKey(r) | t }}</span>
+                  @if (r.emergency_detected) {
+                    <span class="pill pill-error">{{ 'ai.usage.emergency' | t }}</span>
+                  }
+                </td>
+                <td class="num">{{ duration(r.duration_ms) }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [perPage]="perPage"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
+  </div>
+</div>

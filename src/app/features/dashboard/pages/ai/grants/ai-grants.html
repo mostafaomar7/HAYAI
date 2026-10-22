@@ -1,0 +1,179 @@
+<div class="page-container">
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'ai.grants.title' | t }}</h2>
+        <p class="sub">{{ 'ai.grants.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <label class="date-field">
+          <span>{{ 'ai.grants.source_col' | t }}</span>
+          <div class="custom-select">
+            <select [value]="source()" (change)="setSource($any($event.target).value)">
+              <option value="">{{ 'ai.grants.all_sources' | t }}</option>
+              @for (s of sources; track s) {
+                <option [value]="s">{{ ('ai.grants.source.' + s) | t }}</option>
+              }
+            </select>
+          </div>
+        </label>
+        <button class="btn-primary btn-sm" *appCanManage (click)="openForm()">
+          {{ 'ai.grants.new' | t }}
+        </button>
+      </div>
+    </div>
+
+    @if (userId(); as uid) {
+      <div class="card-body filter-row">
+        <span class="chip">
+          {{ 'ai.usage.for_account' | t : { who: userName() || ('#' + uid) } }}
+          <button type="button" (click)="clearUser()">×</button>
+        </span>
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'ai.usage.account' | t }}</th>
+            <th>{{ 'ai.grants.source_col' | t }}</th>
+            <th>{{ 'ai.grants.tokens' | t }}</th>
+            <th>{{ 'ai.grants.consumed' | t }}</th>
+            <th>{{ 'ai.grants.window' | t }}</th>
+            <th>{{ 'ai.grants.notes' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="7" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="7" class="table-hint">{{ 'ai.grants.load_failed' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="7" class="table-hint">{{ 'ai.grants.empty' | t }}</td></tr>
+          } @else {
+            @for (a of items(); track a.id) {
+              <tr [class.highlighted]="highlight() === a.id">
+                <td class="name-cell">
+                  {{ who(a) }}
+                  <span class="sub"><span dir="ltr">#{{ a.user?.id }}</span> · {{ typeKey(a) | t }}</span>
+                </td>
+                <td><span class="pill" [ngClass]="sourceClass(a)">{{ sourceKey(a) | t }}</span></td>
+                <td class="num">{{ num(a.tokens) }}</td>
+                <td class="num">
+                  {{ num(a.consumed_tokens) }}
+                  <span class="sub">{{ 'ai.grants.remaining' | t : { value: num(a.remaining_tokens) } }}</span>
+                  <div class="progress mini">
+                    <div class="progress-track"><div class="progress-fill" [style.width.%]="usedPercent(a)"></div></div>
+                  </div>
+                </td>
+                <td class="nowrap">
+                  {{ a.starts_at | date:'mediumDate' }}
+                  <span class="sub">
+                    @if (a.ends_at) { {{ a.ends_at | date:'mediumDate' }} }
+                    @else { {{ 'ai.grants.no_expiry' | t }} }
+                  </span>
+                </td>
+                <td class="notes-cell">
+                  @if (requestId(a); as rid) {
+                    <!-- This grant exists because somebody approved a request.
+                         The note says so; the link goes to the decision. -->
+                    <a [routerLink]="['/dashboard/ai/token-requests', rid]">
+                      {{ 'ai.grants.from_request' | t : { id: rid } }}
+                    </a>
+                  }
+                  @if (a.notes) { <span class="sub">{{ a.notes }}</span> }
+                  @else if (!requestId(a)) { — }
+                </td>
+                <td>
+                  <a class="btn-secondary btn-sm" routerLink="/dashboard/ai/usage" [queryParams]="usageParams(a)">
+                    {{ 'ai.grants.view_usage' | t }}
+                  </a>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [perPage]="perPage"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
+  </div>
+</div>
+
+<!-- ============ the manual grant ============ -->
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ 'ai.grants.new' | t }}</h3>
+        <button class="modal-close" (click)="closeForm()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- The one thing worth saying before the form: this is the wrong
+             door for somebody who asked through the app. -->
+        <p class="notice warn">{{ 'ai.grants.prefer_request' | t }}</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'ai.grants.user_id' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" step="1" dir="ltr" inputmode="numeric"
+                   [value]="fUser()" (input)="setUser($any($event.target).value)" />
+            @if (fieldErrors()['user_id']) {
+              <span class="field-error">{{ fieldErrors()['user_id'] }}</span>
+            } @else {
+              <span class="hint">{{ 'ai.grants.user_id_hint' | t }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'ai.grants.tokens' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" step="1" dir="ltr" inputmode="numeric"
+                   [value]="fTokens()" (input)="setTokens($any($event.target).value)" />
+            @if (fieldErrors()['tokens']) {
+              <span class="field-error">{{ fieldErrors()['tokens'] }}</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'ai.grants.ends_at' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="date" dir="ltr" [attr.min]="minDate"
+                   [value]="fEndsAt()" (input)="setEndsAt($any($event.target).value)" />
+            @if (fieldErrors()['ends_at']) {
+              <span class="field-error">{{ fieldErrors()['ends_at'] }}</span>
+            } @else {
+              <span class="hint">{{ 'ai.grants.ends_at_hint' | t }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>{{ 'ai.grants.notes' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+          <textarea rows="3" [attr.maxlength]="notesMax"
+                    [value]="fNotes()" (input)="setNotes($any($event.target).value)"></textarea>
+          @if (fieldErrors()['notes']) {
+            <span class="field-error">{{ fieldErrors()['notes'] }}</span>
+          } @else {
+            <span class="hint">{{ 'ai.grants.notes_hint' | t }}</span>
+          }
+        </div>
+
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="!canSubmit()" (click)="submit()">
+          {{ (saving() ? 'common.saving' : 'ai.grants.submit') | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
