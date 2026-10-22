@@ -9,6 +9,7 @@ export const MENU_ITEMS: MenuItem[] = [
   // scoped to the caller. A menu entry will need a new endpoint first.
   { id: 'RenewalUsers', label: 'menu.renewal', iconName: 'renewal', route: '/dashboard/renewal', area: 'subscriptions', roles: ['admin'] },
   { id: 'AccountDeletionRequests', label: 'menu.deletion_requests', iconName: 'renewal', route: '/dashboard/account-deletion-requests', area: 'account_deletion', roles: ['admin'] },
+  { id: 'AiTokenRequests', label: 'menu.ai_token_requests', iconName: 'notifications', route: '/dashboard/ai/token-requests', area: 'ai', roles: ['admin'] },
   { id: 'PlansManagements', label: 'menu.plans', iconName: 'plans', route: '/dashboard/plans', area: 'subscriptions', roles: ['admin'] },
   { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notification', area: 'notifications', roles: ['admin'] },
   { id: 'NotificationHistory', label: 'menu.notification_history', iconName: 'notifications', route: '/dashboard/notification/history', area: 'notifications', roles: ['admin'] },

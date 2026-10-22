@@ -1,0 +1,141 @@
+<div class="page-container">
+
+  <button class="link-btn back-link" (click)="back()">← {{ 'ai.requests.back' | t }}</button>
+
+  @if (loading()) {
+    <div class="detail-card"><p class="text-gray">{{ 'common.loading' | t }}</p></div>
+  } @else if (notFound()) {
+    <div class="detail-card"><p class="text-gray">{{ 'ai.requests.not_found' | t }}</p></div>
+  } @else if (request(); as r) {
+
+    <div class="detail-card">
+      <div class="detail-head">
+        <div>
+          <h2>{{ who() }}</h2>
+          <p class="text-gray">
+            {{ r.user?.user_type || '—' }}
+            @if (r.user?.phone; as phone) { · <span dir="ltr">{{ phone }}</span> }
+            @if (r.user?.email; as email) { · <span dir="ltr">{{ email }}</span> }
+          </p>
+        </div>
+        <span class="pill"
+              [class.pill-pending]="r.status === 'pending'"
+              [class.pill-approved]="r.status === 'approved'"
+              [class.pill-rejected]="r.status === 'rejected'">
+          {{ ('ai.requests.tab.' + r.status) | t }}
+        </span>
+      </div>
+
+      @if (r.note) {
+        <blockquote class="patient-note">{{ r.note }}</blockquote>
+      }
+
+      <!-- ============ what it looked like when they asked ============ -->
+      <h3>{{ 'ai.requests.at_request_time' | t }}</h3>
+      <dl class="facts">
+        <div><dt>{{ 'ai.requests.period' | t }}</dt><dd dir="ltr">{{ r.period || '—' }}</dd></div>
+        <div>
+          <dt>{{ 'ai.requests.monthly_limit' | t }}</dt>
+          <dd dir="ltr">
+            @if (r.monthly_limit === null || r.monthly_limit === undefined) {
+              {{ 'ai.requests.no_limit' | t }}
+            } @else { {{ num(r.monthly_limit) }} }
+          </dd>
+        </div>
+        <div><dt>{{ 'ai.requests.used' | t }}</dt><dd dir="ltr">{{ num(r.monthly_used) }}</dd></div>
+        <div><dt>{{ 'ai.requests.available' | t }}</dt><dd dir="ltr">{{ num(r.available_tokens) }}</dd></div>
+        <div><dt>{{ 'common.created' | t }}</dt><dd>{{ r.created_at | date:'medium' }}</dd></div>
+      </dl>
+
+      <!-- ============ what it is now ============ -->
+      @if (r.current_balance; as b) {
+        <h3>{{ 'ai.requests.balance_now' | t }}</h3>
+        <dl class="facts">
+          <div><dt>{{ 'ai.requests.available' | t }}</dt><dd dir="ltr">{{ num(b.available_tokens) }}</dd></div>
+          <div><dt>{{ 'ai.requests.from_allocations' | t }}</dt><dd dir="ltr">{{ num(b.from_allocations) }}</dd></div>
+          <div><dt>{{ 'ai.requests.from_free_pool' | t }}</dt><dd dir="ltr">{{ num(b.from_free_pool) }}</dd></div>
+          @if (b.monthly_allowance; as m) {
+            <div><dt>{{ 'ai.requests.remaining' | t }}</dt><dd dir="ltr">{{ num(m.remaining) }}</dd></div>
+            <div><dt>{{ 'ai.requests.resets_at' | t }}</dt><dd>{{ m.resets_at | date:'medium' }}</dd></div>
+          }
+        </dl>
+
+        <!-- The request may have been answered by the monthly renewal while it
+             sat in the queue. Granting on top of that is money for nothing. -->
+        @if (alreadyHasTokens()) {
+          <p class="warn-banner">{{ 'ai.requests.already_has_tokens' | t }}</p>
+        }
+      }
+
+      <!-- ============ the decision ============ -->
+      @if (r.status === 'pending') {
+        <div *appCanManage>
+          <h3>{{ 'ai.requests.decide' | t }}</h3>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ 'ai.requests.tokens' | t }} <span class="req">*</span></label>
+              <input type="number" min="1" step="1" dir="ltr" inputmode="numeric"
+                     [value]="tokens()" (input)="setTokens($any($event.target).value)" />
+              @if (fieldErrors()['tokens']) {
+                <span class="field-error">{{ fieldErrors()['tokens'] }}</span>
+              } @else if (tokens() && tokensInvalid()) {
+                <span class="field-error">{{ 'ai.requests.tokens_invalid' | t }}</span>
+              } @else {
+                <span class="hint">{{ 'ai.requests.tokens_hint' | t }}</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'ai.requests.ends_at' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+              <input type="date" dir="ltr" [attr.min]="minDate"
+                     [value]="endsAt()" (input)="setEndsAt($any($event.target).value)" />
+              @if (fieldErrors()['ends_at']) {
+                <span class="field-error">{{ fieldErrors()['ends_at'] }}</span>
+              } @else {
+                <span class="hint">{{ 'ai.requests.ends_at_hint' | t }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'ai.requests.admin_note' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="3" [attr.maxlength]="noteMax"
+                      [value]="adminNote()" (input)="setAdminNote($any($event.target).value)"></textarea>
+            <!-- Said plainly: this is not an internal note. -->
+            <span class="hint strong">{{ 'ai.requests.admin_note_hint' | t }}</span>
+          </div>
+
+          @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+          <div class="form-actions">
+            <button class="btn-primary" [disabled]="!canApprove()" (click)="approve()">
+              {{ (saving() ? 'common.saving' : 'ai.requests.approve') | t }}
+            </button>
+            <button class="btn-reject" [disabled]="saving()" (click)="reject()">
+              {{ 'common.reject' | t }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- ============ already reviewed ============ -->
+        <h3>{{ 'ai.requests.outcome' | t }}</h3>
+        <dl class="facts">
+          @if (r.status === 'approved') {
+            <div><dt>{{ 'ai.requests.granted_tokens' | t }}</dt><dd dir="ltr">{{ num(r.granted_tokens) }}</dd></div>
+            <div><dt>{{ 'ai.requests.granted_until' | t }}</dt>
+                 <dd>{{ r.granted_until ? (r.granted_until | date:'mediumDate') : ('ai.requests.no_expiry' | t) }}</dd></div>
+            @if (r.allocation_id) {
+              <div><dt>{{ 'ai.requests.allocation' | t }}</dt><dd dir="ltr">#{{ r.allocation_id }}</dd></div>
+            }
+          }
+          <div><dt>{{ 'ai.requests.reviewed_at' | t }}</dt><dd>{{ r.reviewed_at | date:'medium' }}</dd></div>
+        </dl>
+        @if (r.admin_note) {
+          <h3>{{ 'ai.requests.admin_note' | t }}</h3>
+          <blockquote class="patient-note">{{ r.admin_note }}</blockquote>
+        }
+      }
+    </div>
+  }
+</div>

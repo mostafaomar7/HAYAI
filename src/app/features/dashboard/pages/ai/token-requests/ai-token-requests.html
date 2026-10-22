@@ -1,0 +1,100 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'ai.requests.title' | t }}</h2>
+        <span class="badge">{{ 'ai.requests.count' | t : { count: total() } }}</span>
+        <!-- Pending across every page, not just this filter's total. -->
+        @if (pendingCount(); as p) {
+          <span class="badge badge-pending">{{ 'ai.requests.pending_badge' | t : { count: p } }}</span>
+        }
+      </div>
+
+      <div class="tab-group">
+        <button class="tab-btn" [class.active]="status() === 'pending'" (click)="setStatus('pending')">{{ 'ai.requests.tab.pending' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'approved'" (click)="setStatus('approved')">{{ 'ai.requests.tab.approved' | t }}</button>
+        <button class="tab-btn" [class.active]="status() === 'rejected'" (click)="setStatus('rejected')">{{ 'ai.requests.tab.rejected' | t }}</button>
+      </div>
+    </div>
+
+    <p class="page-note">{{ 'ai.requests.note' | t }}</p>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'ai.requests.patient' | t }}</th>
+            <th>{{ 'common.type' | t }}</th>
+            <th>{{ 'ai.requests.usage' | t }}</th>
+            <th>{{ 'ai.requests.note_col' | t }}</th>
+            <th>{{ 'common.created' | t }}</th>
+            <th>{{ 'ai.requests.outcome' | t }}</th>
+            <th style="width:130px;">{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="7" class="text-gray" style="padding:32px 24px;">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <!-- An unreachable list must not read as an empty queue: the
+                 difference is "nobody is waiting" versus "we cannot see who". -->
+            <tr><td colspan="7" class="text-gray" style="padding:32px 24px;">{{ 'ai.requests.load_failed' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="7" class="text-gray" style="padding:32px 24px;">{{ 'ai.requests.empty' | t }}</td></tr>
+          } @else {
+            @for (r of items(); track r.id) {
+              <tr>
+                <td>
+                  <span class="who">{{ who(r) }}</span>
+                  @if (r.user?.phone; as phone) { <span class="sub" dir="ltr">{{ phone }}</span> }
+                </td>
+
+                <td class="text-gray">{{ r.user?.user_type || '—' }}</td>
+
+                <td class="text-gray">
+                  <span dir="ltr">{{ usage(r) }}</span>
+                  @if (noLimit(r)) { <span class="sub">{{ 'ai.requests.no_limit' | t }}</span> }
+                </td>
+
+                <td class="text-gray">
+                  @if (r.note) {
+                    <span class="note-text" [title]="r.note">{{ r.note }}</span>
+                  } @else { — }
+                </td>
+
+                <td class="text-gray">{{ r.created_at | date:'mediumDate' }}</td>
+
+                <td>
+                  @if (r.status === 'pending') {
+                    <span class="pill pill-pending">{{ 'ai.requests.tab.pending' | t }}</span>
+                  } @else if (r.status === 'approved') {
+                    <span class="pill pill-approved">
+                      {{ 'ai.requests.granted' | t : { count: r.granted_tokens ?? 0 } }}
+                    </span>
+                    <span class="sub">{{ reviewer(r) }}</span>
+                  } @else {
+                    <span class="pill pill-rejected">{{ 'ai.requests.tab.rejected' | t }}</span>
+                    <span class="sub">{{ reviewer(r) }}</span>
+                  }
+                </td>
+
+                <td>
+                  <button class="btn-secondary btn-sm" (click)="open(r)">
+                    {{ (r.status === 'pending' ? 'ai.requests.review' : 'common.view') | t }}
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [page]="page()"
+      [perPage]="perPage"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
+  </div>
+</div>

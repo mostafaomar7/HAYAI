@@ -7,6 +7,8 @@ import { ApiPagination, ApiResponse } from '../models/api-response.model';
 export interface PagedResult<T> {
   items: T[];
   pagination: ApiPagination;
+  /** Whatever else the list put in `meta`; see `ApiMeta`. Usually unused. */
+  meta?: Record<string, unknown>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +44,7 @@ export class ApiService {
       .pipe(
         map(r => ({
           items: r.data ?? [],
+          meta: r.meta as Record<string, unknown> | undefined,
           pagination: r.meta?.pagination ?? {
             current_page: 1,
             per_page: (r.data ?? []).length,

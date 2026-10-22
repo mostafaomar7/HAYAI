@@ -124,6 +124,10 @@ const PATH_AREAS: [RegExp, AdminArea | typeof SUPER_ADMIN_ONLY][] = [
   [/^notification(\/|$)/, 'notifications'],
   [/^reports(\/|$)/, 'support'],
   [/^account-deletion-requests(\/|$)/, 'account_deletion'],
+  // `ai` was in `AdminArea` from the start but no path ever mapped to it, so
+  // anything under `/dashboard/ai/` read as "no area" — open to every admin,
+  // write buttons and all. The first AI screen is what made that reachable.
+  [/^ai(\/|$)/, 'ai'],
   [/^audit-logs(\/|$)/, 'audit_log'],
   [/^settings(\/|$)/, 'platform_settings']
 ];
