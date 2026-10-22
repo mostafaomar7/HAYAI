@@ -48,9 +48,10 @@
       </a>
       <!-- A different app from the two above: the Partner desktop build, for
            clinics, hospitals, labs and doctors. The label says so, because the
-           badges beside it are the patient app. Links to the download page and
-           never to the installer - the filename carries its version. -->
-      <a class="badge badge-win" [href]="partnerWindowsUrl" target="_blank" rel="noopener">
+           badges beside it are the patient app. The href is the installer
+           itself, and the version gate swaps in the current build - the
+           filename carries its version and changes every release. -->
+      <a class="badge badge-win" [href]="partnerWindowsUrl()" target="_blank" rel="noopener">
         <svg class="badge-win-logo" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
           <path fill="currentColor" d="M3 5.6 10.2 4.6v6.7H3V5.6Zm0 12.8 7.2 1V12.7H3v5.7Zm8.5 1.2L21 21V12.7h-9.5v6.9Zm0-15.2v7h9.5V3l-9.5 1.4Z" />
         </svg>
@@ -235,9 +236,10 @@
           </a>
           <!-- A different app from the two above: the Partner desktop build, for
                clinics, hospitals, labs and doctors. The label says so, because the
-               badges beside it are the patient app. Links to the download page and
-               never to the installer - the filename carries its version. -->
-          <a class="badge badge-win" [href]="partnerWindowsUrl" target="_blank" rel="noopener">
+               badges beside it are the patient app. The href is the installer
+               itself, and the version gate swaps in the current build - the
+               filename carries its version and changes every release. -->
+          <a class="badge badge-win" [href]="partnerWindowsUrl()" target="_blank" rel="noopener">
             <svg class="badge-win-logo" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <path fill="currentColor" d="M3 5.6 10.2 4.6v6.7H3V5.6Zm0 12.8 7.2 1V12.7H3v5.7Zm8.5 1.2L21 21V12.7h-9.5v6.9Zm0-15.2v7h9.5V3l-9.5 1.4Z" />
             </svg>

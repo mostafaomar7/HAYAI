@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TPipe } from '../../../core/i18n/t.pipe';
-import { PARTNER_WINDOWS_PAGE, PartnerAppService } from '../../../core/services/partner-app.service';
+import { PARTNER_WINDOWS_HOST, PARTNER_WINDOWS_INSTALLER, PartnerAppService } from '../../../core/services/partner-app.service';
 
 interface IconCard {
   key: string;
@@ -43,13 +43,13 @@ export class LandingComponent {
    * The Windows Partner build, beside the store badges.
    *
    * Unlike those two it is live, so it is the only download on this page that
-   * goes anywhere. It points at the download *page*, never at the installer:
-   * the filename carries its version and changed twice in one day, so a
-   * hard-coded `.exe` is a 404 by the next release. The version underneath is
-   * read from the API's version gate for the same reason — a number typed
-   * into markup is wrong the day after.
+   * goes anywhere, and it goes straight to the installer. The href starts at
+   * the build this release knew about and is replaced by the gate's
+   * `download_url` the moment it answers: the filename carries its version
+   * and changed twice in one day, so a URL frozen into markup is wrong by the
+   * next release. Same reason the version label is read rather than typed.
    */
-  readonly partnerWindowsUrl = PARTNER_WINDOWS_PAGE;
+  readonly partnerWindowsUrl = signal(PARTNER_WINDOWS_INSTALLER);
   readonly partnerWindowsVersion = signal<string | null>(null);
 
   constructor() {
@@ -58,8 +58,16 @@ export class LandingComponent {
     // already complete without it.
     if (isPlatformBrowser(inject(PLATFORM_ID))) {
       inject(PartnerAppService).windows().subscribe({
-        next: build => this.partnerWindowsVersion.set(build.version_name || null),
-        // The label simply stays off. Never hide or block the button for this.
+        next: build => {
+          this.partnerWindowsVersion.set(build.version_name || null);
+          // Only a URL on our own download host may replace the href. This
+          // button must never be able to send a partner somewhere else,
+          // whatever this response happens to contain.
+          const url = build.download_url || '';
+          if (url.startsWith(PARTNER_WINDOWS_HOST)) this.partnerWindowsUrl.set(url);
+        },
+        // The label stays off and the href stays on the known build. Never
+        // hide or block the button for this.
         error: () => this.partnerWindowsVersion.set(null)
       });
     }
