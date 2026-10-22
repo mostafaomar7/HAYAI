@@ -1,4 +1,4 @@
-# Website release `7627527` — deploy guide (2026-10-22)
+# Website release `f15e278` — deploy guide (2026-10-22)
 
 Follows `4121bd1`, which is **on the server** — we checked before building
 this: the deployed bundle is `main-HP5Z63A7.js` and it carries the senior-care
@@ -19,13 +19,13 @@ calls already answers on production; we measured each one today. See section 5.
 
 ## 1. The package
 
-`hayai-web-7627527.tar.gz` (also as `.zip`, identical content):
+`hayai-web-f15e278.tar.gz` (also as `.zip`, identical content):
 
 ```
 hayai-web/
   browser/     static files
   server/      server.mjs and its chunks
-  RELEASE      7627527…
+  RELEASE      f15e278…
   DEPLOY.md    this file
 ```
 
@@ -35,7 +35,7 @@ Self-contained: no `npm install`, no `node_modules`. Node 20 or newer.
 ## 2. Deploy
 
 ```bash
-cd /tmp && tar -xzf hayai-web-7627527.tar.gz
+cd /tmp && tar -xzf hayai-web-f15e278.tar.gz
 
 sudo rm -rf /var/www/hayai-web.prev
 sudo cp -r /var/www/hayai-web /var/www/hayai-web.prev
@@ -65,7 +65,7 @@ A plain `restart` is enough here: no `environment=` line changes, so no
 S=https://hayaihealthcare.com
 
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4000/en    # 200
-cat /var/www/hayai-web/RELEASE                                       # 7627527…
+cat /var/www/hayai-web/RELEASE                                       # f15e278…
 
 curl -s $S/login | grep -o '<meta name="hayai-i18n-version" content="[^"]*">'
 #   content="<16 hex characters>"   — if it says {{I18N_VERSION}}, stop and tell us
@@ -103,6 +103,10 @@ curl -s $S/ar | grep -c badge-win                        # 0 — the parked page
 - The queue should look like the rest of the dashboard: a white card, a tab
   group top-right, a grey note bar above the table. If it reads as plain
   unstyled text, the deploy did not take — that is what `7627527` fixed.
+- **AI → Overview** opens with five tiles and a per-module table. **AI →
+  Usage log** lists real requests with working module and status filters.
+  **AI → Grants** lists the doctors' plan allowances. All three were run
+  against the live API from this build before packaging, in both languages.
 - Open `/dashboard/ai/token-requests/1` by hand. With nothing in the queue it
   must say **"No request with that number."**
 - **Settings → App versions** now names the eight Windows partner rows. The
@@ -115,7 +119,7 @@ somebody presses Approve on a row — of which there are none.
 
 ## 4. What changed since `4121bd1`
 
-Five code commits.
+Six code commits.
 
 **The AI token-request queue** (`5e52ab9`) — built from the backend brief of
 2026-10-22.
@@ -162,6 +166,22 @@ literal `patient` in an Arabic table), a grant read `50000` rather than
 number at zero, one, two and again past ten, so it now says `3 طلبات`, and an
 empty queue says `لا توجد طلبات` instead of `0 طلب`.
 
+**The AI overview, usage log and grants** (`f15e278`) — built from your
+brief of 2026-10-22, which asked for the three endpoints that had been
+answering with no screen in front of them.
+
+- `/dashboard/ai/overview`, `/dashboard/ai/usage` and
+  `/dashboard/ai/allocations`. The sidebar entry became a **section** with
+  four children; a dropdown whose children are all hidden is dropped, so an
+  admin without `ai` still sees nothing.
+- A token request now links to that account's refusals, usage and grants.
+- The manual grant is behind `ai.manage` and confirms before spending.
+- Two findings are written into the screen itself: the doctors block mixes a
+  windowed figure with two lifetime ones, so each is labelled; and an unknown
+  usage filter is ignored by the API rather than refused, so only filters that
+  demonstrably work are offered. Both are in
+  [`api-reply-ai-usage-screens-2026-10-22.md`](api-reply-ai-usage-screens-2026-10-22.md).
+
 The four other commits in the range are documents only.
 
 ## 5. Nothing is needed from you, and here is the measurement
@@ -169,8 +189,13 @@ The four other commits in the range are documents only.
 Every endpoint this release calls answers on production today:
 
 ```
-GET /admin/ai/token-requests                  200   (total 0, pending_count 0)
-GET /admin/ai/token-requests?status=pending   200
+GET /admin/ai/token-requests                  200   (total 1, pending_count 1)
+GET /admin/ai/token-requests/1                200
+GET /admin/ai/overview                        200
+GET /admin/ai/usage                           200   (83 rows in the last 30 days)
+GET /admin/ai/usage/summary                   200
+GET /admin/ai/modules                         200
+GET /admin/ai/allocations                     200   (15 rows)
 GET /admin/access/me                          200   areas.ai = {view:true, manage:true}
 GET /app/version-gate  (windows, partner)     200   download_url → …1.0.1.12.exe
 ```
