@@ -50,7 +50,7 @@
                   @if (r.user?.phone; as phone) { <span class="sub" dir="ltr">{{ phone }}</span> }
                 </td>
 
-                <td class="text-gray">{{ r.user?.user_type || '—' }}</td>
+                <td class="text-gray">{{ typeKey(r) | t }}</td>
 
                 <td class="text-gray">
                   <span dir="ltr">{{ usage(r) }}</span>
@@ -70,7 +70,7 @@
                     <span class="pill pill-pending">{{ 'ai.requests.tab.pending' | t }}</span>
                   } @else if (r.status === 'approved') {
                     <span class="pill pill-approved">
-                      {{ 'ai.requests.granted' | t : { count: r.granted_tokens ?? 0 } }}
+                      {{ 'ai.requests.granted' | t : { amount: grantedAmount(r) } }}
                     </span>
                     <span class="sub">{{ reviewer(r) }}</span>
                   } @else {

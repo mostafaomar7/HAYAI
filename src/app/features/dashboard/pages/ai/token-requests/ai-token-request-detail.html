@@ -13,7 +13,7 @@
         <div>
           <h2>{{ who() }}</h2>
           <p class="text-gray">
-            {{ r.user?.user_type || '—' }}
+            {{ typeKey() | t }}
             @if (r.user?.phone; as phone) { · <span dir="ltr">{{ phone }}</span> }
             @if (r.user?.email; as email) { · <span dir="ltr">{{ email }}</span> }
           </p>

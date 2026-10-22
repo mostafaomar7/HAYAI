@@ -116,6 +116,13 @@ export class AiTokenRequestDetail {
     return typeof v === 'number' ? v.toLocaleString('en') : '—';
   }
 
+  /** Same rule as the queue: translated when known, as it arrived when not. */
+  typeKey(): string {
+    const type = (this.request()?.user?.user_type || '').trim();
+    if (!type) return '—';
+    return type === 'patient' || type === 'tourist' ? `ai.requests.type.${type}` : type;
+  }
+
   who(): string {
     const u = this.request()?.user;
     if (!u) return '—';

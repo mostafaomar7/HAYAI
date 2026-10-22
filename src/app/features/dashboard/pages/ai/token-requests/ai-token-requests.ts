@@ -98,6 +98,23 @@ export class AiTokenRequests {
     return `${used} / ${r.monthly_limit.toLocaleString('en')}`;
   }
 
+  /**
+   * The account type, as a translation key when it is one we know and as it
+   * arrived when it is not. A type the API adds later should read as itself
+   * rather than as a missing key, and never as a raw `patient` in an Arabic
+   * table.
+   */
+  typeKey(r: AiTokenRequest): string {
+    const type = (r.user?.user_type || '').trim();
+    if (!type) return '—';
+    return type === 'patient' || type === 'tourist' ? `ai.requests.type.${type}` : type;
+  }
+
+  /** Thousands separated: a grant is five or six digits. */
+  grantedAmount(r: AiTokenRequest): string {
+    return typeof r.granted_tokens === 'number' ? r.granted_tokens.toLocaleString('en') : '—';
+  }
+
   noLimit(r: AiTokenRequest): boolean {
     return r.monthly_limit === null || r.monthly_limit === undefined;
   }

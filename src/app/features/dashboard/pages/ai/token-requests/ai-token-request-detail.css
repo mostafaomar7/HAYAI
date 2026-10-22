@@ -1,3 +1,24 @@
+/* The review screen.
+ *
+ * Styles are component-scoped, so the page frame and the buttons have to be
+ * here: the dashboard has no shared stylesheet to inherit them from. Same
+ * values as the rest of the dashboard. */
+
+:host {
+  display: block;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background-color: #F8FAFC;
+  min-height: 100vh;
+}
+
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.text-gray { color: #6B7280; }
+
 .detail-card {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -87,6 +108,49 @@
 .pill-pending  { background: #fef3c7; color: #92400e; }
 .pill-approved { background: #dcfce7; color: #166534; }
 .pill-rejected { background: #f3f4f6; color: #4b5563; }
+
+/* ============== Buttons ============== */
+.btn-primary {
+  background: #2563EB;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary:hover { background: #1D4ED8; }
+.btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
+
+/* Rejecting costs nothing and is reversible by asking again, so it is not a
+   red destructive button — it is the quieter of the two. */
+.btn-reject {
+  background: #fff;
+  color: #B42318;
+  border: 1px solid #FECDCA;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-reject:hover { background: #FFFBFA; }
+.btn-reject:disabled { opacity: .5; cursor: not-allowed; }
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563EB;
+  cursor: pointer;
+}
+.link-btn:hover { text-decoration: underline; }
 
 @media (max-width: 640px) {
   .detail-card { padding: 18px; }
