@@ -113,7 +113,14 @@ export class ExternalDevices {
     if (!ok) return;
     this.svc.deleteDevice(id).subscribe({
       next: () => { this.dialog.toast('success', 'external.devices.deleted'); this.load(); },
-      error: () => this.dialog.error('dialog.delete_failed', 'dialog.try_again')
+      // A device that already has orders cannot be deleted. The API is to
+      // answer that with a 409 (it answered 500 until it was reported on
+      // 2026-10-23), so a 409 gets its own sentence; anything else shows the
+      // API's message rather than a generic "try again".
+      error: err => this.dialog.error(
+        'dialog.delete_failed',
+        err?.status === 409 ? 'external.devices.delete_has_orders' : (err?.error?.message ?? 'dialog.try_again')
+      )
     });
   }
 }

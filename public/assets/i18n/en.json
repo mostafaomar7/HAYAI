@@ -3652,5 +3652,6 @@
   "web.role.subscriptions-manager": "Subscriptions manager",
   "web.role.read-only": "Read only",
   "menu.users.senior_care": "Senior Care",
-  "users.senior_care.title": "Senior Care"
+  "users.senior_care.title": "Senior Care",
+  "external.devices.delete_has_orders": "This device already has orders, so it can't be deleted: its orders would lose the device they were placed for."
 }

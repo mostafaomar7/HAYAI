@@ -3701,5 +3701,6 @@
   "web.role.subscriptions-manager": "مدير الاشتراكات",
   "web.role.read-only": "قراءة فقط",
   "menu.users.senior_care": "رعاية كبار السن",
-  "users.senior_care.title": "رعاية كبار السن"
+  "users.senior_care.title": "رعاية كبار السن",
+  "external.devices.delete_has_orders": "هذا الجهاز عليه طلبات، فلا يمكن حذفه وإلا فقدت الطلبات الجهاز الذي طُلبت عليه."
 }
