@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>عرض فني — صفحات الهبوط وأدوات التسويق والظهور في البحث — HAYAI</title>
+<style>
+  @font-face{font-family:'Cairo';font-weight:400;src:url('fonts/Cairo-400.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-weight:600;src:url('fonts/Cairo-600.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-weight:700;src:url('fonts/Cairo-700.ttf') format('truetype');font-display:block}
+  @font-face{font-family:'Cairo';font-weight:900;src:url('fonts/Cairo-900.ttf') format('truetype');font-display:block}
+
+  :root{ --ink:#0F172A; --body:#334155; --muted:#64748B; --line:#E2E8F0; --brand:#0F766E; --brandbg:#F0FDFA;
+         --bad:#B91C1C; --badbg:#FEF2F2; --warn:#B45309; --warnbg:#FFFBEB; --good:#047857; --goodbg:#ECFDF5; --soft:#F8FAFC; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{ size:A4; margin:16mm 16mm 16mm; }
+  html{font-family:'Cairo',sans-serif;font-size:10.5pt}
+  body{color:var(--body);line-height:1.85;background:#fff}
+  strong{color:var(--ink);font-weight:700}
+  p{margin-bottom:2.2mm}
+  .ltr{direction:ltr;unicode-bidi:isolate}
+  code{font-family:Consolas,'Courier New',monospace;direction:ltr;unicode-bidi:isolate;background:#F1F5F9;border:1px solid var(--line);border-radius:3px;padding:0 1.3mm;font-size:9pt;color:var(--ink)}
+
+  /* header, like the quote */
+  .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid var(--brand);padding-bottom:4mm;margin-bottom:6mm}
+  .top .kicker{color:var(--brand);font-weight:700;font-size:9.5pt}
+  .top h1{color:var(--ink);font-size:20pt;font-weight:900;line-height:1.35;margin-top:1mm}
+  .top .sub{color:var(--muted);font-size:10pt;margin-top:1mm}
+  .top .meta{text-align:left;font-size:9pt;color:var(--muted);line-height:1.9;white-space:nowrap}
+  .top .meta b{color:var(--ink)}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:7mm}
+  .parties div{background:var(--soft);border-radius:6px;padding:3mm 4mm}
+  .parties small{display:block;color:var(--muted);font-size:8.5pt}
+  .parties b{color:var(--ink);font-size:10.5pt}
+
+  h2{page-break-after:avoid;display:flex;align-items:center;gap:2.5mm;color:var(--ink);font-size:14pt;font-weight:900;margin:8mm 0 3.5mm}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:7mm;height:7mm;border-radius:50%;background:var(--brand);color:#fff;font-size:10pt;font-weight:700;flex:none}
+  h3{color:var(--ink);font-size:11.5pt;font-weight:700;margin:4mm 0 1.5mm}
+  .lead{font-size:11pt;color:var(--ink)}
+
+  /* stat tiles */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin:4mm 0 5mm}
+  .stat{border:1px solid var(--line);border-radius:8px;padding:3mm;text-align:center;page-break-inside:avoid}
+  .stat .v{font-size:19pt;font-weight:900;color:var(--bad);line-height:1.2}
+  .stat .v.ok{color:var(--good)}
+  .stat .l{font-size:8.5pt;color:var(--muted);line-height:1.5;margin-top:1mm}
+
+  table{width:100%;border-collapse:collapse;margin:3mm 0 4mm;font-size:9.5pt;page-break-inside:auto}
+  tr{page-break-inside:avoid}
+  th{background:var(--soft);color:var(--ink);font-weight:700;text-align:right;padding:2mm 2.5mm;border-bottom:1.5px solid var(--line)}
+  td{padding:2.2mm 2.5mm;border-bottom:1px solid var(--line);vertical-align:top}
+  td.c{text-align:center}
+  .x{color:var(--bad);font-weight:900}
+  .y{color:var(--good);font-weight:900}
+  .w{color:var(--warn);font-weight:900}
+
+  .box{border-radius:0 8px 8px 0;padding:3.5mm 4.5mm;margin:3.5mm 0 4.5mm;page-break-inside:avoid}
+  .box h3{margin-top:0}
+  .box.bad{border-right:3.5px solid var(--bad);background:var(--badbg)}
+  .box.bad h3{color:var(--bad)}
+  .box.good{border-right:3.5px solid var(--good);background:var(--goodbg)}
+  .box.good h3{color:var(--good)}
+  .box.note{border-right:3.5px solid var(--brand);background:var(--brandbg)}
+
+  ul{margin:0 6mm 2.5mm 0;padding-right:3mm}
+  li{margin-bottom:1.2mm}
+
+  /* missing-item cards */
+  .item{border:1px solid var(--line);border-radius:8px;margin:0 0 4.5mm;page-break-inside:avoid;overflow:hidden}
+  .item .head{display:flex;align-items:center;gap:3mm;background:var(--soft);padding:2.5mm 4mm;border-bottom:1px solid var(--line)}
+  .item .head .tag{background:var(--badbg);color:var(--bad);border-radius:999px;font-size:8.5pt;font-weight:700;padding:.3mm 3mm}
+  .item .head .tag.warn{background:var(--warnbg);color:var(--warn)}
+  .item .head h3{margin:0;font-size:12pt}
+  .item .head .en{color:var(--muted);font-size:9pt;margin-inline-start:auto;direction:ltr}
+  .item .body{padding:3mm 4mm}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm}
+  .grid3 > div{border-radius:6px;padding:2.5mm 3mm;font-size:9.5pt;line-height:1.75}
+  .grid3 .k{display:block;font-weight:700;font-size:8.8pt;margin-bottom:.8mm}
+  .now{background:var(--badbg)} .now .k{color:var(--bad)}
+  .cost{background:var(--warnbg)} .cost .k{color:var(--warn)}
+  .after{background:var(--goodbg)} .after .k{color:var(--good)}
+
+  /* before / after */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin:3mm 0 5mm}
+  .ba > div{border-radius:8px;padding:3.5mm 4mm;page-break-inside:avoid}
+  .ba .b{border:1px solid #FECACA;background:#FFF7F7}
+  .ba .a{border:1.5px solid var(--brand);background:var(--brandbg)}
+  .ba h3{margin-top:0}
+
+  .phase{display:grid;grid-template-columns:24mm 1fr;gap:3mm;border-bottom:1px solid var(--line);padding:2.5mm 0;page-break-inside:avoid}
+  .phase .p{color:var(--brand);font-weight:900}
+
+  .pb{page-break-before:always}
+  .sign{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:8mm;page-break-inside:avoid}
+  .sign b{display:block;color:var(--ink);margin-bottom:14mm}
+  .sign .line{border-top:1.5px solid var(--ink);display:flex;justify-content:space-between;color:var(--muted);font-size:8.5pt;padding-top:1mm}
+  .src{color:var(--muted);font-size:8.5pt}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <div class="kicker">عرض فني</div>
+    <h1>صفحات الهبوط وأدوات التسويق<br>والظهور في البحث</h1>
+    <div class="sub">ليه الموقع بأساسه القوي لسه مش بيبيع، وإيه اللي ناقصه عشان يبيع</div>
+  </div>
+  <div class="meta">رقم العرض: <b>B-2026-1027-HY</b><br>التاريخ: <b>27 أكتوبر 2026</b><br>مكمّل لعرض <b class="ltr">B-2026-1018-HY</b></div>
+</div>
+
+<div class="parties">
+  <div><small>مقدَّم إلى</small><b>HAYAI Healthcare</b></div>
+  <div><small>مقدَّم من</small><b>محمد علي — مطوّر الأنظمة الخلفية (Backend)</b></div>
+</div>
+
+<!-- ═══════════════════════════ 1 ═══════════════════════════ -->
+<h2><span class="n">1</span>الخلاصة في صفحة</h2>
+
+<p class="lead">الموقع النهارده <strong>متبني صح من جوه</strong>: سريع، بيظهر لمحركات البحث، فيه تتبع كامل للإعلانات،
+ولوحة تحكم بتنشئ الصفحات من غير مبرمج. ده الأساس اللي أغلب المواقع ما بتوصلوش.</p>
+
+<p class="lead">لكن <strong>اللي فوق الأساس ده لسه بسيط جدًا</strong>. الصفحات قصيرة، شكلها واحد، ومفيهاش ولا حاجة من اللي
+بتخلي الزائر يثق ويطلب. يعني كل جنيه هيتصرف على الإعلانات هيجيب زائر لصفحة <strong>بتعرّفه بحياة لكن ما بتقنعهوش</strong>.</p>
+
+<p>راجعنا الصفحات المنشورة على <span class="ltr">hayaihealthcare.com</span> صفحة صفحة يوم 27 أكتوبر. دي الأرقام:</p>
+
+<div class="stats">
+  <div class="stat"><div class="v">275</div><div class="l">كلمة بس في الصفحة الرئيسية كلها</div></div>
+  <div class="stat"><div class="v">1</div><div class="l">صورة واحدة في كل صفحة من الصفحات الأساسية</div></div>
+  <div class="stat"><div class="v">0</div><div class="l">رأي عميل أو قصة نجاح أو تقييم على الموقع كله</div></div>
+  <div class="stat"><div class="v">0</div><div class="l">سعر باقة أو عرض ظاهر للزائر</div></div>
+  <div class="stat"><div class="v">0</div><div class="l">فيديو في أي صفحة</div></div>
+  <div class="stat"><div class="v">13</div><div class="l">صفحة بس لكل لغة، 6 منهم صفحات تخصصات قصيرة</div></div>
+  <div class="stat"><div class="v">101</div><div class="l">كلمة في صفحة تخصص العناية المركزة، أهم خدمة عندكم</div></div>
+  <div class="stat"><div class="v ok">100%</div><div class="l">من الأساس التقني جاهز: تتبع، SEO، سرعة، منشئ صفحات</div></div>
+</div>
+
+<div class="box note">
+  <p style="margin:0"><strong>الفكرة كلها في جملة:</strong> عندكم عربية موتورها ممتاز، بس من غير كراسي ولا عدّاد.
+  العرض ده بيكمّل الجزء اللي الزائر بيشوفه ويحس بيه، والجزء اللي جوجل وأدوات الذكاء الاصطناعي بتقيّم الموقع بيه.</p>
+</div>
+
+<!-- ═══════════════════════════ 2 ═══════════════════════════ -->
+<h2><span class="n">2</span>صفحة الهبوط الحالية: ليه مش كفاية</h2>
+
+<p>صفحة الهبوط هي أول حاجة الزائر بيشوفها لما يدوس على إعلان. قدامه <strong>ثواني</strong> يقرر فيها
+يكمّل ولا يقفل. الصفحة الحالية بتقول للزائر «حياة موجودة وبتعمل كذا»، لكن ما بتجاوبش على الأسئلة اللي
+في دماغه وهو بيقرر.</p>
+
+<table>
+  <thead><tr><th style="width:38%">السؤال اللي في دماغ الزائر</th><th style="width:12%" class="c">الصفحة بتجاوب؟</th><th>الوضع النهارده</th></tr></thead>
+  <tbody>
+    <tr><td>«مين استخدم حياة قبلي، وكانت تجربته إزاي؟»</td><td class="c x">✗</td><td>مفيش ولا رأي عميل ولا تقييم ولا قصة نجاح.</td></tr>
+    <tr><td>«هدفع كام؟»</td><td class="c x">✗</td><td>الباقات وأسعارها موجودة في النظام، بس مش ظاهرة في أي صفحة.</td></tr>
+    <tr><td>«تأميني متغطي؟ ومحافظتي فيها خدمة؟»</td><td class="c w">جزئيًا</td><td>كلام عام عن التأمين، من غير أداة يجرّب بيها هو بنفسه.</td></tr>
+    <tr><td>«ليه أطلب دلوقتي مش بكرة؟»</td><td class="c x">✗</td><td>مفيش عرض ولا ميعاد ينتهي ولا سبب للاستعجال.</td></tr>
+    <tr><td>«الناس دي حقيقية؟»</td><td class="c x">✗</td><td>صورة واحدة، مفيش فريق ولا أرقام ولا فيديو ولا شركاء.</td></tr>
+    <tr><td>«أكلّم حد إزاي بسرعة؟»</td><td class="c y">✓</td><td>واتساب وفورم تواصل، ودول موجودين وشغالين.</td></tr>
+  </tbody>
+</table>
+
+<div class="ba">
+  <div class="b">
+    <h3 style="color:var(--bad)">الشكل النهارده</h3>
+    <ul>
+      <li>كل الصفحات بنفس التصميم والترتيب، فالزائر ما يحسش إن الصفحة متعملة علشانه.</li>
+      <li>نص طويل في بلوكات متشابهة من غير عناصر تفاعلية.</li>
+      <li>مفيش حركة ولا أقسام مميزة ولا هوية بصرية للحملات.</li>
+      <li>صفحة الإعلان هي نفسها صفحة الزائر العادي، مهما كانت الحملة.</li>
+    </ul>
+  </div>
+  <div class="a">
+    <h3 style="color:var(--brand)">بعد التنفيذ</h3>
+    <ul>
+      <li>صفحة لكل حملة بمحتوى بيتغير حسب الإعلان اللي الزائر جه منه.</li>
+      <li>آراء وفيديوهات وأرقام حقيقية بتبني الثقة قبل ما يطلب.</li>
+      <li>أسعار الباقات وحاسبة تغطية تجاوبه في نفس اللحظة.</li>
+      <li>Hero جديد، حركة خفيفة، أقسام Bento، والسرعة زي ما هي.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="box bad">
+  <h3>التكلفة الحقيقية للوضع ده</h3>
+  <p>الصفحة البسيطة مش مشكلة شكل وبس، دي بتأثر على الفلوس مباشرة:</p>
+  <ul>
+    <li><strong>إعلانات أغلى:</strong> جوجل وميتا بيقيّموا جودة صفحة الهبوط، والصفحة الضعيفة بتخلّي الضغطة أغلى ومكان الإعلان أقل.</li>
+    <li><strong>زيارات بتضيع:</strong> الزائر اللي ما لقاش إجابته بيقفل ويروح لمنافس، والإعلان اتدفع خلاص.</li>
+    <li><strong>ظهور أقل في البحث:</strong> جوجل بيعتبر الصفحات اللي فيها مئات قليلة من الكلمات «رفيعة»، وبيقدّم عليها الصفحات اللي بتغطي الموضوع كامل.</li>
+    <li><strong>مفيش قياس على السوشيال:</strong> من غير Meta Pixel وبكسل TikTok وSnap، مش هتعرفوا أنهي إعلان جاب عميل وأنهي ضيّع الفلوس.</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════ 3 ═══════════════════════════ -->
+<h2><span class="n">3</span>بنود الظهور في البحث والذكاء الاصطناعي اللي لسه ناقصة</h2>
+
+<p>فريق التسويق قيّم الموقع على سبع ممارسات متقدمة للظهور في جوجل وفي أدوات الذكاء
+الاصطناعي (ChatGPT وGemini وPerplexity). <strong>اتنين بس منهم موجودين ومتنفذين كويس</strong>، والتالت موجود جزئيًا.
+البنود الأربعة دي هي اللي ناقصة تمامًا، وكلها <strong>بتشتغل لوحدها بعد ما تتعمل مرة واحدة</strong>:</p>
+
+<table>
+  <thead><tr><th class="c" style="width:6%">#</th><th style="width:32%">الممارسة</th><th class="c" style="width:24%">الحالة</th><th>في العرض ده؟</th></tr></thead>
+  <tbody>
+    <tr><td class="c">1</td><td>صفحة خريطة الموقع للزوار <span class="ltr">(HTML sitemap)</span></td><td class="c x">✗ مش موجودة</td><td><strong>أيوة</strong> — 3.1</td></tr>
+    <tr><td class="c">2</td><td>خريطة المواضيع <span class="ltr">(Topical map)</span></td><td class="c w">⚠ الهيكل موجود</td><td>بتتكمّل مع بحث الكلمات في 3.2</td></tr>
+    <tr><td class="c">3</td><td>تكديس المعلومة الجديدة <span class="ltr">(Info gain)</span></td><td class="c y">✓ مع فحص آلي</td><td>موجود</td></tr>
+    <tr><td class="c">4</td><td>بحث الكلمات حسب العميل المثالي <span class="ltr">(ICP keyword research)</span></td><td class="c x">✗ مش موجود</td><td><strong>أيوة</strong> — 3.2</td></tr>
+    <tr><td class="c">5</td><td>نسج الروابط الداخلية <span class="ltr">(Internal link weaving)</span></td><td class="c x">✗ مش موجود</td><td><strong>أيوة</strong> — 3.3</td></tr>
+    <tr><td class="c">6</td><td>صفحة معلومات للذكاء الاصطناعي <span class="ltr">(AI info page)</span></td><td class="c y">✓ أقوى من أغلب المواقع</td><td>موجود</td></tr>
+    <tr><td class="c">7</td><td>ملف خريطة الكيانات <span class="ltr">(entitymap.json)</span></td><td class="c x">✗ مش موجود</td><td><strong>أيوة</strong> — 3.4</td></tr>
+  </tbody>
+</table>
+
+<div class="item">
+  <div class="head"><span class="tag">ناقص</span><h3>3.1 صفحة خريطة الموقع للزوار</h3><span class="en">HTML sitemap</span></div>
+  <div class="body">
+    <p>صفحة واحدة بتعرض كل صفحات الموقع مترتبة: الخدمات، التخصصات، المحافظات، المقالات، والأسئلة. ليها رابط في
+    أسفل كل صفحة. دي غير ملف <code>sitemap.xml</code> اللي موجود ومخصص لجوجل بس. دي للبني آدم ولمحركات الذكاء الاصطناعي.</p>
+    <div class="grid3">
+      <div class="now"><span class="k">النهارده</span>الرابط <code>/ar/sitemap</code> بيرجّع «الصفحة غير موجودة». الزائر اللي تاه مالوش خريطة.</div>
+      <div class="cost"><span class="k">ده بيكلّف إيه</span>صفحات التخصصات والمحافظات العميقة بتاخد وقت أطول على ما تتلاقى وتتفهرس، وأدوات الذكاء الاصطناعي بتشوف جزء من الموقع بس.</div>
+      <div class="after"><span class="k">بعد التنفيذ</span>صفحة بتتحدّث لوحدها مع كل صفحة جديدة من لوحة التحكم، بالعربي والإنجليزي، ومن غير أي مجهود يدوي.</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="head"><span class="tag">ناقص</span><h3>3.2 بحث الكلمات حسب العميل المثالي</h3><span class="en">ICP keyword research</span></div>
+  <div class="body">
+    <p>قبل ما نكتب أي صفحة لازم نعرف <strong>العميل اللي بيدفع بيكتب إيه في جوجل بالظبط</strong>. «سرير عناية مركزة
+    متاح دلوقتي في الجيزة» مش زي «أسعار العناية المركزة»، ولا زي «مستشفى بيقبل تأمين أكسا». كل واحدة فيهم عميل
+    مختلف بنية مختلفة.</p>
+    <div class="grid3">
+      <div class="now"><span class="k">النهارده</span>الصفحات متكتبة من وصف الخدمة، مش من الكلام اللي العملاء بيدوّروا بيه. مفيش قايمة كلمات مربوطة بشرايح العملاء.</div>
+      <div class="cost"><span class="k">ده بيكلّف إيه</span>محتوى بيظهر لكلمات محدش بيدوّر بيها، أو لزوار مش هيشتروا. وفلوس الإعلانات بتروح على كلمات عامة غالية.</div>
+      <div class="after"><span class="k">بعد التنفيذ</span>ملف كلمات لكل شريحة: الأهل، شركات التأمين، المرضى المزمنين، المصريين في الخارج. مربوط بكل صفحة ومكمّل لخريطة المواضيع، ومن بيانات Search Console الحقيقية.</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="head"><span class="tag">ناقص</span><h3>3.3 نسج الروابط الداخلية</h3><span class="en">Internal link weaving</span></div>
+  <div class="body">
+    <p>كل صفحة بتربط بالصفحات القريبة منها جوه الكلام نفسه: صفحة العناية المركزة بتشاور على تخصص الحالات الحرجة،
+    وصفحة التأمين بتشاور على المستشفيات اللي بتقبله، ومقالة الطوارئ بتشاور على صفحة الطلب. ده اللي بيقول لجوجل
+    «الموقع ده فاهم الموضوع كله، مش صفحة لوحدها».</p>
+    <div class="grid3">
+      <div class="now"><span class="k">النهارده</span>الروابط اللي في الصفحة الرئيسية 11 رابط، وكلهم روابط القايمة العلوية والسفلية. مفيش ولا رابط جوه المحتوى نفسه.</div>
+      <div class="cost"><span class="k">ده بيكلّف إيه</span>قوة الصفحة الرئيسية ما بتوصلش للصفحات العميقة، فبتفضل ضعيفة في البحث، والزائر بيخلّص الصفحة ويمشي بدل ما يكمّل.</div>
+      <div class="after"><span class="k">بعد التنفيذ</span>روابط بتتولّد لوحدها بين الصفحات المرتبطة، ومعاها بلوك «صفحات ذات صلة» و Breadcrumbs، والمحرر يقدر يعدّلها من لوحة التحكم.</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="head"><span class="tag">ناقص</span><h3>3.4 ملف خريطة الكيانات</h3><span class="en">entitymap.json</span></div>
+  <div class="body">
+    <p>ملف بيوصف «مين حياة» بلغة تفهمها أدوات الذكاء الاصطناعي: الشركة، خدماتها، التخصصات، المحافظات اللي بتغطيها،
+    شركات التأمين، وإيه العلاقة بين كل ده. لما حد يسأل ChatGPT «فين ألاقي سرير عناية مركزة بيقبل تأميني»، الملف ده
+    من الحاجات اللي بتخلّي حياة جزء من الإجابة.</p>
+    <div class="grid3">
+      <div class="now"><span class="k">النهارده</span>الرابط <code>/entitymap.json</code> بيرجّع صفحة الموقع العادية مش الملف، يعني الملف مش موجود.</div>
+      <div class="cost"><span class="k">ده بيكلّف إيه</span>أدوات الذكاء الاصطناعي بتخمّن خدمات حياة من النص، وممكن تخلط أو تسيبها خالص لصالح منافس واضح عندها.</div>
+      <div class="after"><span class="k">بعد التنفيذ</span>ملف بيتولّد لوحده من بيانات النظام الحقيقية، ومربوط بالبيانات المنظمة (Schema) الموجودة، ويتحدّث مع أي خدمة أو محافظة جديدة.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ 4 ═══════════════════════════ -->
+<h2><span class="n">4</span>نطاق العمل بالتفصيل</h2>
+
+<p>البنود دي هي نفس نطاق العرض <span class="ltr">B-2026-1018-HY</span>، ومعاها بنود القسم 3. قدام كل مجموعة: الناقص النهارده، والتغيير اللي هيحصل.</p>
+
+<h3>4.1 القياس والإعلانات</h3>
+<table>
+  <thead><tr><th style="width:30%">البند</th><th style="width:35%">النهارده</th><th>بعد التنفيذ</th></tr></thead>
+  <tbody>
+    <tr><td>Meta Pixel و Conversions API</td><td class="x">مش موجود</td><td>كل طلب وحجز ورسالة واتساب بتتقاس في إعلانات فيسبوك وإنستجرام، حتى مع مانعات الإعلانات وتحديثات آيفون.</td></tr>
+    <tr><td>بكسل TikTok و Snap</td><td class="x">مش موجود</td><td>نفس القياس على المنصات اللي عليها جمهور أصغر في السن، وهما غالبًا اللي بيدوّروا على الرعاية لأهاليهم.</td></tr>
+    <tr><td>اختبارات A/B</td><td class="x">مش موجودة</td><td>نسختين من نفس الصفحة، والنظام بيقول أنهي واحدة بتجيب طلبات أكتر بالأرقام، مش بالرأي.</td></tr>
+    <tr><td>منشئ روابط الحملات + روابط قصيرة و QR</td><td class="x">مش موجود</td><td>رابط لكل حملة وكل منشور وكل بوستر، فتعرفوا كل طلب جه منين، بما فيها الإعلانات الورقية.</td></tr>
+    <tr><td>تكلفة الحملات والعائد</td><td class="x">مش موجود</td><td>شاشة بتحسب تكلفة العميل لكل حملة، فتوقّفوا الخسرانة وتزوّدوا الكسبانة.</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 أدوات زيادة التحويل</h3>
+<table>
+  <thead><tr><th style="width:30%">البند</th><th>إيه اللي بيعمله</th></tr></thead>
+  <tbody>
+    <tr><td>Popups ذكية</td><td>بتظهر في اللحظة الصح، زي قبل ما الزائر يقفل أو بعد ما يقرا نص الصفحة، بعرض أو بسؤال، ومش بتزعجه.</td></tr>
+    <tr><td>شريط إعلان أعلى الموقع</td><td>رسالة الحملة الحالية قدام كل زائر في كل صفحة، وبتتغير من لوحة التحكم في ثانية.</td></tr>
+    <tr><td>عرض محدود بعداد تنازلي</td><td>سبب حقيقي إن الزائر يطلب النهارده مش بعدين.</td></tr>
+    <tr><td>إثبات اجتماعي حي</td><td>رسائل زي «أسر كتير طلبت سرير عناية مركزة النهارده» بالرقم الفعلي، مسحوب من النظام مش مكتوب يدويًا.</td></tr>
+    <tr><td>محتوى ديناميكي حسب الحملة</td><td>الزائر اللي جه من إعلان «تأمين» يشوف عنوان عن التأمين، واللي جه من «طوارئ» يشوف عنوان عن الطوارئ. نفس الصفحة، رسالة مختلفة.</td></tr>
+    <tr><td>زرار واتساب عائم</td><td>دايمًا قدامه، ومرتبط بالكود المرجعي اللي بيربط المحادثة بالإعلان.</td></tr>
+  </tbody>
+</table>
+
+<h3>4.3 مكونات جديدة للصفحات</h3>
+<p>كلها بلوكات جاهزة في منشئ الصفحات، والفريق يضيفها لأي صفحة من غير مبرمج:</p>
+<ul>
+  <li><strong>بلوك أسعار الباقات من النظام:</strong> الأسعار والخصومات بتتسحب لوحدها، فأي تعديل في الباقة يظهر على الموقع فورًا.</li>
+  <li><strong>حاسبة تفاعلية:</strong> الزائر يدخّل تأمينه ومحافظته ونوع الخدمة، ويعرف التغطية والتكلفة التقريبية بنفسه.</li>
+  <li><strong>Quiz:</strong> أسئلة قليلة بتوجّه الزائر للخدمة المناسبة، وفي الآخر بتسجّله كعميل محتمل.</li>
+  <li><strong>شهادات فيديو وقصص نجاح:</strong> أقوى عنصر ثقة في الخدمات الطبية.</li>
+  <li><strong>خريطة المحافظات:</strong> الخدمة متاحة فين بالظبط.</li>
+  <li><strong>بلوك تحميل التطبيق مع QR:</strong> من الموبايل يفتح المتجر، ومن الكمبيوتر يصوّر الكود.</li>
+  <li><strong>بلوكات إضافية:</strong> أرقام وإنجازات، شركاء وشركات تأمين، مقارنة، وأسئلة شائعة لكل خدمة.</li>
+</ul>
+
+<h3>4.4 أدوات التسويق والنمو</h3>
+<ul>
+  <li><strong>أكواد خصم على الموقع:</strong> لكل حملة أو شريك أو مؤثّر، ومعاها قياس لكل كود.</li>
+  <li><strong>برنامج إحالة:</strong> العميل الراضي يجيب غيره ويتكافئ، وده أرخص عميل جديد ممكن.</li>
+  <li><strong>Lead magnets:</strong> دليل أو قايمة مجانية مقابل الإيميل أو الرقم، زي «دليل تجهيز البيت لمريض بعد العناية المركزة».</li>
+  <li><strong>نشرة بريدية وربط مع أدوات الإيميل والواتساب:</strong> اللي ما طلبش النهارده يفضل على تواصل لحد ما يحتاج.</li>
+  <li><strong>تقييم الـ Leads:</strong> النظام يرتّب العملاء المحتملين حسب الجدية، فالمبيعات تبدأ بالأقرب للشراء.</li>
+  <li><strong>قوالب صفحات جاهزة:</strong> صفحة حملة جديدة في دقايق بدل أيام.</li>
+  <li><strong>صفحة لكل جولة شراء جماعي:</strong> لأجهزة الشراء الجماعي، بعدد المشاركين والميعاد النهائي.</li>
+</ul>
+
+<h3>4.5 الشكل</h3>
+<p>حركة وتفاعلات عند الظهور، Hero جديد بخلفيات متحركة، تخطيطات Bento وأقسام داكنة، ووضع ليلي، وألوان
+حسب الحملة. <strong>مع الحفاظ على سرعة الموقع الحالية</strong>، لأن السرعة دي من أقوى نقط الموقع ومش هنضحّي بيها.</p>
+
+<!-- ═══════════════════════════ 5 ═══════════════════════════ -->
+<h2><span class="n">5</span>هيتغير إيه بالنسبالكم</h2>
+
+<table>
+  <thead><tr><th style="width:28%"></th><th style="width:36%">النهارده</th><th>بعد التنفيذ</th></tr></thead>
+  <tbody>
+    <tr><td><strong>الزائر من إعلان</strong></td><td>يشوف صفحة عامة، ويقرا كلام عن الخدمة، ويمشي.</td><td>يشوف صفحة عن اللي دوّر عليه، وآراء ناس زيه، وسعر، وسبب يطلب دلوقتي.</td></tr>
+    <tr><td><strong>فلوس الإعلانات</strong></td><td>متقاسة على جوجل بس.</td><td>متقاسة على جوجل وميتا وتيك توك وسناب، ومعروف تكلفة العميل في كل حملة.</td></tr>
+    <tr><td><strong>جوجل</strong></td><td>13 صفحة قصيرة من غير روابط بينها.</td><td>شبكة صفحات مترابطة مكتوبة لكلمات العملاء الحقيقية، وخريطة واضحة ليها.</td></tr>
+    <tr><td><strong>الذكاء الاصطناعي</strong></td><td>بيخمّن حياة بتعمل إيه.</td><td>عنده ملف رسمي بخدمات حياة ومحافظاتها وتأميناتها.</td></tr>
+    <tr><td><strong>فريق التسويق</strong></td><td>كل حملة محتاجة شغل.</td><td>قوالب وأكواد وروابط وبلوكات جاهزة من لوحة التحكم.</td></tr>
+    <tr><td><strong>العميل اللي ما طلبش</strong></td><td>بيضيع.</td><td>بيدخل النشرة والواتساب ويرجع وقت ما يحتاج.</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="n">6</span>ترتيب التنفيذ المقترح</h2>
+<p>مترتب بحيث كل مرحلة تشتغل وتجيب نتيجة قبل اللي بعدها:</p>
+<div class="phase"><div class="p">المرحلة 1</div><div><strong>القياس أولًا:</strong> بكسلات ميتا وتيك توك وسناب، و Conversions API، وروابط الحملات. أي إعلان بعد كده هيتقاس من أول يوم.</div></div>
+<div class="phase"><div class="p">المرحلة 2</div><div><strong>الأساس في البحث:</strong> بحث الكلمات، صفحة خريطة الموقع، نسج الروابط الداخلية، وملف خريطة الكيانات.</div></div>
+<div class="phase"><div class="p">المرحلة 3</div><div><strong>صفحات بتبيع:</strong> البلوكات الجديدة، الشكل الجديد، وأدوات التحويل على الصفحات الأساسية والحملات.</div></div>
+<div class="phase"><div class="p">المرحلة 4</div><div><strong>النمو:</strong> أكواد الخصم، الإحالة، النشرة، تقييم الـ Leads، واختبارات A/B على اللي اتبنى.</div></div>
+
+<h2><span class="n">7</span>خارج نطاق هذا العرض</h2>
+<ul>
+  <li>ميزانيات الإعلانات وحسابات المنصات الإعلانية.</li>
+  <li>اشتراكات الأدوات الخارجية (أدوات الإيميل، واتساب Business API).</li>
+  <li>إنتاج المحتوى: تصوير الفيديوهات، وكتابة قصص النجاح، والتصميمات الإعلانية. احنا بنبني الأماكن اللي المحتوى ده بيتعرض فيها، وفريقكم بيملاها.</li>
+</ul>
+
+<div style="page-break-inside:avoid">
+<h2><span class="n">8</span>الشروط</h2>
+<ul>
+  <li>إصلاح أي خطأ يظهر في نطاق العمل مجانًا لمدة 30 يوم من تاريخ التسليم.</li>
+  <li>أي طلب إضافي خارج البنود المذكورة يُتفق عليه ويُسعّر منفصلًا.</li>
+</ul>
+
+<p class="src">أرقام القسمين 1 و3 مأخوذة من فحص الصفحات المنشورة على hayaihealthcare.com يوم 27 أكتوبر 2026 (النسخة العربية، النص الظاهر للزائر).</p>
+
+<div class="sign">
+  <div><b>مقدِّم العرض: محمد علي</b><div class="line"><span>التوقيع</span><span>التاريخ</span></div></div>
+  <div><b>العميل: HAYAI Healthcare</b><div class="line"><span>التوقيع</span><span>التاريخ</span></div></div>
+</div>
+</div>
+
+</body>
+</html>
