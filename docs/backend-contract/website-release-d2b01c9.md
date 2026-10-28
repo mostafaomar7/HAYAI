@@ -1,4 +1,4 @@
-# Website release `f15e278` — deploy guide (2026-10-22)
+# Website release `d2b01c9` — deploy guide (2026-10-28)
 
 Follows `4121bd1`, which is **on the server** — we checked before building
 this: the deployed bundle is `main-HP5Z63A7.js` and it carries the senior-care
@@ -19,13 +19,13 @@ calls already answers on production; we measured each one today. See section 5.
 
 ## 1. The package
 
-`hayai-web-f15e278.tar.gz` (also as `.zip`, identical content):
+`hayai-web-d2b01c9.tar.gz` (also as `.zip`, identical content):
 
 ```
 hayai-web/
   browser/     static files
   server/      server.mjs and its chunks
-  RELEASE      f15e278…
+  RELEASE      d2b01c9…
   DEPLOY.md    this file
 ```
 
@@ -35,7 +35,7 @@ Self-contained: no `npm install`, no `node_modules`. Node 20 or newer.
 ## 2. Deploy
 
 ```bash
-cd /tmp && tar -xzf hayai-web-f15e278.tar.gz
+cd /tmp && tar -xzf hayai-web-d2b01c9.tar.gz
 
 sudo rm -rf /var/www/hayai-web.prev
 sudo cp -r /var/www/hayai-web /var/www/hayai-web.prev
@@ -65,7 +65,7 @@ A plain `restart` is enough here: no `environment=` line changes, so no
 S=https://hayaihealthcare.com
 
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4000/en    # 200
-cat /var/www/hayai-web/RELEASE                                       # f15e278…
+cat /var/www/hayai-web/RELEASE                                       # d2b01c9…
 
 curl -s $S/login | grep -o '<meta name="hayai-i18n-version" content="[^"]*">'
 #   content="<16 hex characters>"   — if it says {{I18N_VERSION}}, stop and tell us
@@ -107,6 +107,13 @@ curl -s $S/ar | grep -c badge-win                        # 0 — the parked page
   Usage log** lists real requests with working module and status filters.
   **AI → Grants** lists the doctors' plan allowances. All three were run
   against the live API from this build before packaging, in both languages.
+- **Plans → add a plan → Senior Care** renders **14** modules including
+  **Medical Tourism**, and no blood bank. Checked from this build against the
+  live catalog; it needed no code change, and is the subject of
+  [`api-reply-senior-care-tourism-2026-10-28.md`](api-reply-senior-care-tourism-2026-10-28.md).
+- **External medical devices**: deleting a device that has orders shows the
+  sentence explaining why, not "try again". Nothing to click to verify this
+  safely — it only appears on a real `409`.
 - Open `/dashboard/ai/token-requests/1` by hand. With nothing in the queue it
   must say **"No request with that number."**
 - **Settings → App versions** now names the eight Windows partner rows. The
@@ -119,7 +126,7 @@ somebody presses Approve on a row — of which there are none.
 
 ## 4. What changed since `4121bd1`
 
-Six code commits.
+Seven code commits.
 
 **The AI token-request queue** (`5e52ab9`) — built from the backend brief of
 2026-10-22.
@@ -182,7 +189,13 @@ answering with no screen in front of them.
   demonstrably work are offered. Both are in
   [`api-reply-ai-usage-screens-2026-10-22.md`](api-reply-ai-usage-screens-2026-10-22.md).
 
-The four other commits in the range are documents only.
+**A device with orders says why it cannot be deleted** (`d2b01c9`) — the API
+answered `500` until it was reported on 2026-10-23 and now answers `409`. A
+`409` gets its own sentence — *"This device already has orders, so it can't be
+deleted: its orders would lose the device they were placed for"* — and
+anything else shows the API's own message instead of a generic "try again".
+
+Everything else in the range is documents only.
 
 ## 5. Nothing is needed from you, and here is the measurement
 
