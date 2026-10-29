@@ -23,7 +23,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
-type Tab = 'joined' | 'pending' | 'activity';
+type Tab = 'joined' | 'activity';
 
 interface CostDraft {
   total_cost: string;
@@ -38,7 +38,10 @@ interface CostDraft {
   ship_company_contact_person: string;
   ship_company_phone: string;
   ship_company_email: string;
-  notes: string;
+  /** Goes to the members with their share. */
+  notes_for_users: string;
+  /** About the shipment. */
+  ship_notes: string;
 }
 
 /** Not an id the API could ever issue, so it cannot collide with a real one. */
@@ -105,7 +108,7 @@ export class GroupOrderDetails {
   costDraft = signal<CostDraft>({
     total_cost: '', delivery: 2, shipping_company_id: '',
     ship_company_name: '', ship_company_contact_person: '',
-    ship_company_phone: '', ship_company_email: '', notes: ''
+    ship_company_phone: '', ship_company_email: '', notes_for_users: '', ship_notes: ''
   });
   costErrors = signal<Record<string, string>>({});
   costError = signal<string | null>(null);
@@ -172,7 +175,8 @@ export class GroupOrderDetails {
       shipping_company_id: company?.id ? String(company.id) : '',
       ship_company_name: '', ship_company_contact_person: '',
       ship_company_phone: '', ship_company_email: '',
-      notes: c?.notes ?? ''
+      notes_for_users: o.notes_for_users ?? '',
+      ship_notes: c?.notes ?? ''
     });
   }
 
@@ -187,7 +191,6 @@ export class GroupOrderDetails {
 
   participants = computed(() => this.order()?.participants ?? []);
   joined = computed(() => this.participants().filter(p => p.membership_status === 'joined'));
-  pending = computed(() => this.participants().filter(p => p.membership_status === 'pending'));
   activity = computed<ActivityEntry[]>(() => this.order()?.activity_log ?? []);
 
   percent = computed(() => {
@@ -238,23 +241,6 @@ export class GroupOrderDetails {
   });
 
   // -------------------------------------------------------- participant acts
-
-  approve(p: GroupOrderParticipant): void {
-    this.run(this.svc.approveParticipant(this.id(), p.id), 'gorders.participant_approved');
-  }
-
-  async reject(p: GroupOrderParticipant): Promise<void> {
-    const reason = await this.dialog.prompt({
-      title: 'gorders.reject_title',
-      text: 'gorders.reject_text',
-      params: { name: p.user_name },
-      confirmText: 'gorders.reject'
-    });
-    // The backend rejects an empty reason, so it is checked before the call
-    // rather than surfacing a 422 the admin cannot act on.
-    if (!reason || !reason.trim()) return;
-    this.run(this.svc.rejectParticipant(this.id(), p.id, reason.trim()), 'gorders.participant_rejected');
-  }
 
   async removeParticipant(p: GroupOrderParticipant): Promise<void> {
     const reason = await this.dialog.prompt({
@@ -420,7 +406,8 @@ export class GroupOrderDetails {
         delivery_weeks_min: window!.min,
         delivery_weeks_max: window!.max,
         ...company,
-        notes: d.notes.trim() || null
+        notes_for_users: d.notes_for_users.trim() || null,
+        ship_notes: d.ship_notes.trim() || null
       })
       .subscribe({
         next: () => {

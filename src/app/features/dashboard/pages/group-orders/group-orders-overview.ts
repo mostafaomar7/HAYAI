@@ -10,6 +10,7 @@ import {
   GROUP_ORDER_STATUSES
 } from '../../../../core/services/device-group-orders.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
+import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../shared/utils/debounce.util';
 
@@ -24,7 +25,7 @@ import { debounce } from '../../../../shared/utils/debounce.util';
 @Component({
   selector: 'app-group-orders-overview',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, TPipe, PaginationComponent, CanManageDirective],
   templateUrl: './group-orders-overview.html',
   styleUrls: ['./group-orders.shared.css', './group-orders-overview.css']
 })
@@ -52,6 +53,11 @@ export class GroupOrdersOverview {
     this.page.set(1);
     this.loadRows();
   });
+
+  /** The External section's own device, through the 3-step wizard. */
+  addDevice(): void {
+    this.router.navigate(['/dashboard/group-orders/devices/new']);
+  }
 
   constructor() {
     this.loadStats();

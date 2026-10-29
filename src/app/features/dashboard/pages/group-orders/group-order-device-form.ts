@@ -28,6 +28,8 @@ interface BasicDraft {
   short_description_ar: string;
   cover: File | null;
   coverUrl: string | null;
+  /** More photos for the app's gallery, sent as `images[]` with step 1. */
+  gallery: File[];
 }
 
 interface RoundDraft {
@@ -86,7 +88,7 @@ export class GroupOrderDeviceForm {
   basic = signal<BasicDraft>({
     name_en: '', name_ar: '', category_id: '', brand_model: '', manufacturer: '',
     country_of_origin: '', made_in: '', short_description_en: '', short_description_ar: '',
-    cover: null, coverUrl: null
+    cover: null, coverUrl: null, gallery: []
   });
 
   /** Built from the chosen category's template, never hardcoded. */
@@ -139,6 +141,7 @@ export class GroupOrderDeviceForm {
       short_description_en: d.short_description_en ?? d.short_description ?? '',
       short_description_ar: d.short_description_ar ?? '',
       cover: null,
+      gallery: [],
       coverUrl: d.cover_image_url
     });
     this.hasRound.set(!!d.active_group_order);
@@ -158,6 +161,11 @@ export class GroupOrderDeviceForm {
   onCover(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     this.basic.update(b => ({ ...b, cover: file }));
+  }
+
+  onGallery(event: Event): void {
+    const files = Array.from((event.target as HTMLInputElement).files ?? []);
+    this.basic.update(b => ({ ...b, gallery: files }));
   }
 
   /** Swaps the step-2 fields to whatever the chosen category declares. */
@@ -224,6 +232,7 @@ export class GroupOrderDeviceForm {
     if (b.short_description_en.trim()) form.append('short_description_en', b.short_description_en.trim());
     if (b.short_description_ar.trim()) form.append('short_description_ar', b.short_description_ar.trim());
     if (b.cover) form.append('cover_image', b.cover);
+    for (const img of b.gallery) form.append('images[]', img);
 
     this.saving.set(true);
     const id = this.deviceId();
@@ -231,7 +240,7 @@ export class GroupOrderDeviceForm {
     request.subscribe({
       next: d => {
         this.deviceId.set(d.id);
-        this.basic.update(x => ({ ...x, cover: null, coverUrl: d.cover_image_url ?? x.coverUrl }));
+        this.basic.update(x => ({ ...x, cover: null, gallery: [], coverUrl: d.cover_image_url ?? x.coverUrl }));
         this.saving.set(false);
         this.step.set(2);
       },
@@ -251,9 +260,15 @@ export class GroupOrderDeviceForm {
       return;
     }
 
-    const specifications = this.specFields().map(f => ({
+    // The labels and unit go with each value, from the category's template,
+    // as the contract of 2026-10-29 asks.
+    const specifications = this.specFields().map((f, i) => ({
       key: f.key,
-      value: (this.specValues()[f.key] ?? '').trim() || null
+      value: (this.specValues()[f.key] ?? '').trim() || null,
+      label_en: f.label_en ?? f.label ?? f.key,
+      label_ar: f.label_ar ?? null,
+      unit: f.unit ?? null,
+      sort_order: f.sort_order ?? i
     }));
 
     this.saving.set(true);

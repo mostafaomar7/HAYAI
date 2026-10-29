@@ -118,6 +118,16 @@
             }
             <input type="file" accept="image/*" (change)="onCover($event)">
           </div>
+
+          @if (!deviceId()) {
+            <div class="form-group full">
+              <label>{{ 'gorders.gallery_images' | t }}</label>
+              <input type="file" accept="image/*" multiple (change)="onGallery($event)">
+              <span class="hint">
+                {{ basic().gallery.length ? ('gorders.gallery_selected' | t: { n: basic().gallery.length }) : ('gorders.gallery_hint' | t) }}
+              </span>
+            </div>
+          }
         </div>
 
         <div class="step-footer">

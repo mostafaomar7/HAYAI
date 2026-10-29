@@ -305,8 +305,14 @@
 
               <div class="form-group full">
                 <label>{{ 'gorders.notes_for_users' | t }}</label>
-                <textarea [value]="costDraft().notes"
-                          (input)="setCost('notes', $any($event.target).value)"></textarea>
+                <textarea [value]="costDraft().notes_for_users"
+                          (input)="setCost('notes_for_users', $any($event.target).value)"></textarea>
+                <span class="hint">{{ 'gorders.notes_for_users_hint' | t }}</span>
+              </div>
+              <div class="form-group full">
+                <label>{{ 'gorders.ship_notes' | t }}</label>
+                <textarea [value]="costDraft().ship_notes"
+                          (input)="setCost('ship_notes', $any($event.target).value)"></textarea>
               </div>
             </div>
 
@@ -436,9 +442,6 @@
         <button class="tab" [class.active]="tab() === 'joined'" (click)="tab.set('joined')">
           {{ 'gorders.tab_joined' | t }} ({{ joined().length }})
         </button>
-        <button class="tab" [class.active]="tab() === 'pending'" (click)="tab.set('pending')">
-          {{ 'gorders.tab_pending' | t }} ({{ pending().length }})
-        </button>
         <button class="tab" [class.active]="tab() === 'activity'" (click)="tab.set('activity')">
           {{ 'gorders.tab_activity' | t }}
         </button>
@@ -481,20 +484,20 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th>{{ 'gorders.order_number' | t }}</th>
                 <th>{{ 'gorders.user_name' | t }}</th>
                 <th>{{ 'gorders.phone' | t }}</th>
                 <th>{{ 'gorders.request_date' | t }}</th>
                 <th>{{ 'gorders.status_col' | t }}</th>
-                @if (tab() === 'joined') {
-                  <th>{{ 'gorders.share' | t }}</th>
-                  <th>{{ 'gorders.cost_decision' | t }}</th>
-                }
+                <th>{{ 'gorders.share' | t }}</th>
+                <th>{{ 'gorders.cost_decision' | t }}</th>
                 <th class="action-col">{{ 'common.actions' | t }}</th>
               </tr>
             </thead>
             <tbody>
-              @for (p of (tab() === 'joined' ? joined() : pending()); track p.id) {
+              @for (p of joined(); track p.id) {
                 <tr>
+                  <td class="mono"><bdi dir="ltr">{{ p.order_number || '—' }}</bdi></td>
                   <td class="name-cell">{{ p.user_name }}</td>
                   <!-- A phone number reads left-to-right whatever the page does. -->
                   <td class="text-gray"><bdi dir="ltr">{{ p.phone || '—' }}</bdi></td>
@@ -505,7 +508,6 @@
                     </span>
                   </td>
 
-                  @if (tab() === 'joined') {
                     <td class="num">{{ money(p.share_amount) }}</td>
                     <td>
                       @if (p.cost_decision) {
@@ -516,18 +518,10 @@
                         <span class="text-gray">—</span>
                       }
                     </td>
-                  }
 
                   <td class="action-col">
                     <div class="row-actions" *appCanManage>
-                      @if (p.membership_status === 'pending') {
-                        <button class="link-btn" [disabled]="busy()" (click)="approve(p)">
-                          {{ 'gorders.approve' | t }}
-                        </button>
-                        <button class="link-btn danger" [disabled]="busy()" (click)="reject(p)">
-                          {{ 'gorders.reject' | t }}
-                        </button>
-                      } @else if (p.membership_status === 'joined') {
+                      @if (p.membership_status === 'joined') {
                         <button class="link-btn danger" [disabled]="busy()" (click)="removeParticipant(p)">
                           {{ 'gorders.remove' | t }}
                         </button>
@@ -539,7 +533,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td [attr.colspan]="tab() === 'joined' ? 7 : 5" class="table-hint">
+                  <td colspan="8" class="table-hint">
                     {{ 'common.no_data' | t }}
                   </td>
                 </tr>

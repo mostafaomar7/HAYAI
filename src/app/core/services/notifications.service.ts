@@ -189,6 +189,12 @@ export function notificationTarget(
   // backend starts sending real routes.
   if (link.startsWith('/dashboard/')) return link;
 
+  // External medical devices: `group_order.completed`, `cost_rejected` and
+  // `all_approved` open the round. Two segments deep, so the account pattern
+  // below would not match it.
+  const round = /^\/admin\/external-devices\/group-orders\/(\d+)$/.exec(link);
+  if (round) return `/dashboard/group-orders/${round[1]}`;
+
   const m = /^\/admin\/([a-z-]+)\/(\d+)$/.exec(link);
   if (!m) return null;
 

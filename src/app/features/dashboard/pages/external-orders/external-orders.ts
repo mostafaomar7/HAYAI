@@ -19,12 +19,9 @@ export class ExternalOrders {
 
   loading = signal(true);
   status = signal('');
-  /**
-   * `external` = devices added in the dashboard, which the admin fulfils.
-   * QA could not find these orders at all, because the list mixed them with
-   * the in-app ones and there was no way to separate the two.
-   */
-  source = signal<'' | 'external' | 'internal'>('');
+  // No source tabs: since 2026-10-29 this endpoint answers with orders on
+  // internal devices only, and imported devices have their own section
+  // (External Medical Devices, group orders).
   orders = signal<ExternalDeviceOrder[]>([]);
   total = signal(0);
   devicesById = signal<Map<number, ExternalDevice>>(new Map());
@@ -50,7 +47,6 @@ export class ExternalOrders {
       page: this.page(),
       per_page: this.perPage,
       status: this.status() || undefined,
-      source: this.source() || undefined
     }).subscribe({
       next: r => {
         // A status change can empty the current page — fall back one page.
@@ -65,12 +61,6 @@ export class ExternalOrders {
       },
       error: () => this.loading.set(false)
     });
-  }
-
-  setSource(value: '' | 'external' | 'internal') {
-    this.source.set(value);
-    this.page.set(1);
-    this.load();
   }
 
   goToPage(page: number) { this.page.set(page); this.load(); }

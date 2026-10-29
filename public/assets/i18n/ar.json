@@ -3702,5 +3702,11 @@
   "web.role.read-only": "قراءة فقط",
   "menu.users.senior_care": "رعاية كبار السن",
   "users.senior_care.title": "رعاية كبار السن",
-  "external.devices.delete_has_orders": "هذا الجهاز عليه طلبات، فلا يمكن حذفه وإلا فقدت الطلبات الجهاز الذي طُلبت عليه."
+  "external.devices.delete_has_orders": "هذا الجهاز عليه طلبات، فلا يمكن حذفه وإلا فقدت الطلبات الجهاز الذي طُلبت عليه.",
+  "gorders.order_number": "رقم الطلب",
+  "gorders.notes_for_users_hint": "تُرسل لكل مشارك مع نصيبه وموعد التوصيل المتوقع.",
+  "gorders.ship_notes": "ملاحظات الشحن",
+  "gorders.gallery_images": "صور إضافية",
+  "gorders.gallery_hint": "اختياري. تظهر في معرض الصور بالتطبيق بعد صورة الغلاف.",
+  "gorders.gallery_selected": "تم اختيار {n} صورة"
 }

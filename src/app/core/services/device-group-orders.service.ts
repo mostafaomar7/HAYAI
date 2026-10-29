@@ -45,7 +45,10 @@ export const GROUP_ORDER_STATUSES = [
 ] as const;
 export type GroupOrderStatus = (typeof GROUP_ORDER_STATUSES)[number];
 
-/** Where a participant stands in the round itself. */
+/**
+ * Where a participant stands in the round itself. `pending` is historical:
+ * since 2026-10-29 a join counts at once and nothing waits for an admin.
+ */
 export type MembershipStatus = 'pending' | 'joined' | 'rejected' | 'removed' | 'left';
 
 /** Where a participant stands on the quote they were sent. */
@@ -96,6 +99,18 @@ export interface DeviceMedia {
   disk?: string;
   is_cover?: boolean;
   sort_order?: number;
+}
+
+/** One row of the specifications write: the value, with the labels and unit
+ *  copied from the category's `spec_schema` so the device keeps them even if
+ *  the category's template changes later. */
+export interface SpecValue {
+  key: string;
+  value: string | number | null;
+  label_en?: string | null;
+  label_ar?: string | null;
+  unit?: string | null;
+  sort_order?: number | null;
 }
 
 export interface ResolvedSpecification {
@@ -199,6 +214,12 @@ export interface GroupOrderSummary {
 
 export interface GroupOrderParticipant {
   id: number;
+  /**
+   * The member's reference, e.g. `GO-10-27` — what they quote to the import
+   * company. Also in the export and in the member's app. Since the backend
+   * release of 2026-10-29; absent on older responses.
+   */
+  order_number?: string | null;
   user_id: number;
   user_name: string;
   phone: string | null;
@@ -297,12 +318,16 @@ export interface CostPayload {
   delivery_weeks_min: number;
   delivery_weeks_max: number;
   shipping_company_id?: number | null;
+  /** Shown to the members with their share. The field used to go out as
+   *  `notes`, which the cost endpoint does not read. */
+  notes_for_users?: string | null;
+  /** About the shipment, for the importer side of the record. */
+  ship_notes?: string | null;
   /** The one-off branch. Present only when `shipping_company_id` is absent. */
   ship_company_name?: string;
   ship_company_contact_person?: string | null;
   ship_company_phone?: string | null;
   ship_company_email?: string | null;
-  notes?: string | null;
 }
 
 /**
@@ -395,11 +420,11 @@ export class DeviceGroupOrdersService {
    */
   saveSpecifications(
     id: number,
-    specifications: { key: string; value: string | number | null }[]
+    specifications: SpecValue[]
   ): Observable<ExternalDeviceEntry> {
     return this.api.put<ExternalDeviceEntry>(`${ADMIN}/devices/${id}/specifications`, {
       specifications: specifications.map(sp => ({
-        key: sp.key,
+        ...sp,
         value: sp.value === null || sp.value === '' ? null : String(sp.value)
       }))
     });
@@ -434,7 +459,9 @@ export class DeviceGroupOrdersService {
       notes_for_users?: string | null;
     }
   ): Observable<GroupOrderDetail> {
-    return this.api.post<GroupOrderDetail>(`${ADMIN}/devices/${deviceId}/group-orders`, body);
+    // `publish: true` puts the device in the app with its group open — the
+    // whole point of this step. Without it the round is created as a draft.
+    return this.api.post<GroupOrderDetail>(`${ADMIN}/devices/${deviceId}/group-orders`, { ...body, publish: true });
   }
 
   // ------------------------------------------------------------- screens 6-16
@@ -468,19 +495,8 @@ export class DeviceGroupOrdersService {
     return this.api.post<GroupOrderDetail>(`${ADMIN}/group-orders/${id}/cost`, body);
   }
 
-  approveParticipant(id: number, participantId: number): Observable<GroupOrderParticipant> {
-    return this.api.post<GroupOrderParticipant>(
-      `${ADMIN}/group-orders/${id}/participants/${participantId}/approve`
-    );
-  }
-
-  rejectParticipant(id: number, participantId: number, reason: string): Observable<GroupOrderParticipant> {
-    return this.api.post<GroupOrderParticipant>(
-      `${ADMIN}/group-orders/${id}/participants/${participantId}/reject`,
-      { reason }
-    );
-  }
-
+  // No approve / reject: since 2026-10-29 a join counts at once, and the round
+  // completes when it reaches its size. Removing a member is still possible.
   removeParticipant(id: number, participantId: number, reason: string): Observable<GroupOrderParticipant> {
     return this.api.post<GroupOrderParticipant>(
       `${ADMIN}/group-orders/${id}/participants/${participantId}/remove`,

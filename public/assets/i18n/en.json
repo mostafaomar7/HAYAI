@@ -3653,5 +3653,11 @@
   "web.role.read-only": "Read only",
   "menu.users.senior_care": "Senior Care",
   "users.senior_care.title": "Senior Care",
-  "external.devices.delete_has_orders": "This device already has orders, so it can't be deleted: its orders would lose the device they were placed for."
+  "external.devices.delete_has_orders": "This device already has orders, so it can't be deleted: its orders would lose the device they were placed for.",
+  "gorders.order_number": "Order number",
+  "gorders.notes_for_users_hint": "Sent to every member with their share and the delivery estimate.",
+  "gorders.ship_notes": "Shipping notes",
+  "gorders.gallery_images": "More photos",
+  "gorders.gallery_hint": "Optional. Shown in the app's gallery after the cover.",
+  "gorders.gallery_selected": "{n} photo(s) selected"
 }
