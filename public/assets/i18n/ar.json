@@ -3714,5 +3714,12 @@
   "guidelines.choose_specialty": "اختار تخصص",
   "guidelines.subspecialty_none": "— بدون —",
   "guidelines.subspecialty_hint": "اختياري. أمراض القلب تحت الباطنة.",
-  "guidelines.specialty_required": "اختار التخصص."
+  "guidelines.specialty_required": "اختار التخصص.",
+  "plans.apply_to_all_tourists": "تطبيق على كل السياح",
+  "plans.patient_only_hint": "التعديلات هنا بتطبّق على المرضى بس. السياح ليهم خطة خاصة بيهم.",
+  "plans.tourist_only_hint": "التعديلات هنا بتطبّق على السياح بس.",
+  "plans.tourist_modules_hint": "لما تقفل وحدة هنا، هتختفي من التطبيق عند كل سائح على الخطة دي.",
+  "plans.affects_tourists_text": "الوحدات دي بتطبّق على كل الـ {count} سائح لحظة الحفظ. أي وحدة تقفلها هتختفي من التطبيق عندهم.",
+  "plans.set_default_tourist_text": "دي هتبقى خطة كل السياح. كل سائح من غير استثناء ({count}) هيتنقل عليها فورًا، والخطة الافتراضية الحالية هتتلغي. المرضى مش هيتأثروا.",
+  "users.plan_internal": "(داخلية)"
 }

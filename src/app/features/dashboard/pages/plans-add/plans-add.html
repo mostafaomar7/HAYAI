@@ -80,7 +80,9 @@
       </div>
 
       @if (planType === 'patient') {
-        <p class="hint patient-hint">{{ 'plans.patient_modules_hint' | t }}</p>
+        <p class="hint patient-hint">{{ 'plans.patient_only_hint' | t }} {{ 'plans.patient_modules_hint' | t }}</p>
+      } @else if (planType === 'tourist') {
+        <p class="hint patient-hint">{{ 'plans.tourist_only_hint' | t }} {{ 'plans.tourist_modules_hint' | t }}</p>
       }
 
       @if (!planType) {

@@ -448,3 +448,6 @@
   .open-id { flex: 1; }
   .open-id input { width: 100%; }
 }
+
+/* Same as the patients list: a tourist moved off the default plan. */
+.plan-exception { display: inline-block; background: #FEF3C7; color: #92400E; border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }

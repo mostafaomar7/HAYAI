@@ -206,7 +206,7 @@
               {{ 'plans.edit_modules' | t }}
             </button>
 
-            <!-- Only a patient plan has a default to promote: every other
+            <!-- Only patient and tourist plans have a default to promote: every other
                  account type is assigned its plan at approval and never falls
                  back to one. Offering the button elsewhere just produced a
                  refusal the admin could do nothing about. -->
@@ -215,7 +215,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                {{ 'plans.apply_to_all_patients' | t }}
+                {{ applyToAllKey(plan) | t }}
               </button>
             }
 
@@ -225,6 +225,9 @@
                   <h3>{{ 'plans.edit_modules' | t }}</h3>
                   <span class="draft-count">{{ draftIncluded() }}/{{ draft().length }}</span>
                 </div>
+                @if (audienceHint(plan); as hint) {
+                  <p class="audience-hint">{{ hint | t }}</p>
+                }
 
                 <div class="modules-search">
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">

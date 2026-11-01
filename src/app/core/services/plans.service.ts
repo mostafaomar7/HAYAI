@@ -24,7 +24,14 @@ export type PlanType =
    * app they can reach. Unlike the provider types it is free, and every account
    * falls back to whichever patient plan is flagged `is_default`.
    */
-  | 'patient';
+  | 'patient'
+  /**
+   * Tourists' own plan since 2026-11-01. Same catalog as `patient` minus
+   * Ambulance & Transfers, with its own default, so a module can be open for
+   * one and closed for the other. Until then tourists followed the patient
+   * default.
+   */
+  | 'tourist';
 
 /** Single source for the plan-type dropdowns (list filter and the editor). */
 export const PLAN_TYPE_OPTIONS: { value: PlanType; label: string }[] = [
@@ -42,8 +49,15 @@ export const PLAN_TYPE_OPTIONS: { value: PlanType; label: string }[] = [
   { value: 'physical_therapy', label: 'Physical Therapy' },
   { value: 'employment_office', label: 'Employment Office' },
   { value: 'medical_devices', label: 'Medical Devices' },
-  { value: 'patient', label: 'Patient' }
+  { value: 'patient', label: 'Patient' },
+  { value: 'tourist', label: 'Tourist' }
 ];
+
+/**
+ * Types whose accounts all fall back to one default plan rather than buying
+ * one. The API keeps this list and refuses "make default" for anything else.
+ */
+export const PLAN_TYPES_WITH_DEFAULT: PlanType[] = ['patient', 'tourist'];
 
 /**
  * Every field below `description` arrived with the feature-gating work and is
@@ -171,7 +185,8 @@ export interface Plan {
  * plan is filed under the seniority it targets rather than under `doctor` with
  * a separate role field.
  *
- * Patients and tourists have no subscription and so no entry.
+ * Patients and tourists hold a free plan each, their type's default unless an
+ * admin moved them; a tourist can only hold a tourist plan (422 otherwise).
  */
 export const PLAN_TYPES_FOR_RESOURCE: Partial<Record<UserResource, PlanType[]>> = {
   hospitals: ['hospital'],
@@ -187,7 +202,8 @@ export const PLAN_TYPES_FOR_RESOURCE: Partial<Record<UserResource, PlanType[]>> 
   'physical-therapy': ['physical_therapy'],
   'employment-offices': ['employment_office'],
   'medical-devices': ['medical_devices'],
-  patients: ['patient']
+  patients: ['patient'],
+  tourists: ['tourist']
 };
 
 export interface PlanListQuery {

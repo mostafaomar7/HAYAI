@@ -102,14 +102,15 @@
             <th>{{ 'common.gender' | t }}</th>
             <th>{{ 'common.phone' | t }}</th>
             <th>{{ 'tourists.verification' | t }}</th>
+            <th>{{ 'users.plan' | t }}</th>
             <th class="action-col"></th>
           </tr>
         </thead>
         <tbody>
           @if (loading()) {
-            <tr><td colspan="8" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
+            <tr><td colspan="9" style="padding:24px;color:#6B7280;">{{ 'common.loading' | t }}</td></tr>
           } @else if (!items().length) {
-            <tr><td colspan="8" style="padding:24px;color:#6B7280;">{{ 'users.no_tourists' | t }}</td></tr>
+            <tr><td colspan="9" style="padding:24px;color:#6B7280;">{{ 'users.no_tourists' | t }}</td></tr>
           } @else {
             @for (user of items(); track user.id) {
               <tr>
@@ -148,6 +149,13 @@
                     <span class="residence">{{ user.residence_country }}</span>
                   }
                 </td>
+                <td>
+                  @if (isPlanException(user.plan_status, user.has_plan_exception)) {
+                    <span class="plan-exception">{{ user.plan_status?.plan_name }}</span>
+                  } @else {
+                    <span class="text-gray">{{ 'users.default_plan' | t }}</span>
+                  }
+                </td>
                 <td class="action-col relative-cell">
                   <button class="dots-btn" (click)="toggleActionMenu(user.id, $event)">⋮</button>
                   @if (openActionMenuId === user.id) {
@@ -159,6 +167,10 @@
                       }
                       <button class="dropdown-item" (click)="goToActivity(user)">{{ 'activity.title' | t }}</button>
                       <button class="dropdown-item" *appCanManage (click)="resetPassword(user)">{{ 'users.reset_password.action' | t }}</button>
+                      <button class="dropdown-item" *appCanManage (click)="changePlan(user.id)">{{ 'users.actions.change_plan' | t }}</button>
+                      @if (isPlanException(user.plan_status, user.has_plan_exception)) {
+                        <button class="dropdown-item" *appCanManage (click)="resetPlan(user.id)">{{ 'users.actions.reset_plan' | t }}</button>
+                      }
                       @if (isVerified(user)) {
                         <button class="dropdown-item" *appCanManage (click)="unverify(user)">{{ 'tourists.unverify' | t }}</button>
                       } @else {

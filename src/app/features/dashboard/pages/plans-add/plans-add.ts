@@ -326,8 +326,8 @@ export class PlansAdd {
       const ok = await this.dialog.confirm({
         title: 'plans.affects_subscribers_title',
         // The patient plan is the whole patient base, not a paying cohort.
-        text: this.planType === 'patient'
-          ? 'plans.affects_patients_text'
+        text: this.planType === 'patient' ? 'plans.affects_patients_text'
+          : this.planType === 'tourist' ? 'plans.affects_tourists_text'
           : 'plans.affects_subscribers_text',
         params: { count: subscribers },
         icon: 'warning',

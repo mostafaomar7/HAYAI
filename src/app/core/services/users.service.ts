@@ -45,6 +45,8 @@ export interface PatientItem extends BaseUserListItem {
   gender: 'male' | 'female' | null;
   /** Present on the detail payload; the list may omit it. */
   plan_status?: PlanStatus | null;
+  /** The server's own answer to "moved off the default plan?". */
+  has_plan_exception?: boolean;
 }
 
 /** What an admin recorded after confirming the tourist lives abroad. */
@@ -66,6 +68,9 @@ export interface TouristItem extends BaseUserListItem {
   residence?: string | null;
   residence_country?: string | null;
   verification?: TouristVerification;
+  /** Since 2026-11-01: the Tourist Plan unless an admin moved them. */
+  plan_status?: PlanStatus | null;
+  has_plan_exception?: boolean;
 }
 
 /**

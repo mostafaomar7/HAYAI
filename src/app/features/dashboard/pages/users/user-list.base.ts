@@ -12,6 +12,7 @@ import { APPROVAL_GROUP, ApprovalsService, approvalStatusKey } from '../../../..
 import { PagedResult } from '../../../../core/services/api.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { PLAN_TYPES_FOR_RESOURCE, Plan, PlansService } from '../../../../core/services/plans.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ActivityIdType } from '../../../../core/services/activity.service';
@@ -48,6 +49,7 @@ export abstract class UserListBase<T extends { id: number }> {
   protected approvals = inject(ApprovalsService);
   protected dialog = inject(DialogService);
   protected plans = inject(PlansService);
+  protected i18n = inject(I18nService);
 
   loading = signal(true);
   openActionMenuId: number | null = null;
@@ -469,8 +471,11 @@ export abstract class UserListBase<T extends { id: number }> {
     this.openActionMenuId = null;
 
     // Plans are already fetched in `init()` — reuse them instead of refetching.
+    // Inactive plans stay assignable (the QA plans are inactive on purpose)
+    // and are marked so nobody picks one by mistake.
+    const internal = this.i18n.translate('users.plan_internal');
     const options = this.plansList().reduce<Record<string, string>>((acc, p) => {
-      acc[String(p.id)] = `${p.name} — ${p.plan_type}`;
+      acc[String(p.id)] = `${p.name} — ${p.plan_type}${p.status === 'inactive' ? ` ${internal}` : ''}`;
       return acc;
     }, {});
 
@@ -498,7 +503,10 @@ export abstract class UserListBase<T extends { id: number }> {
    * "exception" badge so an admin can see at a glance which rows were changed
    * by hand — everyone else silently follows the default.
    */
-  isPlanException(planStatus: PlanStatus | null | undefined): boolean {
+  isPlanException(planStatus: PlanStatus | null | undefined, hasException?: boolean): boolean {
+    // The server says so outright since 2026-11-01; the comparison is the
+    // fallback for a payload without the flag.
+    if (typeof hasException === 'boolean') return hasException;
     const fallback = this.defaultPlanId();
     return !!planStatus?.plan_id && fallback !== null && planStatus.plan_id !== fallback;
   }

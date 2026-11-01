@@ -42,6 +42,7 @@
 
 .filter-popup { position: absolute; top: calc(100% + 8px); inset-inline-end: 0; width: 300px; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; padding: 20px; text-align: start; }
 .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.audience-hint { margin: -8px 0 12px; padding: 8px 10px; border-radius: 8px; background: #EFF6FF; color: #1E40AF; font-size: 12.5px; line-height: 1.5; }
 .popup-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
 .close-icon { background: none; border: none; cursor: pointer; padding: 0; line-height: 0; }
 .form-group { margin-bottom: 14px; display: flex; flex-direction: column; }

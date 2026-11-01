@@ -3665,5 +3665,12 @@
   "guidelines.choose_specialty": "Choose a specialty",
   "guidelines.subspecialty_none": "— None —",
   "guidelines.subspecialty_hint": "Optional. Cardiology is under Internal Medicine.",
-  "guidelines.specialty_required": "Choose a specialty."
+  "guidelines.specialty_required": "Choose a specialty.",
+  "plans.apply_to_all_tourists": "Apply to all tourists",
+  "plans.patient_only_hint": "Changes here apply to patients only. Tourists have their own plan.",
+  "plans.tourist_only_hint": "Changes here apply to tourists only.",
+  "plans.tourist_modules_hint": "Switch a module off here and it disappears from the app for every tourist on this plan.",
+  "plans.affects_tourists_text": "These modules apply to all {count} tourists the moment this is saved. A module you switch off disappears from their app.",
+  "plans.set_default_tourist_text": "This becomes the plan the entire tourist base is on. Every tourist without an exception ({count}) moves onto it immediately, and the plan holding it now will be demoted. Patients are not affected.",
+  "users.plan_internal": "(internal)"
 }

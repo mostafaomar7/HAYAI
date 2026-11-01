@@ -8,6 +8,7 @@ import {
   PlanModule,
   PlanModuleCatalog,
   PLAN_TYPE_OPTIONS,
+  PLAN_TYPES_WITH_DEFAULT,
   PlansService,
   PlanType
 } from '../../../../core/services/plans.service';
@@ -76,14 +77,27 @@ export class Plans {
    * rejects anything else; it is mirrored here so the button is never offered
    * where pressing it can only fail.
    */
-  private static readonly TYPES_WITH_DEFAULT = ['patient'];
-
   canSetDefault(plan: { plan_type?: string | null; is_default?: boolean }): boolean {
     if (plan.is_default) return false;
-    return Plans.TYPES_WITH_DEFAULT.includes(plan.plan_type ?? '');
+    return PLAN_TYPES_WITH_DEFAULT.includes(plan.plan_type as PlanType);
   }
 
-  canAddPlan = computed(() => this.activeType() !== 'patient');
+  canAddPlan = computed(() => !PLAN_TYPES_WITH_DEFAULT.includes(this.activeType() as PlanType));
+
+  /** The default button names who it moves; the patient and tourist bases are separate. */
+  applyToAllKey(plan: Plan): string {
+    return plan.plan_type === 'tourist' ? 'plans.apply_to_all_tourists' : 'plans.apply_to_all_patients';
+  }
+
+  /**
+   * One line above the module editor, so the owner does not edit the patient
+   * plan meaning to change tourists, or the other way round.
+   */
+  audienceHint(plan: Plan): string | null {
+    if (plan.plan_type === 'patient') return 'plans.patient_only_hint';
+    if (plan.plan_type === 'tourist') return 'plans.tourist_only_hint';
+    return null;
+  }
 
   visibleBulk = computed(() => {
     const term = this.bulkSearch().trim().toLowerCase();
@@ -392,7 +406,9 @@ export class Plans {
 
     const ok = await this.dialog.confirm({
       title: 'plans.set_default_title',
-      text: plan.plan_type === 'patient' ? 'plans.set_default_patient_text' : 'plans.set_default_text',
+      text: plan.plan_type === 'patient' ? 'plans.set_default_patient_text'
+        : plan.plan_type === 'tourist' ? 'plans.set_default_tourist_text'
+        : 'plans.set_default_text',
       params: { name: plan.name, count: plan.subscribers_count ?? 0 },
       icon: 'warning',
       confirmText: 'plans.set_default_confirm'
