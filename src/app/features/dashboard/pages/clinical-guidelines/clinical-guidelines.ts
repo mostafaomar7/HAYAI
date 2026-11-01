@@ -44,15 +44,19 @@ export class ClinicalGuidelines {
   readonly perPage = 25;
   page = signal(1);
   search = signal('');
+  specialtyFilter = signal('');
+  /** Only offered under a specialty that has subspecialties. */
   subspecialtyFilter = signal('');
   /** '' = both, '1' = what doctors see, '0' = drafts. */
   publishedFilter = signal('');
+  specialties = signal<OptionRow[]>([]);
+  /** The subspecialties of the filtered specialty only. */
   subspecialties = signal<OptionRow[]>([]);
 
   constructor() {
-    this.lists.all(OPTION_LISTS['doctor-subspecialties']).subscribe({
-      next: r => this.subspecialties.set(r.items),
-      error: () => this.subspecialties.set([])
+    this.lists.all(OPTION_LISTS['doctor-specialties']).subscribe({
+      next: r => this.specialties.set(r.items),
+      error: () => this.specialties.set([])
     });
     this.load();
   }
@@ -60,6 +64,7 @@ export class ClinicalGuidelines {
   load(): void {
     this.loading.set(true);
     this.loadError.set(null);
+    const spec = Number(this.specialtyFilter());
     const sub = Number(this.subspecialtyFilter());
     const pub = this.publishedFilter();
     this.svc
@@ -67,6 +72,8 @@ export class ClinicalGuidelines {
         page: this.page(),
         per_page: this.perPage,
         search: this.search() || undefined,
+        // A specialty alone returns its subspecialties' guidelines as well.
+        specialty_id: spec || undefined,
         subspecialty_id: sub || undefined,
         is_published: pub === '' ? undefined : (Number(pub) as 0 | 1)
       })
@@ -80,16 +87,26 @@ export class ClinicalGuidelines {
       });
   }
 
-  /** "Specialty — Subspecialty", so Cardiology under Internal Medicine is not confused with Pediatric Cardiology. */
-  subspecialtyLabel(row: OptionRow): string {
-    return row.specialty?.name ? `${row.specialty.name} — ${row.name}` : row.name;
-  }
-
   onSearch = debounce((value: string) => {
     this.search.set(value);
     this.page.set(1);
     this.load();
   }, 350);
+
+  setSpecialty(value: string): void {
+    this.specialtyFilter.set(value);
+    this.subspecialtyFilter.set('');
+    this.subspecialties.set([]);
+    const row = this.specialties().find(s => String(s.id) === value);
+    if (row?.has_subspecialties) {
+      this.lists.all(OPTION_LISTS['doctor-subspecialties'], { specialty_id: Number(value) }).subscribe({
+        next: r => { if (this.specialtyFilter() === value) this.subspecialties.set(r.items); },
+        error: () => this.subspecialties.set([])
+      });
+    }
+    this.page.set(1);
+    this.load();
+  }
 
   setSubspecialty(value: string): void {
     this.subspecialtyFilter.set(value);

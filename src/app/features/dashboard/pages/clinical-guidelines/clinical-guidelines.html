@@ -16,13 +16,24 @@
         </div>
 
         <div class="filter-select">
-          <select [value]="subspecialtyFilter()" (change)="setSubspecialty($any($event.target).value)">
-            <option value="">{{ 'common.all' | t }} — {{ 'guidelines.category' | t }}</option>
-            @for (s of subspecialties(); track s.id) {
-              <option [value]="s.id" [selected]="subspecialtyFilter() === (s.id + '')">{{ subspecialtyLabel(s) }}</option>
+          <select [value]="specialtyFilter()" (change)="setSpecialty($any($event.target).value)">
+            <option value="" [selected]="specialtyFilter() === ''">{{ 'common.all' | t }} — {{ 'guidelines.specialty' | t }}</option>
+            @for (s of specialties(); track s.id) {
+              <option [value]="s.id" [selected]="specialtyFilter() === (s.id + '')">{{ s.name }}</option>
             }
           </select>
         </div>
+
+        @if (subspecialties().length) {
+          <div class="filter-select">
+            <select [value]="subspecialtyFilter()" (change)="setSubspecialty($any($event.target).value)">
+              <option value="" [selected]="subspecialtyFilter() === ''">{{ 'common.all' | t }} — {{ 'guidelines.subspecialty' | t }}</option>
+              @for (s of subspecialties(); track s.id) {
+                <option [value]="s.id" [selected]="subspecialtyFilter() === (s.id + '')">{{ s.name }}</option>
+              }
+            </select>
+          </div>
+        }
 
         <div class="filter-select">
           <select [value]="publishedFilter()" (change)="setPublished($any($event.target).value)">

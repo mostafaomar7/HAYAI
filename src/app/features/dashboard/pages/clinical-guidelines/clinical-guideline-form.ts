@@ -30,6 +30,8 @@ interface Draft {
   title_ar: string;
   summary_en: string;
   summary_ar: string;
+  specialty_id: string;
+  /** '' = filed on the specialty itself. */
   subspecialty_id: string;
   sections: SectionDraft[];
   source: string;
@@ -82,11 +84,13 @@ export class ClinicalGuidelineForm {
   loadError = signal<string | null>(null);
   formError = signal<string | null>(null);
   errors = signal<Record<string, string>>({});
+  specialties = signal<OptionRow[]>([]);
+  /** The subspecialties of the chosen specialty only. */
   subspecialties = signal<OptionRow[]>([]);
 
   draft = signal<Draft>({
     title_en: '', title_ar: '', summary_en: '', summary_ar: '',
-    subspecialty_id: '', sections: [emptySection()],
+    specialty_id: '', subspecialty_id: '', sections: [emptySection()],
     source: '', source_url: '', last_reviewed_at: '',
     // A new record starts switched off. This screen published immediately on save
     // while pages, articles, products and FAQs all start as drafts — the same
@@ -103,10 +107,23 @@ export class ClinicalGuidelineForm {
 
   isEdit = computed(() => this.id() !== null);
 
+  /**
+   * The subspecialty picker shows only under a specialty that has some. Until
+   * the specialties load, a stored subspecialty still counts, so an edit does
+   * not hide the value it came with.
+   */
+  showSubspecialty = computed(() => {
+    const d = this.draft();
+    const row = this.specialties().find(s => String(s.id) === d.specialty_id);
+    return row ? !!row.has_subspecialties : !!d.subspecialty_id;
+  });
+
   constructor() {
-    this.lists.all(OPTION_LISTS['doctor-subspecialties']).subscribe({
-      next: r => this.subspecialties.set(r.items),
-      error: () => this.subspecialties.set([])
+    // Every specialty, not only those with subspecialties: Critical Care,
+    // Anesthesia and 15 more have none and could not be picked before.
+    this.lists.all(OPTION_LISTS['doctor-specialties']).subscribe({
+      next: r => this.specialties.set(r.items),
+      error: () => this.specialties.set([])
     });
 
     const raw = this.route.snapshot.paramMap.get('id');
@@ -121,6 +138,7 @@ export class ClinicalGuidelineForm {
     this.svc.get(id).subscribe({
       next: g => {
         this.draft.set(this.toDraft(g));
+        this.loadSubspecialties(this.draft().specialty_id);
         this.storedPdfName.set(g.has_pdf ? (g.pdf_name ?? 'PDF') : null);
         this.storedPdfUrl.set(g.pdf_url ?? null);
         if (g.pdf_max_kb) this.pdfMaxKb.set(g.pdf_max_kb);
@@ -138,6 +156,7 @@ export class ClinicalGuidelineForm {
       title_ar: g.title_ar ?? '',
       summary_en: g.summary_en ?? '',
       summary_ar: g.summary_ar ?? '',
+      specialty_id: g.specialty_id ? String(g.specialty_id) : '',
       subspecialty_id: g.subspecialty_id ? String(g.subspecialty_id) : '',
       sections: g.sections?.length
         ? g.sections.map(s => ({
@@ -236,8 +255,27 @@ export class ClinicalGuidelineForm {
     return text.split(/\r?\n/).map(l => l.replace(BULLET, '').trim()).filter(Boolean);
   }
 
-  subspecialtyLabel(row: OptionRow): string {
-    return row.specialty?.name ? `${row.specialty.name} — ${row.name}` : row.name;
+  /** A new specialty clears the subspecialty: the old one belongs to another. */
+  setSpecialty(value: string): void {
+    this.draft.update(d => ({ ...d, specialty_id: value, subspecialty_id: '' }));
+    const errors = { ...this.errors() };
+    delete errors['specialty_id'];
+    delete errors['subspecialty_id'];
+    this.errors.set(errors);
+    this.loadSubspecialties(value);
+  }
+
+  private loadSubspecialties(specialtyId: string): void {
+    this.subspecialties.set([]);
+    if (!specialtyId) return;
+    // `all` sends per_page=all: there are 60 and the default page is 50.
+    this.lists.all(OPTION_LISTS['doctor-subspecialties'], { specialty_id: Number(specialtyId) }).subscribe({
+      next: r => {
+        // A slow answer for a specialty the admin has since changed is dropped.
+        if (this.draft().specialty_id === specialtyId) this.subspecialties.set(r.items);
+      },
+      error: () => this.subspecialties.set([])
+    });
   }
 
   // ----------------------------------------------------------------- saving
@@ -246,6 +284,7 @@ export class ClinicalGuidelineForm {
     const d = this.draft();
     const errors: Record<string, string> = {};
     if (!d.title_en.trim() && !d.title_ar.trim()) errors['title_en'] = 'guidelines.title_required';
+    if (!d.specialty_id) errors['specialty_id'] = 'guidelines.specialty_required';
     if (d.source_url.trim() && !/^https?:\/\//i.test(d.source_url.trim())) errors['source_url'] = 'guidelines.url_invalid';
     if (d.sort_order.trim() && !/^\d+$/.test(d.sort_order.trim())) errors['sort_order'] = 'guidelines.sort_invalid';
     this.errors.set(errors);
@@ -267,10 +306,9 @@ export class ClinicalGuidelineForm {
       title_ar: d.title_ar.trim() || null,
       summary_en: d.summary_en.trim() || null,
       summary_ar: d.summary_ar.trim() || null,
-      subspecialty_id: d.subspecialty_id ? Number(d.subspecialty_id) : null,
-      // The backend fills the specialty in from the subspecialty; sending both
-      // risks a mismatch 422, so the specialty is left to it.
-      specialty_id: null,
+      specialty_id: Number(d.specialty_id),
+      // Sent as null, never left out: see GuidelinePayload.
+      subspecialty_id: this.showSubspecialty() && d.subspecialty_id ? Number(d.subspecialty_id) : null,
       sections,
       source: d.source.trim() || null,
       source_url: d.source_url.trim() || null,

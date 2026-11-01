@@ -539,7 +539,7 @@
   "guidelines.app_hint": "These are the guidelines doctors see in the app. Nothing is pre-filled: an empty list here means an empty screen for them.",
   "guidelines.bullets": "{count} bullets",
   "guidelines.category": "Category",
-  "guidelines.category_hint": "Pick the subspecialty — Cardiology is under Internal Medicine. The specialty is filled in automatically.",
+  "guidelines.category_hint": "Pick the specialty. If it has subspecialties you can narrow it down, or leave it on the specialty itself.",
   "guidelines.col_title": "Title",
   "guidelines.count": "{count} guidelines",
   "guidelines.created": "Guideline added",
@@ -3659,5 +3659,11 @@
   "gorders.ship_notes": "Shipping notes",
   "gorders.gallery_images": "More photos",
   "gorders.gallery_hint": "Optional. Shown in the app's gallery after the cover.",
-  "gorders.gallery_selected": "{n} photo(s) selected"
+  "gorders.gallery_selected": "{n} photo(s) selected",
+  "guidelines.specialty": "Specialty",
+  "guidelines.subspecialty": "Subspecialty",
+  "guidelines.choose_specialty": "Choose a specialty",
+  "guidelines.subspecialty_none": "— None —",
+  "guidelines.subspecialty_hint": "Optional. Cardiology is under Internal Medicine.",
+  "guidelines.specialty_required": "Choose a specialty."
 }

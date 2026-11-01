@@ -547,7 +547,7 @@
   "guidelines.app_hint": "دي الإرشادات اللي الدكاترة بيشوفوها في التطبيق. مفيش محتوى جاهز: لو القايمة هنا فاضية، الشاشة عندهم فاضية.",
   "guidelines.bullets": "{count} نقطة",
   "guidelines.category": "التصنيف",
-  "guidelines.category_hint": "اختار التخصص الفرعي — أمراض القلب تحت الباطنة. التخصص الرئيسي بيتحدد تلقائي.",
+  "guidelines.category_hint": "اختار التخصص. لو ليه تخصصات فرعية تقدر تحدد منها، أو تسيبه على التخصص نفسه.",
   "guidelines.col_title": "العنوان",
   "guidelines.count": "{count} إرشاد",
   "guidelines.created": "تمت إضافة الإرشاد",
@@ -3708,5 +3708,11 @@
   "gorders.ship_notes": "ملاحظات الشحن",
   "gorders.gallery_images": "صور إضافية",
   "gorders.gallery_hint": "اختياري. تظهر في معرض الصور بالتطبيق بعد صورة الغلاف.",
-  "gorders.gallery_selected": "تم اختيار {n} صورة"
+  "gorders.gallery_selected": "تم اختيار {n} صورة",
+  "guidelines.specialty": "التخصص",
+  "guidelines.subspecialty": "التخصص الفرعي",
+  "guidelines.choose_specialty": "اختار تخصص",
+  "guidelines.subspecialty_none": "— بدون —",
+  "guidelines.subspecialty_hint": "اختياري. أمراض القلب تحت الباطنة.",
+  "guidelines.specialty_required": "اختار التخصص."
 }

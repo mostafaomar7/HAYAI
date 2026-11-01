@@ -52,18 +52,35 @@
           </div>
         </div>
 
-        <div class="grid-3 top-gap">
+        <div class="grid-2 top-gap">
           <div class="form-group">
-            <label>{{ 'guidelines.category' | t }}</label>
-            <select [value]="d.subspecialty_id" (change)="set('subspecialty_id', $any($event.target).value)">
-              <option value="">{{ 'guidelines.no_category' | t }}</option>
-              @for (s of subspecialties(); track s.id) {
-                <option [value]="s.id" [selected]="d.subspecialty_id === (s.id + '')">{{ subspecialtyLabel(s) }}</option>
+            <label>{{ 'guidelines.specialty' | t }} *</label>
+            <select [value]="d.specialty_id" (change)="setSpecialty($any($event.target).value)">
+              <option value="" [selected]="!d.specialty_id">{{ 'guidelines.choose_specialty' | t }}</option>
+              @for (s of specialties(); track s.id) {
+                <option [value]="s.id" [selected]="d.specialty_id === (s.id + '')">{{ s.name }}</option>
               }
             </select>
-            @if (errors()['subspecialty_id']) { <span class="field-error">{{ errors()['subspecialty_id'] | t }}</span> }
+            @if (errors()['specialty_id']) { <span class="field-error">{{ errors()['specialty_id'] | t }}</span> }
             <span class="hint">{{ 'guidelines.category_hint' | t }}</span>
           </div>
+          <div class="form-group">
+            @if (showSubspecialty()) {
+              <label>{{ 'guidelines.subspecialty' | t }}</label>
+              <select [value]="d.subspecialty_id" (change)="set('subspecialty_id', $any($event.target).value)">
+                <option value="" [selected]="!d.subspecialty_id">{{ 'guidelines.subspecialty_none' | t }}</option>
+                @for (s of subspecialties(); track s.id) {
+                  <option [value]="s.id" [selected]="d.subspecialty_id === (s.id + '')">{{ s.name }}</option>
+                }
+              </select>
+              <span class="hint">{{ 'guidelines.subspecialty_hint' | t }}</span>
+            }
+            <!-- Outside the @if: a 422 here must show under a specialty with no subspecialties too. -->
+            @if (errors()['subspecialty_id']) { <span class="field-error">{{ errors()['subspecialty_id'] | t }}</span> }
+          </div>
+        </div>
+
+        <div class="grid-2 top-gap">
           <div class="form-group">
             <label>{{ 'guidelines.last_reviewed' | t }}</label>
             <input type="date" [value]="d.last_reviewed_at" (input)="set('last_reviewed_at', $any($event.target).value)">

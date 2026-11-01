@@ -64,9 +64,13 @@ export interface GuidelinePayload {
   title_ar: string | null;
   summary_en: string | null;
   summary_ar: string | null;
-  /** The backend fills the specialty in from this, so it is the one to send. */
-  subspecialty_id: number | null;
+  /**
+   * Both keys always go, `null` included. A guideline may sit on a specialty
+   * with no subspecialty (17 of 29 have none). Leaving `subspecialty_id` out
+   * keeps the stored one, which then 422s against a new specialty.
+   */
   specialty_id: number | null;
+  subspecialty_id: number | null;
   /** `[]` clears every section; blank bullets and empty sections are dropped server-side. */
   sections: GuidelineSection[];
   source: string | null;
@@ -119,6 +123,9 @@ export class ClinicalGuidelinesService {
   ): Observable<ClinicalGuideline> {
     const form = new FormData();
     for (const [key, value] of Object.entries(body)) {
+      // A cleared subspecialty has to be sent, or the stored one stays; the
+      // backend reads an empty string as null.
+      if (key === 'subspecialty_id' && value === null) { form.append(key, ''); continue; }
       if (value === null || value === undefined) continue;
       // Multipart carries strings; sections are nested, so they go as JSON.
       form.append(key, key === 'sections' ? JSON.stringify(value) : String(value));
