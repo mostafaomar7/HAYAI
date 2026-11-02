@@ -81,28 +81,60 @@
     @if (showDoctorFilters()) {
       <div class="form-group sub-filter">
         <label>{{ 'notif.send.specialty' | t }}</label>
-        <div class="chips scroll">
-          @for (s of specialties(); track s.id) {
-            <label class="chip" [class.on]="selectedSpecialties().has($any(s.id))">
-              <input type="checkbox" [checked]="selectedSpecialties().has($any(s.id))"
-                     (change)="toggleSpecialty($any(s.id))">
-              <span>{{ specialtyLabel(s) }}</span>
+
+        <div class="tree-tools">
+          <!-- Hidden in the fallback: the plain lists cannot tell who has doctors. -->
+          @if (!legacyTree()) {
+            <label class="only-registered">
+              <input type="checkbox" [checked]="withDoctors()" (change)="setWithDoctors($any($event.target).checked)">
+              <span>{{ 'notif.send.only_registered' | t }}</span>
             </label>
           }
+          <input class="tree-search" type="text" [placeholder]="'notif.send.search_specialties' | t"
+                 [value]="specialtySearch()" (input)="specialtySearch.set($any($event.target).value)">
         </div>
 
-        @if (subspecialties().length) {
-          <label class="sub-label">{{ 'notif.send.subspecialty' | t }}</label>
-          <div class="chips scroll">
-            @for (s of subspecialties(); track s.id) {
-              <label class="chip" [class.on]="selectedSubspecialties().has($any(s.id))">
-                <input type="checkbox" [checked]="selectedSubspecialties().has($any(s.id))"
-                       (change)="toggleSubspecialty($any(s.id))">
-                <span>{{ specialtyLabel(s) }}</span>
-              </label>
+        <div class="spec-tree">
+          @if (treeLoading()) {
+            <p class="tree-empty">{{ 'common.loading' | t }}</p>
+          } @else {
+            @for (node of visibleTree(); track node.row.id) {
+              <div class="spec-row">
+                <label class="spec-item" [class.on]="selectedSpecialties().has(node.row.id)">
+                  <input type="checkbox" [checked]="selectedSpecialties().has(node.row.id)" (change)="toggleSpecialty(node)">
+                  <span>{{ nodeLabel(node.row) }}</span>
+                </label>
+                @if (node.row.has_subspecialties) {
+                  <button type="button" class="expand-btn" [class.open]="node.open" (click)="toggleExpand(node)"
+                          [attr.aria-expanded]="node.open" [attr.aria-label]="'notif.send.subspecialty' | t">▾</button>
+                }
+              </div>
+              @if (node.open && node.row.has_subspecialties) {
+                <div class="sub-list">
+                  @if (node.shown === null) {
+                    <p class="tree-empty">{{ 'common.loading' | t }}</p>
+                  } @else {
+                    @for (s of node.shown; track s.id) {
+                      <!-- Under a ticked specialty every subspecialty is already reached. -->
+                      <label class="spec-item sub" [class.on]="selectedSpecialties().has(node.row.id) || selectedSubspecialties().has(s.id)"
+                             [class.included]="selectedSpecialties().has(node.row.id)">
+                        <input type="checkbox"
+                               [checked]="selectedSpecialties().has(node.row.id) || selectedSubspecialties().has(s.id)"
+                               [disabled]="selectedSpecialties().has(node.row.id)"
+                               (change)="toggleSubspecialty(s.id)">
+                        <span>{{ nodeLabel(s) }}</span>
+                      </label>
+                    } @empty {
+                      <p class="tree-empty">{{ 'notif.send.no_sub_doctors' | t }}</p>
+                    }
+                  }
+                </div>
+              }
+            } @empty {
+              <p class="tree-empty">{{ 'common.no_data' | t }}</p>
             }
-          </div>
-        }
+          }
+        </div>
         <p class="hint">{{ 'notif.send.doctor_hint' | t }}</p>
       </div>
     }

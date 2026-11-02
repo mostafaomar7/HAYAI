@@ -3498,7 +3498,7 @@
   "notif.send.gender_hint": "Narrows patients and tourists only — every other selected type is left whole. An account with no gender recorded is not reached by either choice.",
   "notif.send.specialty": "Specialty",
   "notif.send.subspecialty": "Subspecialty",
-  "notif.send.doctor_hint": "Narrows doctors only. A doctor is reached if their specialty or their subspecialty is ticked. Cardiology is a subspecialty of Internal Medicine, not a specialty.",
+  "notif.send.doctor_hint": "Narrows doctors only. Tick a specialty to reach all its doctors, or open it to pick subspecialties. The number is the doctors each one reaches.",
   "notif.send.counting": "Counting…",
   "notif.send.count_failed": "The audience count is unavailable. Sending still works.",
   "notif.send.chars_left": "{count} characters left",
@@ -3672,5 +3672,8 @@
   "plans.tourist_modules_hint": "Switch a module off here and it disappears from the app for every tourist on this plan.",
   "plans.affects_tourists_text": "These modules apply to all {count} tourists the moment this is saved. A module you switch off disappears from their app.",
   "plans.set_default_tourist_text": "This becomes the plan the entire tourist base is on. Every tourist without an exception ({count}) moves onto it immediately, and the plan holding it now will be demoted. Patients are not affected.",
-  "users.plan_internal": "(internal)"
+  "users.plan_internal": "(internal)",
+  "notif.send.only_registered": "Only specialties doctors registered with",
+  "notif.send.search_specialties": "Search specialties and subspecialties",
+  "notif.send.no_sub_doctors": "No doctor picked a subspecialty here."
 }

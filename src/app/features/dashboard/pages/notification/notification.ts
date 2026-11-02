@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BroadcastGender,
+  BroadcastSpecialty,
   BroadcastTarget,
   DoctorSpecialty,
   NotificationsService,
@@ -28,6 +29,12 @@ const LINK_OK = /^https?:\/\/\S+$/i;
 /** Only these two take a gender; the rest are organisations. */
 const GENDERED = new Set(['patient', 'tourist']);
 const DOCTOR = 'doctor';
+
+/** A specialty in the picker. `subs` is null until known (the fallback loads them on open). */
+interface SpecialtyNode {
+  row: BroadcastSpecialty;
+  subs: (DoctorSpecialty & { doctors_count?: number })[] | null;
+}
 
 /**
  * Fallback for an unreachable `/lookups/user-types`.
@@ -89,8 +96,37 @@ export class Notification {
   selectedSubspecialties = signal<ReadonlySet<number>>(new Set());
 
   userTypes = signal<LookupItem[]>(FALLBACK_TYPES);
-  specialties = signal<DoctorSpecialty[]>([]);
-  subspecialties = signal<DoctorSpecialty[]>([]);
+  /** Default on: only what registered doctors signed up with. */
+  withDoctors = signal(true);
+  tree = signal<SpecialtyNode[]>([]);
+  treeLoading = signal(false);
+  /**
+   * The broadcast endpoint is not on every server yet. Without it the picker
+   * falls back to the plain lists: no counts, no toggle, subspecialties
+   * loaded when a specialty is opened.
+   */
+  legacyTree = signal(false);
+  expanded = signal<ReadonlySet<number>>(new Set());
+  specialtySearch = signal('');
+
+  /**
+   * The search runs over both levels. A specialty that matches keeps all its
+   * subspecialties; one kept only for a matching subspecialty shows just those,
+   * opened.
+   */
+  visibleTree = computed(() => {
+    const term = this.specialtySearch().trim().toLowerCase();
+    if (!term) return this.tree().map(n => ({ ...n, open: this.expanded().has(n.row.id), shown: n.subs }));
+    const hit = (r: DoctorSpecialty) =>
+      [r.name, r.name_en, r.name_ar].some(x => (x ?? '').toLowerCase().includes(term));
+    return this.tree()
+      .map(n => {
+        if (hit(n.row)) return { ...n, open: this.expanded().has(n.row.id), shown: n.subs };
+        const subs = (n.subs ?? []).filter(hit);
+        return subs.length ? { ...n, open: true, shown: subs } : null;
+      })
+      .filter((n): n is SpecialtyNode & { open: boolean; shown: SpecialtyNode['subs'] } => n !== null);
+  });
 
   sending = signal(false);
   successMsg = signal<string | null>(null);
@@ -142,10 +178,82 @@ export class Notification {
       // The fallback is already in place and carries the same spellings.
       error: () => this.refreshReach()
     });
-    this.svc.specialties().pipe(takeUntilDestroyed()).subscribe({
-      next: rows => this.specialties.set(rows ?? []),
-      error: () => this.specialties.set([])
+    this.loadTree();
+  }
+
+  // ───────────────────────────────────────────────────────── specialties
+
+  private loadTree(): void {
+    this.treeLoading.set(true);
+    this.svc.broadcastSpecialties(this.withDoctors()).subscribe({
+      next: rows => {
+        this.legacyTree.set(false);
+        this.setTree((rows ?? []).map(row => ({ row, subs: row.subspecialties ?? [] })));
+      },
+      // 404 until the backend release of 2026-11-02 is live.
+      error: () => this.loadLegacyTree()
     });
+  }
+
+  private loadLegacyTree(): void {
+    this.legacyTree.set(true);
+    this.svc.specialties().subscribe({
+      next: rows => this.setTree((rows ?? []).map(row => ({ row, subs: null }))),
+      error: () => this.setTree([])
+    });
+  }
+
+  /**
+   * A tick that is no longer on screen would still be sent and still count,
+   * with nothing showing why, so ticks outside the new list are dropped.
+   */
+  private setTree(nodes: SpecialtyNode[]): void {
+    this.tree.set(nodes);
+    this.treeLoading.set(false);
+    const specs = new Set(nodes.map(n => n.row.id));
+    const subs = new Set(nodes.flatMap(n => (n.subs ?? []).map(s => s.id)));
+    const keptSpecs = [...this.selectedSpecialties()].filter(id => specs.has(id));
+    // In the fallback, subspecialties are not known until opened; keep those ticks.
+    const keptSubs = this.legacyTree()
+      ? [...this.selectedSubspecialties()]
+      : [...this.selectedSubspecialties()].filter(id => subs.has(id));
+    const changed = keptSpecs.length !== this.selectedSpecialties().size
+      || keptSubs.length !== this.selectedSubspecialties().size;
+    this.selectedSpecialties.set(new Set(keptSpecs));
+    this.selectedSubspecialties.set(new Set(keptSubs));
+    if (changed) this.refreshReach();
+  }
+
+  setWithDoctors(on: boolean): void {
+    this.withDoctors.set(on);
+    this.loadTree();
+  }
+
+  toggleExpand(node: SpecialtyNode): void {
+    const next = new Set(this.expanded());
+    const id = node.row.id;
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+      if (node.subs === null) this.loadLegacySubs(id);
+    }
+    this.expanded.set(next);
+  }
+
+  private loadLegacySubs(specialtyId: number): void {
+    this.svc.subspecialties(specialtyId).subscribe({
+      next: rows => this.tree.update(list =>
+        list.map(n => (n.row.id === specialtyId ? { ...n, subs: rows ?? [] } : n))),
+      error: () => this.tree.update(list =>
+        list.map(n => (n.row.id === specialtyId ? { ...n, subs: [] } : n)))
+    });
+  }
+
+  /** The name, and the doctors it reaches when the server counted them. */
+  nodeLabel(row: DoctorSpecialty & { doctors_count?: number }): string {
+    const name = this.specialtyLabel(row);
+    return typeof row.doctors_count === 'number' ? `${name} (${row.doctors_count})` : name;
   }
 
   /** An account type: our word for the API's id, falling back to its own. */
@@ -180,7 +288,6 @@ export class Notification {
     if (!next.has(DOCTOR) && !this.everyone()) {
       this.selectedSpecialties.set(new Set());
       this.selectedSubspecialties.set(new Set());
-      this.subspecialties.set([]);
     }
     if (![...next].some(t => GENDERED.has(t)) && !this.everyone()) {
       this.selectedGenders.set(new Set());
@@ -195,13 +302,20 @@ export class Notification {
     this.refreshReach();
   }
 
-  toggleSpecialty(id: number): void {
+  /**
+   * A ticked specialty already reaches every doctor under it, so its
+   * subspecialty ticks are dropped rather than sent alongside.
+   */
+  toggleSpecialty(node: SpecialtyNode): void {
+    const id = node.row.id;
     const next = new Set(this.selectedSpecialties());
     if (next.has(id)) {
       next.delete(id);
     } else {
       next.add(id);
-      this.loadSubspecialties(id);
+      const under = new Set((node.subs ?? []).map(s => s.id));
+      this.selectedSubspecialties.set(
+        new Set([...this.selectedSubspecialties()].filter(s => !under.has(s))));
     }
     this.selectedSpecialties.set(next);
     this.refreshReach();
@@ -212,20 +326,6 @@ export class Notification {
     if (next.has(id)) next.delete(id); else next.add(id);
     this.selectedSubspecialties.set(next);
     this.refreshReach();
-  }
-
-  /** Subspecialties are per specialty, so the list grows as specialties are picked. */
-  private loadSubspecialties(specialtyId: number): void {
-    this.svc.subspecialties(specialtyId).subscribe({
-      next: rows => {
-        const seen = new Set(this.subspecialties().map(r => r.id));
-        this.subspecialties.set([
-          ...this.subspecialties(),
-          ...(rows ?? []).filter(r => !seen.has(r.id))
-        ]);
-      },
-      error: () => undefined
-    });
   }
 
   // ───────────────────────────────────────────────────────── the target

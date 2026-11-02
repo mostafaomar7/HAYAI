@@ -101,6 +101,18 @@ export interface DoctorSpecialty {
   has_subspecialties?: boolean;
 }
 
+/**
+ * One specialty as the broadcast picker gets it, with its subspecialties
+ * nested and the doctors each one reaches. Same order as sign-up.
+ */
+export interface BroadcastSpecialty extends DoctorSpecialty {
+  /** Doctors under the specialty, whatever their subspecialty; blocked ones left out. */
+  doctors_count?: number;
+  /** Stays true even when `with_doctors=1` filtered every subspecialty out. */
+  has_subspecialties?: boolean;
+  subspecialties?: (DoctorSpecialty & { doctors_count?: number })[];
+}
+
 export interface BroadcastPreview {
   total: number;
   /**
@@ -247,6 +259,17 @@ export class NotificationsService {
 
   broadcast(body: BroadcastRequest): Observable<BroadcastResponse> {
     return this.api.post<BroadcastResponse>('/admin/notifications/broadcast', body);
+  }
+
+  /**
+   * The sign-up taxonomy, both levels in one call (backend, 2026-11-02).
+   * `withDoctors` keeps only what registered doctors actually picked.
+   */
+  broadcastSpecialties(withDoctors: boolean): Observable<BroadcastSpecialty[]> {
+    return this.api.get<BroadcastSpecialty[]>(
+      '/admin/notifications/broadcast/doctor-specialties',
+      withDoctors ? { with_doctors: 1 } : {}
+    );
   }
 
   specialties(): Observable<DoctorSpecialty[]> {
