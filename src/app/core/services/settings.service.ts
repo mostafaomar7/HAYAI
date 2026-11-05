@@ -17,6 +17,8 @@ export interface PlatformSetting {
   key: string;
   group: string;
   type: SettingType | string;
+  /** Narrows `type` where the text has a shape, such as `email_list`. */
+  format?: string | null;
   value: unknown;
   default: unknown;
   /** True while nobody has changed it, so the row still shows the default. */

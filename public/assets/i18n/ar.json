@@ -3724,5 +3724,9 @@
   "users.plan_internal": "(داخلية)",
   "notif.send.only_registered": "التخصصات اللي فيها دكاترة مسجلين بس",
   "notif.send.search_specialties": "دوّر في التخصصات والتخصصات الدقيقة",
-  "notif.send.no_sub_doctors": "مفيش دكتور اختار تخصص دقيق هنا."
+  "notif.send.no_sub_doctors": "مفيش دكتور اختار تخصص دقيق هنا.",
+  "settings.group.support": "الدعم",
+  "settings.key.support.emails": "إيميلات الدعم",
+  "settings.email_list_placeholder": "islam@hayaihealthcare.com, contact@hayaihealthcare.com",
+  "settings.email_list_hint": "افصل بين العناوين بفاصلة. أول عنوان هو الأساسي، ونسخ المتجر بتعرضه هو بس. لو سيبتها فاضية هتتستخدم العناوين المتسجلة على السيرفر."
 }

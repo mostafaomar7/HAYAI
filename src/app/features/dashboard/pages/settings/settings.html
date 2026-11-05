@@ -40,7 +40,17 @@
               </div>
 
               <div class="setting-control">
-                @switch (row.type) {
+                @switch (controlOf(row)) {
+                  @case ('email_list') {
+                    <!-- The order means something: the first address is the
+                         only one store builds show, so the box says so. -->
+                    <div class="email-list">
+                      <input type="text" dir="ltr" inputmode="email" [value]="textValue(row)"
+                             [placeholder]="'settings.email_list_placeholder' | t"
+                             (input)="setEmailList(row, $any($event.target).value)">
+                      <span class="state">{{ 'settings.email_list_hint' | t }}</span>
+                    </div>
+                  }
                   @case ('bool') {
                     <label class="switch">
                       <input type="checkbox" [checked]="boolValue(row)"

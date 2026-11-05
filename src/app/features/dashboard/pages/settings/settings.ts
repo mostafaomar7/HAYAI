@@ -141,6 +141,11 @@ export class Settings {
     return v === null || v === undefined ? '' : String(v);
   }
 
+  /** What to draw: a row's `format` is more specific than its `type`. */
+  controlOf(row: PlatformSetting): string {
+    return row.format === 'email_list' ? 'email_list' : row.type;
+  }
+
   /** Which of the three token states this row is in, for the helper line. */
   tokensState(row: PlatformSetting): 'uncapped' | 'none' | 'capped' {
     const v = this.valueOf(row);
@@ -184,6 +189,15 @@ export class Settings {
 
   setText(row: PlatformSetting, raw: string): void {
     this.setValue(row, raw === '' ? null : raw);
+  }
+
+  /**
+   * Text, never an array: PATCH refuses one as an unknown setting. Empty goes
+   * back to the addresses set on the server, so it is null rather than ''.
+   */
+  setEmailList(row: PlatformSetting, raw: string): void {
+    const trimmed = raw.trim();
+    this.setValue(row, trimmed === '' ? null : trimmed);
   }
 
   /** '' | 'true' | 'false', matching the three options in the select. */

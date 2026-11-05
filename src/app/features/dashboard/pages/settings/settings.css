@@ -72,6 +72,9 @@
 .switch input { width: 18px; height: 18px; accent-color: #2563EB; }
 
 .tokens { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.email-list { display: flex; flex-direction: column; gap: 6px; }
+.setting-control .email-list input[type="text"] { width: 340px; }
+.email-list .state { max-width: 340px; }
 .state { font-size: 12px; color: #6B7280; max-width: 220px; line-height: 1.5; }
 .state.ok { color: #047857; }
 .state.danger { color: #B45309; }
@@ -105,5 +108,7 @@
   .setting-control input[type="text"], .setting-control input[type="number"],
   .setting-control select.tri { width: 100%; }
   .setting-control { width: 100%; }
+  .setting-control .email-list input[type="text"] { width: 100%; }
+  .email-list .state { max-width: none; }
   .footer-bar .btn-primary, .footer-bar .btn-secondary { flex: 1; }
 }
