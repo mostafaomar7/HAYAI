@@ -325,6 +325,24 @@ export class Plans {
       }))
     );
     this.editingPlanId.set(plan.id);
+    this.trimDraftToCatalog(plan);
+  }
+
+  /**
+   * The rows above are the list's copy of the plan, which can predate a catalog
+   * change (a tab left open across a deploy). The catalog decides what exists,
+   * so anything it no longer has leaves the editor and with it the save. A
+   * failed catalog read leaves the rows as they are.
+   */
+  private trimDraftToCatalog(plan: Plan): void {
+    this.svc.modules(plan.plan_type).subscribe({
+      next: res => {
+        if (this.editingPlanId() !== plan.id || !res.items.length) return;
+        const known = new Set(res.items.map(c => c.key));
+        this.draft.update(rows => rows.filter(r => known.has(r.key)));
+      },
+      error: () => undefined
+    });
   }
 
   toggleDraft(key: string, event: Event) {
@@ -364,7 +382,8 @@ export class Plans {
     }
 
     this.savingModules.set(true);
-    const modules = (plan.modules ?? []).map(m => ({
+    // Only what the editor is showing: see trimDraftToCatalog.
+    const modules = (plan.modules ?? []).filter(m => chosen.has(m.module_key)).map(m => ({
       module_key: m.module_key,
       module_name: m.module_name,
       included: chosen.get(m.module_key) ?? m.included,
