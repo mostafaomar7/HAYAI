@@ -243,6 +243,24 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/ai/grants/ai-grants').then(m => m.AiGrants)
   },
+  {
+    path: 'ai/suggestions',
+    data: { title: 'ai.suggestions.title' },
+    loadComponent: () =>
+      import('./pages/ai/suggestions/ai-suggestions').then(m => m.AiSuggestions)
+  },
+  {
+    path: 'ai/suggestions/new',
+    data: { title: 'ai.suggestions.title' },
+    loadComponent: () =>
+      import('./pages/ai/suggestions/ai-suggestion-form').then(m => m.AiSuggestionForm)
+  },
+  {
+    path: 'ai/suggestions/:id/edit',
+    data: { title: 'ai.suggestions.title' },
+    loadComponent: () =>
+      import('./pages/ai/suggestions/ai-suggestion-form').then(m => m.AiSuggestionForm)
+  },
   // The bell links straight to `/dashboard/ai/token-requests/{id}`, so the
   // detail route has to exist on its own, not only as a row the list opens.
   {

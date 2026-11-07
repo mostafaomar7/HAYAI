@@ -1,0 +1,111 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <p class="hint-block">{{ loadError()! | t }}</p>
+  } @else {
+    @let d = draft();
+
+    <div class="card">
+      <div class="card-head">
+        <h2>{{ (isEdit() ? 'ai.suggestions.edit' : 'ai.suggestions.add') | t }}</h2>
+        <label class="switch">
+          <input type="checkbox" [checked]="d.is_active" [disabled]="!canManage()"
+                 (change)="set('is_active', $any($event.target).checked)">
+          <span>{{ (d.is_active ? 'ai.suggestions.active' : 'ai.suggestions.inactive') | t }}</span>
+        </label>
+      </div>
+      <p class="card-sub">
+        <span class="role-chip">{{ ('ai.suggestions.tab.' + role()) | t }}</span>
+        {{ 'ai.suggestions.live_hint' | t }}
+      </p>
+
+      @if (formError()) {
+        <div class="form-error">
+          <span>{{ formError()! | t }}</span>
+          @for (m of formErrorList(); track $index) { <span class="form-error-line">{{ m }}</span> }
+        </div>
+      }
+
+      <div class="panel">
+        <div class="form-group">
+          <label>{{ 'ai.suggestions.assistant' | t }} *</label>
+          <select [value]="d.module_key" [disabled]="!canManage() || modulesLoading()"
+                  (change)="set('module_key', $any($event.target).value)">
+            <option value="" [selected]="!d.module_key">
+              {{ (modulesLoading() ? 'common.loading' : 'ai.suggestions.choose_assistant') | t }}
+            </option>
+            @for (m of modules(); track m.key) {
+              <option [value]="m.key" [selected]="d.module_key === m.key">
+                {{ moduleOption(m, audienceKey(m) ? (audienceKey(m)! | t) : null) }}
+              </option>
+            }
+            @if (missingModule()) {
+              <option [value]="d.module_key" selected>{{ d.module_key }}</option>
+            }
+          </select>
+          @if (selectedModule(); as m) {
+            @if (audienceKey(m); as badge) {
+              <span class="audience" [class.off]="!m.enabled">{{ badge | t }}</span>
+            }
+          }
+          @if (errors()['module_key']) { <span class="field-error">{{ errors()['module_key'] | t }}</span> }
+        </div>
+
+        <div class="grid-2 top-gap">
+          <div class="form-group">
+            <label>{{ 'ai.suggestions.title_en' | t }} *</label>
+            <input type="text" dir="ltr" [value]="d.title_en" [attr.maxlength]="limits.title" [readonly]="!canManage()"
+                   (input)="set('title_en', $any($event.target).value)">
+            <span class="hint counter"><bdi dir="ltr">{{ d.title_en.length }} / {{ limits.title }}</bdi></span>
+            @if (errors()['title_en']) { <span class="field-error">{{ errors()['title_en'] | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'ai.suggestions.title_ar' | t }} *</label>
+            <input type="text" dir="rtl" [value]="d.title_ar" [attr.maxlength]="limits.title" [readonly]="!canManage()"
+                   (input)="set('title_ar', $any($event.target).value)">
+            <span class="hint counter"><bdi dir="ltr">{{ d.title_ar.length }} / {{ limits.title }}</bdi></span>
+            @if (errors()['title_ar']) { <span class="field-error">{{ errors()['title_ar'] | t }}</span> }
+          </div>
+        </div>
+
+        <div class="form-group top-gap slug-group">
+          <label>{{ 'ai.suggestions.slug' | t }}</label>
+          <input type="text" dir="ltr" [value]="d.slug" [attr.maxlength]="limits.slug" [readonly]="!canManage()"
+                 placeholder="ecg_summary" (input)="set('slug', $any($event.target).value)">
+          <span class="hint">{{ 'ai.suggestions.slug_hint' | t }}</span>
+          @if (errors()['slug']) { <span class="field-error">{{ errors()['slug'] | t }}</span> }
+        </div>
+
+        <div class="form-group top-gap">
+          <label>{{ 'ai.suggestions.prompt' | t }}</label>
+          <!-- Hidden from app users. Whichever language it is written in is
+               the one the AI reads, so the box follows the text. -->
+          <textarea dir="auto" rows="8" [value]="d.prompt" [readonly]="!canManage()" [class.over]="promptOver()"
+                    (input)="set('prompt', $any($event.target).value)"></textarea>
+          <div class="prompt-foot">
+            <span class="hint">{{ 'ai.suggestions.prompt_hint' | t }}</span>
+            <span class="counter" [class.over]="promptOver()"><bdi dir="ltr">{{ promptLength() }} / {{ limits.prompt }}</bdi></span>
+          </div>
+          @if (errors()['prompt']) { <span class="field-error">{{ errors()['prompt'] | t }}</span> }
+        </div>
+
+        @if (errors()['is_active']) { <span class="field-error">{{ errors()['is_active'] | t }}</span> }
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <button class="btn-secondary" (click)="back()">{{ 'common.cancel' | t }}</button>
+      <button class="btn-primary" *appCanManage [disabled]="saving() || promptOver()" (click)="save()">
+        {{ (saving() ? 'common.saving' : 'common.save') | t }}
+      </button>
+    </div>
+  }
+</div>

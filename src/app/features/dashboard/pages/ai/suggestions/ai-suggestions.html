@@ -1,0 +1,159 @@
+<div class="page-container">
+  <div class="table-card">
+
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'ai.suggestions.title' | t }}</h2>
+        @if (!loading() && !loadError()) {
+          <span class="badge">{{ 'ai.suggestions.count' | t : { count: rows().length, active: activeCount() } }}</span>
+        }
+      </div>
+
+      <div class="tab-group" role="tablist">
+        @for (r of roles; track r) {
+          <button class="tab-btn" role="tab" [class.active]="role() === r" [attr.aria-selected]="role() === r"
+                  (click)="setRole(r)">{{ ('ai.suggestions.tab.' + r) | t }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [placeholder]="'ai.suggestions.search' | t" [value]="search()" maxlength="100"
+               (input)="search.set($any($event.target).value)" />
+      </div>
+
+      <div class="filter-select">
+        <select [value]="moduleFilter()" (change)="moduleFilter.set($any($event.target).value)">
+          <option value="" [selected]="moduleFilter() === ''">{{ 'common.all' | t }} — {{ 'ai.suggestions.assistant' | t }}</option>
+          @for (m of modules(); track m.key) {
+            <option [value]="m.key" [selected]="moduleFilter() === m.key">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-select">
+        <select [value]="activeFilter()" (change)="activeFilter.set($any($event.target).value)">
+          <option value="" [selected]="activeFilter() === ''">{{ 'common.all' | t }} — {{ 'ai.suggestions.status' | t }}</option>
+          <option value="1" [selected]="activeFilter() === '1'">{{ 'ai.suggestions.active' | t }}</option>
+          <option value="0" [selected]="activeFilter() === '0'">{{ 'ai.suggestions.inactive' | t }}</option>
+        </select>
+      </div>
+
+      @if (filtered()) {
+        <button class="link-btn" (click)="clearFilters()">{{ 'ai.suggestions.clear_filters' | t }}</button>
+      }
+
+      <button class="btn-primary" *appCanManage (click)="add()">{{ 'ai.suggestions.add' | t }}</button>
+    </div>
+
+    <!-- Released app builds read these too, so the bar says it out loud. -->
+    <p class="hint-bar">
+      {{ 'ai.suggestions.live_hint' | t }}
+      @if (canManage() && filtered() && rows().length > 1) {
+        <span class="hint-strong">{{ 'ai.suggestions.clear_to_reorder' | t }}</span>
+      } @else if (reordering()) {
+        <span class="hint-strong">{{ 'ai.suggestions.saving_order' | t }}</span>
+      }
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            @if (canManage()) { <th class="handle-col"></th> }
+            <th class="num">#</th>
+            <th>{{ 'ai.suggestions.col_title' | t }}</th>
+            <th>{{ 'ai.suggestions.assistant' | t }}</th>
+            <th>{{ 'ai.suggestions.slug' | t }}</th>
+            <th>{{ 'ai.suggestions.col_prompt' | t }}</th>
+            <th>{{ 'ai.suggestions.status' | t }}</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody [class.dragging]="dragId() !== null" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
+          @if (loading()) {
+            <tr><td class="table-hint" colspan="8">{{ 'common.loading' | t }}</td></tr>
+          } @else if (loadError()) {
+            <tr><td class="table-hint" colspan="8">
+              <strong>{{ loadError()! | t }}</strong>
+              <button class="btn-secondary retry" (click)="load()">{{ 'common.retry' | t }}</button>
+            </td></tr>
+          } @else if (!rows().length) {
+            <tr><td class="table-hint" colspan="8">
+              <strong>{{ 'ai.suggestions.empty' | t }}</strong>
+              <span class="empty-sub">{{ 'ai.suggestions.empty_hint' | t }}</span>
+              <button class="btn-primary retry" *appCanManage (click)="add()">{{ 'ai.suggestions.add' | t }}</button>
+            </td></tr>
+          } @else if (!visible().length) {
+            <tr><td class="table-hint" colspan="8">
+              <strong>{{ 'ai.suggestions.empty_filtered' | t }}</strong>
+              <button class="btn-secondary retry" (click)="clearFilters()">{{ 'ai.suggestions.clear_filters' | t }}</button>
+            </td></tr>
+          } @else {
+            @for (row of visible(); track row.id; let i = $index; let first = $first; let last = $last) {
+              <tr class="openable" role="button" tabindex="0"
+                  [class.inactive]="!row.is_active"
+                  [class.drag-src]="dragId() === row.id"
+                  [class.drop-before]="dropIndex() === i && dragId() !== row.id"
+                  [class.drop-after]="last && dropIndex() === i + 1 && dragId() !== row.id"
+                  [attr.draggable]="isArmed(row) ? 'true' : null"
+                  (dragstart)="onDragStart($event, row)" (dragend)="onDragEnd()" (dragover)="onDragOver($event, i)"
+                  (click)="edit(row)" (keydown.enter)="edit(row)">
+                @if (canManage()) {
+                  <td class="handle-col" (click)="$event.stopPropagation()">
+                    @if (canReorder()) {
+                      <span class="drag-handle" (mousedown)="arm(row)" (mouseup)="disarm()" (touchstart)="arm(row)"
+                            [title]="'ai.suggestions.drag' | t" aria-hidden="true">⋮⋮</span>
+                      <span class="move-btns">
+                        <button class="icon-btn" [disabled]="first" (click)="moveBy(i, -1, $event)"
+                                [attr.aria-label]="'ai.suggestions.move_up' | t">↑</button>
+                        <button class="icon-btn" [disabled]="last" (click)="moveBy(i, 1, $event)"
+                                [attr.aria-label]="'ai.suggestions.move_down' | t">↓</button>
+                      </span>
+                    }
+                  </td>
+                }
+                <td class="num">{{ row.sort_order }}</td>
+                <td class="title-cell" [title]="otherTitle(row)">
+                  <bdi>{{ row.title }}</bdi>
+                  @if (!row.title_ar) { <span class="warn-chip">{{ 'ai.suggestions.no_arabic' | t }}</span> }
+                </td>
+                <td>
+                  <span class="module-tag">{{ row.module_name }}</span>
+                  @if (audienceKey(moduleOf(row)); as badge) {
+                    <span class="audience" [class.off]="!moduleOf(row)?.enabled">{{ badge | t }}</span>
+                  }
+                </td>
+                <td><code class="slug">{{ row.slug || '—' }}</code></td>
+                <td>
+                  @if (row.prompt) {
+                    <span class="pill pill-prompt">{{ 'ai.suggestions.has_prompt' | t }}</span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td (click)="$event.stopPropagation()">
+                  <label class="switch" [class.readonly]="!canManage()">
+                    <input type="checkbox" [checked]="row.is_active" [disabled]="!canManage() || toggling().has(row.id)"
+                           (click)="toggleActive(row, $event)">
+                    <span>{{ (row.is_active ? 'ai.suggestions.active' : 'ai.suggestions.inactive') | t }}</span>
+                  </label>
+                </td>
+                <td class="actions-col" (click)="$event.stopPropagation()">
+                  <span class="row-actions">
+                    <button class="link-btn" (click)="edit(row)">{{ (canManage() ? 'common.edit' : 'ai.suggestions.view') | t }}</button>
+                    <button class="link-danger" *appCanManage (click)="remove(row, $event)">{{ 'common.delete' | t }}</button>
+                  </span>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
