@@ -75,6 +75,10 @@
             @if (errors()['title_ar']) { <span class="field-error">{{ errors()['title_ar'] | t }}</span> }
           </div>
         </div>
+        <!-- The server recognises a tapped chip by this exact text, which is
+             why it must be unique per assistant and why an edit only reaches
+             users once their app reloads its assistants. -->
+        <span class="hint">{{ 'ai.suggestions.title_hint' | t }}</span>
 
         <div class="form-group top-gap slug-group">
           <label>{{ 'ai.suggestions.slug' | t }}</label>

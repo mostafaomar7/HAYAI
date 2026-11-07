@@ -3736,5 +3736,6 @@
   "ai.suggestions.err.title_too_long": "At most 300 characters.",
   "ai.suggestions.err.slug_format": "Lowercase letters, digits and underscores only.",
   "ai.suggestions.err.slug_too_long": "At most 64 characters.",
-  "ai.suggestions.err.prompt_too_long": "At most 2000 characters."
+  "ai.suggestions.err.prompt_too_long": "At most 2000 characters.",
+  "ai.suggestions.title_hint": "Users see this text. Editing it takes effect the next time the app loads its assistants. Each question must be unique within its assistant."
 }

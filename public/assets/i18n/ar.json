@@ -3785,5 +3785,6 @@
   "ai.suggestions.err.title_too_long": "أقصى حاجة 300 حرف.",
   "ai.suggestions.err.slug_format": "حروف إنجليزي صغيرة وأرقام و _ بس.",
   "ai.suggestions.err.slug_too_long": "أقصى حاجة 64 حرف.",
-  "ai.suggestions.err.prompt_too_long": "أقصى حاجة 2000 حرف."
+  "ai.suggestions.err.prompt_too_long": "أقصى حاجة 2000 حرف.",
+  "ai.suggestions.title_hint": "المستخدم بيشوف النص ده. التعديل بيظهر أول ما التطبيق يحمّل المساعدين تاني. وكل سؤال لازم ميتكررش جوه نفس المساعد."
 }
