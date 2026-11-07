@@ -47,6 +47,7 @@
 .form-group textarea.over { border-color: #DC2626; background: #FEF2F2; }
 .form-group input[readonly], .form-group textarea[readonly] { background: #F9FAFB; }
 .slug-group { max-width: 420px; }
+.checks { display: flex; flex-wrap: wrap; gap: 10px 24px; }
 
 .hint { display: block; font-size: 12px; color: #6B7280; margin-top: 6px; }
 .counter { font-size: 12px; color: #6B7280; font-variant-numeric: tabular-nums; }

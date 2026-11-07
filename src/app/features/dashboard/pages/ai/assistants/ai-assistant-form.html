@@ -1,0 +1,120 @@
+<div class="page-container">
+  <button class="back-btn" (click)="back()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+    {{ 'common.back' | t }}
+  </button>
+
+  @if (loading()) {
+    <p class="hint-block">{{ 'common.loading' | t }}</p>
+  } @else if (loadError()) {
+    <p class="hint-block">{{ loadError()! | t }}</p>
+  } @else {
+    @let d = draft();
+
+    <div class="card">
+      <div class="card-head">
+        <h2>{{ (isEdit() ? 'ai.assistants.edit' : 'ai.assistants.add') | t }}</h2>
+        <label class="switch">
+          <input type="checkbox" [checked]="d.enabled" [disabled]="!canManage()"
+                 (change)="set('enabled', $any($event.target).checked)">
+          <span>{{ (d.enabled ? 'ai.assistants.on' : 'ai.assistants.off') | t }}</span>
+        </label>
+      </div>
+      <p class="card-sub">
+        <span class="role-chip">{{ 'ai.suggestions.tab.patient' | t }}</span>
+        {{ (isEdit() ? 'ai.assistants.form_hint_edit' : 'ai.assistants.form_hint_new') | t }}
+      </p>
+
+      @if (formError()) {
+        <div class="form-error">
+          <span>{{ formError()! | t }}</span>
+          @for (m of formErrorList(); track $index) { <span class="form-error-line">{{ m }}</span> }
+        </div>
+      }
+
+      <div class="panel">
+        @if (isEdit()) {
+          <div class="form-group">
+            <label>{{ 'ai.assistants.key' | t }}</label>
+            <!-- Made by the server from the first English name; it never changes. -->
+            <input type="text" dir="ltr" [value]="key()" readonly>
+          </div>
+        }
+
+        <div class="grid-2" [class.top-gap]="isEdit()">
+          <div class="form-group">
+            <label>{{ 'ai.assistants.name_en' | t }} *</label>
+            <input type="text" dir="ltr" [value]="d.name_en" [attr.maxlength]="limits.name" [readonly]="!canManage()"
+                   placeholder="Skin Care" (input)="set('name_en', $any($event.target).value)">
+            <span class="hint counter"><bdi dir="ltr">{{ d.name_en.length }} / {{ limits.name }}</bdi></span>
+            @if (errors()['name_en']) { <span class="field-error">{{ errors()['name_en'] | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'ai.assistants.name_ar' | t }} *</label>
+            <input type="text" dir="rtl" [value]="d.name_ar" [attr.maxlength]="limits.name" [readonly]="!canManage()"
+                   placeholder="العناية بالبشرة" (input)="set('name_ar', $any($event.target).value)">
+            <span class="hint counter"><bdi dir="ltr">{{ d.name_ar.length }} / {{ limits.name }}</bdi></span>
+            @if (errors()['name_ar']) { <span class="field-error">{{ errors()['name_ar'] | t }}</span> }
+          </div>
+        </div>
+
+        <div class="form-group top-gap">
+          <label>{{ 'ai.assistants.audience' | t }} *</label>
+          <div class="checks">
+            <label class="switch">
+              <input type="checkbox" [checked]="d.patients" [disabled]="!canManage()"
+                     (change)="set('patients', $any($event.target).checked)">
+              <span>{{ 'ai.assistants.patients' | t }}</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" [checked]="d.tourists" [disabled]="!canManage()"
+                     (change)="set('tourists', $any($event.target).checked)">
+              <span>{{ 'ai.assistants.tourists' | t }}</span>
+            </label>
+          </div>
+          @if (errors()['user_types']) { <span class="field-error">{{ errors()['user_types'] | t }}</span> }
+        </div>
+
+        <div class="grid-2 top-gap">
+          <div class="form-group">
+            <label>{{ 'ai.assistants.entry_en' | t }}</label>
+            <input type="text" dir="ltr" [value]="d.entry_question_en" [attr.maxlength]="limits.entryQuestion" [readonly]="!canManage()"
+                   placeholder="Questions about your skin?" (input)="set('entry_question_en', $any($event.target).value)">
+            <span class="hint counter"><bdi dir="ltr">{{ d.entry_question_en.length }} / {{ limits.entryQuestion }}</bdi></span>
+            @if (errors()['entry_question_en']) { <span class="field-error">{{ errors()['entry_question_en'] | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'ai.assistants.entry_ar' | t }}</label>
+            <input type="text" dir="rtl" [value]="d.entry_question_ar" [attr.maxlength]="limits.entryQuestion" [readonly]="!canManage()"
+                   placeholder="عندك سؤال عن بشرتك؟" (input)="set('entry_question_ar', $any($event.target).value)">
+            <span class="hint counter"><bdi dir="ltr">{{ d.entry_question_ar.length }} / {{ limits.entryQuestion }}</bdi></span>
+            @if (errors()['entry_question_ar']) { <span class="field-error">{{ errors()['entry_question_ar'] | t }}</span> }
+          </div>
+        </div>
+        <span class="hint">{{ 'ai.assistants.entry_hint' | t }}</span>
+
+        <div class="form-group top-gap">
+          <label>{{ 'ai.assistants.brief' | t }}</label>
+          <textarea dir="auto" rows="8" [value]="d.brief" [readonly]="!canManage()" [class.over]="briefOver()"
+                    (input)="set('brief', $any($event.target).value)"></textarea>
+          <div class="prompt-foot">
+            <span class="hint">{{ 'ai.assistants.brief_hint' | t }}</span>
+            <span class="counter" [class.over]="briefOver()"><bdi dir="ltr">{{ d.brief.length }} / {{ limits.brief }}</bdi></span>
+          </div>
+          @if (errors()['brief']) { <span class="field-error">{{ errors()['brief'] | t }}</span> }
+        </div>
+
+        @if (errors()['enabled']) { <span class="field-error">{{ errors()['enabled'] | t }}</span> }
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <button class="btn-secondary" (click)="back()">{{ 'common.cancel' | t }}</button>
+      <button class="btn-primary" *appCanManage [disabled]="saving() || briefOver()" (click)="save()">
+        {{ (saving() ? 'common.saving' : 'common.save') | t }}
+      </button>
+    </div>
+  }
+</div>

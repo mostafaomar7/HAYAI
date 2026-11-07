@@ -244,6 +244,24 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/ai/grants/ai-grants').then(m => m.AiGrants)
   },
   {
+    path: 'ai/assistants',
+    data: { title: 'ai.assistants.title' },
+    loadComponent: () =>
+      import('./pages/ai/assistants/ai-assistants').then(m => m.AiAssistants)
+  },
+  {
+    path: 'ai/assistants/new',
+    data: { title: 'ai.assistants.title' },
+    loadComponent: () =>
+      import('./pages/ai/assistants/ai-assistant-form').then(m => m.AiAssistantForm)
+  },
+  {
+    path: 'ai/assistants/:key/edit',
+    data: { title: 'ai.assistants.title' },
+    loadComponent: () =>
+      import('./pages/ai/assistants/ai-assistant-form').then(m => m.AiAssistantForm)
+  },
+  {
     path: 'ai/suggestions',
     data: { title: 'ai.suggestions.title' },
     loadComponent: () =>

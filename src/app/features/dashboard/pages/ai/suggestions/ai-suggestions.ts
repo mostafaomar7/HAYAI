@@ -75,6 +75,9 @@ export class AiSuggestions {
   constructor() {
     const asked = this.route.snapshot.queryParamMap.get('role');
     if (asked === 'doctor' || asked === 'patient') this.role.set(asked);
+    // `?module=` opens the list on one assistant (from AI Assistants).
+    const module = this.route.snapshot.queryParamMap.get('module');
+    if (module) this.moduleFilter.set(module);
     this.load();
   }
 

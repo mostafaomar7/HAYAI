@@ -32,6 +32,9 @@
           @for (m of modules(); track m.key) {
             <option [value]="m.key" [selected]="moduleFilter() === m.key">{{ m.name }}</option>
           }
+          @if (moduleFilter() && !modules().length) {
+            <option [value]="moduleFilter()" selected>{{ moduleFilter() }}</option>
+          }
         </select>
       </div>
 

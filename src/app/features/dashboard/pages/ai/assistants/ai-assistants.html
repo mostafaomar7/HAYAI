@@ -1,0 +1,125 @@
+<div class="page-container">
+
+  @if (globalOff()) {
+    <!-- The platform-wide switch on Settings overrides every row below. -->
+    <p class="global-off">{{ 'ai.assistants.global_off' | t }}</p>
+  }
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="title-area">
+        <h2>{{ 'ai.assistants.title' | t }}</h2>
+        @if (!loading() && !loadError()) {
+          <span class="badge">{{ 'ai.assistants.count' | t : { count: inTab().length, on: onCount() } }}</span>
+        }
+      </div>
+
+      <div class="tab-group" role="tablist">
+        @for (t of tabs; track t) {
+          <button class="tab-btn" role="tab" [class.active]="tab() === t" [attr.aria-selected]="tab() === t"
+                  (click)="setTab(t)">{{ ('ai.suggestions.tab.' + t) | t }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#6B7280" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [placeholder]="'ai.assistants.search' | t" [value]="search()"
+               (input)="search.set($any($event.target).value)" />
+      </div>
+
+      <div class="filter-select">
+        <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+          <option value="" [selected]="statusFilter() === ''">{{ 'common.all' | t }} — {{ 'ai.suggestions.status' | t }}</option>
+          <option value="1" [selected]="statusFilter() === '1'">{{ 'ai.assistants.on' | t }}</option>
+          <option value="0" [selected]="statusFilter() === '0'">{{ 'ai.assistants.off' | t }}</option>
+        </select>
+      </div>
+
+      @if (filtered()) {
+        <button class="link-btn" (click)="clearFilters()">{{ 'ai.suggestions.clear_filters' | t }}</button>
+      }
+
+      <!-- Custom assistants exist in the patient app only. -->
+      @if (tab() === 'patient') {
+        <button class="btn-primary" *appCanManage (click)="add()">{{ 'ai.assistants.add' | t }}</button>
+      }
+    </div>
+
+    <p class="hint-bar">{{ 'ai.assistants.live_hint' | t }}</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'ai.assistants.col_name' | t }}</th>
+            <th>{{ 'ai.assistants.col_type' | t }}</th>
+            <th>{{ 'ai.assistants.col_questions' | t }}</th>
+            <th>{{ 'ai.suggestions.status' | t }}</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td class="table-hint" colspan="5">{{ 'common.loading' | t }}</td></tr>
+          } @else if (loadError()) {
+            <tr><td class="table-hint" colspan="5">
+              <strong>{{ loadError()! | t }}</strong>
+              <button class="btn-secondary retry" (click)="load()">{{ 'common.retry' | t }}</button>
+            </td></tr>
+          } @else if (!inTab().length) {
+            <tr><td class="table-hint" colspan="5"><strong>{{ 'ai.assistants.empty' | t }}</strong></td></tr>
+          } @else if (!rows().length) {
+            <tr><td class="table-hint" colspan="5">
+              <strong>{{ 'ai.assistants.empty_filtered' | t }}</strong>
+              <button class="btn-secondary retry" (click)="clearFilters()">{{ 'ai.suggestions.clear_filters' | t }}</button>
+            </td></tr>
+          } @else {
+            @for (a of rows(); track a.key) {
+              <tr [class.off]="!a.enabled">
+                <td class="name-cell" [title]="otherName(a)">
+                  <bdi>{{ a.name }}</bdi>
+                  <code class="key" dir="ltr">{{ a.key }}</code>
+                </td>
+                <td>
+                  <span class="type-tag" [class.direct]="a.interaction === 'direct'">
+                    {{ (a.interaction === 'direct' ? 'ai.assistants.type.direct' : 'ai.assistants.type.suggested') | t }}
+                  </span>
+                  @if (audienceKey(a); as badge) { <span class="audience">{{ badge | t }}</span> }
+                  @if (isCustom(a)) { <span class="custom-tag">{{ 'ai.assistants.added' | t }}</span> }
+                </td>
+                <td>
+                  @if (a.interaction === 'suggested') {
+                    <button class="link-btn" [class.zero]="questionCount(a) === 0" (click)="openQuestions(a)">
+                      {{ 'ai.assistants.questions' | t : { count: questionCount(a) } }}
+                    </button>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td>
+                  <label class="switch" [class.readonly]="!canManage()">
+                    <input type="checkbox" [checked]="a.enabled" [disabled]="!canManage() || saving().has(a.key)"
+                           (click)="toggle(a, $event)">
+                    <span>{{ (a.enabled ? 'ai.assistants.on' : 'ai.assistants.off') | t }}</span>
+                  </label>
+                </td>
+                <td class="actions-col">
+                  @if (isCustom(a)) {
+                    <span class="row-actions">
+                      <button class="link-btn" (click)="edit(a)">{{ (canManage() ? 'common.edit' : 'ai.suggestions.view') | t }}</button>
+                      <button class="link-danger" *appCanManage (click)="remove(a, $event)">{{ 'common.delete' | t }}</button>
+                    </span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

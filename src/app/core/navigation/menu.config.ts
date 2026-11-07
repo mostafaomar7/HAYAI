@@ -19,6 +19,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'AiTokenRequests', label: 'menu.ai_token_requests', route: '/dashboard/ai/token-requests', area: 'ai' },
       { id: 'AiUsage', label: 'menu.ai_usage', route: '/dashboard/ai/usage', area: 'ai' },
       { id: 'AiGrants', label: 'menu.ai_grants', route: '/dashboard/ai/allocations', area: 'ai' },
+      { id: 'AiAssistants', label: 'menu.ai_assistants', route: '/dashboard/ai/assistants', area: 'ai' },
       { id: 'AiSuggestions', label: 'menu.ai_suggestions', route: '/dashboard/ai/suggestions', area: 'ai' },
     ]
   },
