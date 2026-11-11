@@ -361,6 +361,12 @@ export class BlockField {
 
 /** Catalogue label → our translation → the key made readable. */
 export function fieldLabel(f: FieldDef, i18n: I18nService): string {
+  // `media_id` is a video on the video block and an image elsewhere; the
+  // catalogue says which (`accept`), so a video field is named for what it takes.
+  if (f['accept'] === 'video') {
+    const v = i18n.translate('web.blocks.field.video_file');
+    if (v !== 'web.blocks.field.video_file') return v;
+  }
   const key = `web.blocks.field.${f.key}`;
   const t = i18n.translate(key);
   // The catalogue is English; in the Arabic dashboard our translation reads better.

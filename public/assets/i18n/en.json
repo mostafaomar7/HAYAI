@@ -1799,7 +1799,7 @@
   "web.blocks.field.phone": "Phone",
   "web.blocks.field.photo_media_id": "Photo",
   "web.blocks.field.points": "Points",
-  "web.blocks.field.poster_media_id": "Poster image",
+  "web.blocks.field.poster_media_id": "Cover image",
   "web.blocks.field.prefix": "Prefix",
   "web.blocks.field.price": "Price",
   "web.blocks.field.primary_cta": "Primary button",
@@ -2593,7 +2593,7 @@
   "web.medialib.no_alt": "No alt",
   "web.medialib.not_used": "Not used anywhere.",
   "web.medialib.open_file": "Open file",
-  "web.medialib.processing": "Processing…",
+  "web.medialib.processing": "Uploaded, the server is saving it…",
   "web.medialib.q_done": "Uploaded",
   "web.medialib.q_duplicate": "Already in library",
   "web.medialib.q_failed": "Failed",
@@ -3798,5 +3798,10 @@
   "ai.assistants.err.name_too_long": "At most 150 characters.",
   "ai.assistants.err.audience_required": "Choose at least one: patients or tourists.",
   "ai.assistants.err.brief_too_long": "At most 4000 characters.",
-  "ai.assistants.err.entry_too_long": "At most 300 characters."
+  "ai.assistants.err.entry_too_long": "At most 300 characters.",
+  "web.medialib.mov_rejected": ".mov files are not accepted. Export the video as MP4 first (on iPhone: Share → Save as MP4, or any converter).",
+  "web.medialib.wrong_kind": "This field takes a {kind} file.",
+  "web.medialib.sending": "Uploading… {pct}%",
+  "web.media.video_hint": "MP4 or WebM, up to 100 MB. A large video takes a few minutes to upload; keep this window open.",
+  "web.blocks.field.video_file": "Video file"
 }

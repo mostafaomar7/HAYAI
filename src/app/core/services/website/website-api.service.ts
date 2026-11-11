@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { ApiService, PagedResult } from '../api.service';
+import { ApiService, PagedResult, UploadEvent } from '../api.service';
 import { ApiPagination } from '../../models/api-response.model';
 import {
   AnalyticsEvent, AnalyticsRange, AnalyticsSummary, AuditLogRow, AuthorInput, BlockDefinition,
@@ -430,6 +430,11 @@ export class WebsiteApiService {
   /** `form` carries `file` plus optional alt_en/alt_ar/caption_en/caption_ar/focal_x/focal_y. */
   uploadMedia(form: FormData): Observable<WebsiteMedia> {
     return this.api.postMultipart<WebsiteMedia>(`${BASE}/media`, form);
+  }
+
+  /** The same upload, reporting progress: videos run to 100 MB. */
+  uploadMediaWithProgress(form: FormData): Observable<UploadEvent<WebsiteMedia>> {
+    return this.api.postMultipartWithProgress<WebsiteMedia>(`${BASE}/media`, form);
   }
 
   updateMedia(id: number, body: Partial<Pick<WebsiteMedia, 'alt_en' | 'alt_ar' | 'caption_en' | 'caption_ar' | 'focal_x' | 'focal_y'>>): Observable<WebsiteMedia> {

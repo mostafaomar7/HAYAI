@@ -57,13 +57,21 @@
           @if (canUpload()) {
             <input class="alt-input" type="text" [placeholder]="'web.media.alt_en' | t" [value]="altEn()" (input)="altEn.set($any($event.target).value)">
             <input class="alt-input" type="text" [placeholder]="'web.media.alt_ar' | t" dir="rtl" [value]="altAr()" (input)="altAr.set($any($event.target).value)">
-            <label class="btn-primary btn-sm upload-btn">
+            <label class="btn-primary btn-sm upload-btn" [class.busy]="uploading()">
               {{ (uploading() ? 'web.media.uploading' : 'web.media.upload') | t }}
-              <input type="file" hidden [disabled]="uploading()" (change)="upload($event)"
-                     accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.mp4,.webm">
+              <input type="file" hidden [disabled]="uploading()" (change)="upload($event)" [attr.accept]="accept()">
             </label>
           }
         </div>
+        @if (uploading()) {
+          <div class="progress" role="progressbar" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100">
+            <span class="progress-bar" [style.width.%]="progress()"></span>
+          </div>
+          <p class="muted progress-label">{{ (progress() < 100 ? 'web.medialib.sending' : 'web.medialib.processing') | t : { pct: progress() } }}</p>
+        }
+        @if (kind() === 'video' && canUpload()) {
+          <p class="muted kind-hint">{{ 'web.media.video_hint' | t }}</p>
+        }
 
         @if (loading()) {
           <p class="table-hint">{{ 'common.loading' | t }}</p>

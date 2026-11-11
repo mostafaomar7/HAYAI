@@ -2631,7 +2631,7 @@
   "web.medialib.no_alt": "بلا نص بديل",
   "web.medialib.not_used": "غير مستخدم في أي مكان.",
   "web.medialib.open_file": "فتح الملف",
-  "web.medialib.processing": "قيد المعالجة…",
+  "web.medialib.processing": "اترفع، والسيرفر بيحفظه…",
   "web.medialib.q_done": "تم الرفع",
   "web.medialib.q_duplicate": "موجود بالفعل",
   "web.medialib.q_failed": "فشل",
@@ -3847,5 +3847,10 @@
   "ai.assistants.err.name_too_long": "أقصى حاجة 150 حرف.",
   "ai.assistants.err.audience_required": "اختار واحد على الأقل: المرضى أو السياح.",
   "ai.assistants.err.brief_too_long": "أقصى حاجة 4000 حرف.",
-  "ai.assistants.err.entry_too_long": "أقصى حاجة 300 حرف."
+  "ai.assistants.err.entry_too_long": "أقصى حاجة 300 حرف.",
+  "web.medialib.mov_rejected": "ملفات .mov مش مقبولة. حوّل الفيديو لـ MP4 الأول (من الآيفون: مشاركة ← حفظ كـ MP4، أو أي محوّل).",
+  "web.medialib.wrong_kind": "الحقل ده بياخد ملف من نوع {kind}.",
+  "web.medialib.sending": "بيترفع… {pct}%",
+  "web.media.video_hint": "MP4 أو WebM، لحد 100 ميجا. الفيديو الكبير بياخد كام دقيقة عشان يترفع، فسيب الشاشة دي مفتوحة.",
+  "web.blocks.field.video_file": "ملف الفيديو"
 }

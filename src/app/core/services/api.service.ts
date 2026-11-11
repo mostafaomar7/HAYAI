@@ -1,8 +1,14 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEventType, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiPagination, ApiResponse } from '../models/api-response.model';
+
+/** One step of an upload: `data` is set only on the last one. */
+export interface UploadEvent<T> {
+  progress: number;
+  data?: T;
+}
 
 export interface PagedResult<T> {
   items: T[];
@@ -63,6 +69,23 @@ export class ApiService {
 
   postMultipart<T>(path: string, form: FormData): Observable<T> {
     return this.http.post<ApiResponse<T>>(this.url(path), form).pipe(map(r => r.data));
+  }
+
+  /**
+   * A multipart POST that reports how much has been sent, for uploads big
+   * enough to take minutes (a 100 MB video). Emits `{ progress }` from 0 to
+   * 100 while sending, then `{ data }` once the server answers. No timeout is
+   * applied here or by any interceptor, so a slow connection is not cut off.
+   */
+  postMultipartWithProgress<T>(path: string, form: FormData): Observable<UploadEvent<T>> {
+    return this.http
+      .post<ApiResponse<T>>(this.url(path), form, { reportProgress: true, observe: 'events' })
+      .pipe(
+        filter(e => e.type === HttpEventType.UploadProgress || e.type === HttpEventType.Response),
+        map(e => e.type === HttpEventType.UploadProgress
+          ? { progress: e.total ? Math.min(100, Math.round((e.loaded / e.total) * 100)) : 0 }
+          : { progress: 100, data: (e as { body: ApiResponse<T> | null }).body?.data as T })
+      );
   }
 
   put<T>(path: string, body: unknown): Observable<T> {

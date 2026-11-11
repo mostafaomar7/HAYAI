@@ -72,6 +72,13 @@
                       <button type="button" class="link-btn danger" (click)="dropQueued(i.uid)">{{ 'common.remove' | t }}</button>
                     }
                   </div>
+                  @if (i.status === 'uploading') {
+                    <!-- Sent bytes, not processing: at 100% the server is still storing it. -->
+                    <div class="progress" role="progressbar" [attr.aria-valuenow]="i.progress ?? 0" aria-valuemin="0" aria-valuemax="100">
+                      <span class="progress-bar" [style.width.%]="i.progress ?? 0"></span>
+                    </div>
+                    <span class="muted progress-label">{{ ((i.progress ?? 0) < 100 ? 'web.medialib.sending' : 'web.medialib.processing') | t : { pct: i.progress ?? 0 } }}</span>
+                  }
                   @if (i.message) {
                     <div class="q-msg" [class.err]="i.status === 'invalid' || i.status === 'failed'">{{ i.message | t: i.params }}</div>
                   }

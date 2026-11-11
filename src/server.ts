@@ -946,7 +946,11 @@ function contentSecurityPolicy(nonce: string): string {
     `connect-src 'self' ${API_ORIGIN} https://*.google-analytics.com https://*.analytics.google.com ` +
       `https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com ` +
       `https://www.google.com.eg https://pagead2.googlesyndication.com https://*.clarity.ms ${cookieyes}`,
-    `frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net`,
+    // The video block: a self-hosted file comes from the API origin (media-src
+    // would otherwise fall back to default-src 'self' and refuse it), and a
+    // YouTube / Vimeo player is an iframe from these two hosts only.
+    `media-src 'self' ${API_ORIGIN}`,
+    `frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net https://www.youtube-nocookie.com https://player.vimeo.com`,
     `upgrade-insecure-requests`
   ].join('; ');
 }

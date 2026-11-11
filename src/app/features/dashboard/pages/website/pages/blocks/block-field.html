@@ -52,10 +52,10 @@
     @case ('media') {
       @if (field()['multiple']) {
         <app-media-picker [multiple]="true" [values]="$any(arr())" [disabled]="disabled()"
-                          [kind]="$any(field()['kind'] ?? 'image')" (valuesChange)="emit($event)" />
+                          [kind]="$any(field()['accept'] ?? field()['kind'] ?? 'image')" (valuesChange)="emit($event)" />
       } @else {
         <app-media-picker [value]="$any(value())" [disabled]="disabled()"
-                          [kind]="$any(field()['kind'] ?? 'image')" (valueChange)="emit($event)" />
+                          [kind]="$any(field()['accept'] ?? field()['kind'] ?? 'image')" (valueChange)="emit($event)" />
       }
     }
 

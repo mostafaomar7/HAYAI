@@ -6,6 +6,7 @@ import { WebsiteContextService } from '../../../../../core/services/website/webs
 import { WebsiteMedia } from '../../../../../core/services/website/website.models';
 import { DialogService } from '../../../../../core/services/dialog.service';
 import { debounce } from '../../../../../shared/utils/debounce.util';
+import { mediaAccept, mediaFileProblem } from './website-utils';
 
 /**
  * Media-library picker for every `media` field (block images, featured image,
@@ -48,6 +49,10 @@ export class MediaPicker {
   page = signal(1);
   lastPage = signal(1);
   uploading = signal(false);
+  /** 0–100 while a file is being sent. */
+  progress = signal(0);
+  /** What the file input offers: only the field's own kind. */
+  accept = computed(() => mediaAccept(this.kind() || null));
   altEn = signal('');
   altAr = signal('');
 
@@ -151,14 +156,23 @@ export class MediaPicker {
     const inputEl = event.target as HTMLInputElement;
     const file = inputEl.files?.[0];
     inputEl.value = '';
-    if (!file) return;
+    if (!file || this.uploading()) return;
+    // Refused here rather than after minutes of sending a 100 MB file.
+    const problem = mediaFileProblem(file, this.kind() || null);
+    if (problem) {
+      this.dialog.error('web.media.upload_failed', problem.key, problem.params);
+      return;
+    }
     const form = new FormData();
     form.append('file', file);
     if (this.altEn().trim()) form.append('alt_en', this.altEn().trim());
     if (this.altAr().trim()) form.append('alt_ar', this.altAr().trim());
     this.uploading.set(true);
-    this.api.uploadMedia(form).subscribe({
-      next: m => {
+    this.progress.set(0);
+    this.api.uploadMediaWithProgress(form).subscribe({
+      next: e => {
+        if (!e.data) { this.progress.set(e.progress); return; }
+        const m = e.data;
         this.uploading.set(false);
         this.altEn.set('');
         this.altAr.set('');
@@ -168,7 +182,9 @@ export class MediaPicker {
       },
       error: err => {
         this.uploading.set(false);
-        this.dialog.error('common.error', errorMessage(err, 'web.media.upload_failed'));
+        // The server's own 422 sentence names what is wrong with the file.
+        const fe = err?.error?.errors?.file;
+        this.dialog.error('web.media.upload_failed', Array.isArray(fe) ? fe[0] : errorMessage(err, 'web.media.upload_failed'));
       }
     });
   }

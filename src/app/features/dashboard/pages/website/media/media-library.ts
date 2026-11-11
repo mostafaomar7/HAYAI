@@ -9,21 +9,16 @@ import { WebsiteContextService } from '../../../../../core/services/website/webs
 import { Locale, MediaUsage, WebsiteMedia } from '../../../../../core/services/website/website.models';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../../shared/utils/debounce.util';
-import { fmtDate, nullIfEmpty } from '../shared/website-utils';
+import { MEDIA_LIMITS, fmtDate, mediaAccept, mediaFileProblem, nullIfEmpty } from '../shared/website-utils';
 
 const MB = 1024 * 1024;
 
 /**
- * Section 11 upload rules, checked here so a 90 MB PDF fails in a second
- * instead of after the upload. SVG is refused by the backend on purpose
- * (it can carry script), so it gets its own message rather than "wrong type".
+ * Section 11 upload rules (shared with the picker), checked here so a 90 MB
+ * PDF fails in a second instead of after the upload. SVG is refused by the
+ * backend on purpose (it can carry script), so it gets its own message.
  */
-const LIMITS: { exts: string[]; max: number; kind: 'image' | 'document' | 'video' }[] = [
-  { exts: ['jpg', 'jpeg', 'png', 'webp', 'gif'], max: 8 * MB, kind: 'image' },
-  { exts: ['pdf'], max: 20 * MB, kind: 'document' },
-  { exts: ['mp4', 'webm'], max: 100 * MB, kind: 'video' }
-];
-const ACCEPT = LIMITS.flatMap(l => l.exts.map(e => '.' + e)).join(',');
+const ACCEPT = mediaAccept();
 
 type QueueStatus = 'ready' | 'invalid' | 'uploading' | 'done' | 'duplicate' | 'failed';
 
@@ -39,6 +34,8 @@ interface QueueItem {
   message: string | null;
   params?: Record<string, string | number>;
   result?: WebsiteMedia;
+  /** 0–100 while sending; a 100 MB video takes minutes. */
+  progress?: number;
 }
 
 interface DetailDraft {
@@ -217,20 +214,12 @@ export class MediaLibrary {
     const base: QueueItem = {
       uid: ++this.uid, file, kind: null, previewUrl: null, altEn: '', altAr: '', status: 'ready', message: null
     };
-    if (ext === 'svg' || file.type === 'image/svg+xml') {
-      return { ...base, status: 'invalid', message: 'web.medialib.svg_rejected' };
+    const rule = MEDIA_LIMITS.find(l => l.exts.includes(ext)) ?? null;
+    const problem = mediaFileProblem(file);
+    if (problem) {
+      return { ...base, kind: rule?.kind ?? null, status: 'invalid', message: problem.key, params: problem.params };
     }
-    const rule = LIMITS.find(l => l.exts.includes(ext));
-    if (!rule) {
-      return { ...base, status: 'invalid', message: 'web.medialib.type_rejected', params: { ext: ext || '?' } };
-    }
-    if (file.size > rule.max) {
-      return {
-        ...base, kind: rule.kind, status: 'invalid', message: 'web.medialib.too_large',
-        params: { max: Math.round(rule.max / MB), size: this.size(file.size) }
-      };
-    }
-    return { ...base, kind: rule.kind, previewUrl: rule.kind === 'image' ? URL.createObjectURL(file) : null };
+    return { ...base, kind: rule!.kind, previewUrl: rule!.kind === 'image' ? URL.createObjectURL(file) : null };
   }
 
   setQueueAlt(uid: number, field: 'altEn' | 'altAr', value: string): void {
@@ -271,7 +260,7 @@ export class MediaLibrary {
     // back the existing item for a re-upload, so a known id means "duplicate".
     const knownIds = new Set(this.items().map(i => i.id));
     for (const item of pending) {
-      this.patchQueue(item.uid, { status: 'uploading', message: null });
+      this.patchQueue(item.uid, { status: 'uploading', message: null, progress: 0 });
       const started = Date.now();
       try {
         const m = await this.uploadOne(item);
@@ -307,7 +296,13 @@ export class MediaLibrary {
     if (item.altEn.trim()) form.append('alt_en', item.altEn.trim());
     if (item.altAr.trim()) form.append('alt_ar', item.altAr.trim());
     return new Promise((resolve, reject) =>
-      this.api.uploadMedia(form).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: resolve, error: reject })
+      this.api.uploadMediaWithProgress(form).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: e => {
+          if (e.data) resolve(e.data);
+          else this.patchQueue(item.uid, { progress: e.progress });
+        },
+        error: reject
+      })
     );
   }
 

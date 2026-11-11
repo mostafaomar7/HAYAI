@@ -299,3 +299,10 @@ pre.code-preview {
 .timeline { list-style: none; margin: 0; padding: 0; }
 .timeline li { padding: 10px 0; border-top: 1px solid #F1F5F9; font-size: 13px; }
 .timeline li:first-child { border-top: none; }
+
+/* Upload progress (large videos take minutes). */
+.progress { position: relative; height: 6px; border-radius: 999px; background: #E5E7EB; overflow: hidden; margin: 8px 0 4px; }
+.progress-bar { display: block; height: 100%; border-radius: inherit; background: #2563EB; transition: width .2s ease; }
+.progress-label { font-size: 12px; margin: 0; }
+.kind-hint { font-size: 12px; margin: 6px 0 0; }
+.upload-btn.busy { opacity: .6; cursor: progress; }

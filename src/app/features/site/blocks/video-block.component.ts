@@ -23,7 +23,8 @@ import { SiteImageComponent } from '../ui/site-image.component';
     @if (d['description']) {
       <p class="blk-intro">{{ d['description'] }}</p>
     }
-    <div class="video-frame">
+    <!-- The player stays LTR on the Arabic page; the text above follows it. -->
+    <div class="video-frame" dir="ltr" [style.aspect-ratio]="ratio()">
       @if (embed(); as e) {
         @if (playing()) {
           <iframe
@@ -62,6 +63,13 @@ export class VideoBlockComponent {
   protected state = inject(SiteStateService);
   private sanitizer = inject(DomSanitizer);
   protected playing = signal(false);
+
+  /** The cover's own shape, so nothing jumps when it loads; 16:9 without one. */
+  protected ratio = computed(() => {
+    const p = this.data()['poster'];
+    const w = Number(p?.width), h = Number(p?.height);
+    return w > 0 && h > 0 ? `${w} / ${h}` : '16 / 9';
+  });
 
   /** youtube / vimeo: the API's `embed_url` (never the watch `url`), with autoplay
    *  added since the click on the facade is the "play". */

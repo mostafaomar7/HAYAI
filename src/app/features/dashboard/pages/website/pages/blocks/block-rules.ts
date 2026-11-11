@@ -107,6 +107,13 @@ export function summaryOf(data: Record<string, unknown> | null | undefined): str
  */
 export function isFieldVisible(blockType: string, field: BlockField, data: Record<string, unknown>): boolean {
   if (blockType === 'pricing' && field.key === 'tiers') return !data['product_id'];
+  // A video is either our own file or a YouTube / Vimeo link, never both: the
+  // provider decides which input shows. The cover image shows for all three.
+  if (blockType === 'video') {
+    const provider = data['provider'];
+    if (field.key === 'media_id') return provider === 'self';
+    if (field.key === 'url') return provider === 'youtube' || provider === 'vimeo';
+  }
   return true;
 }
 

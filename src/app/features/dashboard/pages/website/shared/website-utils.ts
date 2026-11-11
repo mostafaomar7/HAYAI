@@ -9,6 +9,44 @@ import { ByLocale, Locale } from '../../../../../core/services/website/website.m
  * an array of rows carrying `locale` (pages, products list) or an object
  * keyed by locale (create / update bodies, some detail payloads).
  */
+const MB = 1024 * 1024;
+
+export type MediaKind = 'image' | 'document' | 'video';
+
+/**
+ * The library's upload rules (section 11), shared by the library screen and
+ * the picker so both refuse the same files before a minute of uploading.
+ * `.mov` (iPhone) is not here on purpose: the server refuses it.
+ */
+export const MEDIA_LIMITS: { exts: string[]; mimes: string[]; max: number; kind: MediaKind }[] = [
+  { exts: ['jpg', 'jpeg', 'png', 'webp', 'gif'], mimes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], max: 8 * MB, kind: 'image' },
+  { exts: ['pdf'], mimes: ['application/pdf'], max: 20 * MB, kind: 'document' },
+  { exts: ['mp4', 'webm'], mimes: ['video/mp4', 'video/webm'], max: 100 * MB, kind: 'video' }
+];
+
+/** The file input's `accept` for one kind, or for everything. */
+export function mediaAccept(kind?: MediaKind | '' | null): string {
+  const rules = kind ? MEDIA_LIMITS.filter(l => l.kind === kind) : MEDIA_LIMITS;
+  return rules.flatMap(l => [...l.exts.map(e => '.' + e), ...l.mimes]).join(',');
+}
+
+/**
+ * Why a file cannot be uploaded, as an i18n key and its params, or null when
+ * it can. `kind` narrows it to what the field takes.
+ */
+export function mediaFileProblem(file: File, kind?: MediaKind | '' | null): { key: string; params?: Record<string, string | number> } | null {
+  const ext = (file.name.split('.').pop() ?? '').toLowerCase();
+  if (ext === 'svg' || file.type === 'image/svg+xml') return { key: 'web.medialib.svg_rejected' };
+  if (ext === 'mov' || file.type === 'video/quicktime') return { key: 'web.medialib.mov_rejected' };
+  const rule = MEDIA_LIMITS.find(l => l.exts.includes(ext));
+  if (!rule) return { key: 'web.medialib.type_rejected', params: { ext: ext || '?' } };
+  if (kind && rule.kind !== kind) return { key: 'web.medialib.wrong_kind', params: { kind } };
+  if (file.size > rule.max) {
+    return { key: 'web.medialib.too_large', params: { max: Math.round(rule.max / MB), size: (file.size / MB).toFixed(1) + ' MB' } };
+  }
+  return null;
+}
+
 export function translationFor<T extends { locale?: Locale | string }>(
   translations: T[] | ByLocale<T> | null | undefined,
   locale: Locale
