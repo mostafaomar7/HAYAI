@@ -17,6 +17,7 @@ import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ActivityIdType } from '../../../../core/services/activity.service';
 import { debounce } from '../../../../shared/utils/debounce.util';
+import { AdminAccessService } from '../../../../core/services/admin-access.service';
 
 /**
  * Which table each list's row id belongs to. The activity endpoint keys off
@@ -425,6 +426,18 @@ export abstract class UserListBase<T extends { id: number }> {
       ['/dashboard/users', userId ?? row.id, 'activity'],
       userId ? {} : { queryParams: { id_type: ACTIVITY_ID_TYPE[this.resource] } }
     );
+  }
+
+  /** Hayai points belong to members only, and need `loyalty.view`. */
+  readonly canSeePoints = computed(() =>
+    (this.resource === 'patients' || this.resource === 'tourists') && this.adminAccess.can('loyalty')
+  );
+  private adminAccess = inject(AdminAccessService);
+
+  /** Patient and tourist rows carry the user id itself. */
+  goToPoints(row: { id: number; user_id?: number | null }) {
+    this.openActionMenuId = null;
+    this.router.navigate(['/dashboard/loyalty/accounts', row.user_id ?? row.id]);
   }
 
   /**

@@ -26,7 +26,9 @@ export type AdminArea =
    */
   | 'clinical_guidelines' | 'external_devices'
   | 'subscriptions' | 'advertisements' | 'notifications' | 'support'
-  | 'account_deletion' | 'statistics' | 'ai' | 'platform_settings' | 'audit_log';
+  | 'account_deletion' | 'statistics' | 'ai' | 'platform_settings' | 'audit_log'
+  /** Hayai points, the loyalty program (2026-11-18). */
+  | 'loyalty';
 
 export type AccessLevel = 'view' | 'manage';
 
@@ -128,6 +130,7 @@ const PATH_AREAS: [RegExp, AdminArea | typeof SUPER_ADMIN_ONLY][] = [
   // anything under `/dashboard/ai/` read as "no area" — open to every admin,
   // write buttons and all. The first AI screen is what made that reachable.
   [/^ai(\/|$)/, 'ai'],
+  [/^loyalty(\/|$)/, 'loyalty'],
   [/^audit-logs(\/|$)/, 'audit_log'],
   [/^settings(\/|$)/, 'platform_settings']
 ];

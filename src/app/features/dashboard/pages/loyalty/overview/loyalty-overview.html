@@ -1,0 +1,140 @@
+<div class="page-container">
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.overview.title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.overview.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <button class="btn-secondary btn-sm" (click)="thisMonth()">{{ 'loyalty.overview.this_month' | t }}</button>
+        <button class="btn-secondary btn-sm" (click)="lastMonth()">{{ 'loyalty.overview.last_month' | t }}</button>
+        <label class="field">
+          <span>{{ 'common.from' | t }}</span>
+          <input type="date" dir="ltr" [value]="from()" [max]="to()" (change)="setRange('from', $any($event.target).value)" />
+        </label>
+        <label class="field">
+          <span>{{ 'common.to' | t }}</span>
+          <input type="date" dir="ltr" [value]="to()" [min]="from()" (change)="setRange('to', $any($event.target).value)" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (failed()) {
+    <div class="card">
+      <p class="table-hint">{{ 'loyalty.load_failed' | t }}</p>
+      <div class="card-body"><button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></div>
+    </div>
+  } @else if (data(); as d) {
+
+    @if (!d.enabled) {
+      <p class="notice warn">
+        {{ 'loyalty.overview.program_off' | t }}
+        <a routerLink="/dashboard/loyalty/settings">{{ 'menu.loyalty.settings' | t }}</a>
+      </p>
+    }
+
+    <!-- right now: not moved by the dates -->
+    <div class="tiles">
+      <a class="tile" routerLink="/dashboard/loyalty/settings" style="text-decoration:none;color:inherit">
+        <p class="tile-label">{{ 'loyalty.overview.program' | t }}</p>
+        <div class="tile-value" [class.green]="d.enabled" [class.red]="!d.enabled">
+          {{ (d.enabled ? 'loyalty.on' : 'loyalty.off') | t }}
+        </div>
+        <p class="tile-foot">{{ 'loyalty.overview.partners_accepting' | t : { n: num(d.partners_accepting) } }}</p>
+      </a>
+      <div class="tile">
+        <p class="tile-label">{{ 'loyalty.overview.outstanding' | t }}</p>
+        <div class="tile-value"><bdi dir="ltr">{{ num(d.outstanding.points) }}</bdi></div>
+        <p class="tile-foot">{{ 'loyalty.overview.outstanding_hint' | t : { value: money(d.outstanding.value, d.currency) } }}</p>
+      </div>
+      <a class="tile" routerLink="/dashboard/loyalty/vouchers" [queryParams]="{ status: 'redeemed', settlement: 'unsettled' }" style="text-decoration:none;color:inherit">
+        <p class="tile-label">{{ 'loyalty.overview.unsettled' | t }}</p>
+        <div class="tile-value amber"><bdi dir="ltr">{{ money(d.unsettled.amount, d.currency) }}</bdi></div>
+        <p class="tile-foot">{{ 'loyalty.overview.unsettled_hint' | t : { n: num(d.unsettled.count) } }}</p>
+      </a>
+    </div>
+
+    <!-- the period -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>{{ 'loyalty.overview.period' | t }}</h2>
+          <p class="sub"><bdi dir="ltr">{{ d.from | date:'mediumDate' }} – {{ d.to | date:'mediumDate' }}</bdi></p>
+        </div>
+      </div>
+      <div class="card-body">
+        <dl class="detail-grid">
+          <div><dt>{{ 'loyalty.overview.earned' | t }}</dt><dd dir="ltr" class="pos">{{ num(d.points.earned) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.redeemed' | t }}</dt><dd dir="ltr">{{ num(d.points.redeemed) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.refunded' | t }}</dt><dd dir="ltr">{{ num(d.points.refunded) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.expired' | t }}</dt><dd dir="ltr">{{ num(d.points.expired) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.adjusted' | t }}</dt><dd dir="ltr">{{ signed(d.points.adjusted) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.members_earning' | t }}</dt><dd dir="ltr">{{ num(d.points.members_earning) }}</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div><h2>{{ 'loyalty.overview.by_event' | t }}</h2></div></div>
+        @if (!d.earned_by_event.length) {
+          <p class="table-hint">{{ 'loyalty.overview.no_earning' | t }}</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>{{ 'loyalty.rules.action' | t }}</th>
+                  <th>{{ 'loyalty.points' | t }}</th>
+                  <th>{{ 'loyalty.overview.times' | t }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of d.earned_by_event; track e.event) {
+                  <tr>
+                    <td class="name-cell">{{ pick(e) || e.event }}</td>
+                    <td class="num">{{ num(e.points) }}</td>
+                    <td class="num">{{ num(e.times) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>{{ 'loyalty.overview.vouchers' | t }}</h2>
+            <p class="sub">{{ 'loyalty.overview.vouchers_hint' | t }}</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'common.status' | t }}</th>
+                <th>{{ 'loyalty.count' | t }}</th>
+                <th>{{ 'loyalty.amount' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of ['active', 'redeemed', 'cancelled', 'expired']; track s) {
+                <tr>
+                  <td><a class="pill" [ngClass]="'pill-' + s" routerLink="/dashboard/loyalty/vouchers" [queryParams]="{ status: s }" style="text-decoration:none">{{ ('loyalty.voucher.status.' + s) | t }}</a></td>
+                  <td class="num">{{ num($any(d.vouchers)[s]?.count ?? 0) }}</td>
+                  <td class="num">{{ money($any(d.vouchers)[s]?.amount ?? 0, d.currency) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>

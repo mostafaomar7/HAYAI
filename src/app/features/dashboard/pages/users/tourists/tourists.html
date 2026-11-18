@@ -166,6 +166,7 @@
                         <button class="dropdown-item" *appCanManage (click)="blockUser(user.id)">{{ 'users.actions.block' | t }}</button>
                       }
                       <button class="dropdown-item" (click)="goToActivity(user)">{{ 'activity.title' | t }}</button>
+                      @if (canSeePoints()) { <button class="dropdown-item" (click)="goToPoints(user)">{{ 'menu.loyalty' | t }}</button> }
                       <button class="dropdown-item" *appCanManage (click)="resetPassword(user)">{{ 'users.reset_password.action' | t }}</button>
                       <button class="dropdown-item" *appCanManage (click)="changePlan(user.id)">{{ 'users.actions.change_plan' | t }}</button>
                       @if (isPlanException(user.plan_status, user.has_plan_exception)) {

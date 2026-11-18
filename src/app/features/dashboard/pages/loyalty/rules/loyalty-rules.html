@@ -1,0 +1,245 @@
+<div class="page-container">
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.rules.title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.rules.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <label class="field">
+          <span>{{ 'loyalty.rules.action' | t }}</span>
+          <select [value]="fEvent()" (change)="setFilter('event', $any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            @for (e of events(); track e.event) { <option [value]="e.event">{{ pick(e) }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>{{ 'common.status' | t }}</span>
+          <select [value]="fStatus()" (change)="setFilter('status', $any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            @for (s of statuses; track s) { <option [value]="s">{{ ('loyalty.rules.status.' + s) | t }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>{{ 'loyalty.rules.audience' | t }}</span>
+          <select [value]="fAudience()" (change)="setFilter('audience', $any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            @for (a of audiences; track a) { <option [value]="a">{{ ('loyalty.audience.' + a) | t }}</option> }
+          </select>
+        </label>
+        <button class="btn-primary btn-sm" *appCanManage="'loyalty'" (click)="openNew()">+ {{ 'loyalty.rules.add' | t }}</button>
+      </div>
+    </div>
+
+    <!-- how rules work: said on the page, because "why did this pay 50?" is the first question -->
+    <div class="card-body">
+      <details open>
+        <summary class="section-title" style="cursor:pointer;margin:0 0 8px">{{ 'loyalty.rules.how_title' | t }}</summary>
+        <ul class="help">
+          <li>{{ 'loyalty.rules.how_1' | t }}</li>
+          <li>{{ 'loyalty.rules.how_2' | t }}</li>
+          <li>{{ 'loyalty.rules.how_3' | t }}</li>
+          <li>{{ 'loyalty.rules.how_4' | t }}</li>
+          <li>{{ 'loyalty.rules.how_5' | t }}</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.rules.action' | t }}</th>
+            <th>{{ 'loyalty.points' | t }}</th>
+            <th>{{ 'loyalty.rules.limit' | t }}</th>
+            <th>{{ 'loyalty.rules.dates' | t }}</th>
+            <th>{{ 'loyalty.rules.audience' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'loyalty.rules.on' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="8" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="8" class="table-hint">{{ 'loyalty.load_failed' | t }} <button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></td></tr>
+          } @else if (!groups().length) {
+            <tr><td colspan="8" class="table-hint">{{ 'loyalty.rules.empty' | t }}</td></tr>
+          } @else {
+            @for (g of groups(); track g.group) {
+              <tr class="group-row"><td colspan="8">{{ groupKey(g.group) | t }}</td></tr>
+              @for (r of g.rows; track r.id) {
+                <tr>
+                  <td class="name-cell">
+                    {{ actionTitle(r) }}
+                    @if (hasOwnTitle(r)) { <span class="sub">{{ pick(r, 'event_title') || pick(eventOf(r.event)) }}</span> }
+                    <span class="sub">{{ (r.kind === 'once' ? 'loyalty.kind.once' : 'loyalty.kind.repeatable') | t }}</span>
+                  </td>
+                  <td class="num">
+                    <bdi dir="ltr">{{ num(r.points) }}</bdi>
+                    @if (r.points_per_egp) {
+                      <span class="sub">{{ 'loyalty.rules.per_egp_text' | t : { n: r.points_per_egp } }}</span>
+                    }
+                    @if (r.max_points) {
+                      <span class="sub">{{ 'loyalty.rules.max_text' | t : { n: num(r.max_points) } }}</span>
+                    }
+                  </td>
+                  <td>{{ limitText(r) }}</td>
+                  <td class="nowrap">
+                    @if (!r.starts_at && !r.ends_at) {
+                      <span class="muted">{{ 'loyalty.rules.standing' | t }}</span>
+                    } @else {
+                      <bdi dir="ltr">{{ r.starts_at ? (r.starts_at | date:'d MMM y, HH:mm') : '…' }}</bdi>
+                      <span class="sub"><bdi dir="ltr">→ {{ r.ends_at ? (r.ends_at | date:'d MMM y, HH:mm') : '…' }}</bdi></span>
+                    }
+                  </td>
+                  <td>{{ ('loyalty.audience.' + r.audience) | t }}</td>
+                  <td><span class="pill" [ngClass]="'pill-' + r.rule_status">{{ statusLabel(r) | t }}</span></td>
+                  <td>
+                    <label class="switch" [class.readonly]="!canManage()">
+                      <input type="checkbox" [checked]="r.is_active" [disabled]="busy().has(r.id) || !canManage()"
+                             (change)="toggle(r, $any($event.target))" />
+                    </label>
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="link-btn" *appCanManage="'loyalty'" (click)="openEdit(r)">{{ 'common.edit' | t }}</button>
+                      <button class="link-btn danger" *appCanManage="'loyalty'" [disabled]="busy().has(r.id)" (click)="remove(r)">{{ 'common.delete' | t }}</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'loyalty.rules.edit' : 'loyalty.rules.add') | t }}</h3>
+        <button class="modal-close" (click)="closeForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>{{ 'loyalty.rules.action' | t }} <span class="req">*</span></label>
+            <select [value]="ev()" (change)="setEvent($any($event.target).value)" [disabled]="!!editing()">
+              <option value="">{{ 'loyalty.rules.pick_action' | t }}</option>
+              @for (e of events(); track e.event) {
+                <option [value]="e.event">{{ pick(e) }} · {{ (e.kind === 'once' ? 'loyalty.kind.once' : 'loyalty.kind.repeatable') | t }}</option>
+              }
+            </select>
+            @if (shownError('event'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else if (formEvent(); as fe) { @if (pick(fe, 'description')) { <span class="hint">{{ pick(fe, 'description') }}</span> } }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.points_fixed' | t }}</label>
+            <input type="number" min="0" step="1" dir="ltr" inputmode="numeric" [value]="points()" (input)="points.set($any($event.target).value)" />
+            @if (shownError('points'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          @if (showAmount()) {
+            <div class="form-group">
+              <label>{{ 'loyalty.rules.per_egp' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+              <input type="number" min="0" step="0.01" dir="ltr" inputmode="decimal" [value]="perEgp()" (input)="perEgp.set($any($event.target).value)" />
+              @if (shownError('points_per_egp'); as e) { <span class="field-error">{{ e | t }}</span> }
+              @else { <span class="hint">{{ 'loyalty.rules.per_egp_hint' | t }}</span> }
+            </div>
+            <div class="form-group">
+              <label>{{ 'loyalty.rules.max_points' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+              <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [value]="maxPoints()" (input)="maxPoints.set($any($event.target).value)" />
+              @if (shownError('max_points'); as e) { <span class="field-error">{{ e | t }}</span> }
+              @else { <span class="hint">{{ 'loyalty.rules.max_points_hint' | t }}</span> }
+            </div>
+          }
+
+          @if (showLimit()) {
+            <div class="form-group">
+              <label>{{ 'loyalty.rules.limit' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+              <div class="inline-pair">
+                <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [placeholder]="'loyalty.rules.no_limit' | t"
+                       [value]="limitCount()" (input)="limitCount.set($any($event.target).value)" />
+                <select [value]="limitPeriod()" (change)="limitPeriod.set($any($event.target).value)">
+                  <option value="">—</option>
+                  @for (p of periods; track p) { <option [value]="p">{{ ('loyalty.rules.per_period.' + p) | t }}</option> }
+                </select>
+              </div>
+              @if (shownError('limit_count'); as e) { <span class="field-error">{{ e | t }}</span> }
+              @if (shownError('limit_period'); as e) { <span class="field-error">{{ e | t }}</span> }
+              @if (ev() === 'daily_check_in') { <span class="hint">{{ 'loyalty.rules.daily_hint' | t }}</span> }
+              @else { <span class="hint">{{ 'loyalty.rules.limit_hint' | t }}</span> }
+            </div>
+          } @else if (formEvent()) {
+            <div class="form-group">
+              <label>{{ 'loyalty.rules.limit' | t }}</label>
+              <span class="hint">{{ 'loyalty.rules.once_hint' | t }}</span>
+            </div>
+          }
+
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.audience' | t }}</label>
+            <select [value]="audience()" (change)="audience.set($any($event.target).value)">
+              @for (a of audiences; track a) { <option [value]="a">{{ ('loyalty.audience.' + a) | t }}</option> }
+            </select>
+            @if (shownError('audience'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.starts_at' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="datetime-local" dir="ltr" [value]="startsAt()" (input)="startsAt.set($any($event.target).value)" />
+            @if (shownError('starts_at'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.ends_at' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="datetime-local" dir="ltr" [value]="endsAt()" [attr.min]="startsAt() || null" (input)="endsAt.set($any($event.target).value)" />
+            @if (shownError('ends_at'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group full">
+            <span class="hint">{{ (startsAt() || endsAt() ? 'loyalty.rules.campaign_hint' : 'loyalty.rules.standing_hint') | t }}</span>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.title_en' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="text" dir="ltr" maxlength="150" [placeholder]="formEvent()?.title_en || ''" [value]="titleEn()" (input)="titleEn.set($any($event.target).value)" />
+            @if (shownError('title_en'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.title_ar' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="text" dir="rtl" maxlength="150" [placeholder]="formEvent()?.title_ar || ''" [value]="titleAr()" (input)="titleAr.set($any($event.target).value)" />
+            @if (shownError('title_ar'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.desc_en' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="2" dir="ltr" [placeholder]="formEvent()?.description_en || ''" [value]="descEn()" (input)="descEn.set($any($event.target).value)"></textarea>
+            @if (shownError('description_en'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.desc_ar' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="2" dir="rtl" [placeholder]="formEvent()?.description_ar || ''" [value]="descAr()" (input)="descAr.set($any($event.target).value)"></textarea>
+            @if (shownError('description_ar'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group full">
+            <span class="hint">{{ 'loyalty.rules.titles_hint' | t }}</span>
+            <label class="checkbox" style="margin-top:8px">
+              <input type="checkbox" [checked]="active()" (change)="active.set($any($event.target).checked)" />
+              {{ 'loyalty.rules.active' | t }}
+            </label>
+          </div>
+        </div>
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'common.saving' : 'common.save') | t }}</button>
+      </div>
+    </div>
+  </div>
+}

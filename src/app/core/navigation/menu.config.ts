@@ -23,6 +23,18 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'AiSuggestions', label: 'menu.ai_suggestions', route: '/dashboard/ai/suggestions', area: 'ai' },
     ]
   },
+  // Hayai points. The sidebar drops the section without `loyalty.view`.
+  {
+    id: 'Loyalty', label: 'menu.loyalty', iconName: 'plans', route: '', roles: ['admin'], hasDropdown: true,
+    children: [
+      { id: 'LoyaltyOverview', label: 'menu.loyalty.overview', route: '/dashboard/loyalty/overview', area: 'loyalty' },
+      { id: 'LoyaltyRules', label: 'menu.loyalty.rules', route: '/dashboard/loyalty/rules', area: 'loyalty' },
+      { id: 'LoyaltyPartners', label: 'menu.loyalty.partners', route: '/dashboard/loyalty/partners', area: 'loyalty' },
+      { id: 'LoyaltyAccounts', label: 'menu.loyalty.accounts', route: '/dashboard/loyalty/accounts', area: 'loyalty' },
+      { id: 'LoyaltyVouchers', label: 'menu.loyalty.vouchers', route: '/dashboard/loyalty/vouchers', area: 'loyalty' },
+      { id: 'LoyaltySettings', label: 'menu.loyalty.settings', route: '/dashboard/loyalty/settings', area: 'loyalty' },
+    ]
+  },
   { id: 'PlansManagements', label: 'menu.plans', iconName: 'plans', route: '/dashboard/plans', area: 'subscriptions', roles: ['admin'] },
   { id: 'SendNotifications', label: 'menu.send_notifications', iconName: 'notifications', route: '/dashboard/notification', area: 'notifications', roles: ['admin'] },
   { id: 'NotificationHistory', label: 'menu.notification_history', iconName: 'notifications', route: '/dashboard/notification/history', area: 'notifications', roles: ['admin'] },

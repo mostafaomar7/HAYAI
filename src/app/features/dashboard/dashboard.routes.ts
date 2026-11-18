@@ -293,6 +293,43 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/ai/token-requests/ai-token-request-detail').then(m => m.AiTokenRequestDetail)
   },
+  // Hayai points (loyalty program, 2026-11-18). Area `loyalty`.
+  { path: 'loyalty', pathMatch: 'full', redirectTo: 'loyalty/overview' },
+  {
+    path: 'loyalty/overview',
+    data: { title: 'menu.loyalty.overview' },
+    loadComponent: () => import('./pages/loyalty/overview/loyalty-overview').then(m => m.LoyaltyOverviewPage)
+  },
+  {
+    path: 'loyalty/settings',
+    data: { title: 'menu.loyalty.settings' },
+    loadComponent: () => import('./pages/loyalty/settings/loyalty-settings').then(m => m.LoyaltySettingsPage)
+  },
+  {
+    path: 'loyalty/rules',
+    data: { title: 'menu.loyalty.rules' },
+    loadComponent: () => import('./pages/loyalty/rules/loyalty-rules').then(m => m.LoyaltyRulesPage)
+  },
+  {
+    path: 'loyalty/partners',
+    data: { title: 'menu.loyalty.partners' },
+    loadComponent: () => import('./pages/loyalty/partners/loyalty-partners').then(m => m.LoyaltyPartnersPage)
+  },
+  {
+    path: 'loyalty/accounts',
+    data: { title: 'menu.loyalty.accounts' },
+    loadComponent: () => import('./pages/loyalty/accounts/loyalty-accounts').then(m => m.LoyaltyAccountsPage)
+  },
+  {
+    path: 'loyalty/accounts/:userId',
+    data: { title: 'menu.loyalty.accounts' },
+    loadComponent: () => import('./pages/loyalty/accounts/loyalty-account').then(m => m.LoyaltyAccountPage)
+  },
+  {
+    path: 'loyalty/vouchers',
+    data: { title: 'menu.loyalty.vouchers' },
+    loadComponent: () => import('./pages/loyalty/vouchers/loyalty-vouchers').then(m => m.LoyaltyVouchersPage)
+  },
   {
     path: 'account-deletion-requests',
     data: { title: 'deletion_requests.title' },

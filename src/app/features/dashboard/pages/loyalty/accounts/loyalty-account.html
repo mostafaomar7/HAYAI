@@ -1,0 +1,176 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <button class="back-btn" (click)="back()">← {{ 'common.back' | t }}</button>
+        <h2>{{ 'loyalty.account.title' | t : { name: displayName() } }}</h2>
+        @if (account()?.user; as u) {
+          <p class="sub">
+            {{ typeKey(u.user_type) | t }} · <bdi dir="ltr">#{{ u.id }}</bdi>
+            @if (u.phone) { · <bdi dir="ltr">{{ u.phone }}</bdi> }
+            @if (u.email) { · <bdi dir="ltr">{{ u.email }}</bdi> }
+          </p>
+        }
+      </div>
+      <div class="actions-area">
+        <a class="btn-secondary btn-sm" routerLink="/dashboard/loyalty/vouchers" [queryParams]="vouchersParams()">{{ 'loyalty.account.vouchers' | t }}</a>
+        @if (canManage() && account()) {
+          <button class="btn-primary btn-sm" (click)="openAdjust()">{{ 'loyalty.adjust.title' | t }}</button>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (failed()) {
+    <div class="card">
+      <p class="table-hint">{{ 'loyalty.load_failed' | t }}</p>
+      <div class="card-body"><button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></div>
+    </div>
+  } @else if (account(); as a) {
+    <div class="tiles">
+      <div class="tile">
+        <p class="tile-label">{{ 'loyalty.accounts.balance' | t }}</p>
+        <div class="tile-value blue"><bdi dir="ltr">{{ num(a.balance) }}</bdi></div>
+        <p class="tile-foot">{{ money(a.balance_value, a.currency) }}</p>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'loyalty.account.expiring' | t }}</p>
+        @if (a.expiring_soon; as x) {
+          <div class="tile-value amber"><bdi dir="ltr">{{ num(x.points) }}</bdi></div>
+          <p class="tile-foot">{{ 'loyalty.account.expires_on' | t }} <bdi dir="ltr">{{ x.expires_at | date:'mediumDate' }}</bdi></p>
+        } @else {
+          <div class="tile-value">0</div>
+        }
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'loyalty.account.invite' | t }}</p>
+        <div class="tile-value"><span class="mono-code" dir="ltr">{{ a.referral_code || '—' }}</span></div>
+        <p class="tile-foot">
+          {{ 'loyalty.account.invited' | t : { n: num(a.invited_count) } }}
+          @if (a.referred_by_user_id) {
+            · <a [routerLink]="['/dashboard/loyalty/accounts', a.referred_by_user_id]">{{ 'loyalty.account.referred_by' | t : { id: a.referred_by_user_id } }}</a>
+          }
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h2>{{ 'loyalty.account.lifetime' | t }}</h2></div></div>
+      <div class="card-body">
+        <dl class="detail-grid">
+          <div><dt>{{ 'loyalty.overview.earned' | t }}</dt><dd dir="ltr" class="pos">{{ num(a.lifetime.earned) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.redeemed' | t }}</dt><dd dir="ltr">{{ num(a.lifetime.redeemed) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.refunded' | t }}</dt><dd dir="ltr">{{ num(a.lifetime.refunded) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.expired' | t }}</dt><dd dir="ltr">{{ num(a.lifetime.expired) }}</dd></div>
+          <div><dt>{{ 'loyalty.overview.adjusted' | t }}</dt><dd dir="ltr">{{ signed(a.lifetime.adjusted) }}</dd></div>
+        </dl>
+      </div>
+    </div>
+  }
+
+  <div class="card">
+    <div class="card-head">
+      <div><h2>{{ 'loyalty.account.ledger' | t }}</h2></div>
+      <div class="actions-area filters">
+        <label class="field">
+          <span>{{ 'loyalty.account.entry_type' | t }}</span>
+          <select [value]="type()" (change)="setType($any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            @for (ty of entryTypes; track ty) { <option [value]="ty">{{ ('loyalty.entry.' + ty) | t }}</option> }
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.account.date' | t }}</th>
+            <th>{{ 'loyalty.account.entry_type' | t }}</th>
+            <th>{{ 'loyalty.account.what' | t }}</th>
+            <th>{{ 'loyalty.points' | t }}</th>
+            <th>{{ 'loyalty.account.remaining' | t }}</th>
+            <th>{{ 'loyalty.account.expires' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (entriesLoading()) {
+            <tr><td colspan="6" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (entriesFailed()) {
+            <tr><td colspan="6" class="table-hint">{{ 'loyalty.load_failed' | t }}</td></tr>
+          } @else if (!entries().length) {
+            <tr><td colspan="6" class="table-hint">{{ 'loyalty.account.no_entries' | t }}</td></tr>
+          } @else {
+            @for (e of entries(); track e.id) {
+              <tr>
+                <td class="nowrap"><bdi dir="ltr">{{ e.created_at | date:'d MMM y, HH:mm' }}</bdi></td>
+                <td><span class="pill" [ngClass]="entryClass(e)">{{ entryTypeLabel(e) | t }}</span></td>
+                <td class="name-cell">
+                  {{ entryTitle(e) }}
+                  @if (e.voucher; as v) {
+                    <span class="sub">{{ 'loyalty.account.voucher_line' | t : { amount: money(v.amount, v.currency), status: (label(v.status_label, 'loyalty.voucher.status.' + v.status) | t) } }}</span>
+                  }
+                  @if (e.note) { <span class="sub">{{ e.note }}</span> }
+                </td>
+                <td class="num" [class.pos]="e.points > 0" [class.neg]="e.points < 0"><bdi dir="ltr">{{ signed(e.points) }}</bdi></td>
+                <td class="num">{{ e.type === 'earn' || (e.type === 'adjust' && e.points > 0) || e.type === 'refund' ? num(e.remaining) : '' }}</td>
+                <td class="nowrap">
+                  @if (e.points > 0) {
+                    @if (e.expires_at) { <bdi dir="ltr">{{ e.expires_at | date:'mediumDate' }}</bdi> }
+                    @else { <span class="muted">{{ 'loyalty.account.never' | t }}</span> }
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>
+
+@if (adjustOpen()) {
+  <div class="modal-backdrop" (click)="closeAdjust()">
+    <div class="modal" style="max-width:520px" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ 'loyalty.adjust.title' | t }}</h3>
+        <button class="modal-close" (click)="closeAdjust()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="stack">
+          <div class="tabs" style="padding:0">
+            <button type="button" class="tab" [class.active]="aDirection() === 'give'" (click)="aDirection.set('give')">+ {{ 'loyalty.adjust.give' | t }}</button>
+            <button type="button" class="tab" [class.active]="aDirection() === 'take'" (click)="aDirection.set('take')">− {{ 'loyalty.adjust.take' | t }}</button>
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.points' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [value]="aPoints()" (input)="aPoints.set($any($event.target).value)" />
+            @if (fieldErrors()['points']; as e) { <span class="field-error">{{ e }}</span> }
+            @else if (tooMuch()) { <span class="field-error">{{ 'loyalty.adjust.too_much' | t : { n: num(account()?.balance) } }}</span> }
+            @else { <span class="hint">{{ 'loyalty.adjust.balance_now' | t : { n: num(account()?.balance) } }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.adjust.reason' | t }} <span class="req">*</span></label>
+            <textarea rows="3" maxlength="500" [value]="aReason()" (input)="aReason.set($any($event.target).value)"></textarea>
+            @if (fieldErrors()['reason']; as e) { <span class="field-error">{{ e }}</span> }
+            @else { <span class="hint">{{ 'loyalty.adjust.reason_hint' | t }}</span> }
+          </div>
+          @if (aDirection() === 'give') {
+            <label class="checkbox">
+              <input type="checkbox" [checked]="aNeverExpires()" (change)="aNeverExpires.set($any($event.target).checked)" />
+              {{ 'loyalty.adjust.never_expires' | t }}
+            </label>
+          }
+        </div>
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" (click)="closeAdjust()">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="!canAdjust()" (click)="submitAdjust()">{{ (adjusting() ? 'common.saving' : 'loyalty.adjust.submit') | t }}</button>
+      </div>
+    </div>
+  </div>
+}

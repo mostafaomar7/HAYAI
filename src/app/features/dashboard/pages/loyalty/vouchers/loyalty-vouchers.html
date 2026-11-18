@@ -1,0 +1,164 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.vouchers.title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.vouchers.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        <button class="btn-secondary btn-sm" (click)="showOwed()">{{ 'loyalty.vouchers.owed' | t }}</button>
+      </div>
+    </div>
+
+    <div class="card-body filters">
+      <label class="field">
+        <span>{{ 'common.status' | t }}</span>
+        <select [value]="status()" (change)="setStatus($any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          @for (s of statuses; track s) { <option [value]="s">{{ ('loyalty.voucher.status.' + s) | t }}</option> }
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'loyalty.vouchers.settlement' | t }}</span>
+        <select [value]="settlement()" (change)="setSettlement($any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="unsettled">{{ 'loyalty.voucher.settlement.unsettled' | t }}</option>
+          <option value="settled">{{ 'loyalty.voucher.settlement.settled' | t }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'loyalty.vouchers.partner' | t }}</span>
+        <select [value]="partnerId() ?? ''" (change)="setPartner($any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          @if (partnerMissing()) { <option [value]="partnerId()">{{ partnerName() || ('#' + partnerId()) }}</option> }
+          @for (p of partners(); track p.user_id) { <option [value]="p.user_id">{{ partnerLabel(p) }}</option> }
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'common.from' | t }}</span>
+        <input type="date" dir="ltr" [value]="from()" (change)="setDate('from', $any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>{{ 'common.to' | t }}</span>
+        <input type="date" dir="ltr" [value]="to()" [min]="from()" (change)="setDate('to', $any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>{{ 'loyalty.vouchers.code' | t }}</span>
+        <input type="text" dir="ltr" class="mono-code" [value]="code()" (input)="onCode($any($event.target).value)" />
+      </label>
+    </div>
+
+    @if (userId(); as uid) {
+      <div class="card-body" style="padding-top:0">
+        <span class="chip">
+          {{ 'loyalty.vouchers.for_member' | t : { who: userName() || ('#' + uid) } }}
+          <button type="button" (click)="clearUser()">×</button>
+        </span>
+      </div>
+    }
+
+    @if (totals(); as tt) {
+      <div class="card-body totals" style="padding-top:0">
+        <span>{{ 'loyalty.vouchers.total_count' | t }}: <strong dir="ltr">{{ num(tt.count) }}</strong></span>
+        <span>{{ 'loyalty.amount' | t }}: <strong dir="ltr">{{ money(tt.amount) }}</strong></span>
+        <span>{{ 'loyalty.points' | t }}: <strong dir="ltr">{{ num(tt.points) }}</strong></span>
+      </div>
+    }
+
+    @if (selected().size && canManage()) {
+      <div class="bulk-bar">
+        <span>{{ 'loyalty.vouchers.selected' | t : { n: selected().size, amount: money(selectedAmount()) } }}</span>
+        @if (selectedPartners() > 1) { <span class="pill pill-warning">{{ 'loyalty.vouchers.mixed' | t }}</span> }
+        <span class="spacer"></span>
+        <button class="btn-secondary btn-sm" (click)="toggleAll(false)">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary btn-sm" [disabled]="busy()" (click)="settle()">{{ 'loyalty.vouchers.settle' | t }}</button>
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            @if (canManage()) {
+              <th class="check">
+                <input type="checkbox" [checked]="allSelected()" [disabled]="!settleableRows().length"
+                       [title]="'loyalty.vouchers.select_all' | t" (change)="toggleAll($any($event.target).checked)" />
+              </th>
+            }
+            <th>{{ 'loyalty.vouchers.code' | t }}</th>
+            <th>{{ 'loyalty.vouchers.member' | t }}</th>
+            <th>{{ 'loyalty.vouchers.partner' | t }}</th>
+            <th>{{ 'loyalty.amount' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'loyalty.vouchers.dates' | t }}</th>
+            <th>{{ 'loyalty.vouchers.settlement' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="9" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="9" class="table-hint">{{ 'loyalty.load_failed' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="9" class="table-hint">{{ 'loyalty.vouchers.empty' | t }}</td></tr>
+          } @else {
+            @for (v of items(); track v.id) {
+              <tr>
+                @if (canManage()) {
+                  <td class="check">
+                    @if (settleable(v)) {
+                      <input type="checkbox" [checked]="selected().has(v.id)" (change)="toggleOne(v, $any($event.target).checked)" />
+                    }
+                  </td>
+                }
+                <td><span class="mono-code" dir="ltr">{{ v.code }}</span></td>
+                <td class="name-cell">
+                  @if (v.patient) {
+                    <a [routerLink]="['/dashboard/loyalty/accounts', v.patient.id]">{{ v.patient.name || ('#' + v.patient.id) }}</a>
+                    @if (v.patient.phone) { <span class="sub"><bdi dir="ltr">{{ v.patient.phone }}</bdi></span> }
+                  } @else { — }
+                </td>
+                <td class="name-cell">
+                  {{ v.partner?.name || (v.partner ? '#' + v.partner.user_id : '—') }}
+                  @if (v.partner?.user_type) { <span class="sub">{{ typeKey(v.partner!.user_type) | t }}</span> }
+                </td>
+                <td class="num">
+                  {{ money(v.amount, v.currency) }}
+                  <span class="sub">{{ 'loyalty.vouchers.points_n' | t : { n: num(v.points) } }}</span>
+                  @if (v.invoice_amount) {
+                    <span class="sub">{{ 'loyalty.vouchers.invoice' | t : { amount: money(v.invoice_amount, v.currency) } }}@if (v.invoice_reference) { · <bdi dir="ltr">{{ v.invoice_reference }}</bdi> }</span>
+                  }
+                </td>
+                <td>
+                  <span class="pill" [ngClass]="'pill-' + v.status">{{ statusLabel(v) | t }}</span>
+                  @if (v.cancel_reason) { <span class="sub">{{ v.cancel_reason }}</span> }
+                </td>
+                <td class="nowrap">
+                  <span class="sub">{{ 'loyalty.vouchers.created' | t }} <bdi dir="ltr">{{ v.created_at | date:'d MMM y, HH:mm' }}</bdi></span>
+                  @if (v.redeemed_at) { <span class="sub">{{ 'loyalty.vouchers.used' | t }} <bdi dir="ltr">{{ v.redeemed_at | date:'d MMM y, HH:mm' }}</bdi></span> }
+                  @else if (v.status === 'active' && v.expires_at) { <span class="sub">{{ 'loyalty.vouchers.expires' | t }} <bdi dir="ltr">{{ v.expires_at | date:'d MMM y, HH:mm' }}</bdi></span> }
+                  @if (v.cancelled_at) { <span class="sub">{{ 'loyalty.vouchers.cancelled_on' | t }} <bdi dir="ltr">{{ v.cancelled_at | date:'d MMM y, HH:mm' }}</bdi></span> }
+                </td>
+                <td>
+                  @if (v.settlement_status) {
+                    <span class="pill" [ngClass]="'pill-' + v.settlement_status">{{ settlementLabel(v) | t }}</span>
+                    @if (v.settled_at) { <span class="sub"><bdi dir="ltr">{{ v.settled_at | date:'mediumDate' }}</bdi></span> }
+                    @if (v.settlement_reference) { <span class="sub"><bdi dir="ltr">{{ v.settlement_reference }}</bdi></span> }
+                  } @else { <span class="muted">—</span> }
+                </td>
+                <td>
+                  @if (canManage() && v.status === 'active') {
+                    <button class="link-btn danger" [disabled]="busy()" (click)="cancel(v)">{{ 'loyalty.vouchers.cancel' | t }}</button>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>

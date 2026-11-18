@@ -1,0 +1,140 @@
+<div class="page-container">
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (failed()) {
+    <div class="card">
+      <p class="table-hint">{{ 'loyalty.load_failed' | t }}</p>
+      <div class="card-body"><button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></div>
+    </div>
+  } @else if (saved(); as s) {
+
+    <!-- the switch: its own action, confirmed, never part of Save -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>{{ 'loyalty.settings.title' | t }}</h2>
+          <p class="sub">{{ 'loyalty.settings.subtitle' | t }}</p>
+        </div>
+        <div class="actions-area">
+          <label class="switch" [class.readonly]="!canManage()">
+            <input type="checkbox" [checked]="s.enabled" [disabled]="switching() || !canManage()"
+                   (change)="toggleEnabled($any($event.target))" />
+            {{ 'loyalty.settings.enabled' | t }}
+            <span class="pill" [ngClass]="s.enabled ? 'pill-active' : 'pill-inactive'">{{ (s.enabled ? 'loyalty.on' : 'loyalty.off') | t }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="muted" style="margin:0">{{ 'loyalty.settings.enabled_hint' | t }}</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>{{ 'loyalty.settings.conversion' | t }} <span class="req">*</span></label>
+            <div class="inline-pair" dir="ltr">
+              <input type="number" min="1" step="1" inputmode="numeric" [disabled]="!canManage()"
+                     [value]="convPoints()" (input)="edit('conversion_points', convPoints, $any($event.target).value)" />
+              <span>{{ 'loyalty.points' | t }} =</span>
+              <input type="number" min="0.01" step="0.01" inputmode="decimal" [disabled]="!canManage()"
+                     [value]="convAmount()" (input)="edit('conversion_amount', convAmount, $any($event.target).value)" />
+              <span>{{ currencyWord(s.currency) }}</span>
+            </div>
+            @if (errorFor('conversion_points'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @if (errorFor('conversion_amount'); as e) { <span class="field-error">{{ e | t }}</span> }
+            <span class="hint">{{ 'loyalty.settings.point_value' | t : { value: pointValueText() } }}</span>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.settings.validity' | t }}</label>
+            <input type="number" min="1" max="3650" step="1" dir="ltr" inputmode="numeric"
+                   [disabled]="neverExpire() || !canManage()"
+                   [value]="validityDays()" (input)="edit('points_validity_days', validityDays, $any($event.target).value)" />
+            <label class="checkbox" style="margin-top:6px">
+              <input type="checkbox" [checked]="neverExpire()" [disabled]="!canManage()"
+                     (change)="neverExpire.set($any($event.target).checked)" />
+              {{ 'loyalty.settings.never_expire' | t }}
+            </label>
+            @if (errorFor('points_validity_days'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.settings.min_redeem' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                   [value]="minRedeem()" (input)="edit('min_redeem_points', minRedeem, $any($event.target).value)" />
+            @if (errorFor('min_redeem_points'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.settings.max_redeem' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                   [placeholder]="'loyalty.settings.no_max' | t"
+                   [value]="maxRedeem()" (input)="edit('max_redeem_points', maxRedeem, $any($event.target).value)" />
+            @if (errorFor('max_redeem_points'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ 'loyalty.settings.max_redeem_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.settings.voucher_days' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" max="365" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                   [value]="voucherDays()" (input)="edit('voucher_validity_days', voucherDays, $any($event.target).value)" />
+            @if (errorFor('voucher_validity_days'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ 'loyalty.settings.voucher_days_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.settings.referral_days' | t }} <span class="req">*</span></label>
+            <input type="number" min="0" max="365" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                   [value]="referralDays()" (input)="edit('referral_window_days', referralDays, $any($event.target).value)" />
+            @if (errorFor('referral_window_days'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ 'loyalty.settings.referral_days_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'loyalty.settings.terms_en' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="5" dir="ltr" [attr.maxlength]="termsMax" [disabled]="!canManage()"
+                      [value]="termsEn()" (input)="edit('terms_en', termsEn, $any($event.target).value)"></textarea>
+            @if (errorFor('terms_en'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint"><bdi dir="ltr">{{ termsEn().length }} / {{ termsMax }}</bdi> · {{ 'loyalty.settings.terms_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'loyalty.settings.terms_ar' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="5" dir="rtl" [attr.maxlength]="termsMax" [disabled]="!canManage()"
+                      [value]="termsAr()" (input)="edit('terms_ar', termsAr, $any($event.target).value)"></textarea>
+            @if (errorFor('terms_ar'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint"><bdi dir="ltr">{{ termsAr().length }} / {{ termsMax }}</bdi></span> }
+          </div>
+        </div>
+
+        <!-- the whole program in one sentence, from what is typed -->
+        <p class="notice info" style="margin-top:16px">
+          @if (preview(); as p) {
+            {{ 'loyalty.settings.preview_rate' | t : { points: p.points, amount: p.amount } }}
+            ·
+            @if (neverExpire()) { {{ 'loyalty.settings.preview_never' | t }} }
+            @else { {{ 'loyalty.settings.preview_days' | t : { days: p.days } }} }
+            ·
+            {{ 'loyalty.settings.preview_voucher' | t : { min: p.min, days: p.voucherDays } }}
+          }
+        </p>
+
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+
+        @if (canManage()) {
+          <div class="row" style="justify-content:flex-end">
+            <button class="btn-secondary" [disabled]="!dirty() || saving()" (click)="reset()">{{ 'common.cancel' | t }}</button>
+            <button class="btn-primary" [disabled]="!canSave()" (click)="save()">
+              {{ (saving() ? 'common.saving' : 'common.save') | t }}
+            </button>
+          </div>
+        }
+        @if (s.updated_at) {
+          <p class="muted" style="margin:12px 0 0">{{ 'loyalty.settings.updated' | t }} <bdi dir="ltr">{{ s.updated_at | date:'medium' }}</bdi></p>
+        }
+      </div>
+    </div>
+  }
+</div>

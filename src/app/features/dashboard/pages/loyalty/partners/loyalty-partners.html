@@ -1,0 +1,133 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.partners.title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.partners.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <div class="search-box">
+          <input type="text" [placeholder]="'common.search_placeholder' | t" (input)="onSearch($any($event.target).value)" />
+        </div>
+        <label class="field">
+          <span>{{ 'loyalty.partners.type' | t }}</span>
+          <select [value]="type()" (change)="setType($any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            @for (ty of types; track ty) { <option [value]="ty">{{ typeKey(ty) | t }}</option> }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button type="button" class="tab" [class.active]="tab() === 'all'" (click)="setTab('all')">{{ 'loyalty.partners.tab_all' | t }}</button>
+      <button type="button" class="tab" [class.active]="tab() === 'accepting'" (click)="setTab('accepting')">{{ 'loyalty.partners.tab_accepting' | t }}</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.partners.account' | t }}</th>
+            <th>{{ 'loyalty.partners.type' | t }}</th>
+            <th>{{ 'loyalty.partners.accepts' | t }}</th>
+            <th>{{ 'loyalty.partners.cap' | t }}</th>
+            <th>{{ 'loyalty.partners.redeemed' | t }}</th>
+            <th>{{ 'loyalty.partners.unsettled' | t }}</th>
+            <th>{{ 'loyalty.partners.note' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="8" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="8" class="table-hint">{{ 'loyalty.load_failed' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="8" class="table-hint">{{ (tab() === 'accepting' ? 'loyalty.partners.empty_accepting' : 'loyalty.partners.empty') | t }}</td></tr>
+          } @else {
+            @for (p of items(); track p.user_id) {
+              <tr>
+                <td class="name-cell">
+                  {{ name(p) }}
+                  <span class="sub">
+                    <bdi dir="ltr">#{{ p.user_id }}</bdi>
+                    @if (p.phone) { · <bdi dir="ltr">{{ p.phone }}</bdi> }
+                    @if (p.account_status && p.account_status !== 'active') { · <span class="pill pill-warning">{{ p.account_status }}</span> }
+                  </span>
+                  @if ((p.entities?.length ?? 0) > 1) {
+                    <span class="sub">{{ 'loyalty.partners.branches' | t : { n: p.entities!.length } }}</span>
+                  }
+                </td>
+                <td>{{ typeKey(p.provider_type) | t }}</td>
+                <td>
+                  <label class="switch" [class.readonly]="!canManage()">
+                    <input type="checkbox" [checked]="p.accepts_points" [disabled]="busy().has(p.user_id) || !canManage()"
+                           (change)="toggle(p, $any($event.target))" />
+                    <span class="pill" [ngClass]="p.accepts_points ? 'pill-active' : 'pill-inactive'">{{ (p.accepts_points ? 'loyalty.on' : 'loyalty.off') | t }}</span>
+                  </label>
+                </td>
+                <td class="num">{{ p.max_voucher_amount === null ? ('loyalty.partners.no_cap' | t) : money(p.max_voucher_amount) }}</td>
+                <td class="num">{{ money(p.redeemed_amount) }}</td>
+                <td class="num">
+                  @if (p.unsettled_amount > 0) {
+                    <a class="neg" routerLink="/dashboard/loyalty/vouchers" [queryParams]="vouchersParams(p)">{{ money(p.unsettled_amount) }}</a>
+                  } @else { {{ money(p.unsettled_amount) }} }
+                </td>
+                <td style="max-width:220px"><span class="sub" style="overflow-wrap:anywhere">{{ p.note || '—' }}</span></td>
+                <td>
+                  @if (canManage()) {
+                    <button class="link-btn" (click)="openEdit(p)">{{ 'common.edit' | t }}</button>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>
+
+@if (editing(); as p) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" style="max-width:520px" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ name(p) }}</h3>
+        <button class="modal-close" (click)="close()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="stack">
+          <label class="checkbox">
+            <input type="checkbox" [checked]="fAccepts()" (change)="fAccepts.set($any($event.target).checked)" />
+            {{ 'loyalty.partners.accepts_long' | t }}
+          </label>
+          @if (fieldErrors()['accepts_points']) { <span class="field-error">{{ fieldErrors()['accepts_points'] }}</span> }
+          @if (fieldErrors()['user_id']) { <span class="field-error">{{ fieldErrors()['user_id'] }}</span> }
+
+          <div class="form-group">
+            <label>{{ 'loyalty.partners.cap' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="number" min="1" step="0.01" dir="ltr" inputmode="decimal" [placeholder]="'loyalty.partners.no_cap' | t"
+                   [value]="fCap()" (input)="fCap.set($any($event.target).value)" />
+            @if (fieldErrors()['max_voucher_amount']; as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ 'loyalty.partners.cap_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.partners.note' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="3" maxlength="1000" [value]="fNote()" (input)="fNote.set($any($event.target).value)"></textarea>
+            @if (fieldErrors()['note']; as e) { <span class="field-error">{{ e }}</span> }
+            @else { <span class="hint">{{ 'loyalty.partners.note_hint' | t }}</span> }
+          </div>
+        </div>
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'common.saving' : 'common.save') | t }}</button>
+      </div>
+    </div>
+  </div>
+}

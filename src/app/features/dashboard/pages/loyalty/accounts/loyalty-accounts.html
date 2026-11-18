@@ -1,0 +1,73 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.accounts.title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.accounts.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <div class="search-box">
+          <input type="text" [value]="search()" [placeholder]="'loyalty.accounts.search' | t" (input)="onSearch($any($event.target).value)" />
+        </div>
+        <label class="field">
+          <span>{{ 'loyalty.accounts.type' | t }}</span>
+          <select [value]="type()" (change)="setType($any($event.target).value)">
+            <option value="">{{ 'common.all' | t }}</option>
+            <option value="patient">{{ 'users.patient.title' | t }}</option>
+            <option value="tourist">{{ 'users.tourist.title' | t }}</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>{{ 'loyalty.accounts.sort' | t }}</span>
+          <select [value]="sort()" (change)="setSort($any($event.target).value)">
+            <option value="balance">{{ 'loyalty.accounts.sort_balance' | t }}</option>
+            <option value="recent">{{ 'loyalty.accounts.sort_recent' | t }}</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.accounts.member' | t }}</th>
+            <th>{{ 'loyalty.accounts.type' | t }}</th>
+            <th>{{ 'loyalty.accounts.code' | t }}</th>
+            <th>{{ 'loyalty.accounts.balance' | t }}</th>
+            <th>{{ 'loyalty.accounts.earned' | t }}</th>
+            <th>{{ 'loyalty.accounts.joined' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="6" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="6" class="table-hint">{{ 'loyalty.load_failed' | t }}</td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="6" class="table-hint">{{ 'loyalty.accounts.empty' | t }}</td></tr>
+          } @else {
+            @for (a of items(); track a.user_id) {
+              <tr style="cursor:pointer" (click)="open(a)">
+                <td class="name-cell">
+                  <a [routerLink]="['/dashboard/loyalty/accounts', a.user_id]" (click)="$event.stopPropagation()">{{ a.name || ('#' + a.user_id) }}</a>
+                  <span class="sub"><bdi dir="ltr">{{ a.phone || a.email || ('#' + a.user_id) }}</bdi></span>
+                </td>
+                <td>{{ typeKey(a.user_type) | t }}</td>
+                <td><span class="mono-code" dir="ltr">{{ a.referral_code || '—' }}</span></td>
+                <td class="num">
+                  <strong>{{ num(a.balance) }}</strong>
+                  <span class="sub">{{ money(a.balance_value) }}</span>
+                </td>
+                <td class="num">{{ num(a.earned) }}</td>
+                <td class="nowrap">{{ a.joined_at ? (a.joined_at | date:'mediumDate') : '—' }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>
