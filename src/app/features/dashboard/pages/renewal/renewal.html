@@ -78,7 +78,7 @@
       has. Measured on production 2026-10-14 — both rows ended 29 and 30 days
       ahead, with status "active".
     -->
-    <p class="hint-bar">{{ 'renewal.window_hint' | t }}</p>
+    <p class="hint-bar">{{ 'renewal.window_hint' | t : { days: windowDays(), grace: graceDays() } }}</p>
 
     <div class="table-responsive">
       <table class="data-table">
@@ -106,18 +106,48 @@
                 </td>
                 <td>
                   <div class="user-cell">
-                    @if (user.user.avatar) {
-                      <img [src]="user.user.avatar" alt="Avatar" class="avatar">
+                    @if (user.user?.avatar) {
+                      <img [src]="user.user!.avatar" alt="Avatar" class="avatar">
                     } @else {
-                      <span class="avatar-initials" [style.background-color]="avatarColor(user.user.name)">{{ initials(user.user.name) }}</span>
+                      <span class="avatar-initials" [style.background-color]="avatarColor(user.user?.name)">{{ initials(user.user?.name) }}</span>
                     }
-                    <span class="user-name">{{ user.user.name }}</span>
+                    <div class="user-text">
+                      <span class="user-name">{{ user.user?.name || '—' }}</span>
+                      <!-- Owner contact, so the admin can reach them before renewing. -->
+                      @if (user.user?.email || user.user?.phone) {
+                        <span class="user-contact">
+                          @if (user.user?.email) { <bdi dir="ltr">{{ user.user?.email }}</bdi> }
+                          @if (user.user?.email && user.user?.phone) { · }
+                          @if (user.user?.phone) { <bdi dir="ltr">{{ user.user?.country_code }} {{ user.user?.phone }}</bdi> }
+                        </span>
+                      }
+                    </div>
                   </div>
                 </td>
-                <td class="text-gray">{{ user.user.type || '—' }}</td>
-                <td class="text-gray">{{ user.plan.name }}</td>
+                <td class="text-gray">{{ user.user?.type || '—' }}</td>
+                <td class="text-gray">
+                  {{ user.plan?.name || '—' }}
+                  <!-- Deleted from the dashboard after this term began; the
+                       term still runs, but the plan is gone from the filter. -->
+                  @if (user.plan?.is_deleted) {
+                    <span class="deleted-plan">{{ 'renewal.deleted_plan' | t }}</span>
+                  }
+                </td>
                 <td class="text-gray">
                   {{ user.ended_at }}
+                  @if (user.phase) {
+                    <span class="phase phase-{{ user.phase }}"
+                          [title]="user.phase === 'grace' && user.grace_ends_at ? ('renewal.grace_until' | t : { date: user.grace_ends_at }) : ''">
+                      {{ 'renewal.phase.' + user.phase | t }}
+                    </span>
+                  }
+                  @if (user.days_left != null) {
+                    <span class="days-left">
+                      @if (user.days_left > 0) { {{ 'renewal.days_left' | t : { count: user.days_left } }} }
+                      @else if (user.days_left === 0) { {{ 'renewal.ends_today' | t }} }
+                      @else { {{ 'renewal.ended_ago' | t : { count: -user.days_left } }} }
+                    </span>
+                  }
                   <!-- A term that ends on the day it starts is not a lapsed
                        subscription, it is a broken record: renewing it will not
                        clear it from this list. -->

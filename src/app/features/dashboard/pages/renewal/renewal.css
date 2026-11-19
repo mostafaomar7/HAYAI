@@ -379,3 +379,23 @@
   margin-inline-start: 5px; padding: 1px 6px; border-radius: 5px;
   background: #ECFDF5; color: #047857; font-size: 11px; font-weight: 700;
 }
+
+/* Name with the owner's contact under it. */
+.user-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.user-contact { font-size: 12px; font-weight: 400; color: #6B7280; white-space: nowrap; }
+
+/* Where the term stands: about to end, ended but still usable, or past both. */
+.phase {
+  display: inline-block; margin-inline-start: 8px; padding: 2px 8px;
+  border-radius: 10px; font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.phase-expiring { background: #FFFBEB; color: #B45309; }
+.phase-grace { background: #FFF7ED; color: #C2410C; cursor: help; }
+.phase-expired { background: #FEF2F2; color: #B91C1C; }
+.days-left { display: block; margin-top: 2px; font-size: 12px; color: #6B7280; }
+
+.deleted-plan {
+  display: inline-block; margin-inline-start: 8px; padding: 2px 8px;
+  border-radius: 10px; background: #F3F4F6; color: #6B7280;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}

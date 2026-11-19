@@ -1,6 +1,6 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RenewalItem, SubscriptionsService } from '../../../../core/services/subscriptions.service';
+import { RenewalItem, RenewalQuery, SubscriptionsService } from '../../../../core/services/subscriptions.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { Plan, PlansService } from '../../../../core/services/plans.service';
 import { LookupItem, LookupsService } from '../../../../core/services/lookups.service';
@@ -33,6 +33,10 @@ export class Renewal {
   readonly perPage = 15;
   page = signal(1);
   total = signal(0);
+  /** How far ahead the API looks, from `meta.window_days` (7 on 2026-11-19). */
+  windowDays = signal(7);
+  /** Days an ended term stays usable, from `meta.grace_days` (2 on 2026-11-19). */
+  graceDays = signal(2);
 
   plansList = signal<Plan[]>([]);
   userTypes = signal<LookupItem[]>([]);
@@ -68,14 +72,25 @@ export class Renewal {
     });
   }
 
+  /**
+   * The filters the list is showing. Shared by `load()` and "Renew All", so
+   * the bulk renew acts on the rows the admin filtered down to and not on
+   * every account in the renewal list. Empty filters are left out.
+   */
+  private filters(): Pick<RenewalQuery, 'search' | 'user_type' | 'plan_id'> {
+    return {
+      search: this.search() || undefined,
+      user_type: this.userTypeFilter() || undefined,
+      plan_id: this.planFilter() ? Number(this.planFilter()) : undefined
+    };
+  }
+
   load() {
     this.loading.set(true);
     this.svc.renewals({
       page: this.page(),
       per_page: this.perPage,
-      search: this.search() || undefined,
-      user_type: this.userTypeFilter() || undefined,
-      plan_id: this.planFilter() ? Number(this.planFilter()) : undefined
+      ...this.filters()
     }).subscribe({
       next: r => {
         // Renewing the last row of the last page leaves us past the end.
@@ -86,6 +101,10 @@ export class Renewal {
         }
         this.renewalUsers.set(r.items);
         this.total.set(r.pagination.total);
+        const days = Number(r.meta?.["window_days"]);
+        if (days > 0) this.windowDays.set(days);
+        const grace = Number(r.meta?.["grace_days"]);
+        if (grace >= 0 && r.meta?.["grace_days"] != null) this.graceDays.set(grace);
         this.selectedIds.set(new Set());
         this.loading.set(false);
       },
@@ -208,11 +227,13 @@ export class Renewal {
       const ok = await this.dialog.confirm({
         title: 'renewal.renew_all_title',
         text: 'renewal.renew_all_text',
+        params: { count: this.total() },
         icon: 'warning',
         confirmText: 'renewal.renew_all_confirm'
       });
       if (!ok) return;
-      this.svc.renewBulk({ all: true }).subscribe({
+      // JSON drops the undefined keys, so an empty filter is not sent.
+      this.svc.renewBulk({ all: true, ...this.filters() }).subscribe({
         next: r => { this.dialog.toast('success', 'renewal.renewed_count', { count: r.renewed }); this.load(); },
         error: err => this.dialog.error('renewal.bulk_failed', err.error?.message ?? 'dialog.try_again')
       });
