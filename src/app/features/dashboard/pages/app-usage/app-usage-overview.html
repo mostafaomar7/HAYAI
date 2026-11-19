@@ -1,0 +1,245 @@
+<div class="page-container">
+
+  <div class="card" style="overflow:visible">
+    <div class="card-head">
+      <div>
+        <h2>
+          {{ 'appusage.title' | t }}
+          <span class="info" style="vertical-align:middle;margin-inline-start:6px">
+            <button type="button" class="info-btn" [attr.aria-expanded]="infoOpen()" (click)="infoOpen.set(!infoOpen())" [title]="'appusage.info_title' | t">i</button>
+            @if (infoOpen()) {
+              <div class="info-pop" (click)="infoOpen.set(false)">
+                <ul>
+                  <li>{{ 'appusage.info.last_seen' | t }}</li>
+                  <li>{{ 'appusage.info.store' | t }}</li>
+                  <li>{{ 'appusage.info.no_activity' | t }}</li>
+                  <li>{{ 'appusage.info.unknown' | t }}</li>
+                  <li>{{ 'appusage.info.excluded' | t }}</li>
+                </ul>
+              </div>
+            }
+          </span>
+        </h2>
+        <p class="sub">{{ 'appusage.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area" style="flex-direction:column;align-items:flex-end;gap:8px">
+        @if (asOf()) { <span class="as-of">{{ 'appusage.updated' | t }}: <bdi>{{ asOf() }}</bdi></span> }
+        <button class="btn-secondary btn-sm" (click)="openUsers({ activity: 'inactive', days: 30 })">{{ 'appusage.inactive_users' | t }}</button>
+      </div>
+    </div>
+
+    <div class="card-body filters">
+      <label class="field">
+        <span>{{ 'appusage.audience' | t }}</span>
+        <select [value]="filters().audience || ''" (change)="setFilter('audience', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="patients">{{ 'appusage.audience.patients' | t }}</option>
+          <option value="partners">{{ 'appusage.audience.partners' | t }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.user_type' | t }}</span>
+        <select [value]="filters().user_type || ''" (change)="setFilter('user_type', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          @for (u of userTypes; track u) { <option [value]="u">{{ typeKey(u) | t }}</option> }
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.app' | t }}</span>
+        <select [value]="filters().app || ''" (change)="setFilter('app', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="patient">{{ 'appusage.app.patient' | t }}</option>
+          <option value="partner">{{ 'appusage.app.partner' | t }}</option>
+          <option value="unknown">{{ 'appusage.unknown' | t }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.platform' | t }}</span>
+        <select [value]="filters().platform || ''" (change)="setFilter('platform', $any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="android">{{ 'appusage.pf.android' | t }}</option>
+          <option value="ios">{{ 'appusage.pf.ios' | t }}</option>
+          <option value="windows">{{ 'appusage.pf.windows' | t }}</option>
+          <option value="unknown">{{ 'appusage.unknown' | t }}</option>
+        </select>
+      </label>
+      @if (hasFilters()) {
+        <button class="btn-secondary btn-sm" (click)="clearFilters()">{{ 'appusage.clear_filters' | t }}</button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><p class="table-hint">{{ 'common.loading' | t }}</p></div>
+  } @else if (failed()) {
+    <div class="card">
+      <p class="table-hint">{{ failed()! | t }}</p>
+      <div class="card-body"><button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></div>
+    </div>
+  } @else if (data(); as d) {
+
+    <!-- 1. KPI cards -->
+    <div class="tiles">
+      <div class="tile">
+        <p class="tile-label">{{ 'appusage.total_users' | t }}</p>
+        <div class="tile-value">{{ num(d.total_users) }}</div>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'appusage.active_today' | t }}</p>
+        <div class="tile-value blue">{{ num(d.active.last_24_hours) }}</div>
+        @if (pct(d.active.last_24_hours, d.total_users); as p) { <p class="tile-foot">{{ 'appusage.of_total' | t : { pct: p } }}</p> }
+        @else { <p class="tile-foot">{{ 'appusage.of_total' | t : { pct: 0 } }}</p> }
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'appusage.active_week' | t }}</p>
+        <div class="tile-value blue">{{ num(d.active.last_7_days) }}</div>
+        <p class="tile-foot">{{ 'appusage.of_total' | t : { pct: pct(d.active.last_7_days, d.total_users) ?? 0 } }}</p>
+      </div>
+      <div class="tile">
+        <p class="tile-label">{{ 'appusage.active_month' | t }}</p>
+        <div class="tile-value blue">{{ num(d.active.last_30_days) }}</div>
+        <p class="tile-foot">{{ 'appusage.of_total' | t : { pct: pct(d.active.last_30_days, d.total_users) ?? 0 } }}</p>
+      </div>
+    </div>
+
+    <!-- 2. buckets -->
+    <div class="card">
+      <div class="card-head"><div><h2>{{ 'appusage.when_title' | t }}</h2><p class="sub">{{ 'appusage.click_hint' | t }}</p></div></div>
+      <div class="card-body">
+        <div class="bars">
+          @for (b of d.buckets; track b.key) {
+            <button type="button" class="bar-row" (click)="openUsers({ bucket: b.key })">
+              <span>{{ b.label }}</span>
+              <span class="bar-track"><span class="bar-fill" [ngClass]="'b-' + b.key" [style.width.%]="(b.users / maxBucket()) * 100" style="display:block"></span></span>
+              <span class="bar-num">{{ num(b.users) }} <small class="muted">{{ pct(b.users, d.total_users) ?? 0 }}%</small></span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. platform / store -->
+    <div class="card">
+      <div class="card-head"><div><h2>{{ 'appusage.platform_title' | t }}</h2></div></div>
+      <div class="card-body">
+        <div class="donut-wrap">
+          <svg class="donut" viewBox="0 0 150 150" role="img" [attr.aria-label]="'appusage.platform_title' | t">
+            <circle cx="75" cy="75" [attr.r]="R" stroke="#F1F5F9"></circle>
+            @for (s of donut(); track $index) {
+              <circle cx="75" cy="75" [attr.r]="R" [attr.stroke]="s.color" [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset" transform="rotate(-90 75 75)"><title>{{ s.label }}: {{ s.users }}</title></circle>
+            }
+            <text class="center" x="75" y="81" text-anchor="middle">{{ num(d.total_users) }}</text>
+          </svg>
+          <div class="legend">
+            @for (s of donut(); track $index) {
+              <span><span class="sw" [style.background]="s.color"></span>{{ s.label }} — <bdi dir="ltr">{{ num(s.users) }}</bdi></span>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'appusage.store' | t }}</th>
+              <th>{{ 'appusage.users' | t }}</th>
+              <th>{{ 'appusage.active_30' | t }}</th>
+              <th>{{ 'appusage.inactive_30' | t }}</th>
+              <th>{{ 'appusage.no_activity' | t }}</th>
+              <th>{{ 'appusage.pct_active' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of d.by_platform; track $index) {
+              <tr class="clickable" (click)="openUsers({ platform: r.platform ?? 'unknown' })">
+                <td><span class="pf" [ngClass]="platformClass(r.platform)">{{ r.store_label }}</span>
+                  @if (r.store_label !== r.platform_label) { <span class="sub">{{ r.platform_label }}</span> }</td>
+                <td class="num">{{ num(r.users) }}</td>
+                <td class="num">{{ num(r.active_30_days) }}</td>
+                <td class="num">{{ num(r.inactive_30_days) }}</td>
+                <td class="num">{{ num(r.no_activity) }}</td>
+                <td class="num">{{ activePct(r) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-hint">{{ 'appusage.empty' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. by app / by account type -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div><h2>{{ 'appusage.by_app' | t }}</h2></div></div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead><tr>
+              <th>{{ 'appusage.app' | t }}</th><th>{{ 'appusage.users' | t }}</th><th>{{ 'appusage.active_30' | t }}</th>
+              <th>{{ 'appusage.inactive_30' | t }}</th><th>{{ 'appusage.no_activity' | t }}</th><th>{{ 'appusage.pct_active' | t }}</th>
+            </tr></thead>
+            <tbody>
+              @for (r of d.by_app; track $index) {
+                <tr class="clickable" (click)="openUsers({ app: r.app ?? 'unknown' })">
+                  <td>{{ r.app_label }}</td>
+                  <td class="num">{{ num(r.users) }}</td><td class="num">{{ num(r.active_30_days) }}</td>
+                  <td class="num">{{ num(r.inactive_30_days) }}</td><td class="num">{{ num(r.no_activity) }}</td>
+                  <td class="num">{{ activePct(r) }}</td>
+                </tr>
+              } @empty { <tr><td colspan="6" class="table-hint">{{ 'appusage.empty' | t }}</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2>{{ 'appusage.by_type' | t }}</h2></div></div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead><tr>
+              <th>{{ 'appusage.user_type' | t }}</th><th>{{ 'appusage.users' | t }}</th><th>{{ 'appusage.active_30' | t }}</th>
+              <th>{{ 'appusage.inactive_30' | t }}</th><th>{{ 'appusage.no_activity' | t }}</th><th>{{ 'appusage.pct_active' | t }}</th>
+            </tr></thead>
+            <tbody>
+              @for (r of d.by_user_type; track $index) {
+                <tr class="clickable" (click)="r.user_type && openUsers({ user_type: r.user_type })">
+                  <td>{{ r.user_type ? (typeKey(r.user_type) | t) : r.user_type_label }}</td>
+                  <td class="num">{{ num(r.users) }}</td><td class="num">{{ num(r.active_30_days) }}</td>
+                  <td class="num">{{ num(r.inactive_30_days) }}</td><td class="num">{{ num(r.no_activity) }}</td>
+                  <td class="num">{{ activePct(r) }}</td>
+                </tr>
+              } @empty { <tr><td colspan="6" class="table-hint">{{ 'appusage.empty' | t }}</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. versions -->
+    <div class="card">
+      <div class="card-head"><div><h2>{{ 'appusage.versions' | t }}</h2><p class="sub">{{ 'appusage.versions_hint' | t }}</p></div></div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead><tr>
+            <th>{{ 'appusage.app' | t }}</th><th>{{ 'appusage.platform' | t }}</th><th>{{ 'appusage.version' | t }}</th>
+            <th>{{ 'appusage.build' | t }}</th><th>{{ 'appusage.users' | t }}</th><th>{{ 'appusage.active_30' | t }}</th><th></th>
+          </tr></thead>
+          <tbody>
+            @for (v of d.app_versions; track $index) {
+              <tr class="clickable" [class.outdated]="isOutdated(v)" (click)="openVersion(v)">
+                <td>{{ v.app_label }}</td>
+                <td><span class="pf" [ngClass]="platformClass(v.platform)">{{ v.platform_label }}</span></td>
+                <td><bdi dir="ltr">{{ v.app_version || '—' }}</bdi></td>
+                <td class="num">{{ v.app_build ?? '—' }}</td>
+                <td class="num">{{ num(v.users) }}</td>
+                <td class="num">{{ num(v.active_30_days) }}</td>
+                <td>@if (isOutdated(v)) { <span class="pill pill-warning">{{ 'appusage.outdated' | t }}</span> }</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="table-hint">{{ 'appusage.no_versions' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

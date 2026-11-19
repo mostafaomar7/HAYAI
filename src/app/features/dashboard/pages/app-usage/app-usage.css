@@ -1,0 +1,80 @@
+/* Shared by the App usage screens, on top of website.shared.css. */
+
+.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6B7280; font-weight: 600; }
+.field input, .field select {
+  padding: 7px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px;
+  font-family: inherit; color: #374151; background: #fff; min-width: 140px;
+}
+.field.small input { min-width: 0; width: 110px; }
+
+.tiles { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.tile-foot { margin: 8px 0 0; font-size: 12px; color: #6B7280; }
+
+.sub { display: block; font-size: 12px; color: #6B7280; margin-top: 2px; }
+.data-table .num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.data-table .nowrap { white-space: nowrap; }
+.data-table tr.clickable { cursor: pointer; }
+.data-table tr.clickable:hover td { background: #F8FAFC; }
+.data-table tr.outdated td { background: #FFFBEB; }
+
+.as-of { font-size: 12px; color: #6B7280; white-space: nowrap; }
+
+/* platform dot */
+.pf { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.pf::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #CBD5E1; flex: none; }
+.pf.pf-android::before { background: #16A34A; }
+.pf.pf-ios::before { background: #111827; }
+.pf.pf-windows::before { background: #2563EB; }
+
+/* info tooltip */
+.info { position: relative; display: inline-flex; }
+.info-btn {
+  width: 22px; height: 22px; border-radius: 50%; border: 1px solid #CBD5E1; background: #fff;
+  color: #475569; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; line-height: 1;
+}
+.info-pop {
+  position: absolute; top: 28px; inset-inline-end: 0; z-index: 20; width: min(420px, 80vw);
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+  padding: 14px 16px; font-size: 13px; color: #374151; line-height: 1.7;
+}
+.info-pop ul { margin: 0; padding-inline-start: 18px; }
+
+/* "when did they last use the app?" bars */
+.bars { display: flex; flex-direction: column; gap: 10px; }
+.bar-row {
+  display: grid; grid-template-columns: minmax(150px, 220px) 1fr 70px; align-items: center; gap: 12px;
+  background: none; border: none; padding: 4px 6px; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 13px; color: #374151; text-align: start;
+}
+.bar-row:hover { background: #F8FAFC; }
+.bar-track { height: 14px; background: #F1F5F9; border-radius: 7px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 7px; background: #2563EB; min-width: 2px; }
+.bar-fill.b-8_to_30_days { background: #60A5FA; }
+.bar-fill.b-31_to_90_days { background: #F59E0B; }
+.bar-fill.b-over_90_days { background: #EF4444; }
+.bar-fill.b-no_activity { background: #94A3B8; }
+.bar-num { font-variant-numeric: tabular-nums; font-weight: 600; text-align: end; }
+
+/* donut */
+.donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+.donut { width: 150px; height: 150px; flex: none; }
+.donut circle { fill: none; stroke-width: 22; }
+.donut .center { font-size: 18px; font-weight: 700; fill: #111827; }
+.legend { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 6px; }
+
+.two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) {
+  .two-col { grid-template-columns: 1fr; }
+  .bar-row { grid-template-columns: 1fr 60px; }
+  .bar-row .bar-track { grid-column: 1 / -1; grid-row: 2; }
+}
+
+.chips-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.day-chip {
+  padding: 6px 12px; border: 1px solid #E5E7EB; border-radius: 999px; background: #fff;
+  font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; font-family: inherit;
+}
+.day-chip.on { background: #2563EB; color: #fff; border-color: #2563EB; }
+.muted-cell { color: #9CA3AF; font-style: italic; }

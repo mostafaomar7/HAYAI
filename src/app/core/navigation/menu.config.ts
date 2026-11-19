@@ -23,6 +23,9 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'AiSuggestions', label: 'menu.ai_suggestions', route: '/dashboard/ai/suggestions', area: 'ai' },
     ]
   },
+  // Who uses the apps, on which platform and version. The home page charts
+  // are the only other `statistics` screen, so this stands on its own.
+  { id: 'AppUsage', label: 'menu.app_usage', iconName: 'growth', route: '/dashboard/analytics/app-usage', area: 'statistics', roles: ['admin'] },
   // Hayai points. The sidebar drops the section without `loyalty.view`.
   {
     id: 'Loyalty', label: 'menu.loyalty', iconName: 'plans', route: '', roles: ['admin'], hasDropdown: true,

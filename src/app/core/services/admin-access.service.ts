@@ -131,6 +131,8 @@ const PATH_AREAS: [RegExp, AdminArea | typeof SUPER_ADMIN_ONLY][] = [
   // write buttons and all. The first AI screen is what made that reachable.
   [/^ai(\/|$)/, 'ai'],
   [/^loyalty(\/|$)/, 'loyalty'],
+  // `/admin/analytics/*` reads need `statistics.view`.
+  [/^analytics(\/|$)/, 'statistics'],
   [/^audit-logs(\/|$)/, 'audit_log'],
   [/^settings(\/|$)/, 'platform_settings']
 ];

@@ -1,0 +1,162 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <button class="back-btn" (click)="backToOverview()">← {{ 'appusage.title' | t }}</button>
+        <h2>{{ 'appusage.users_title' | t }}</h2>
+        <p class="sub">{{ 'appusage.users_subtitle' | t }}</p>
+      </div>
+      <div class="actions-area filters">
+        <div class="search-box">
+          <input type="text" [value]="q().search || ''" [placeholder]="'appusage.search' | t" (input)="onSearch($any($event.target).value)" />
+        </div>
+        <button class="btn-primary btn-sm" (click)="inactivePreset()">{{ 'appusage.inactive_users' | t }}</button>
+      </div>
+    </div>
+
+    <div class="card-body filters">
+      <label class="field">
+        <span>{{ 'appusage.activity' | t }}</span>
+        <select [value]="q().activity || ''" (change)="setActivity($any($event.target).value)">
+          <option value="">{{ 'appusage.activity.all' | t }}</option>
+          <option value="active">{{ 'appusage.activity.active' | t }}</option>
+          <option value="inactive">{{ 'appusage.activity.inactive' | t }}</option>
+          <option value="no_activity">{{ 'appusage.no_activity' | t }}</option>
+        </select>
+        @if (fieldErrors()['activity']) { <span class="field-error">{{ fieldErrors()['activity'] }}</span> }
+      </label>
+      <div class="field">
+        <span>{{ 'appusage.days' | t }}</span>
+        <div class="chips-row">
+          @for (d of dayChoices; track d) {
+            <button type="button" class="day-chip" [class.on]="daysEnabled() && currentDays() === d" (click)="setDays(d)">{{ 'appusage.days_n' | t : { n: d } }}</button>
+          }
+        </div>
+        @if (fieldErrors()['days']) { <span class="field-error">{{ fieldErrors()['days'] }}</span> }
+      </div>
+      <label class="field">
+        <span>{{ 'appusage.platform' | t }}</span>
+        <select [value]="q().platform || ''" (change)="navigate({ platform: $any($event.target).value || null })">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="android">{{ 'appusage.pf.android' | t }}</option>
+          <option value="ios">{{ 'appusage.pf.ios' | t }}</option>
+          <option value="windows">{{ 'appusage.pf.windows' | t }}</option>
+          <option value="unknown">{{ 'appusage.unknown' | t }}</option>
+        </select>
+        @if (fieldErrors()['platform']) { <span class="field-error">{{ fieldErrors()['platform'] }}</span> }
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.app' | t }}</span>
+        <select [value]="q().app || ''" (change)="navigate({ app: $any($event.target).value || null })">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="patient">{{ 'appusage.app.patient' | t }}</option>
+          <option value="partner">{{ 'appusage.app.partner' | t }}</option>
+          <option value="unknown">{{ 'appusage.unknown' | t }}</option>
+        </select>
+        @if (fieldErrors()['app']) { <span class="field-error">{{ fieldErrors()['app'] }}</span> }
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.audience' | t }}</span>
+        <select [value]="q().audience || ''" (change)="navigate({ audience: $any($event.target).value || null })">
+          <option value="">{{ 'common.all' | t }}</option>
+          <option value="patients">{{ 'appusage.audience.patients' | t }}</option>
+          <option value="partners">{{ 'appusage.audience.partners' | t }}</option>
+        </select>
+        @if (fieldErrors()['audience']) { <span class="field-error">{{ fieldErrors()['audience'] }}</span> }
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.user_type' | t }}</span>
+        <select [value]="q().user_type || ''" (change)="navigate({ user_type: $any($event.target).value || null })">
+          <option value="">{{ 'common.all' | t }}</option>
+          @for (u of userTypes; track u) { <option [value]="u">{{ typeKey(u) | t }}</option> }
+        </select>
+        @if (fieldErrors()['user_type']) { <span class="field-error">{{ fieldErrors()['user_type'] }}</span> }
+      </label>
+      <label class="field small">
+        <span>{{ 'appusage.outdated' | t }}</span>
+        <span class="row" style="gap:6px;flex-wrap:nowrap">
+          <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [placeholder]="'appusage.build_below' | t"
+                 [value]="buildDraft()" (input)="buildDraft.set($any($event.target).value)" (keyup.enter)="applyBuild()" />
+          <button type="button" class="btn-secondary btn-sm" (click)="applyBuild()">{{ 'appusage.apply' | t }}</button>
+        </span>
+        @if (fieldErrors()['build_below']) { <span class="field-error">{{ fieldErrors()['build_below'] }}</span> }
+      </label>
+      <label class="field">
+        <span>{{ 'appusage.sort' | t }}</span>
+        <select [value]="q().sort || ''" (change)="navigate({ sort: $any($event.target).value || null })">
+          <option value="">{{ 'appusage.sort.default' | t }}</option>
+          <option value="last_seen_desc">{{ 'appusage.sort.last_seen_desc' | t }}</option>
+          <option value="last_seen_asc">{{ 'appusage.sort.last_seen_asc' | t }}</option>
+          <option value="newest">{{ 'appusage.sort.newest' | t }}</option>
+        </select>
+        @if (fieldErrors()['sort']) { <span class="field-error">{{ fieldErrors()['sort'] }}</span> }
+      </label>
+    </div>
+
+    <!-- what is narrowing the list, removable one by one -->
+    <div class="card-body chips-row" style="padding-top:0">
+      @if (q().bucket) {
+        <span class="chip">{{ bucketLabel() || q().bucket }} <button type="button" (click)="navigate({ bucket: null })">×</button></span>
+      }
+      @if (q().app_version) {
+        <span class="chip">{{ 'appusage.version' | t }} <bdi dir="ltr">{{ q().app_version }}</bdi> <button type="button" (click)="navigate({ app_version: null })">×</button></span>
+      }
+      @if (q().build_below) {
+        <span class="chip">{{ 'appusage.build_below_chip' | t : { n: q().build_below ?? '' } }} <button type="button" (click)="navigate({ build_below: null })">×</button></span>
+      }
+      @if (fieldErrors()['bucket']) { <span class="field-error">{{ fieldErrors()['bucket'] }}</span> }
+      @if (fieldErrors()['app_version']) { <span class="field-error">{{ fieldErrors()['app_version'] }}</span> }
+      <span class="spacer"></span>
+      <span class="muted">{{ 'appusage.count' | t : { n: total().toLocaleString('en') } }}</span>
+      <button type="button" class="link-btn" (click)="clearAll()">{{ 'appusage.clear_filters' | t }}</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'appusage.name' | t }}</th>
+            <th>{{ 'appusage.phone' | t }}</th>
+            <th>{{ 'appusage.store' | t }}</th>
+            <th>{{ 'appusage.app' | t }}</th>
+            <th>{{ 'appusage.version' | t }}</th>
+            <th>{{ 'appusage.last_seen' | t }}</th>
+            <th>{{ 'appusage.registered' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="7" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="7" class="table-hint">{{ 'appusage.load_failed' | t }} <button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="7" class="table-hint">{{ (hasFieldErrors() ? 'appusage.bad_filter' : 'appusage.no_users') | t }}</td></tr>
+          } @else {
+            @for (u of items(); track u.id) {
+              <tr class="clickable" [title]="rowTitle(u)" (click)="open(u)">
+                <td class="name-cell">
+                  {{ u.name || ('#' + u.id) }}
+                  <span class="sub"><span class="chip">{{ typeKey(u.user_type) | t }}</span></span>
+                </td>
+                <td><bdi dir="ltr">{{ u.phone || '—' }}</bdi></td>
+                <td>
+                  <span class="pf" [ngClass]="platformClass(u.platform)">{{ u.store_label || '—' }}</span>
+                  @if (u.platform && u.platform_label !== u.store_label) { <span class="sub">{{ u.platform_label }}</span> }
+                </td>
+                <td>{{ u.app_label || '—' }}</td>
+                <td><bdi dir="ltr">{{ versionText(u.app_version, u.app_build) || '—' }}</bdi></td>
+                <td class="nowrap">
+                  @if (u.last_seen_at) { <span [title]="exact(u.last_seen_at)">{{ ago(u.last_seen_at) }}</span> }
+                  @else { <span class="muted-cell">{{ 'appusage.no_activity' | t }}</span> }
+                </td>
+                <td class="nowrap">{{ u.registered_at ? (u.registered_at | date:'mediumDate') : '—' }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="q().page || 1" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>

@@ -35,6 +35,31 @@
           <span class="plan-modules">{{ 'activity.modules_open' | t : { count: plan.enabled_module_keys.length } }}</span>
         </div>
       }
+
+      <!-- Which app the account uses and when it last opened it. Any field
+           can be null on an account from before tracking started. -->
+      @if (m.user.app_usage !== undefined) {
+        <div class="plan-box app-box">
+          <span class="plan-label">{{ 'appusage.app_card' | t }}</span>
+          @if (m.user.app_usage; as au) {
+            <strong>
+              <span class="pf" [ngClass]="platformClass(au.platform)">{{ au.platform ? (au.store_label || au.platform_label) : '—' }}</span>
+            </strong>
+            <span class="plan-term">
+              {{ au.app ? au.app_label : '—' }} · <bdi dir="ltr">{{ versionText(au.app_version, au.app_build) || '—' }}</bdi>
+            </span>
+            @if (au.last_seen_at) {
+              <span class="plan-term" [title]="au.last_seen_at | date:'medium'">{{ 'appusage.last_seen' | t }}: {{ ago(au.last_seen_at) }}</span>
+            } @else {
+              <span class="plan-term muted-cell">{{ 'appusage.no_activity' | t }}</span>
+            }
+            <span class="plan-modules">{{ 'appusage.last_login' | t }}: {{ au.last_login_at ? (au.last_login_at | date:'medium') : '—' }}</span>
+          } @else {
+            <strong>—</strong>
+            <span class="plan-term muted-cell">{{ 'appusage.no_activity' | t }}</span>
+          }
+        </div>
+      }
     </section>
   }
 

@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { ApiPagination } from '../models/api-response.model';
 import { PlanStatus } from './users.service';
+import { AppUsageInfo } from './analytics.service';
 
 /** `outgoing` = the account did it. `incoming` = it was done to them. */
 export type ActivityDirection = 'outgoing' | 'incoming';
@@ -42,6 +43,8 @@ export interface ActivityUser {
   status: string;
   created_at: string;
   plan_status?: PlanStatus | null;
+  /** When and with which app the account was last seen (backend of 2026-11-18). */
+  app_usage?: AppUsageInfo | null;
 }
 
 export interface ActivityMeta {

@@ -293,6 +293,17 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/ai/token-requests/ai-token-request-detail').then(m => m.AiTokenRequestDetail)
   },
+  // App usage (2026-11-18). Area `statistics`.
+  {
+    path: 'analytics/app-usage',
+    data: { title: 'menu.app_usage' },
+    loadComponent: () => import('./pages/app-usage/app-usage-overview').then(m => m.AppUsageOverviewPage)
+  },
+  {
+    path: 'analytics/app-usage/users',
+    data: { title: 'menu.app_usage' },
+    loadComponent: () => import('./pages/app-usage/app-usage-users').then(m => m.AppUsageUsersPage)
+  },
   // Hayai points (loyalty program, 2026-11-18). Area `loyalty`.
   { path: 'loyalty', pathMatch: 'full', redirectTo: 'loyalty/overview' },
   {

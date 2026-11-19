@@ -79,3 +79,12 @@
   .activity-row { flex-wrap: wrap; }
   .row-time { margin-inline-start: auto; }
 }
+
+/* App card (app usage, 2026-11-18) */
+.app-box { min-width: 220px; }
+.pf { display: inline-flex; align-items: center; gap: 6px; }
+.pf::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #CBD5E1; }
+.pf.pf-android::before { background: #16A34A; }
+.pf.pf-ios::before { background: #111827; }
+.pf.pf-windows::before { background: #2563EB; }
+.muted-cell { color: #9CA3AF; font-style: italic; }

@@ -15,6 +15,7 @@ import {
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 import { PaginationComponent } from '../../../../shared/ui/pagination.component/pagination.component';
+import { platformClass, timeAgo, versionText } from '../app-usage/app-usage-shared';
 
 @Component({
   selector: 'app-user-activity',
@@ -29,6 +30,10 @@ export class UserActivity {
   private location = inject(Location);
   private svc = inject(ActivityService);
   private i18n = inject(I18nService);
+
+  readonly platformClass = platformClass;
+  readonly versionText = versionText;
+  ago(iso: string | null): string { return timeAgo(iso, this.i18n.lang()); }
 
   private id = 0;
   /**
