@@ -249,7 +249,8 @@ visible within about one minute.
 
 | URL | What happens |
 |---|---|
-| `/` | `302` to `/en` (or `/ar` when the browser's first language is Arabic). `x-default` stays English. |
+| `/` | `302` to `/ar` (or `/en` when the browser's first language is English). Crawlers send no language, so they land on `/ar`. `x-default` (built by the API) points at Arabic. |
+| `/anything-else` (no `/ar` or `/en`) | Checked against the CMS redirect list (`GET /public/redirects/resolve`, cached 60 s): a match is a real `301/302`, otherwise a plain `404` page with `noindex`. `503` if the API is down. Edit them in **Website → Redirects**. |
 | `/en/...`, `/ar/...` | Server-rendered. One API call (`/public/{locale}/resolve`) decides: page, product, author, listing, redirect (real `301/302`), or not found (real `404`). |
 | `/en/products?page=2` | Listing pages; canonical/robots come from the API. |
 | `/en/search?q=…` | Search, always `noindex`. |

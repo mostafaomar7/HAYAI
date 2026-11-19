@@ -98,6 +98,27 @@ export class SiteAnalyticsService {
     return this.serverFt;
   }
 
+  /**
+   * The visit's campaign, for the app store links. The server's first touch
+   * wins, then the session's copy; the three keys travel as one set, never
+   * mixed from both.
+   */
+  campaign(): { utm_source?: string; utm_medium?: string; utm_campaign?: string } {
+    if (!this.isBrowser) return {};
+    let stored: Dict = {};
+    try {
+      stored = JSON.parse(sessionStorage.getItem(ATTR_KEY) || 'null') ?? {};
+    } catch {}
+    const ft = this.firstTouch();
+    const from = ft['utm_source'] ? ft : stored['utm_source'] ? stored : {};
+    const out: { utm_source?: string; utm_medium?: string; utm_campaign?: string } = {};
+    for (const k of ['utm_source', 'utm_medium', 'utm_campaign'] as const) {
+      const v = from[k];
+      if (typeof v === 'string' && v) out[k] = v;
+    }
+    return out;
+  }
+
   /** The `attribution` object forms and purchases send (contract §18.3). */
   attribution(extra: Dict = {}): Dict {
     if (!this.isBrowser) return {};

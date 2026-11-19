@@ -380,15 +380,22 @@ app.use((req, res, next) => {
   next();
 });
 
+/**
+ * The visitor's language for an address that does not name one. Arabic unless
+ * the browser's first choice is English: our patients search in Arabic, and
+ * crawlers send no preference at all, so Google lands on /ar.
+ */
+function preferredLocale(req: Request): 'ar' | 'en' {
+  const first = (req.get('accept-language') || '').toLowerCase().split(',')[0]?.trim() ?? '';
+  return first.startsWith('en') ? 'en' : 'ar';
+}
+
 /* ------------------------------------------------------------------------
- * `/` → default locale. 302 (not 301): the Arabic choice depends on the
- * browser's Accept-Language, and x-default stays English. Crawlers send no
- * Arabic preference, so they always land on /en.
+ * `/` → default locale. 302 (not 301): the choice depends on the browser's
+ * Accept-Language. The x-default hreflang (built by the API) points at /ar.
  * --------------------------------------------------------------------- */
 app.get('/', (req, res) => {
-  const accept = (req.get('accept-language') || '').toLowerCase();
-  const first = accept.split(',')[0]?.trim() ?? '';
-  const locale = first.startsWith('ar') ? 'ar' : 'en';
+  const locale = preferredLocale(req);
   const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
   res.setHeader('Vary', 'Accept-Language');
   res.setHeader('Cache-Control', 'private, max-age=0');
@@ -434,24 +441,93 @@ app.use(
 );
 
 /* ------------------------------------------------------------------------
- * Any other URL (`/landing`, typos, old SPA links) gets the plain client
- * shell, exactly as on the static hosting. The router's wildcard decides
- * there: a signed-in admin goes to /dashboard, anyone else to the holding
- * page. Rendering it on the server instead would evaluate that redirect
- * without the admin's token (it lives in localStorage) and always send them
- * to the public site. Not part of the website, so noindex.
+ * Any other URL (`/sitemap.xml`, `/landing`, typos, old links): the CMS
+ * redirect list first, then a real 404.
+ *
+ * These used to get the admin client shell with a 200, which Google counts as
+ * a soft 404 and keeps crawling. The website's own redirects were never
+ * consulted for them either, so `/sitemap.xml` → `/sitemap_index.xml` sat in
+ * the CMS doing nothing. Prefixed paths already answer both properly through
+ * `resolve`; this is the same for the rest.
+ *
+ * The admin app only lives at /login and /dashboard, which never reach here.
  * --------------------------------------------------------------------- */
-app.use((req, res, next) => {
+type RedirectHit = { location: string; status: number } | null;
+const redirectCache = new Map<string, { value: RedirectHit; until: number }>();
+const REDIRECT_TTL = 60_000;
+
+async function cmsRedirect(path: string): Promise<RedirectHit> {
+  const key = path.toLowerCase();
+  const cached = redirectCache.get(key);
+  if (cached && cached.until > Date.now()) return cached.value;
+  const upstream = await fetch(`${API_BASE_URL}/public/redirects/resolve?path=${encodeURIComponent(path)}`, {
+    headers: { Accept: 'application/json', ...(WEBSITE_KEY ? { 'X-Website-Key': WEBSITE_KEY } : {}) },
+    signal: AbortSignal.timeout(5_000)
+  });
+  let value: RedirectHit = null;
+  if (upstream.ok) {
+    const data = (await upstream.json())?.data;
+    const status = Number(data?.status_code);
+    // A relative destination stays relative, so staging redirects to staging.
+    const target = typeof data?.destination === 'string' && data.destination.startsWith('/') ? data.destination : data?.location;
+    if (typeof target === 'string' && target && [301, 302, 307, 308].includes(status)) value = { location: target, status };
+  } else if (upstream.status !== 404) {
+    throw new Error(`redirects/resolve answered ${upstream.status}`);
+  }
+  // Bounded: every typo a bot tries would otherwise stay in memory.
+  if (redirectCache.size > 2000) redirectCache.clear();
+  redirectCache.set(key, { value, until: Date.now() + REDIRECT_TTL });
+  return value;
+}
+
+app.use(async (req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
   if (/^\/(en|ar|preview|login|dashboard)(\/|$)/i.test(req.path)) return next();
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  let hit: RedirectHit;
+  try {
+    hit = await cmsRedirect(req.path);
+  } catch {
+    // The API is down. A 404 now could drop a redirected URL from the index;
+    // a 503 tells crawlers to come back.
+    res.status(503).setHeader('Retry-After', '120');
+    return void res.type('text/plain').send('Temporarily unavailable');
+  }
+  if (hit) {
+    const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.redirect(hit.status, hit.location.includes('?') || !qs ? hit.location : hit.location + qs);
+  }
+  const nonce = randomBytes(16).toString('base64');
+  res.status(404);
   res.setHeader('Cache-Control', 'no-cache');
-  // This shell boots the admin app, so it gets the admin policy. It was
-  // going out with no policy at all.
-  const shellNonce = randomBytes(16).toString('base64');
-  applyAdminHeaders(res, shellNonce);
-  res.type('text/html').send(withAuthMode(deferCssWithNonce(adminShell(), shellNonce)));
+  res.setHeader(CSP_HEADER, contentSecurityPolicy(nonce));
+  res.type('text/html').send(notFoundPage(preferredLocale(req), nonce));
 });
+
+/**
+ * The page for an address outside /ar and /en that matches nothing. Plain
+ * HTML on purpose: booting the app here would hand the address to the
+ * client router, whose wildcard sends visitors elsewhere.
+ */
+function notFoundPage(locale: 'ar' | 'en', nonce: string): string {
+  const ar = locale === 'ar';
+  const t = ar
+    ? { title: 'الصفحة غير موجودة', body: 'الرابط ده مش موجود أو اتنقل.', home: 'الصفحة الرئيسية', other: 'English', otherHref: '/en', otherLang: 'en' }
+    : { title: 'Page not found', body: 'This address does not exist or has moved.', home: 'Home page', other: 'العربية', otherHref: '/ar', otherLang: 'ar' };
+  return (
+    `<!doctype html><html lang="${locale}" dir="${ar ? 'rtl' : 'ltr'}"><head><meta charset="utf-8">` +
+    `<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow">` +
+    `<title>${t.title} | HAYAI</title><style nonce="${nonce}">` +
+    `body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#f7f9fa;color:#14232b}` +
+    `main{padding:24px 16px;text-align:center;max-width:32rem}h1{font-size:1.75rem;margin:0 0 .5rem}p{margin:0 0 1.5rem;color:#4a5a63}` +
+    `a{display:inline-block;margin:.25rem;padding:.7rem 1.4rem;border-radius:.6rem;text-decoration:none;font-weight:600}` +
+    `.p{background:#0f766e;color:#fff}.s{color:#0f766e;border:1px solid #0f766e}</style></head>` +
+    `<body><main><h1>${t.title}</h1><p>${t.body}</p>` +
+    `<a class="p" href="/${locale}">${t.home}</a><a class="s" href="${t.otherHref}" lang="${t.otherLang}">${t.other}</a>` +
+    `</main></body></html>`
+  );
+}
 
 /* ------------------------------------------------------------------------
  * Everything else: Angular. Public pages are rendered; dashboard routes get
@@ -847,29 +923,6 @@ function i18nVersion(): string {
     }
   }
   return i18nVersionValue;
-}
-
-/**
- * The client shell. Read once: it is a build artefact and cannot change while
- * the process runs.
- *
- * `index.csr.html` is built straight from `src/index.html`, so it still holds
- * the two tracking placeholders. The rendered path substitutes them; this one
- * never did, so every unknown URL printed the literal text `{{TRACKING_HEAD}}
- * {{TRACKING_BODY}}` into the top-left of the page — `{{TRACKING_BODY}}` sits
- * before `<app-root>`, and the one in `<head>` is text, so the parser moves it
- * into the body as well. Stripped rather than filled: this shell boots the
- * admin app, which is an internal tool and is not measured.
- */
-let adminShellHtml: string | null = null;
-function adminShell(): string {
-  if (adminShellHtml === null) {
-    adminShellHtml = readFileSync(join(browserDistFolder, 'index.csr.html'), 'utf8')
-      .replaceAll('{{TRACKING_HEAD}}', '')
-      .replaceAll('{{TRACKING_BODY}}', '')
-      .replaceAll('{{I18N_VERSION}}', i18nVersion());
-  }
-  return adminShellHtml;
 }
 
 /**

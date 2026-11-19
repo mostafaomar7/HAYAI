@@ -48,8 +48,8 @@ export const routes: Routes = [
   // `/{locale}/…` with locale `en` or `ar`; anything else under a first
   // segment falls through to the routes below exactly as before.
   //
-  // The bare domain `/` is answered by server.ts with a 302 to `/en` (or
-  // `/ar` for Arabic browsers) before Angular runs, so the empty-path
+  // The bare domain `/` is answered by server.ts with a 302 to `/ar` (or
+  // `/en` for English browsers) before Angular runs, so the empty-path
   // holding page above is now only reached in two cases: the legacy static
   // (Apache) hosting, which cannot run the site anyway, and an in-app
   // navigation to `/` (e.g. the signed-out wildcard redirect at the bottom).
