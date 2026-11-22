@@ -2,6 +2,18 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, PagedResult } from './api.service';
 
+/**
+ * Who sees an advert in the patient app — the same field the Partner app
+ * sends (2026-11-18). `patient`: every patient who is not a tourist.
+ */
+export type AdAudience = 'all' | 'patient' | 'tourist';
+export const AD_AUDIENCES: AdAudience[] = ['all', 'patient', 'tourist'];
+
+/** The advert's audience; a missing or unknown value reads as everyone. */
+export function adAudience(v: string | null | undefined): AdAudience {
+  return AD_AUDIENCES.includes(v as AdAudience) ? (v as AdAudience) : 'all';
+}
+
 export interface Advertisement {
   id: number;
   image_url: string;
@@ -16,7 +28,8 @@ export interface Advertisement {
   views_count: number;
   clicks_count: number;
   provider_type?: string;
-  owner_id?: number;
+  /** The owner's user id; `null` on a Hayai advert, which has no account. */
+  owner_id?: number | null;
   /** These arrived with the API change we asked for; see the backend notes. */
   owner_name?: string | null;
   /**
@@ -28,6 +41,8 @@ export interface Advertisement {
   provider_type_label?: string | null;
   title?: string | null;
   description?: string | null;
+  /** Absent on adverts from before the field existed: those reach everyone. */
+  audience?: AdAudience | null;
   created_at: string;
   updated_at: string;
 }

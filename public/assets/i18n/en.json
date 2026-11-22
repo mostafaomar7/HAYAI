@@ -4150,5 +4150,17 @@
   "renewal.days_left#one": "1 day left",
   "renewal.ends_today": "Ends today",
   "renewal.ended_ago": "Ended {count} days ago",
-  "renewal.ended_ago#one": "Ended 1 day ago"
+  "renewal.ended_ago#one": "Ended 1 day ago",
+  "ads.audience": "Who can see this ad",
+  "ads.audience.all": "Patients and tourists",
+  "ads.audience.patient": "Patients only",
+  "ads.audience.tourist": "Tourists only",
+  "ads.audience_hint.all": "Every patient in the app, resident or tourist.",
+  "ads.audience_hint.patient": "Resident patients only; tourists do not see it.",
+  "ads.audience_hint.tourist": "Tourists (foreign patients) only.",
+  "ads.owner_hayai": "Hayai",
+  "ads.owner_name": "Advertiser name",
+  "ads.owner_name_placeholder": "e.g. Hayai Healthcare — free check-up week",
+  "ads.owner_name_hint": "Shown in the apps as the advertiser. No account is linked to this ad.",
+  "ads.owner_name_required": "Write the advertiser name (up to 255 characters)."
 }

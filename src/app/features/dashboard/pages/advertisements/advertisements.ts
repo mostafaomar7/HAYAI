@@ -1,7 +1,7 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Advertisement, AdvertisementsService } from '../../../../core/services/advertisements.service';
+import { Advertisement, AdvertisementsService, adAudience } from '../../../../core/services/advertisements.service';
 import { DialogService } from '../../../../core/services/dialog.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
@@ -79,6 +79,9 @@ export class Advertisements {
    * is worse than the blank card the QA round complained about. The dates are
    * plain facts and they are on the row already.
    */
+  /** Who sees it; an advert with no audience reaches everyone. */
+  audienceOf(ad: Advertisement) { return adAudience(ad.audience); }
+
   adState(ad: Advertisement): 'expired' | 'scheduled' | 'running' {
     const today = new Date().toISOString().slice(0, 10);
     if (ad.end_date && ad.end_date < today) return 'expired';

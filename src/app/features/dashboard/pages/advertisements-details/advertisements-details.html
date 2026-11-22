@@ -25,6 +25,20 @@
       </select>
     </div>
 
+    @if (isHayai()) {
+      <!-- A Hayai advert has no account behind it: this text is what the
+           apps show as the advertiser. -->
+      <div class="form-group">
+        <label>{{ 'ads.owner_name' | t }} <span style="color:#dc2626;">*</span></label>
+        <input type="text" maxlength="255" formControlName="owner_name"
+               [placeholder]="'ads.owner_name_placeholder' | t" [class.invalid]="ownerNameInvalid" />
+        @if (ownerNameInvalid) {
+          <span class="field-error">{{ 'ads.owner_name_required' | t }}</span>
+        } @else {
+          <span class="field-hint">{{ 'ads.owner_name_hint' | t }}</span>
+        }
+      </div>
+    } @else {
     <div class="form-group">
       <label>
         {{ 'ads.owner' | t }}
@@ -57,6 +71,7 @@
         <p style="color:#6B7280;font-size:13px;margin:0;">{{ 'ads.select_type_first' | t }}</p>
       }
     </div>
+    }
 
     <div class="form-group">
       <label>{{ 'ads.redirect_link' | t }} <span style="color:#dc2626;">*</span></label>
@@ -82,6 +97,19 @@
       } @else {
         <span class="field-hint">{{ 'ads.status_hint' | t }}</span>
       }
+    </div>
+
+    <!-- The same field and values the Partner app sends. On edit it starts
+         from the advert's own value, so saving any other change never turns a
+         provider's tourist-only advert into one for everyone. -->
+    <div class="form-group">
+      <label>{{ 'ads.audience' | t }}</label>
+      <select formControlName="audience">
+        @for (a of audiences; track a) {
+          <option [value]="a">{{ ('ads.audience.' + a) | t }}</option>
+        }
+      </select>
+      <span class="field-hint">{{ ('ads.audience_hint.' + form.controls.audience.value) | t }}</span>
     </div>
 
     <div class="form-group">

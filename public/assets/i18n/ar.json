@@ -4205,5 +4205,17 @@
   "renewal.ended_ago": "انتهى منذ {count} يوم",
   "renewal.ended_ago#one": "انتهى منذ يوم واحد",
   "renewal.ended_ago#two": "انتهى منذ يومين",
-  "renewal.ended_ago#few": "انتهى منذ {count} أيام"
+  "renewal.ended_ago#few": "انتهى منذ {count} أيام",
+  "ads.audience": "من يمكنه رؤية الإعلان",
+  "ads.audience.all": "المرضى والسائحون",
+  "ads.audience.patient": "المرضى فقط",
+  "ads.audience.tourist": "السائحون فقط",
+  "ads.audience_hint.all": "كل المرضى في التطبيق، المقيمين والسائحين.",
+  "ads.audience_hint.patient": "المرضى المقيمون فقط؛ السائحون لا يرونه.",
+  "ads.audience_hint.tourist": "السائحون (المرضى الأجانب) فقط.",
+  "ads.owner_hayai": "حياي",
+  "ads.owner_name": "اسم المعلن",
+  "ads.owner_name_placeholder": "مثال: حياي للرعاية الصحية — أسبوع الكشف المجاني",
+  "ads.owner_name_hint": "يظهر في التطبيقات كاسم المعلن. الإعلان غير مرتبط بأي حساب.",
+  "ads.owner_name_required": "اكتب اسم المعلن (حتى 255 حرفًا)."
 }

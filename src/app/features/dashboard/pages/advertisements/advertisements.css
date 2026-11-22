@@ -303,3 +303,5 @@
   font-size: 13px;
   color: #6B7280;
 }
+/* Who sees the advert, when it is narrower than everyone. */
+.badge.audience { background: #F5F3FF; color: #6D28D9; }

@@ -4,15 +4,23 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { apiErrorText } from '../../../../shared/utils/api-error.util';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AdvertisementsService } from '../../../../core/services/advertisements.service';
+import { AdvertisementsService, AD_AUDIENCES, AdAudience, adAudience } from '../../../../core/services/advertisements.service';
 import { ProviderItem, UserResource, UsersService } from '../../../../core/services/users.service';
 import { httpUrlValidator } from '../../../../core/validators/url.validator';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../core/i18n/t.pipe';
 import { CanManageDirective } from '../../../../shared/directives/can-manage.directive';
 
+/**
+ * Hayai itself as the advertiser (backend of 2026-11-22). Not an account type,
+ * so it is not in `/lookups/user-types`; the form adds it on its own. Such an
+ * advert has no owner account: the admin types the advertiser text instead.
+ */
+const HAYAI = 'hayai';
+type OwnerType = UserResource | typeof HAYAI;
+
 interface OwnerTypeOption {
-  value: UserResource;
+  value: OwnerType;
   label: string;
 }
 
@@ -56,7 +64,10 @@ export class AdvertisementsDetails {
   selectedFile: File | null = null;
 
   // Owner picker state
-  ownerType = signal<UserResource | ''>('');
+  ownerType = signal<OwnerType | ''>('');
+  /** The owner type the advert was loaded with, to tell a change from a keep. */
+  private loadedOwnerType: OwnerType | '' = '';
+  isHayai = computed(() => this.ownerType() === HAYAI);
   /**
    * True on an edit whose advert came back without an owner id — which is
    * every edit today. Drives the notice on the form, so an admin knows that
@@ -72,6 +83,7 @@ export class AdvertisementsDetails {
   // same reason: an owner type should read the same wherever it appears,
   // and in Arabic these were thirteen English words in an Arabic form.
   readonly ownerTypeOptions: OwnerTypeOption[] = [
+    { value: HAYAI, label: 'ads.owner_hayai' },
     { value: 'doctors', label: 'users.doctor.title' },
     { value: 'hospitals', label: 'users.hospital.title' },
     { value: 'clinics', label: 'users.clinic.title' },
@@ -112,15 +124,23 @@ export class AdvertisementsDetails {
     { api: 'medical_devices', resource: 'medical-devices' }
   ];
 
+  readonly audiences = AD_AUDIENCES;
+
   form = this.fb.group({
     // Required on create. On edit it is left optional on purpose — see
     // `loadAd`: the API does not say who owns an advert, and an update that
     // omits `owner_id` keeps the owner it already has (verified against the
     // API). Forcing a choice here is how an advert quietly changes hands.
     owner_id: [null as number | null, Validators.required],
+    // The advertiser text for a Hayai advert. Required only while "Hayai" is
+    // the owner type; see `applyOwnerValidators`.
+    owner_name: [''],
     redirect_link: ['', [Validators.required, httpUrlValidator()]],
     status: ['active'],
     is_published: [true],
+    // Who sees the advert in the patient app. Starts on everyone for a new
+    // advert, and on the advert's own value for an edit.
+    audience: ['all' as AdAudience],
     start_date: [''],
     end_date: ['']
   });
@@ -238,6 +258,9 @@ export class AdvertisementsDetails {
           // first belongs in this control.
           status: this.statusForControl(ad),
           is_published: ad.is_published,
+          // An advert from before the field existed has none, and it already
+          // reaches everyone.
+          audience: adAudience(ad.audience),
           start_date: ad.start_date ?? '',
           end_date: ad.end_date ?? ''
         });
@@ -249,11 +272,18 @@ export class AdvertisementsDetails {
         // picker came up blank on every edit. Measured on a live record:
         // GET /admin/advertisements/6 answers `"provider_type":"doctor"` and
         // carries no `owner_type` at all.
-        const resource = this.normaliseType(ad.provider_type);
-        if (resource) {
-          this.ownerType.set(resource);
-          this.loadOwners(resource);
+        if (ad.provider_type === HAYAI) {
+          // A Hayai advert: no account, the typed text is the advertiser.
+          this.ownerType.set(HAYAI);
+          this.form.patchValue({ owner_name: ad.owner_name ?? '' });
+        } else {
+          const resource = this.normaliseType(ad.provider_type);
+          if (resource) {
+            this.ownerType.set(resource);
+            this.loadOwners(resource);
+          }
         }
+        this.loadedOwnerType = this.ownerType();
 
         // The owner itself cannot be prefilled: the advert payload names the
         // kind of owner but never which one — no `owner_id`, no `user_id`,
@@ -261,11 +291,8 @@ export class AdvertisementsDetails {
         // not sent, which leaves the owner as it was. Asked for in the
         // backend contract; until then this is the only answer that cannot
         // reassign somebody's advert by accident.
-        this.ownerUnknown.set(ad.owner_id == null);
-        if (ad.owner_id == null) {
-          this.form.controls.owner_id.removeValidators(Validators.required);
-          this.form.controls.owner_id.updateValueAndValidity();
-        }
+        this.ownerUnknown.set(ad.owner_id == null && ad.provider_type !== HAYAI);
+        this.applyOwnerValidators();
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -298,21 +325,50 @@ export class AdvertisementsDetails {
    */
   private apiProviderType(): string | null {
     const resource = this.ownerType();
-    if (!resource) return null;
+    if (!resource || resource === HAYAI) return null;
     const match = AdvertisementsDetails.OWNER_TYPES.find(t => t.resource === resource);
     return match ? match.api : null;
   }
 
   onOwnerTypeChange(value: string) {
-    this.ownerType.set(value as UserResource | '');
+    this.ownerType.set(value as OwnerType | '');
     this.form.patchValue({ owner_id: null });
-    if (value) this.loadOwners(value as UserResource);
+    if (value && value !== HAYAI) this.loadOwners(value as UserResource);
     else this.owners.set([]);
+    this.applyOwnerValidators();
+  }
+
+  /**
+   * Which owner field is required for the type now picked.
+   *
+   * - Hayai: the advertiser text, never an account.
+   * - An account type: the account, except on an edit that keeps the type it
+   *   was loaded with and whose owner the API did not name — leaving it alone
+   *   there keeps the current owner. Switching a Hayai advert to an account
+   *   type always needs the account, or the save would silently keep it Hayai.
+   */
+  private applyOwnerValidators(): void {
+    const { owner_id, owner_name } = this.form.controls;
+    if (this.isHayai()) {
+      owner_id.clearValidators();
+      owner_name.setValidators([Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]);
+    } else {
+      owner_name.clearValidators();
+      const keepsUnknownOwner = this.isEdit() && this.ownerUnknown() && this.ownerType() === this.loadedOwnerType;
+      owner_id.setValidators(keepsUnknownOwner ? [] : [Validators.required]);
+    }
+    owner_id.updateValueAndValidity();
+    owner_name.updateValueAndValidity();
+  }
+
+  get ownerNameInvalid(): boolean {
+    const c = this.form.controls.owner_name;
+    return (c.touched || this.showValidation()) && c.invalid;
   }
 
   onOwnerSearch(value: string) {
     this.ownerSearch.set(value);
-    if (this.ownerType()) this.loadOwners(this.ownerType() as UserResource);
+    if (this.ownerType() && !this.isHayai()) this.loadOwners(this.ownerType() as UserResource);
   }
 
   onOwnerSelected(value: string) {
@@ -398,7 +454,12 @@ export class AdvertisementsDetails {
     // owner is refused naming both. Omitting the pair on an edit is what leaves
     // an advert with the owner it already has.
     const providerType = this.apiProviderType();
-    if (v.owner_id !== null && v.owner_id !== undefined && providerType) {
+    if (this.isHayai()) {
+      // Sent as a pair every time: `owner_name` on its own is ignored, and
+      // re-sending the same text keeps the advert exactly as it was.
+      form.append('provider_type', HAYAI);
+      form.append('owner_name', (v.owner_name ?? '').trim());
+    } else if (v.owner_id !== null && v.owner_id !== undefined && providerType) {
       form.append('owner_id', String(v.owner_id));
       form.append('provider_type', providerType);
     }
@@ -406,6 +467,7 @@ export class AdvertisementsDetails {
     const status = this.statusToSend(v.status ?? '');
     if (status) form.append('status', status);
     form.append('is_published', v.is_published ? '1' : '0');
+    form.append('audience', adAudience(v.audience));
     if (v.start_date) form.append('start_date', v.start_date);
     if (v.end_date) form.append('end_date', v.end_date);
     if (this.selectedFile) form.append('image', this.selectedFile);

@@ -129,6 +129,11 @@
               } @else {
                 <span class="badge draft">{{ 'ads.unpublished' | t }}</span>
               }
+              <!-- Everyone is the default and says nothing; the narrower two
+                   are what an admin needs to tell apart at a glance. -->
+              @if (audienceOf(ad) !== 'all') {
+                <span class="badge audience">{{ ('ads.audience.' + audienceOf(ad)) | t }}</span>
+              }
             </span>
             @if (ad.owner_name) {
               <span class="ad-owner">
