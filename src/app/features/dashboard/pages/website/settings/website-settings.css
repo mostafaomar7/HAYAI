@@ -56,3 +56,4 @@ textarea.field { resize: vertical; line-height: 1.6; }
   padding: 12px 18px; box-shadow: 0 -6px 20px rgba(15, 23, 42, .08);
   font-size: 14px; font-weight: 600; color: #1E40AF;
 }
+.page-field { max-width: 560px; }

@@ -200,6 +200,17 @@ export class TagLayerService {
    * `error_type` is a category, never the message, which can echo the value
    * the patient typed.
    */
+  /**
+   * The brief's per-form GA4 events (`icu_request_submitted`,
+   * `treatment_plan_requested`), on top of `generate_lead`. Only the form id
+   * goes with them: no field value ever reaches the data layer. Skipped on a
+   * duplicate for the same reason as `lead()`.
+   */
+  formEvent(event: string, payload: Dict, formId: string | null): void {
+    if (payload['duplicate'] === true) return;
+    this.push({ event, ...this.measurement(), form_id: formId });
+  }
+
   formError(formId: string | null, status: number): void {
     const errorType = status === 422 ? 'validation' : status === 0 || status === 408 || status === 504 ? 'timeout' : 'server';
     this.push({ event: 'form_error', ...this.measurement(), form_id: formId, error_type: errorType });

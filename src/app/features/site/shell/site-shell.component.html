@@ -1,18 +1,41 @@
 <div class="site" [class.has-sticky]="stickyMobile().length">
   <a class="skip-link" href="#main">{{ state.t('skipToContent') }}</a>
 
+  <!-- ================= emergency bar (Settings → Emergency bar) ================= -->
+  @if (emergency(); as eb) {
+    <div class="emergency-bar" role="note">
+      <div class="wrap eb-row">
+        <p class="eb-text eb-long">
+          @for (part of ebLong(); track $index) {
+            @if (part.href) {<a [attr.href]="part.href" dir="ltr">{{ part.text }}</a>} @else {{{ part.text }}}
+          }
+        </p>
+        <p class="eb-text eb-short">
+          @for (part of ebShort(); track $index) {
+            @if (part.href) {<a [attr.href]="part.href" dir="ltr">{{ part.text }}</a>} @else {{{ part.text }}}
+          }
+        </p>
+        @if (eb.link?.path && eb.link?.label) {
+          <a class="eb-link" [attr.href]="eb.link!.path">{{ eb.link!.label }}</a>
+        }
+      </div>
+    </div>
+  }
+
   <!-- ================= header ================= -->
   <header class="site-header">
     <div class="wrap header-row">
       <a class="brand" [attr.href]="'/' + state.locale()">
-        <img [attr.src]="logo()" [attr.alt]="orgName()" width="179" height="64" />
+        <img src="/brand/hayai-logo-horizontal.webp" [attr.alt]="orgName()" width="630" height="172" />
       </a>
 
       <nav id="site-nav" class="main-nav" [class.is-open]="menuOpen()" [attr.aria-label]="state.t('menu')">
-        <ul class="nav-list">
+        <!-- Without a header CTA, the menu's last item ("Get the app" in the
+             CMS order) is drawn as the Navy button the brief asks for. -->
+        <ul class="nav-list" [class.last-is-cta]="!headerCta()">
           @for (item of headerMenu(); track $index) {
             <li [class.has-sub]="item.children?.length">
-              <a [attr.href]="href(item)" [attr.target]="item.target || null">{{ item.label }}</a>
+              <a [attr.href]="href(item)" [attr.target]="item.target || null" [attr.aria-current]="isActive(item) ? 'page' : null">{{ item.label }}</a>
               @if (item.children?.length) {
                 <ul class="sub-list">
                   @for (child of item.children; track $index) {
@@ -65,10 +88,10 @@
   <footer class="site-footer">
     <div class="wrap footer-grid">
       <div class="footer-brand">
-        <p class="footer-name">{{ orgName() }}</p>
-        @if (org().description) {
-          <p class="muted">{{ org().description }}</p>
-        }
+        <a class="logo-plate footer-logo" [attr.href]="'/' + state.locale()">
+          <img src="/brand/hayai-logo-stacked.webp" [attr.alt]="orgName()" width="528" height="537" loading="lazy" />
+        </a>
+        <site-store-badges />
         @if (footerCtas().length) {
           <div class="cta-row">
             @for (c of footerCtas(); track $index) {
@@ -78,20 +101,25 @@
         }
       </div>
 
-      @if (footerMenu().length) {
-        <nav class="footer-nav" [attr.aria-label]="orgName()">
+      <!-- Footer menu: a top-level item with children is a column, its
+           children the links. Items without children are the bottom row
+           (privacy, terms, disclaimer), so today's flat menu still works. -->
+      @if (footerColumns().length) {
+        @for (col of footerColumns(); track $index) {
+          <nav class="footer-col" [attr.aria-label]="col.label">
+            <p class="footer-h">{{ col.label }}</p>
+            <ul>
+              @for (child of col.children; track $index) {
+                <li><a [attr.href]="href(child)" [attr.target]="child.target || null">{{ child.label }}</a></li>
+              }
+            </ul>
+          </nav>
+        }
+      } @else if (footerLinks().length) {
+        <nav class="footer-col footer-flat" [attr.aria-label]="state.t('footerNav')">
           <ul>
-            @for (item of footerMenu(); track $index) {
-              <li>
-                <a [attr.href]="href(item)" [attr.target]="item.target || null">{{ item.label }}</a>
-                @if (item.children?.length) {
-                  <ul>
-                    @for (child of item.children; track $index) {
-                      <li><a [attr.href]="href(child)" [attr.target]="child.target || null">{{ child.label }}</a></li>
-                    }
-                  </ul>
-                }
-              </li>
+            @for (item of footerLinks(); track $index) {
+              <li><a [attr.href]="href(item)" [attr.target]="item.target || null">{{ item.label }}</a></li>
             }
           </ul>
         </nav>
@@ -119,15 +147,26 @@
           <p class="footer-h">{{ state.t('followUs') }}</p>
           <ul>
             @for (url of sameAs(); track url) {
-              <li><a [attr.href]="url" target="_blank" rel="me noopener">{{ url.replace('https://', '').replace('www.', '') }}</a></li>
+              <li><a [attr.href]="url" target="_blank" rel="me noopener">{{ socialName(url) }}</a></li>
             }
           </ul>
         </div>
       }
     </div>
     <div class="wrap footer-bottom">
-      <p>© {{ year }} {{ orgName() }}. {{ state.t('rights') }}</p>
-      @if (state.privacyUrl()) {
+      <p class="footer-legal">
+        <span>© {{ year }} {{ legalName() }}</span>
+        @if (org().tax_registration) {
+          <span aria-hidden="true"> · </span><span>{{ state.t('taxReg') }} <bdi dir="ltr">{{ org().tax_registration }}</bdi></span>
+        }
+      </p>
+      @if (footerColumns().length && footerLinks().length) {
+        <ul class="footer-bottom-links">
+          @for (item of footerLinks(); track $index) {
+            <li><a [attr.href]="href(item)" [attr.target]="item.target || null">{{ item.label }}</a></li>
+          }
+        </ul>
+      } @else if (!footerLinks().length && state.privacyUrl()) {
         <a [attr.href]="state.privacyUrl()">{{ state.t('privacyPolicy') }}</a>
       }
     </div>

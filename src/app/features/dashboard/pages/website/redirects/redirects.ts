@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { WebsiteApiService, errorMessage, fieldErrors } from '../../../../../core/services/website/website-api.service';
+import { WebsiteApiService, errorMessage, fieldErrors, firstError } from '../../../../../core/services/website/website-api.service';
 import { WebsiteContextService } from '../../../../../core/services/website/website-context.service';
 import { RedirectInput, WebsiteRedirect } from '../../../../../core/services/website/website.models';
 import { DialogService } from '../../../../../core/services/dialog.service';
@@ -11,6 +11,9 @@ import { TPipe } from '../../../../../core/i18n/t.pipe';
 import { PaginationComponent } from '../../../../../shared/ui/pagination.component/pagination.component';
 import { debounce } from '../../../../../shared/utils/debounce.util';
 import { fmtDate, nullIfEmpty } from '../shared/website-utils';
+
+/** Field messages preferred over the API's generic "Validation failed". */
+const REDIRECT_FIELDS = ['source_path', 'destination'];
 
 interface RedirectDraft {
   source_path: string;
@@ -187,7 +190,7 @@ export class Redirects {
         this.saving.set(false);
         if (err?.status === 422) {
           this.errors.set(fieldErrors(err));
-          this.formError.set(errorMessage(err, 'web.redirects.save_failed'));
+          this.formError.set(firstError(err, 'web.redirects.save_failed', REDIRECT_FIELDS));
         } else {
           this.dialog.error('common.error', errorMessage(err, 'web.redirects.save_failed'));
         }
@@ -201,7 +204,8 @@ export class Redirects {
       next: updated => {
         this.rows.update(list => list.map(r => (r.id === row.id ? { ...r, ...(updated ?? {}), is_active: !row.is_active } : r)));
       },
-      error: err => this.dialog.error('common.error', errorMessage(err, 'web.redirects.save_failed'))
+      // e.g. switching on a redirect whose URL a live page now serves.
+      error: err => this.dialog.error('common.error', firstError(err, 'web.redirects.save_failed', REDIRECT_FIELDS))
     });
   }
 

@@ -9,7 +9,8 @@ import { WebsiteContextService } from '../../../../../core/services/website/webs
 import {
   AttachedCta, Locale, MenuItemNode, WebsiteCta, WebsiteMenu, WebsitePageRow
 } from '../../../../../core/services/website/website.models';
-import { pickLocalized, translationFor } from '../shared/website-utils';
+import { translationFor } from '../shared/website-utils';
+import { PagePicker } from '../pages/editor/page-picker';
 
 /** Editable menu node. `uid` is local only (tracking + error paths), never sent. */
 interface EditNode {
@@ -42,10 +43,14 @@ const LOCALES: Locale[] = ['en', 'ar'];
 /** Rendered by the site template; the API will not delete them. */
 const TEMPLATE_MENUS = ['header', 'footer'];
 
+/** API limits per language tree (header and footer alike). */
+const MAX_TOP = 50;
+const MAX_CHILDREN = 30;
+
 @Component({
   selector: 'app-website-menus',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, PagePicker],
   templateUrl: './menus.html',
   styleUrls: ['../shared/website.shared.css', './menus.css']
 })
@@ -81,6 +86,9 @@ export class Menus {
   pages = signal<WebsitePageRow[]>([]);
   ctaLibrary = signal<WebsiteCta[]>([]);
   placements = signal<string[]>([]);
+
+  readonly maxTop = MAX_TOP;
+  readonly maxChildren = MAX_CHILDREN;
 
   canUpdate = computed(() => this.ctx.can('cms.update'));
   /**
@@ -296,11 +304,26 @@ export class Menus {
   }
 
   addTop(): void {
+    if (this.tree().length >= MAX_TOP) return;
     this.mutate(tree => [...tree, this.blank()]);
   }
 
   addChild(parent: EditNode): void {
+    if (parent.children.length >= MAX_CHILDREN) return;
     this.mutate(tree => tree.map(n => (n.uid === parent.uid ? { ...n, children: [...n.children, this.blank()] } : n)));
+  }
+
+  /** The item above has room for one more child. */
+  canIndent(node: EditNode): boolean {
+    const tree = this.tree();
+    const i = tree.findIndex(n => n.uid === node.uid);
+    return i > 0 && tree[i - 1].children.length < MAX_CHILDREN;
+  }
+
+  /** A page chosen in the search: keep its row so the live / path hints can show it. */
+  pickPage(node: EditNode, row: WebsitePageRow | null): void {
+    if (row && !this.pages().some(p => p.id === row.id)) this.pages.update(list => [...list, row]);
+    this.patch(node, { page_id: row ? String(row.id) : '' });
   }
 
   remove(node: EditNode, parent?: EditNode): void {
@@ -331,7 +354,7 @@ export class Menus {
   indent(node: EditNode): void {
     this.mutate(tree => {
       const i = tree.findIndex(n => n.uid === node.uid);
-      if (i <= 0 || node.children.length) return tree;
+      if (i <= 0 || node.children.length || tree[i - 1].children.length >= MAX_CHILDREN) return tree;
       const prev = tree[i - 1];
       const copy = tree.filter(n => n.uid !== node.uid);
       return copy.map(n => (n.uid === prev.uid ? { ...n, children: [...n.children, node] } : n));
@@ -376,10 +399,6 @@ export class Menus {
     this.mutate(() => this.trees()[from].map(copy));
   }
 
-  pageTitle(p: WebsitePageRow): string {
-    return translationFor(p.translations, this.locale())?.title || pickLocalized(p.translations, 'title', this.lang()) || `#${p.id}`;
-  }
-
   pageFor(node: EditNode): WebsitePageRow | undefined {
     return node.page_id ? this.pages().find(p => String(p.id) === node.page_id) : undefined;
   }
@@ -390,11 +409,6 @@ export class Menus {
     if (!p) return true;
     const tr = translationFor(p.translations, this.locale());
     return !!p.is_live && !!tr && tr.is_enabled !== false;
-  }
-
-  pagePath(node: EditNode): string | null {
-    const tr = translationFor(this.pageFor(node)?.translations, this.locale());
-    return tr?.published_path || tr?.path || null;
   }
 
   errorAt(path: string): string | null {
@@ -453,8 +467,10 @@ export class Menus {
       if (n.mode === 'page' && !n.page_id) e[`${path}.page_id`] = 'web.menus.pick_page';
       if (n.mode === 'url' && !n.url.trim()) e[`${path}.url`] = 'common.required';
     };
+    if (tree.length > MAX_TOP) e['items'] = 'web.menus.max_top';
     tree.forEach((n, i) => {
       check(n, `items.${i}`);
+      if (n.children.length > MAX_CHILDREN) e[`items.${i}.children`] = 'web.menus.max_children';
       n.children.forEach((c, j) => check(c, `items.${i}.children.${j}`));
     });
     return e;
@@ -482,7 +498,9 @@ export class Menus {
     this.itemErrors.set(local);
     this.itemsError.set(null);
     if (Object.keys(local).length) {
-      this.itemsError.set('web.menus.fix_errors');
+      // A size limit has no input to sit under, so it is the banner.
+      const limit = local['items'] ?? Object.entries(local).find(([k]) => k.endsWith('.children'))?.[1];
+      this.itemsError.set(limit ?? 'web.menus.fix_errors');
       return;
     }
     this.savingItems.set(true);

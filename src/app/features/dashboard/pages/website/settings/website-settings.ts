@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { WebsiteApiService, errorMessage, fieldErrors } from '../../../../../core/services/website/website-api.service';
+import { WebsiteApiService, errorMessage, fieldErrors, firstError } from '../../../../../core/services/website/website-api.service';
 import { WebsiteContextService } from '../../../../../core/services/website/website-context.service';
 import { WebsiteSetting } from '../../../../../core/services/website/website.models';
 import { DialogService } from '../../../../../core/services/dialog.service';
 import { I18nService } from '../../../../../core/i18n/i18n.service';
 import { TPipe } from '../../../../../core/i18n/t.pipe';
 import { fmtDate, lines } from '../shared/website-utils';
+import { PagePicker } from '../pages/editor/page-picker';
 
 /** How one setting is edited. Decided from `type`, then from the value's shape. */
-type Widget = 'string' | 'text' | 'bool' | 'number' | 'list' | 'json';
+type Widget = 'string' | 'text' | 'bool' | 'number' | 'list' | 'json' | 'page';
 
 /** Draft values are what the inputs hold: strings for text-ish widgets, booleans for toggles. */
 type DraftValue = string | boolean;
@@ -25,7 +26,7 @@ type DraftValue = string | boolean;
 const DIRECTORY_KEYS = ['directory.doctors_public', 'directory.hospitals_public'];
 
 /** Keys whose values are URLs, e-mails or phone numbers — always typed left-to-right. */
-const LTR_HINTS = ['url', 'same_as', 'email', 'phone', 'whatsapp', 'twitter'];
+const LTR_HINTS = ['url', 'same_as', 'email', 'phone', 'whatsapp', 'twitter', '_number', 'tax_registration'];
 
 /**
  * Website settings (§13.1): organisation identity for structured data, SEO
@@ -37,7 +38,7 @@ const LTR_HINTS = ['url', 'same_as', 'email', 'phone', 'whatsapp', 'twitter'];
 @Component({
   selector: 'app-website-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TPipe],
+  imports: [CommonModule, FormsModule, TPipe, PagePicker],
   templateUrl: './website-settings.html',
   styleUrls: ['../shared/website.shared.css', './website-settings.css']
 })
@@ -65,6 +66,7 @@ export class WebsiteSettings {
   activeGroup = signal<string>('all');
 
   readonly canEdit = computed(() => this.ctx.can('settings.update'));
+  readonly lang = computed<'en' | 'ar'>(() => (this.i18n.lang() === 'ar' ? 'ar' : 'en'));
 
   readonly groups = computed(() => {
     const map = new Map<string, WebsiteSetting[]>();
@@ -127,6 +129,8 @@ export class WebsiteSettings {
   widget(row: WebsiteSetting): Widget {
     const type = (row.type || '').toLowerCase();
     const sample = row.value ?? row.default;
+    // A page reference (`emergency_bar.link_page_id`) is searched for, not typed as a number.
+    if (/(^|[._])page_id$/.test(row.key) && ['int', 'integer', ''].includes(type)) return 'page';
     switch (type) {
       // `email` and `phone` arrived with the API change of 2026-10-14:
       // organization.email became `email`, and organization.phone and
@@ -161,7 +165,7 @@ export class WebsiteSettings {
       case 'bool': return value === true || value === 1 || value === '1' || value === 'true';
       case 'list': return Array.isArray(value) ? value.join('\n') : value == null ? '' : String(value);
       case 'json': return value === null || value === undefined ? '' : JSON.stringify(value, null, 2);
-      case 'number': return value === null || value === undefined ? '' : String(value);
+      case 'number': case 'page': return value === null || value === undefined ? '' : String(value);
       default: return value === null || value === undefined ? '' : String(value);
     }
   }
@@ -175,7 +179,9 @@ export class WebsiteSettings {
         const s = String(value).trim();
         return s === '' ? null : JSON.parse(s);
       }
-      case 'number': {
+      case 'number':
+      case 'page': {
+        // Empty is `null` (a nullable int clears), never 0.
         const s = String(value).trim();
         return s === '' ? null : Number(s);
       }
@@ -188,6 +194,15 @@ export class WebsiteSettings {
 
   value(key: string): DraftValue {
     return this.draft()[key];
+  }
+
+  pageId(key: string): number | null {
+    const v = String(this.draft()[key] ?? '').trim();
+    return v ? Number(v) : null;
+  }
+
+  isInt(row: WebsiteSetting): boolean {
+    return ['int', 'integer'].includes((row.type || '').toLowerCase());
   }
 
   set(key: string, value: DraftValue): void {
@@ -320,7 +335,7 @@ export class WebsiteSettings {
         this.saving.set(false);
         if (err?.status === 422) {
           this.errors.set(this.mapErrors(fieldErrors(err)));
-          this.formError.set(errorMessage(err, 'web.settings.save_failed'));
+          this.formError.set(firstError(err, 'web.settings.save_failed'));
         } else {
           this.dialog.error('common.error', errorMessage(err, 'web.settings.save_failed'));
         }

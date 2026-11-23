@@ -88,8 +88,16 @@
                             [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)"></textarea>
                 }
                 @case ('number') {
-                  <input class="field narrow" type="number" [id]="'s-' + row.key" [disabled]="!canEdit()"
+                  <input class="field narrow" type="number" dir="ltr" [id]="'s-' + row.key" [disabled]="!canEdit()"
+                         [attr.step]="isInt(row) ? 1 : 'any'" [attr.inputmode]="isInt(row) ? 'numeric' : 'decimal'"
                          [value]="$any(value(row.key))" (input)="set(row.key, $any($event.target).value)">
+                }
+                @case ('page') {
+                  <div class="page-field">
+                    <app-page-picker [value]="pageId(row.key)" [locale]="lang()" [perPage]="50" [disabled]="!canEdit()"
+                                     placeholder="web.menus.search_page" hint="web.settings.page_none"
+                                     (picked)="set(row.key, $event ? '' + $event.id : '')" />
+                  </div>
                 }
                 @case ('list') {
                   <textarea class="field mono" rows="4" [id]="'s-' + row.key" [attr.dir]="dir(row.key) ?? 'ltr'" [disabled]="!canEdit()"

@@ -17,19 +17,22 @@ export function dataPath(index: number): string {
 export const ANCHOR_RE = /^[a-z][a-z0-9_-]*$/;
 
 /**
- * Link targets a block may use (§3 `url`): absolute https, a localized site
- * path (`/en/…`, `/ar/…`), an in-page `#anchor`, `mailto:` or `tel:`.
+ * Link targets a block may use, same set as the API: absolute https, a site
+ * path (`/…`), an in-page `#anchor`, `mailto:` or `tel:` (short hotlines like
+ * `tel:123` and typed spaces included; the API strips the spaces).
  */
 const URL_RES = [
   /^https:\/\/[^\s/$.?#][^\s]*$/i,
-  /^\/(en|ar)(\/[^\s]*)?$/,
-  /^#[a-z][a-z0-9_-]*$/,
+  /^\/(?!\/)[^\s]*$/,
+  /^#[A-Za-z][\w-]*$/,
   /^mailto:[^\s@]+@[^\s@]+$/i,
-  /^tel:\+?[0-9][0-9 ()-]{3,}$/i
+  /^tel:\+?[\d\s().-]+$/i
 ];
 
 export function isValidUrl(value: string): boolean {
-  return URL_RES.some(re => re.test(value.trim()));
+  const v = value.trim();
+  if (/^tel:/i.test(v) && v.replace(/\D/g, '').length < 3) return false;
+  return URL_RES.some(re => re.test(v));
 }
 
 /** The answer of a `direct_answer` block must not lean on context the reader lacks. */

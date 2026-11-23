@@ -5,8 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import { SiteApiService } from './services/site-api.service';
 import { SiteStateService } from './services/site-state.service';
 import { DEFAULT_SITE_LOCALE, SiteLocale, isSiteLocale } from './site-paths';
-import { Dict, ResolveResult, ResolvedView, SiteData } from './models/site.models';
+import { Dict, PagePayload, ResolveResult, ResolvedView, SiteData } from './models/site.models';
 import { cleanQueryString, str } from './site-utils';
+import { loadHospitalWidgets, loadPageWidgets, widgetPlan } from './widgets/page-widgets';
 
 declare const ngDevMode: unknown;
 
@@ -90,6 +91,7 @@ export const siteViewResolver: ResolveFn<ResolvedView | RedirectCommand> = async
   const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   // Injected before the first `await`: inject() only works synchronously.
   const responseInit = inject(RESPONSE_INIT, { optional: true });
+  const state = inject(SiteStateService);
   const locale = localeOf(route);
   const { path, qs } = splitUrl(router, routerState, locale);
 
@@ -153,6 +155,15 @@ export const siteViewResolver: ResolveFn<ResolvedView | RedirectCommand> = async
     }
     default:
       if (result.status && result.status !== 200) setServerResponse(responseInit, result.status);
+  }
+
+  // Live widgets (website 2026): fetched here so they are in the server HTML.
+  if (result.kind === 'page') {
+    const plan = widgetPlan(result.data as PagePayload, state.site(), locale);
+    view.widgets = await loadPageWidgets(api, locale, plan, parseQuery(qs));
+  } else if (result.kind === 'hospital') {
+    const slug = str((result.data as Dict | null)?.['slug']) || path.split('/').filter(Boolean).pop() || '';
+    if (slug) view.widgets = await loadHospitalWidgets(api, locale, slug);
   }
   return view;
 };

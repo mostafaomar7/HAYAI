@@ -24,8 +24,34 @@ import { SeoHeadService } from '../services/seo-head.service';
 import { CtaButtonComponent } from '../ui/cta-button.component';
 import { SiteFormComponent } from '../ui/site-form.component';
 import { PurchaseFormComponent } from '../ui/purchase-form.component';
+import { StoreBadgesComponent } from '../ui/store-badges.component';
 import { MenuItem } from '../models/site.models';
 import { hrefOf, str } from '../site-utils';
+
+/**
+ * The emergency text with every occurrence of each hotline number turned
+ * into its `tel:` link (a number inside a longer number is left alone).
+ */
+export function linkNumbers(
+  text: string,
+  numbers: { number: string; href: string }[] | null | undefined
+): { text: string; href: string | null }[] {
+  const nums = (numbers ?? []).filter(n => n?.number && n?.href);
+  if (!text) return [];
+  if (!nums.length) return [{ text, href: null }];
+  const esc = nums.map(n => n.number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).sort((a, b) => b.length - a.length);
+  const re = new RegExp(`(?<![\\d٠-٩])(${esc.join('|')})(?![\\d٠-٩])`, 'g');
+  const out: { text: string; href: string | null }[] = [];
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    const i = m.index ?? 0;
+    if (i > last) out.push({ text: text.slice(last, i), href: null });
+    out.push({ text: m[0], href: nums.find(n => n.number === m[0])?.href ?? null });
+    last = i + m[0].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last), href: null });
+  return out;
+}
 import { withAttribution } from '../tracking-params';
 import { isPublicSitePath } from '../site-paths';
 
@@ -41,7 +67,7 @@ import { isPublicSitePath } from '../site-paths';
  */
 @Component({
   selector: 'site-shell',
-  imports: [RouterOutlet, CtaButtonComponent, SiteFormComponent, PurchaseFormComponent],
+  imports: [RouterOutlet, CtaButtonComponent, SiteFormComponent, PurchaseFormComponent, StoreBadgesComponent],
   templateUrl: './site-shell.component.html',
   styleUrl: './site-shell.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -68,9 +94,21 @@ export class SiteShellComponent implements OnDestroy {
 
   protected org = computed(() => this.state.site()?.organization ?? {});
   protected orgName = computed(() => str(this.org().name) || 'HAYAI');
-  protected logo = computed(() => str(this.org().logo_url) || '/logo.png');
+  protected legalName = computed(() => str(this.org().legal_name, this.org().name) || 'HAYAI');
   protected headerMenu = computed(() => this.state.site()?.menus?.header ?? []);
   protected footerMenu = computed(() => this.state.site()?.menus?.footer ?? []);
+  protected footerColumns = computed(() => this.footerMenu().filter(i => i.children?.length));
+  protected footerLinks = computed(() => this.footerMenu().filter(i => !i.children?.length));
+
+  protected emergency = computed(() => {
+    const eb = this.state.site()?.emergency_bar;
+    return eb?.enabled && (str(eb.text) || str(eb.short_text)) ? eb : null;
+  });
+  protected ebLong = computed(() => linkNumbers(str(this.emergency()?.text, this.emergency()?.short_text), this.emergency()?.numbers));
+  protected ebShort = computed(() => linkNumbers(str(this.emergency()?.short_text, this.emergency()?.text), this.emergency()?.numbers));
+
+  /** The path on screen, for the menu's active item. */
+  private currentPath = signal(this.router.url.split(/[?#]/)[0]);
   protected headerCta = computed(() => this.state.siteCtas('header')[0] ?? null);
   protected footerCtas = computed(() => this.state.siteCtas('footer'));
   protected stickyMobile = computed(() => this.state.ctas('sticky_mobile').slice(0, 2));
@@ -116,6 +154,7 @@ export class SiteShellComponent implements OnDestroy {
     inject(WhatsappRefService).install();
     // The visit's campaign on every Google Play / App Store button.
     inject(StoreLinksService).install();
+    this.preloadFonts();
 
     this.router.events
       .pipe(
@@ -124,6 +163,7 @@ export class SiteShellComponent implements OnDestroy {
       )
       .subscribe(e => {
         this.currentSearch.set(e.urlAfterRedirects.split('?')[1] ?? '');
+        this.currentPath.set(e.urlAfterRedirects.split(/[?#]/)[0]);
         this.afterNavigation(e);
       });
 
@@ -150,6 +190,58 @@ export class SiteShellComponent implements OnDestroy {
 
   protected href(item: MenuItem): string {
     return hrefOf(item);
+  }
+
+  /** A profile link's platform name instead of its raw URL. */
+  protected socialName(url: string): string {
+    const known: [RegExp, string][] = [
+      [/instagram\.com/i, 'Instagram'],
+      [/facebook\.com/i, 'Facebook'],
+      [/linkedin\.com/i, 'LinkedIn'],
+      [/play\.google\.com/i, 'Google Play'],
+      [/apps\.apple\.com/i, 'App Store'],
+      [/(x|twitter)\.com/i, 'X'],
+      [/youtube\.com/i, 'YouTube'],
+      [/tiktok\.com/i, 'TikTok'],
+      [/google\.[a-z.]+\/(search|maps)/i, 'Google']
+    ];
+    for (const [re, name] of known) if (re.test(url)) return name;
+    return url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+  }
+
+  /** The item for this page or a page under it (never the bare home link). */
+  protected isActive(item: MenuItem): boolean {
+    const norm = (p: string) => {
+      try {
+        return decodeURI(p).replace(/\/+$/, '');
+      } catch {
+        return p.replace(/\/+$/, '');
+      }
+    };
+    const target = norm(hrefOf(item).split(/[?#]/)[0]);
+    const here = norm(this.currentPath());
+    if (!target.startsWith('/') || target.split('/').filter(Boolean).length < 2) return false;
+    return here === target || here.startsWith(target + '/');
+  }
+
+  /** Above-the-fold fonts for this language, preloaded from the server HTML. */
+  private preloadFonts(): void {
+    const files =
+      this.state.locale() === 'ar'
+        ? ['/fonts/plex-arabic-700.woff2', '/fonts/plex-arabic-400.woff2']
+        : ['/fonts/instrument-serif-italic-latin.woff2', '/fonts/carlito-400-latin.woff2'];
+    const head = this.document.head;
+    head.querySelectorAll('link[data-site-font]').forEach(l => l.remove());
+    for (const href of files) {
+      const l = this.document.createElement('link');
+      l.setAttribute('rel', 'preload');
+      l.setAttribute('as', 'font');
+      l.setAttribute('type', 'font/woff2');
+      l.setAttribute('href', href);
+      l.setAttribute('crossorigin', '');
+      l.setAttribute('data-site-font', '');
+      head.appendChild(l);
+    }
   }
 
   protected toggleMenu(): void {

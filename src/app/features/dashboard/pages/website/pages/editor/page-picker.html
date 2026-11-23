@@ -12,7 +12,7 @@
   } @else {
     <div class="search-wrap">
       <input type="text" class="picker-input" [disabled]="disabled()"
-             [placeholder]="'web.pages.parent_search' | t"
+             [placeholder]="placeholder() | t"
              (focus)="focus()" (blur)="close()" (input)="onSearch($any($event.target).value)">
       @if (open()) {
         <div class="results">
@@ -31,6 +31,6 @@
         </div>
       }
     </div>
-    <span class="hint">{{ 'web.pages.parent_none' | t }}</span>
+    @if (hint()) { <span class="hint">{{ hint() | t }}</span> }
   }
 </div>

@@ -682,6 +682,17 @@ export function fieldErrors(err: any): Record<string, string> {
   return out;
 }
 
+/**
+ * The most specific message of a failed call: the first field error (`keys`
+ * tried first, in order), else the backend message, else `fallback`.
+ * Laravel's own `message` is often just "Validation failed".
+ */
+export function firstError(err: any, fallback = 'common.error', keys: string[] = []): string {
+  const bag = fieldErrors(err);
+  for (const k of keys) if (bag[k]) return bag[k];
+  return Object.values(bag)[0] || errorMessage(err, fallback);
+}
+
 /** The backend's own message for a failed call, or `fallback` (an i18n key). */
 export function errorMessage(err: any, fallback = 'common.error'): string {
   return err?.error?.message || fallback;

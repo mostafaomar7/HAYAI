@@ -120,7 +120,8 @@ export class BlockField {
 
   // ── select ─────────────────────────────────────────────────────
   selectOptions = computed(() => {
-    const raw = (this.field().options ?? []) as unknown[];
+    // An empty option is the "none" choice, which the template adds itself.
+    const raw = ((this.field().options ?? []) as unknown[]).filter(o => o !== null && o !== '');
     return raw.map(o => {
       if (o && typeof o === 'object') {
         const r = o as Record<string, unknown>;

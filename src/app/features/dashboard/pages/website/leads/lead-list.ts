@@ -19,6 +19,8 @@ import { fmtDate } from '../shared/website-utils';
 import { attrLabel, attributionRows, enumLabel } from '../purchases/sales-shared';
 
 const SPAM = 'spam';
+const ICU_TYPE = 'icu_bed_request';
+const LOCAL_TYPES = [ICU_TYPE, 'treatment_plan'];
 
 /**
  * Website leads (form submissions).
@@ -49,7 +51,8 @@ export class LeadList {
   rows = signal<WebsiteLead[]>([]);
   counts = signal<Record<string, number>>({});
   flows = signal<StatusFlow[]>([]);
-  types = signal<string[]>([]);
+  /** Seeded with the types this screen knows, in case the API lists lag behind. */
+  types = signal<string[]>([...LOCAL_TYPES]);
   locales = signal<LocaleInfo[]>([]);
   forms = signal<WebsiteForm[]>([]);
   loading = signal(true);
@@ -93,6 +96,8 @@ export class LeadList {
     return ['', ...values.filter(v => v !== SPAM), SPAM];
   });
 
+  icuQueue = computed(() => this.type() === ICU_TYPE);
+
   activeFilters = computed(() =>
     [this.type(), this.formId(), this.utmCampaign(), this.utmSource(), this.locale(), this.from(), this.to()]
       .filter(Boolean).length
@@ -121,15 +126,33 @@ export class LeadList {
         this.flows.set(e.lead_statuses ?? []);
         // A lead's type is its form's type; the enum may also list lead types separately.
         const leadTypes = e['lead_types'];
-        this.types.set(Array.isArray(leadTypes) ? (leadTypes as string[]) : e.form_types ?? []);
+        this.addTypes(Array.isArray(leadTypes) ? (leadTypes as string[]) : e.form_types ?? []);
         this.locales.set(e.locales ?? []);
       },
       error: () => this.flows.set([])
+    });
+    // The overview is meant to list the types too; not every deploy sends them yet.
+    this.api.overview().pipe(takeUntilDestroyed()).subscribe({
+      next: o => {
+        const extra = o as unknown as Record<string, unknown>;
+        for (const k of ['lead_types', 'form_types']) if (Array.isArray(extra[k])) this.addTypes(extra[k] as string[]);
+      },
+      error: () => {}
     });
     this.api.forms({ per_page: 100 }).pipe(takeUntilDestroyed()).subscribe({
       next: res => this.forms.set(res.items),
       error: () => this.forms.set([])
     });
+  }
+
+  /** Merges an API type list in, in the API's order; local-only types go last. */
+  private addTypes(list: string[]): void {
+    this.types.update(cur => [...new Set([...list.filter(t => typeof t === 'string' && t), ...cur])]);
+  }
+
+  /** "ICU queue": ICU bed requests only, newest first (the list's default order). */
+  toggleIcuQueue(): void {
+    this.setFilter('type', this.icuQueue() ? '' : ICU_TYPE);
   }
 
   /** The list filters, without paging — shared with the CSV export. */

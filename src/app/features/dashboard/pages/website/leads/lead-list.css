@@ -17,6 +17,8 @@
   border-radius: 999px; background: #2563EB; color: #fff; font-size: 11px; line-height: 16px; text-align: center;
 }
 .tab.spam-tab { margin-inline-start: auto; }
+.tab.icu-tab { color: #B91C1C; font-weight: 600; }
+.tab.icu-tab.active { border-bottom-color: #DC2626; }
 .notice.inset { margin: 14px 24px 0; }
 .nowrap { white-space: nowrap; }
 .ltr-cell { text-align: start; unicode-bidi: plaintext; }

@@ -10,6 +10,8 @@ import { CmsPageComponent } from './cms-page.component';
 import { ProductPageComponent } from './product-page.component';
 import { AuthorPageComponent } from './author-page.component';
 import { ListingPageComponent } from './listing-page.component';
+import { HospitalPageComponent } from './hospital-page.component';
+import { FILTER_KEYS } from '../widgets/page-widgets';
 import { BreadcrumbsComponent } from '../ui/breadcrumbs.component';
 import { SiteImageComponent } from '../ui/site-image.component';
 import { arr, buildJsonLd, img, str } from '../site-utils';
@@ -27,6 +29,7 @@ import { arr, buildJsonLd, img, str } from '../site-utils';
     ProductPageComponent,
     AuthorPageComponent,
     ListingPageComponent,
+    HospitalPageComponent,
     BreadcrumbsComponent,
     SiteImageComponent
   ],
@@ -43,7 +46,7 @@ import { arr, buildJsonLd, img, str } from '../site-utils';
     @if (view(); as v) {
       @switch (v.result.kind) {
         @case ('page') {
-          <site-cms-page [page]="v.result.data" />
+          <site-cms-page [page]="v.result.data" [widgets]="v.widgets" />
         }
         @case ('product') {
           <site-product-page [product]="v.result.data" />
@@ -58,7 +61,9 @@ import { arr, buildJsonLd, img, str } from '../site-utils';
           <ng-container [ngTemplateOutlet]="entity" />
         }
         @case ('hospital') {
-          <ng-container [ngTemplateOutlet]="entity" />
+          @if (v.result.data) {
+            <site-hospital-page [hospital]="v.result.data" [widgets]="v.widgets" />
+          }
         }
         @case ('redirect') {
           <div class="wrap center-page">
@@ -154,6 +159,9 @@ export class SiteViewComponent {
       const seo: SeoData = d['seo'] ?? {};
       this.state.alternates.set(arr(seo.alternates));
       const firstHero = arr<Dict>(d['sections']).find(s => s?.['type'] === 'hero');
+      // A page with live widgets filtered by the URL (`?q=`, `?area=`…) is a
+      // search result: noindex, follow, canonical to the clean page.
+      const filtered = !!v.widgets && FILTER_KEYS.some(k => k !== 'page' && !!v.widgets!.query[k]);
       this.seo.apply({
         locale,
         dir: d['dir'],
@@ -161,7 +169,7 @@ export class SiteViewComponent {
         description: str(seo.description, d['excerpt'], d['short_description'], d['geo']?.direct_answer?.answer),
         canonical: d['is_preview'] ? null : seo.canonical,
         // Previews are always noindex whatever the draft's own SEO says.
-        robots: d['is_preview'] ? 'noindex, nofollow' : seo.robots,
+        robots: d['is_preview'] ? 'noindex, nofollow' : filtered ? 'noindex, follow' : seo.robots,
         alternates: d['is_preview'] ? [] : seo.alternates,
         openGraph: seo.open_graph,
         twitter: seo.twitter,

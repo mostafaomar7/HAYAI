@@ -31,6 +31,12 @@ export class PagePicker {
   /** The page being edited: it cannot be its own parent. */
   excludeId = input<number | null>(null);
   disabled = input(false);
+  /** Rows the caller already holds, so a chosen id shows without a fetch. */
+  known = input<WebsitePageRow[]>([]);
+  perPage = input(10);
+  placeholder = input('web.pages.parent_search');
+  /** Shown under the empty box; '' for none. */
+  hint = input('web.pages.parent_none');
 
   picked = output<WebsitePageRow | null>();
 
@@ -49,6 +55,8 @@ export class PagePicker {
       untracked(() => {
         if (!id) { this.selected.set(null); return; }
         if (this.selected()?.id === id) return;
+        const row = this.known().find(p => p.id === id);
+        if (row) { this.selected.set(row); return; }
         this.api.page(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: p => this.selected.set(p),
           error: () => this.selected.set(null)
@@ -70,7 +78,7 @@ export class PagePicker {
 
   search(): void {
     this.searching.set(true);
-    this.api.pages({ q: this.q() || undefined, per_page: 10, sort: 'updated' })
+    this.api.pages({ q: this.q() || undefined, per_page: this.perPage(), sort: 'updated' })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {

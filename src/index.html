@@ -30,11 +30,9 @@
        the placeholder is left as-is and the app falls back to the bundle
        hash. -->
   <meta name="hayai-i18n-version" content="{{I18N_VERSION}}">
-  <!-- Inter was already the declared body font but never loaded; Poppins is the
-       display face used by the landing page design. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts are self-hosted: @font-face rules at the top of styles.css, files
+       in public/fonts. The public site preloads its two above-the-fold files
+       from the shell (per language). -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">

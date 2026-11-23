@@ -135,6 +135,9 @@
       <select class="field-input" [id]="id" [disabled]="disabled()" [attr.aria-invalid]="!!error() || null" (change)="onSelect($event)">
         @if (!field().required) {
           <option value="" [selected]="!str()">{{ 'web.blocks.picker.none' | t }}</option>
+        } @else if (!str()) {
+          <!-- Without this the browser shows the first option while the model is still empty. -->
+          <option value="" selected disabled>{{ 'web.blocks.picker.choose' | t }}</option>
         }
         @for (o of selectOptions(); track o.value) {
           <option [value]="o.value" [selected]="str() === o.value">{{ o.label }}</option>

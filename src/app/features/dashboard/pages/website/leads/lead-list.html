@@ -110,7 +110,14 @@
           @if (count(s) !== null) { <span class="count">{{ count(s) }}</span> }
         </button>
       }
+      <button class="tab icu-tab" [class.active]="icuQueue()" [attr.aria-pressed]="icuQueue()"
+              [title]="'web.leads.icu_queue_hint' | t" (click)="toggleIcuQueue()">
+        {{ 'web.leads.icu_queue' | t }}
+      </button>
     </div>
+    @if (icuQueue()) {
+      <p class="notice info inset">{{ 'web.leads.icu_queue_hint' | t }}</p>
+    }
 
     @if (filtersOpen()) {
       <div class="filters">

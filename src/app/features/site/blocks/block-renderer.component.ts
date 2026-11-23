@@ -10,6 +10,7 @@ import { BreadcrumbsComponent } from '../ui/breadcrumbs.component';
 import { BuyBoxComponent } from '../ui/buy-box.component';
 import { VideoBlockComponent } from './video-block.component';
 import { FormBlockComponent } from './form-block.component';
+import { LineIconComponent, PILLARS, iconKnown } from '../ui/line-icon.component';
 import { isExternalHref, money, str } from '../site-utils';
 
 const KNOWN_BLOCKS = new Set([
@@ -42,7 +43,8 @@ const KNOWN_BLOCKS = new Set([
     BreadcrumbsComponent,
     BuyBoxComponent,
     VideoBlockComponent,
-    FormBlockComponent
+    FormBlockComponent,
+    LineIconComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { style: 'display: contents' },
@@ -62,22 +64,23 @@ const KNOWN_BLOCKS = new Set([
         @switch (s.type) {
           <!-- ============ hero ============ -->
           @case ('hero') {
-            <div class="hero" [class.hero-center]="d['alignment'] === 'center'" [class.hero-has-media]="!!d['image']">
+            @let lines = heroLines(isH1() ? h1Text() || d['headline'] : d['headline']);
+            <div class="hero" [class.hero-center]="d['alignment'] === 'center'" [class.hero-has-media]="!!d['image'] || hasAside()">
               <div class="hero-copy">
                 @if (d['eyebrow']) {
                   <p class="eyebrow">{{ d['eyebrow'] }}</p>
                 }
+                <!-- Second sentence of the headline in Sky (brand rule). -->
                 @if (isH1()) {
-                  <h1 [attr.id]="headingId()" class="hero-title">{{ h1Text() || d['headline'] }}</h1>
-                  <!-- The page projects its GEO direct answer here, so it sits
-                       immediately after the H1 as the spec requires. -->
-                  <ng-content />
+                  <h1 [attr.id]="headingId()" class="hero-title">{{ lines[0] }}@if (lines[1]) {<span class="hero-line2"> {{ lines[1] }}</span>}</h1>
                 } @else {
-                  <h2 [attr.id]="headingId()" class="hero-title">{{ d['headline'] }}</h2>
+                  <h2 [attr.id]="headingId()" class="hero-title">{{ lines[0] }}@if (lines[1]) {<span class="hero-line2"> {{ lines[1] }}</span>}</h2>
                 }
                 @if (d['subheadline']) {
                   <p class="hero-sub">{{ d['subheadline'] }}</p>
                 }
+                <!-- Home: the search box and quick chips. -->
+                <ng-content select="[hero-search]" />
                 @if (d['primary_cta'] || d['secondary_cta']) {
                   <div class="cta-row">
                     <site-cta [cta]="d['primary_cta']" placement="hero" size="lg" />
@@ -85,7 +88,9 @@ const KNOWN_BLOCKS = new Set([
                   </div>
                 }
               </div>
-              @if (d['image']) {
+              @if (hasAside()) {
+                <div class="hero-aside"><ng-content select="[hero-aside]" /></div>
+              } @else if (d['image']) {
                 <div class="hero-media">
                   <site-img [image]="d['image']" [priority]="priority()" sizes="(min-width: 960px) 50vw, 100vw" />
                 </div>
@@ -101,7 +106,7 @@ const KNOWN_BLOCKS = new Set([
 
           <!-- ============ direct_answer ============ -->
           @case ('direct_answer') {
-            <div class="da" [attr.data-geo]="geoAnswerOnPage() ? null : 'answer'">
+            <div class="da da-quiet" [attr.data-geo]="geoAnswerOnPage() ? null : 'answer'">
               <h2 [attr.id]="headingId()" class="da-q">{{ d['question'] }}</h2>
               <p class="da-a">{{ d['answer'] }}</p>
             </div>
@@ -112,11 +117,17 @@ const KNOWN_BLOCKS = new Set([
             <ng-container *ngTemplateOutlet="head" />
             <div class="grid" [style.--cols]="cols()">
               @for (it of items(); track $index) {
-                <article class="card">
-                  @if (it['image']) {
-                    <site-img [image]="it['image']" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
+                <article class="card" [class.card-shot]="isPortrait(it['image'])">
+                  @if (iconKnown(it['icon'])) {
+                    <site-line-icon [name]="it['icon']" [index]="$index" />
                   } @else if (glyph(it['icon'])) {
                     <span class="card-icon" aria-hidden="true">{{ glyph(it['icon']) }}</span>
+                  }
+                  @if (it['image']) {
+                    <!-- A portrait image is an app screenshot: shown in a phone frame. -->
+                    <div [class.phone-frame]="isPortrait(it['image'])">
+                      <site-img [image]="it['image']" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
+                    </div>
                   }
                   <h3 class="card-title">{{ it['title'] }}</h3>
                   @if (it['description']) {
@@ -141,9 +152,10 @@ const KNOWN_BLOCKS = new Set([
           <!-- ============ steps ============ -->
           @case ('steps') {
             <ng-container *ngTemplateOutlet="head" />
-            <ol class="steps">
+            <!-- Theme "brand" = the journey-pillar strip (About's promise). -->
+            <ol class="steps" [class.steps-pillars]="s.settings?.theme === 'brand'" [style.--n]="items().length">
               @for (it of items(); track $index) {
-                <li class="step">
+                <li class="step" [style.--pillar]="pillar($index)">
                   <span class="step-n" aria-hidden="true">{{ $index + 1 }}</span>
                   <div>
                     <h3 class="card-title">{{ it['title'] }}</h3>
@@ -368,12 +380,35 @@ const KNOWN_BLOCKS = new Set([
 
           <!-- ============ contact_form ============ -->
           @case ('contact_form') {
-            <div class="form-card">
-              <h2 [attr.id]="headingId()" class="blk-title">{{ title() || d['form'].name }}</h2>
-              @if (intro()) {
-                <p class="muted">{{ intro() }}</p>
+            <div class="form-layout" [class.form-layout-2]="d['form']?.key === 'contact' && hasReach()">
+              <div class="form-card">
+                <h2 [attr.id]="headingId()" class="blk-title">{{ title() || d['form'].name }}</h2>
+                @if (intro()) {
+                  <p class="muted">{{ intro() }}</p>
+                }
+                <site-form-block [form]="d['form']" />
+              </div>
+              <!-- Contact page: "Reach us directly" beside the form. -->
+              @if (d['form']?.key === 'contact' && hasReach()) {
+                @let o = state.site()?.organization;
+                <aside class="reach-card" aria-labelledby="reach-h">
+                  <h3 id="reach-h" class="card-title">{{ state.t('reachUs') }}</h3>
+                  <ul class="reach-list">
+                    @if (o?.whatsapp) {
+                      <li><span class="reach-k">{{ state.t('whatsappUs') }}</span>
+                        <a [attr.href]="'https://wa.me/' + digits(o!.whatsapp!)" target="_blank" rel="noopener" dir="ltr">{{ o!.whatsapp }}</a></li>
+                    }
+                    @if (o?.phone) {
+                      <li><span class="reach-k">{{ state.t('phone') }}</span>
+                        <a [attr.href]="'tel:' + digits(o!.phone!, true)" dir="ltr">{{ o!.phone }}</a></li>
+                    }
+                    @if (o?.email) {
+                      <li><span class="reach-k">{{ state.t('email_') }}</span>
+                        <a [attr.href]="'mailto:' + o!.email">{{ o!.email }}</a></li>
+                    }
+                  </ul>
+                </aside>
               }
-              <site-form-block [form]="d['form']" />
             </div>
           }
 
@@ -498,17 +533,19 @@ const KNOWN_BLOCKS = new Set([
                   @if (a.image) {
                     <site-img [image]="a.image" [altText]="a.title" sizes="(min-width: 960px) 33vw, 100vw" cls="card-img" />
                   }
+                  @if (a.category?.name) {
+                    <p class="eyebrow">{{ a.category.name }}</p>
+                  }
                   <h3 class="card-title"><a [attr.href]="a.path">{{ a.title }}</a></h3>
                   @if (a.excerpt) {
                     <p>{{ a.excerpt }}</p>
                   }
                   <p class="meta">
                     @if (a.author?.name) {
-                      <span>{{ a.author.name }}</span>
+                      <span>{{ state.t('reviewedBy', a.author.name) }}</span>
                     }
-                    <time [attr.datetime]="a.published_at">{{ date(a.published_at) }}</time>
-                    @if (a.reading_time_minutes) {
-                      <span>{{ a.reading_time_minutes }} {{ state.t('minRead') }}</span>
+                    @if (date(a.modified_at || a.published_at)) {
+                      <time [attr.datetime]="a.modified_at || a.published_at">{{ state.t('updatedOn', date(a.modified_at || a.published_at)) }}</time>
                     }
                   </p>
                 </article>
@@ -661,6 +698,8 @@ export class BlockRendererComponent {
   readonly priority = input(false);
   /** The page already printed its GEO direct answer after the H1. */
   readonly geoAnswerOnPage = input(false);
+  /** The page projects a `[hero-aside]` (Home: the ICU card). */
+  readonly hasAside = input(false);
 
   protected state = inject(SiteStateService);
   private ctaService = inject(SiteCtaService);
@@ -756,6 +795,41 @@ export class BlockRendererComponent {
    *  words, only an emoji / symbol an editor typed shows. */
   protected glyph(icon: string | null): string {
     return icon && !/^[a-z0-9_-]+$/i.test(icon) ? icon : '';
+  }
+
+  protected iconKnown = iconKnown;
+
+  /**
+   * The hero headline as [first line, Sky line]: an explicit line break wins,
+   * else the split is after the first sentence ("Know where to go. | Get the
+   * right care, faster."). One sentence stays one line.
+   */
+  protected heroLines(text: string | null | undefined): [string, string] {
+    const t = (text ?? '').trim();
+    const nl = t.split(/\r?\n/);
+    if (nl.length > 1) return [nl[0].trim(), nl.slice(1).join(' ').trim()];
+    const m = /^(.+?[.!?؟。])\s+(\S.*)$/s.exec(t);
+    return m ? [m[1], m[2]] : [t, ''];
+  }
+
+  /** A portrait image in a card is an app screenshot (phone frame). */
+  protected isPortrait(image: Dict | null | undefined): boolean {
+    const w = Number(image?.['width']);
+    const h = Number(image?.['height']);
+    return w > 0 && h > w * 1.3;
+  }
+
+  protected pillar(i: number): string {
+    return PILLARS[i % PILLARS.length];
+  }
+
+  protected hasReach(): boolean {
+    const o = this.state.site()?.organization;
+    return !!(o?.whatsapp || o?.phone || o?.email);
+  }
+
+  protected digits(n: string, keepPlus = false): string {
+    return String(n).replace(keepPlus ? /[^\d+]/g : /\D/g, '');
   }
 
   protected external(href: string): boolean {

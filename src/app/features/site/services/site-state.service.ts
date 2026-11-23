@@ -2,7 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { DEFAULT_SITE_LOCALE, SiteLocale } from '../site-paths';
 import { SiteStringKey, siteT } from '../i18n/site-strings';
 import { Dict, FormDefinition, PagePayload, SeoAlternate, SiteCta, SiteData } from '../models/site.models';
-import { ctasFor } from '../site-utils';
+import { ctasFor, str } from '../site-utils';
 
 export type SiteModal =
   | { kind: 'form'; formKey: string; trackingKey?: string | null; title?: string | null }
@@ -64,6 +64,18 @@ export class SiteStateService {
   ctas(placement: string): SiteCta[] {
     const own = ctasFor(this.page()?.ctas, placement);
     return own.length ? own : this.siteCtas(placement);
+  }
+
+  /**
+   * Where "Request appointment" goes (there is no web booking): the header
+   * "Get the app" CTA, else the header menu's last item, which the brief's
+   * menu order makes "Get the app".
+   */
+  appHref(): string | null {
+    const cta = this.siteCtas('header')[0]?.action?.href;
+    if (cta) return cta;
+    const last = this.site()?.menus?.header?.slice(-1)[0];
+    return last ? str(last.path, last.url, last.href) || null : null;
   }
 
   privacyUrl(): string | null {

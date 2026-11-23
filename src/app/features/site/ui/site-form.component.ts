@@ -19,6 +19,12 @@ import { str } from '../site-utils';
 
 type Values = Record<string, string | string[] | boolean>;
 
+/** GA4 events the brief names per form type (also in `site.analytics.events`). */
+const FORM_EVENTS: Record<string, string> = {
+  icu_bed_request: 'icu_request_submitted',
+  treatment_plan: 'treatment_plan_requested'
+};
+
 /**
  * A CMS form (contract §8 / §18.3), rendered from its definition.
  *
@@ -54,7 +60,9 @@ type Values = Record<string, string | string[] | boolean>;
           @if (showTitle() && f.name) {
             <h3 class="form-title">{{ f.name }}</h3>
           }
-          @if (f.description) {
+          <!-- The ICU form's description is the "call 123 first" warning: it
+               goes above the submit button, in Coral, instead. -->
+          @if (f.description && !urgent()) {
             <p class="muted">{{ f.description }}</p>
           }
 
@@ -217,6 +225,10 @@ type Values = Record<string, string | string[] | boolean>;
             <p class="form-alert" role="alert">{{ generalError() }}</p>
           }
 
+          @if (f.description && urgent()) {
+            <p class="form-urgent" role="note">{{ f.description }}</p>
+          }
+
           <div class="form-actions-row">
             <button type="submit" class="btn btn-primary" [disabled]="sending()">
               {{ sending() ? state.t('sending') : f.submit_label || state.t('submit') }}
@@ -253,6 +265,8 @@ export class SiteFormComponent {
   private startedOnce = false;
 
   protected privacy = computed(() => this.form()?.privacy_url || this.state.privacyUrl());
+  /** The ICU bed request: its description is an emergency warning. */
+  protected urgent = computed(() => this.form()?.type === 'icu_bed_request');
 
   protected fid(field: FormField): string {
     return `${this.idPrefix()}-${this.form()?.key}-${field.key}`;
@@ -454,6 +468,9 @@ export class SiteFormComponent {
         this.doneMessage.set(str(f.success_message, d?.message, res?.['message']));
         this.done.set(true);
         this.tags.lead(d as Dict, this.form()?.key ?? null);
+        // GA4 only: the API records the conversion itself on arrival.
+        const event = FORM_EVENTS[str(f.type)];
+        if (event) this.tags.formEvent(event, d as Dict, f.key);
         this.submitted.emit(d);
       },
       error: (err: HttpErrorResponse) => {

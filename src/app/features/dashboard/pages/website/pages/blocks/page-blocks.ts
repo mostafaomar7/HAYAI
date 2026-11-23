@@ -231,8 +231,9 @@ export class PageBlocks {
         this.dialog.toast('info', 'web.blocks.h1_moved');
       }
     }
+    const before = b.section.data?.[key];
     this.patch(b.uid, s => ({ ...s, data: { ...s.data, [key]: value } }));
-    this.clearError(this.indexOf(b), `data.${key}`);
+    this.clearChanged(this.indexOf(b), key, before, value);
   }
 
   setEnabled(b: WorkingBlock, enabled: boolean): void {
@@ -465,12 +466,31 @@ export class PageBlocks {
     return out;
   }
 
-  private clearError(index: number, suffix: string): void {
-    const key = `sections.${index}.${suffix}`;
-    if (!this.errors()[key]) return;
+  /**
+   * Drops the errors on `data.{key}` and on anything inside it whose value
+   * just changed. List fields emit the whole list, so clearing only the
+   * list's own key left "Required" under a list item the admin had filled in.
+   */
+  private clearChanged(index: number, key: string, before: unknown, after: unknown): void {
+    const base = `sections.${index}.data.${key}`;
+    const differs = (p: string[]) => JSON.stringify(valueAt(before, p)) !== JSON.stringify(valueAt(after, p));
+    // An item-level rule ("type the figure, or choose a live value") clears
+    // when any field of that item changes, not only the one it sits on.
+    const stale = Object.keys(this.errors()).filter(k => {
+      if (k === base) return true;
+      if (!k.startsWith(base + '.')) return false;
+      const rest = k.slice(base.length + 1).split('.');
+      return differs(rest) || (rest.length > 1 && differs(rest.slice(0, -1)));
+    });
+    if (!stale.length) return;
+    // What the client rules still reject stays, with their own message.
+    const local = validateSections(this.blocks().map(b => b.section), this.byType(), this.locale());
     this.errors.update(e => {
       const next = { ...e };
-      delete next[key];
+      for (const k of stale) {
+        if (local[k]) next[k] = local[k];
+        else delete next[k];
+      }
       return next;
     });
   }
@@ -479,7 +499,11 @@ export class PageBlocks {
   private revealFirstError(): void {
     const keys = Object.keys(this.errors());
     const indexes = keys.map(k => /^sections\.(\d+)\./.exec(k)?.[1]).filter((x): x is string => !!x).map(Number);
-    if (!indexes.length) return;
+    if (!indexes.length) {
+      // Nothing to point at on a block: bring the banner into view instead.
+      setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('.form-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 30);
+      return;
+    }
     const first = Math.min(...indexes);
     const block = this.blocks()[first];
     if (!block) return;
@@ -488,8 +512,12 @@ export class PageBlocks {
     if (needsAdvanced) this.advancedOpen.update(s => new Set(s).add(block.uid));
     setTimeout(() => {
       const card = this.host.nativeElement.querySelector<HTMLElement>(`#blk-${block.uid}`);
-      card?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const bad = card?.querySelector<HTMLElement>('[aria-invalid="true"], .has-error input, .has-error textarea, .has-error select');
+      // Most specific first: the card itself carries `.has-error` too.
+      const bad = ['[aria-invalid="true"]', '.bf.has-error :is(input, textarea, select)', '.item.has-error :is(input, textarea, select)']
+        .map(s => card?.querySelector<HTMLElement>(s))
+        .find(el => !!el) ?? null;
+      // A long list item can sit far below the card's top: scroll to the field itself.
+      (bad ?? card)?.scrollIntoView({ behavior: 'smooth', block: bad ? 'center' : 'start' });
       bad?.focus({ preventScroll: true });
     }, 60);
   }
@@ -527,6 +555,7 @@ export class PageBlocks {
     this.formError.set(null);
     if (Object.keys(local).length) {
       this.formError.set('web.blocks.fix_errors');
+      this.dialog.toast('warning', 'web.blocks.fix_errors');
       this.revealFirstError();
       return;
     }
@@ -550,6 +579,7 @@ export class PageBlocks {
         if (err?.status === 422) {
           this.errors.set(fieldErrors(err));
           this.formError.set(errorMessage(err, 'web.blocks.save_failed'));
+          this.dialog.toast('error', 'web.blocks.save_failed');
           this.revealFirstError();
         } else {
           this.dialog.error('common.error', errorMessage(err, 'web.blocks.save_failed'));
@@ -576,6 +606,16 @@ export class PageBlocks {
   spacingOf(b: WorkingBlock): string {
     return b.section.settings?.spacing ?? 'normal';
   }
+}
+
+/** Reads `a.0.b` style paths out of nested data. */
+function valueAt(value: unknown, path: string[]): unknown {
+  let cur = value;
+  for (const p of path) {
+    if (cur === null || typeof cur !== 'object') return undefined;
+    cur = (cur as Record<string, unknown>)[p];
+  }
+  return cur;
 }
 
 /** Fills in what older rows may lack so the editor can treat every block alike. */

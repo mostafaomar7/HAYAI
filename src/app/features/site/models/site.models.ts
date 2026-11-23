@@ -83,7 +83,13 @@ export interface SiteData {
     email?: string | null;
     whatsapp?: string | null;
     same_as?: string[];
+    legal_name?: string | null;
+    tax_registration?: string | null;
   };
+  /** Coral bar above the header on every page (Settings → Emergency bar). */
+  emergency_bar?: EmergencyBar | null;
+  /** Store links for the official badges; a null URL = no badge. */
+  apps?: { google_play_url?: string | null; app_store_url?: string | null } | null;
   menus: { header?: MenuItem[]; footer?: MenuItem[]; [key: string]: MenuItem[] | undefined };
   ctas: SiteCta[] | Record<string, SiteCta[]>;
   paths?: Record<string, string>;
@@ -91,6 +97,15 @@ export interface SiteData {
   analytics?: { enabled?: boolean; endpoint?: string; events?: string[] };
   legal?: { privacy_url?: string | null };
   schema?: Dict[];
+}
+
+export interface EmergencyBar {
+  enabled: boolean;
+  text?: string | null;
+  short_text?: string | null;
+  numbers?: { kind: string; number: string; href: string }[];
+  /** Null until the admin picks the page, or while it is unpublished. */
+  link?: { label?: string | null; path?: string | null; url?: string | null } | null;
 }
 
 export interface SeoAlternate {
@@ -211,4 +226,28 @@ export interface ResolvedView {
   qs: string;
   result: ResolveResult;
   listing?: { kind: string; items: any; meta: Dict | null; seo: SeoData | null; query: Record<string, string> } | null;
+  /** Live data the page's widgets need, fetched in the same server render. */
+  widgets?: PageWidgets | null;
+}
+
+/** One live list: rows plus the endpoint's `meta`. */
+export interface WidgetList {
+  items: Dict[];
+  meta: Dict | null;
+}
+
+/**
+ * Live data attached to a CMS page (website 2026 builds A–G) or a hospital
+ * profile (build D). Each key is present only when the page has the widget.
+ */
+export interface PageWidgets {
+  /** This URL's query (filters), for the forms and the pager. */
+  query: Record<string, string>;
+  areas?: Dict[];
+  icu?: WidgetList;
+  doctors?: WidgetList;
+  specialties?: Dict[];
+  hospitals?: WidgetList;
+  articles?: WidgetList;
+  categories?: Dict[];
 }
