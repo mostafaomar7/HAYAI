@@ -32,7 +32,9 @@
       <nav id="site-nav" class="main-nav" [class.is-open]="menuOpen()" [attr.aria-label]="state.t('menu')">
         <!-- Without a header CTA, the menu's last item ("Get the app" in the
              CMS order) is drawn as the Navy button the brief asks for. -->
-        <ul class="nav-list" [class.last-is-cta]="!headerCta()">
+        <!-- With a header CTA ("Request care") it stays a button, outlined, so
+             the two are not the same weight. -->
+        <ul class="nav-list last-is-cta" [class.with-cta]="!!headerCta()">
           @for (item of headerMenu(); track $index) {
             <li [class.has-sub]="item.children?.length">
               <a [attr.href]="href(item)" [attr.target]="item.target || null" [attr.aria-current]="isActive(item) ? 'page' : null">{{ item.label }}</a>

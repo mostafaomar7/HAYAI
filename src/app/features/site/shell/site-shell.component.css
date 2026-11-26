@@ -167,6 +167,8 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; font-size: 13px; }
   background: var(--navy); color: #fff !important; font-weight: 700;
 }
 .last-is-cta > li:last-child > a:hover { background: #002566; }
+.last-is-cta.with-cta > li:last-child > a { background: #fff; color: var(--navy) !important; box-shadow: inset 0 0 0 1px var(--navy); }
+.last-is-cta.with-cta > li:last-child > a:hover { background: var(--tint-blue); }
 .header-cta .btn { background: var(--navy); color: #fff !important; border-color: var(--navy); }
 .header-cta .btn:hover { background: #002566; }
 .menu-toggle {
@@ -183,7 +185,8 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; font-size: 13px; }
 .nav-cta-mobile .btn { background: var(--navy); color: #fff !important; }
 @media (max-width: 1079px) {
   .menu-toggle { display: grid; }
-  .header-cta { display: none; }
+  /* The header CTA stays in the bar, smaller: at the end of a long menu it would be out of reach. */
+  .header-cta .btn { min-height: 38px; padding: 6px 12px; font-size: 14px; white-space: nowrap; }
   .main-nav {
     display: none; position: absolute; inset-inline: 0; inset-block-start: 100%;
     background: #fff; border-block-end: 1px solid var(--line); padding: 12px 20px 20px;
@@ -194,9 +197,17 @@ html[lang='ar'] .eyebrow { letter-spacing: 0; font-size: 13px; }
   .nav-list a { padding: 12px 4px; border-block-end: 1px solid var(--line); }
   .nav-list a[aria-current='page'] { border-block-end-color: var(--line); }
   .sub-list { position: static; display: block; border: 0; box-shadow: none; padding: 0; padding-inline-start: 12px; }
-  .nav-cta-mobile { display: block; margin-block-start: 16px; }
+  .header-end { gap: 10px; }
 }
 @media (max-width: 480px) { .brand img { height: 34px; min-width: 124px; } }
+/* Logo, language, "Request care" and the menu button share one bar on small phones. */
+@media (max-width: 400px) {
+  .brand img { height: 28px; min-width: 100px; }
+  .header-end { gap: 8px; }
+  .lang-link { font-size: 14px; }
+  .header-cta .btn { padding: 6px 10px; font-size: 13px; }
+  .menu-toggle { width: 40px; height: 40px; }
+}
 
 /* -------- footer: Navy, three columns, store badges, legal line -------- */
 .site-footer { background: var(--navy); color: rgba(255, 255, 255, 0.82); margin-block-start: 64px; padding-block: 48px 24px; }

@@ -72,7 +72,9 @@ export class SiteStateService {
    * menu order makes "Get the app".
    */
   appHref(): string | null {
-    const cta = this.siteCtas('header')[0]?.action?.href;
+    // A form CTA in the header ("Request care") opens a form, not the app.
+    const head = this.siteCtas('header')[0];
+    const cta = head?.action?.kind === 'form' ? null : head?.action?.href;
     if (cta) return cta;
     const last = this.site()?.menus?.header?.slice(-1)[0];
     return last ? str(last.path, last.url, last.href) || null : null;
