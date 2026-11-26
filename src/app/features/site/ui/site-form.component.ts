@@ -1,7 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
+  ViewEncapsulation,
+  afterNextRender,
   computed,
   inject,
   input,
@@ -10,12 +13,15 @@ import {
   viewChild
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Dict, FormDefinition, FormField } from '../models/site.models';
+import { AccountMode, Dict, FormDefinition, FormField, RequestTrackingLink } from '../models/site.models';
 import { SiteStateService } from '../services/site-state.service';
 import { SiteApiService } from '../services/site-api.service';
 import { SiteAnalyticsService } from '../services/site-analytics.service';
 import { TagLayerService } from '../services/tag-layer.service';
-import { str } from '../site-utils';
+import { WebsiteAccountService } from '../services/website-account.service';
+import { OtpStepComponent, latinDigits } from './otp-step.component';
+import { RequestConfirmationComponent } from './request-confirmation.component';
+import { str, uuid } from '../site-utils';
 
 type Values = Record<string, string | string[] | boolean>;
 
@@ -35,26 +41,55 @@ const FORM_EVENTS: Record<string, string> = {
  */
 @Component({
   selector: 'site-form',
+  imports: [OtpStepComponent, RequestConfirmationComponent],
+  styleUrl: './account-flow.css',
+  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (form(); as f) {
       @if (done()) {
-        <div class="form-done" role="status" aria-live="polite">
-          <p class="form-done-title">{{ state.t('thankYou') }}</p>
-          <p>{{ doneMessage() }}</p>
-          @if (reference()) {
-            <p>{{ state.t('yourReference') }}: <strong dir="ltr">{{ reference() }}</strong></p>
-          }
-        </div>
+        <site-request-confirmation
+          [reference]="reference()"
+          [message]="doneMessage()"
+          [tracking]="tracking()"
+          [accountReady]="accountReady()"
+          [hasPassword]="hasPassword()"
+          [formKey]="f.key"
+        />
+        <!-- after_submit: the request is in; the code only adds tracking and
+             the account, so it comes after and never blocks. -->
+        @if (verifyAfter(); as va) {
+          <div class="after-verify">
+            <site-otp-step
+              [phone]="va.phone"
+              [otpEndpoint]="otpEndpoint()"
+              [verifyEndpoint]="verifyEndpoint()"
+              [name]="va.name"
+              [request]="va.request"
+              [formKey]="f.key"
+              [idPrefix]="idPrefix() + '-' + f.key"
+              [title]="state.t('verifyAfterTitle')"
+              [intro]="state.t('verifyAfterText')"
+              submitKey="otpVerify"
+              [canChangeNumber]="false"
+              (verified)="afterVerified($event)"
+              (phoneError)="verifyAfter.set(null)"
+              (unavailable)="verifyAfter.set(null)"
+            />
+          </div>
+        }
       } @else {
+        <!-- Hidden, not removed, during the code step: what was typed stays
+             exactly where it was for "Change number" and for the send. -->
         <form
           #formEl
           class="site-form"
           [attr.id]="anchorId() || null"
+          [style.display]="stage() === 'otp' ? 'none' : null"
           novalidate
           (submit)="submit($event)"
-          (input)="sync()"
-          (change)="sync()"
+          (input)="edited()"
+          (change)="edited()"
           (focusin)="started()"
         >
           @if (showTitle() && f.name) {
@@ -69,6 +104,13 @@ const FORM_EVENTS: Record<string, string> = {
           @for (field of f.fields; track field.key) {
             @if (visible(field)) {
               <div class="field" [class.has-error]="errors()[field.key]" [class.field-wide]="isWide(field)">
+                @if (isContinuing(field)) {
+                  <span class="label-like">{{ field.label }}</span>
+                  <p class="continuing">
+                    {{ continuingParts()[0] }}<bdi dir="ltr">{{ account.session()?.phone_masked }}</bdi>{{ continuingParts()[1] }} ·
+                    <button type="button" class="link-btn" (click)="notYou()">{{ state.t('notYou') }}</button>
+                  </p>
+                } @else {
                 @switch (field.type) {
                   @case ('textarea') {
                     <label [attr.for]="fid(field)">{{ field.label }}@if (field.required) {<span class="req" aria-hidden="true"> *</span>}</label>
@@ -179,6 +221,7 @@ const FORM_EVENTS: Record<string, string> = {
                     />
                   }
                 }
+                }
                 @if (field.help) {
                   <p class="help" [attr.id]="fid(field) + '-help'">{{ field.help }}</p>
                 }
@@ -231,10 +274,31 @@ const FORM_EVENTS: Record<string, string> = {
 
           <div class="form-actions-row">
             <button type="submit" class="btn btn-primary" [disabled]="sending()">
-              {{ sending() ? state.t('sending') : f.submit_label || state.t('submit') }}
+              {{ sending() ? state.t('sending') : codeFirst() ? state.t('otpSendCode') : f.submit_label || state.t('submit') }}
             </button>
           </div>
         </form>
+
+        @if (stage() === 'otp') {
+          <site-otp-step
+            [phone]="otpPhone()"
+            [otpEndpoint]="otpEndpoint()"
+            [verifyEndpoint]="verifyEndpoint()"
+            [name]="otpName()"
+            [formKey]="f.key"
+            [idPrefix]="idPrefix() + '-' + f.key"
+            (verified)="beforeVerified()"
+            (phoneError)="backToForm($event)"
+            (unavailable)="otpOff()"
+            (changeNumber)="backToForm(null)"
+          />
+          @if (sending()) {
+            <p class="muted" role="status">{{ state.t('sending') }}</p>
+          }
+          @if (generalError()) {
+            <p class="form-alert" role="alert">{{ generalError() }}</p>
+          }
+        }
       }
     }
   `
@@ -264,7 +328,96 @@ export class SiteFormComponent {
   protected generalError = signal<string | null>(null);
   private startedOnce = false;
 
+  // ---- website-to-patient (brief 2026-11-26)
+  protected account = inject(WebsiteAccountService);
+  /** Set when the SMS service answered 503: this visit sends plain leads. */
+  private otpDown = signal(false);
+  protected stage = signal<'form' | 'otp'>('form');
+  protected otpPhone = signal('');
+  protected otpName = signal<string | null>(null);
+  protected tracking = signal<RequestTrackingLink | null>(null);
+  protected accountReady = signal(false);
+  protected hasPassword = signal<boolean | null>(null);
+  protected verifyAfter = signal<{ phone: string; name: string | null; request: { reference: string; token: string } } | null>(null);
+  /** The body waiting for the code (before_submit). */
+  private pending: Dict | FormData | null = null;
+  /** One per submit attempt, reused on retries of it, kept in the draft. */
+  private attemptKey: string | null = null;
+  /** The exact body of that attempt: a retry under the same key must not differ. */
+  private attemptBody: Dict | FormData | null = null;
+  private draftTimer: ReturnType<typeof setTimeout> | null = null;
+
+  protected mode = computed<AccountMode>(() => (this.otpDown() ? 'none' : this.form()?.account?.mode ?? 'none'));
+  /** The mobile the code goes to: the form's first phone field. */
+  protected phoneField = computed(() => this.form()?.fields.find(x => x.type === 'phone') ?? null);
+  protected continuing = computed(() => this.mode() !== 'none' && !!this.phoneField() && !!this.account.session());
+  protected codeFirst = computed(() => this.mode() === 'before_submit' && !!this.phoneField() && !this.continuing());
+  protected continuingParts = computed(() => this.state.t('continuingAs', '\u0000').split('\u0000'));
+  protected otpEndpoint = computed(() => this.form()?.account?.otp_endpoint || `/api/v1/public/${this.state.locale()}/account/otp`);
+  protected verifyEndpoint = computed(() => this.form()?.account?.verify_endpoint || `/api/v1/public/${this.state.locale()}/account/verify`);
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.draftTimer && clearTimeout(this.draftTimer));
+    afterNextRender(() => {
+      const f = this.form();
+      if (!f) return;
+      if (this.mode() !== 'none') this.account.check(this.state.locale()).subscribe();
+      this.restoreDraft(f);
+    });
+  }
+
   protected privacy = computed(() => this.form()?.privacy_url || this.state.privacyUrl());
+
+  protected isContinuing(field: FormField): boolean {
+    return this.continuing() && field.key === this.phoneField()?.key;
+  }
+
+  protected notYou(): void {
+    this.account.forget(this.state.locale());
+    this.errors.update(e => {
+      const { [this.phoneField()?.key ?? '']: _drop, ...rest } = e;
+      return rest;
+    });
+    setTimeout(() => this.formEl()?.nativeElement.querySelector<HTMLElement>(`[name="${CSS.escape(this.phoneField()?.key ?? '')}"]`)?.focus());
+  }
+
+  // ---- draft: survives refresh, the code step and a lost connection
+
+  /** Typed by the visitor: a different request from any earlier attempt. */
+  protected edited(): void {
+    this.attemptKey = null;
+    this.attemptBody = null;
+    this.sync();
+    this.queueDraft();
+  }
+
+  private queueDraft(): void {
+    const key = this.form()?.key;
+    if (!key) return;
+    if (this.draftTimer) clearTimeout(this.draftTimer);
+    this.draftTimer = setTimeout(() => this.account.saveDraft(key, this.values(), this.attemptKey), 400);
+  }
+
+  private restoreDraft(f: FormDefinition): void {
+    const draft = this.account.draft(f.key);
+    const el = this.formEl()?.nativeElement;
+    if (!draft || !el) return;
+    for (const field of f.fields) {
+      if (field.type === 'file') continue;
+      const v = draft.values[field.key];
+      if (v === undefined || v === '' || v === false) continue;
+      const inputs = Array.from(el.querySelectorAll<HTMLInputElement>(`[name="${CSS.escape(field.key)}"]`));
+      for (const input of inputs) {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          input.checked = Array.isArray(v) ? v.includes(input.value) : v === true || String(v) === input.value;
+        } else if (!input.value) {
+          input.value = Array.isArray(v) ? String(v[0] ?? '') : String(v);
+        }
+      }
+    }
+    this.attemptKey = draft.attempt ?? null;
+    this.sync();
+  }
   /** The ICU bed request: its description is an emergency warning. */
   protected urgent = computed(() => this.form()?.type === 'icu_bed_request');
 
@@ -346,6 +499,8 @@ export class SiteFormComponent {
     if (this.startedOnce) return;
     this.startedOnce = true;
     this.analytics.track('form_started', { form_key: this.form()?.key, cta_tracking_key: this.ctaKey() });
+    // A request that can become a patient: the top of the website-to-patient funnel.
+    if (this.mode() !== 'none') this.analytics.trackOnce('request_started', this.form()?.key ?? '', { form_key: this.form()?.key, cta_tracking_key: this.ctaKey() });
   }
 
   /** Mirrors the DOM values into a signal, for the visibility rules only. */
@@ -381,6 +536,8 @@ export class SiteFormComponent {
 
     for (const field of f.fields) {
       if (!this.visible(field)) continue;
+      // Verified: the API fills the request's mobile from the account.
+      if (this.isContinuing(field)) continue;
       if (field.type === 'file') {
         const input = el.querySelector<HTMLInputElement>(`[name="${CSS.escape(field.key)}"]`);
         const list = Array.from(input?.files ?? []);
@@ -407,7 +564,9 @@ export class SiteFormComponent {
         continue;
       }
       const rules: Dict = field.validation ?? {};
-      const value = String(data.get(field.key) ?? '').trim();
+      const raw = String(data.get(field.key) ?? '').trim();
+      // Arabic keyboards type ٠١٢…: the API accepts them, so the check does too.
+      const value = field.type === 'phone' ? latinDigits(raw) : raw;
       if (!value) {
         if (field.required) errors[field.key] = t('fieldRequired');
         continue;
@@ -459,13 +618,105 @@ export class SiteFormComponent {
       if (f.honeypot_field) body[f.honeypot_field] = honeypot ?? '';
     }
 
+    const phoneKey = this.phoneField()?.key;
+    const phone = phoneKey && typeof fields[phoneKey] === 'string' ? latinDigits(fields[phoneKey] as string) : '';
+    const nameValue = typeof fields['name'] === 'string' ? (fields['name'] as string) : typeof fields['full_name'] === 'string' ? (fields['full_name'] as string) : null;
+    this.otpName.set(nameValue);
+    this.otpPhone.set(phone);
+
+    // Retrying an attempt whose answer was lost, nothing edited since.
+    if (this.attemptKey && this.attemptBody) {
+      this.send(f, this.attemptBody);
+      return;
+    }
+    if (this.codeFirst() && phone) {
+      // before_submit: the code first, then this very body goes with the session.
+      this.pending = body;
+      this.stage.set('otp');
+      this.account.saveDraft(f.key, this.values(), this.attemptKey);
+      return;
+    }
+    this.send(f, body);
+  }
+
+  /** The code was right: the session is stored, send what was waiting. */
+  protected beforeVerified(): void {
+    const f = this.form();
+    if (f && this.pending) this.send(f, this.pending);
+  }
+
+  /** after_submit: the request is now in the account and trackable. */
+  protected afterVerified(res: Dict): void {
+    this.verifyAfter.set(null);
+    this.accountReady.set(true);
+    const acc = (res?.['account'] ?? {}) as Dict;
+    this.hasPassword.set(typeof acc['has_password'] === 'boolean' ? (acc['has_password'] as boolean) : null);
+  }
+
+  /** "Change number", or a number the code endpoint refused. */
+  protected backToForm(phoneError: string | null): void {
+    this.stage.set('form');
+    this.pending = null;
+    const key = this.phoneField()?.key;
+    if (phoneError && key) {
+      this.errors.set({ ...this.errors(), [key]: phoneError });
+      this.focusFirstError();
+    } else if (key) {
+      setTimeout(() => this.formEl()?.nativeElement.querySelector<HTMLElement>(`[name="${CSS.escape(key)}"]`)?.focus());
+    }
+  }
+
+  /** SMS codes are off right now: never lose the request, send it as a plain lead. */
+  protected otpOff(): void {
+    this.otpDown.set(true);
+    const f = this.form();
+    if (f && this.pending) this.send(f, this.pending);
+    else this.stage.set('form');
+  }
+
+  private send(f: FormDefinition, body: Dict | FormData): void {
+    const t = (k: Parameters<SiteStateService['t']>[0], n?: string | number) => this.state.t(k, n);
+    this.attemptKey ??= uuid();
+    this.attemptBody = body;
+    const headers: Record<string, string> = { 'Idempotency-Key': this.attemptKey };
+    const token = this.mode() !== 'none' ? this.account.storedToken() : null;
+    if (token) headers['X-Website-Session'] = token;
+    this.account.saveDraft(f.key, this.values(), this.attemptKey);
+
     this.sending.set(true);
-    this.api.submitForm(f.submit_endpoint, body).subscribe({
+    this.generalError.set(null);
+    this.api.submitForm(f.submit_endpoint, body, headers).subscribe({
       next: (res: Dict) => {
         const d = res?.['data'] ?? res;
         this.sending.set(false);
-        this.reference.set(str(d?.reference) || null);
+        this.attemptKey = null;
+        this.attemptBody = null;
+        this.pending = null;
+        if (this.draftTimer) clearTimeout(this.draftTimer);
+        this.draftTimer = null;
+        this.account.clearDraft(f.key);
+        const ref = str(d?.reference) || null;
+        this.reference.set(ref);
         this.doneMessage.set(str(f.success_message, d?.message, res?.['message']));
+        // `tracking` comes with the first answer only; a replay carries null.
+        const tr = d?.tracking as RequestTrackingLink | null | undefined;
+        if (tr?.token) {
+          this.tracking.set(tr);
+          if (ref) this.account.rememberRequest(ref, tr.token);
+        } else if (ref && !this.tracking()) {
+          const known = this.account.requestToken(ref);
+          if (known) this.tracking.set({ token: known });
+        }
+        const acc = (d?.account ?? null) as Dict | null;
+        if (acc?.['linked']) {
+          this.accountReady.set(true);
+          this.hasPassword.set(this.account.session()?.has_password ?? null);
+        }
+        const phone = this.otpPhone();
+        if (this.mode() === 'after_submit' && acc?.['verification_pending'] && phone && ref && this.tracking()?.token) {
+          this.verifyAfter.set({ phone, name: this.otpName(), request: { reference: ref, token: this.tracking()!.token } });
+        }
+        this.stage.set('form');
         this.done.set(true);
         this.tags.lead(d as Dict, this.form()?.key ?? null);
         // GA4 only: the API records the conversion itself on arrival.
@@ -476,6 +727,27 @@ export class SiteFormComponent {
       error: (err: HttpErrorResponse) => {
         this.sending.set(false);
         this.tags.formError(this.form()?.key ?? null, err.status);
+        // A lost answer may have created the request: the retry must reuse the
+        // key. A refusal (4xx) means nothing was created, so the next is new.
+        if (err.status !== 0 && err.status < 500) {
+          this.attemptKey = null;
+          this.attemptBody = null;
+        }
+        this.account.saveDraft(f.key, this.values(), this.attemptKey);
+        this.stage.set('form');
+        if (err.status === 422 && err.error?.errors?.['verification']) {
+          // before_submit without a (still valid) session: to the code step.
+          if (token) this.account.forget(this.state.locale());
+          const phone = this.otpPhone();
+          if (phone && this.mode() === 'before_submit') {
+            this.pending = body;
+            this.stage.set('otp');
+          } else {
+            this.generalError.set(t('verifyFirst'));
+            this.focusFirstError();
+          }
+          return;
+        }
         if (err.status === 422 && err.error?.errors) {
           const mapped: Record<string, string> = {};
           for (const [key, msgs] of Object.entries(err.error.errors as Record<string, string[]>)) {
@@ -489,6 +761,9 @@ export class SiteFormComponent {
           this.focusFirstError();
         } else if (err.status === 429) {
           this.generalError.set(t('rateLimited'));
+        } else if (err.status === 0) {
+          // The answer was lost, not necessarily the request: the retry reuses its key.
+          this.generalError.set(t('connectionLost'));
         } else {
           this.generalError.set(err.error?.message || t('genericError'));
         }

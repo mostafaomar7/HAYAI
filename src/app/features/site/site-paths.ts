@@ -26,3 +26,14 @@ export const TRACK_ORDER_SEGMENTS = ['requests', 'track'] as const;
 export function trackOrderPath(locale: SiteLocale): string {
   return `/${locale}/${TRACK_ORDER_SEGMENTS.join('/')}`;
 }
+
+/**
+ * Where a website request is followed: `/{locale}/requests/{reference}?token=`.
+ * The backend builds this exact path into `tracking.url` and the tracking SMS,
+ * so it must not change. Routed after `requests/track`, which it would
+ * otherwise swallow (a reference is never the word "track").
+ */
+export function requestTrackingPath(locale: SiteLocale, reference: string, token?: string | null): string {
+  const base = `/${locale}/requests/${encodeURIComponent(reference)}`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
+}

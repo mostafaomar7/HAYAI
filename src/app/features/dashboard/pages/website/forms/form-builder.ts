@@ -65,7 +65,13 @@ interface SettingsDraft {
   consent_text_en: string; consent_text_ar: string;
   notify_emails: string;
   is_active: boolean;
+  account_mode: string;
 }
+
+/** Website-to-patient (2026-11-26): the values, also in enums → `account_modes`. */
+const ACCOUNT_MODES = ['none', 'after_submit', 'before_submit'];
+/** Business forms never create a patient account: the API answers 422 `account_mode`. */
+const NO_ACCOUNT_TYPES = ['hospital_partnership', 'request_demo', 'request_quote', 'purchase_inquiry'];
 
 const str = (v: unknown): string => (v === null || v === undefined ? '' : String(v));
 const numOrUndef = (v: string): number | undefined => (v.trim() === '' || isNaN(Number(v)) ? undefined : Number(v));
@@ -73,7 +79,7 @@ const numOrUndef = (v: string): number | undefined => (v.trim() === '' || isNaN(
 const emptySettings = (): SettingsDraft => ({
   key: '', type: '', name_en: '', name_ar: '', description_en: '', description_ar: '',
   submit_label_en: '', submit_label_ar: '', success_message_en: '', success_message_ar: '',
-  requires_consent: true, consent_text_en: '', consent_text_ar: '', notify_emails: '', is_active: true
+  requires_consent: true, consent_text_en: '', consent_text_ar: '', notify_emails: '', is_active: true, account_mode: 'none'
 });
 
 /** `Full name (optional)` → `full_name_optional`. */
@@ -129,6 +135,9 @@ export class FormBuilder {
 
   fieldTypes = signal<string[]>([]);
   formTypes = signal<string[]>([]);
+  accountModes = signal<string[]>(ACCOUNT_MODES);
+  /** Business form types: the select shows "Lead only" and cannot change. */
+  accountLocked = computed(() => NO_ACCOUNT_TYPES.includes(this.settings().type));
   mapsToOptions = signal<string[]>([]);
 
   private uid = 0;
@@ -155,6 +164,8 @@ export class FormBuilder {
         this.fieldTypes.set(e.form_field_types ?? []);
         this.formTypes.set(e.form_types ?? []);
         this.mapsToOptions.set(e.form_field_maps_to ?? []);
+        const modes = e['account_modes'];
+        if (Array.isArray(modes) && modes.length) this.accountModes.set(modes.filter((m): m is string => typeof m === 'string'));
         if (this.isNew() && !this.settings().type && e.form_types?.length) {
           this.setSetting('type', e.form_types[0]);
         }
@@ -193,7 +204,8 @@ export class FormBuilder {
       requires_consent: !!f.requires_consent,
       consent_text_en: str(f.consent_text_en), consent_text_ar: str(f.consent_text_ar),
       notify_emails: joinLines(f.notify_emails),
-      is_active: !!f.is_active
+      is_active: !!f.is_active,
+      account_mode: str(f.account_mode) || 'none'
     });
     const sorted = [...(f.fields ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     this.fields.set(sorted.map(x => this.fromField(x)));
@@ -615,6 +627,7 @@ export class FormBuilder {
       consent_text_ar: nullIfEmpty(s.consent_text_ar.trim()),
       notify_emails: lines(s.notify_emails),
       is_active: s.is_active,
+      account_mode: this.accountLocked() ? 'none' : s.account_mode,
       fields: fieldsOut
     };
     // A system form's key and type are fixed (the site looks it up by key).
@@ -762,5 +775,5 @@ export class FormBuilder {
 /** Settings inputs that render their own error. */
 const SETTINGS_PATHS = new Set([
   'key', 'type', 'name_en', 'name_ar', 'description_en', 'description_ar', 'submit_label_en', 'submit_label_ar',
-  'success_message_en', 'success_message_ar', 'consent_text_en', 'consent_text_ar', 'notify_emails', 'requires_consent', 'is_active'
+  'success_message_en', 'success_message_ar', 'consent_text_en', 'consent_text_ar', 'notify_emails', 'requires_consent', 'is_active', 'account_mode'
 ]);

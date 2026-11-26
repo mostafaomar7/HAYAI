@@ -57,6 +57,18 @@
         <div class="tile-value">{{ d.purchases_open || 0 }}</div>
         <p class="tile-sub">{{ 'web.overview.purchases_submitted' | t: { n: count(d.purchases, 'submitted') } }}</p>
       </div>
+      @if (d.patient_accounts; as pa) {
+        <!-- Website-to-patient (2026-11-26). Created is not activated: both shown. -->
+        <div class="tile">
+          <p class="tile-label">{{ 'web.overview.patients_title' | t }}</p>
+          <div class="tile-value green">{{ pa.created_on_website || 0 }}</div>
+          <p class="tile-sub">{{ 'web.overview.patients_created' | t }}</p>
+          <p class="tile-sub">{{ 'web.overview.patients_activated' | t: { n: pa.app_activated || 0 } }} · {{ 'web.overview.patients_password' | t: { n: pa.password_set || 0 } }}</p>
+          <p class="tile-sub">
+            <a routerLink="/dashboard/website/leads" [queryParams]="{ has_account: 1 }">{{ 'web.overview.patients_linked' | t: { n: pa.leads_linked || 0, m: pa.leads_linked_by_phone || 0 } }}</a>
+          </p>
+        </div>
+      }
     </div>
 
     <div class="overview-grid">

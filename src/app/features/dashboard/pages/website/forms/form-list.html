@@ -45,7 +45,12 @@
                   }
                 </td>
                 <td class="mono text-gray" dir="ltr">{{ row.key }}</td>
-                <td class="text-gray">{{ typeLabel(row) }}</td>
+                <td class="text-gray">
+                  {{ typeLabel(row) }}
+                  @if (row.account_mode && row.account_mode !== 'none') {
+                    <span class="pill pill-in_progress">{{ ('web.forms.account_mode.' + row.account_mode) | t }}</span>
+                  }
+                </td>
                 <td>
                   <span [class]="'pill ' + (row.is_active ? 'pill-active' : 'pill-inactive')">
                     {{ (row.is_active ? 'common.active' : 'common.inactive') | t }}

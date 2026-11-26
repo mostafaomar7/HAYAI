@@ -39,6 +39,11 @@ export const SITE_ROUTES: Routes = [
         loadComponent: () => import('./pages/track-order-page.component').then(m => m.TrackOrderPageComponent)
       },
       {
+        // A website request (brief 2026-11-26). After `requests/track`, which it would match too.
+        path: 'requests/:reference',
+        loadComponent: () => import('./pages/request-tracking-page.component').then(m => m.RequestTrackingPageComponent)
+      },
+      {
         path: '**',
         loadComponent: () => import('./pages/site-view.component').then(m => m.SiteViewComponent),
         resolve: { view: siteViewResolver },

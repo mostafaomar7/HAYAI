@@ -145,6 +145,21 @@
             }
           </select>
         </div>
+        <div class="custom-select">
+          <select [value]="hasAccount()" (change)="setFilter('hasAccount', $any($event.target).value)">
+            <option value="">{{ 'web.leads.account.any' | t }}</option>
+            <option value="1" [selected]="hasAccount() === '1'">{{ 'web.leads.account.with' | t }}</option>
+            <option value="0" [selected]="hasAccount() === '0'">{{ 'web.leads.account.without' | t }}</option>
+          </select>
+        </div>
+        <div class="custom-select">
+          <select [value]="accountLink()" (change)="setFilter('accountLink', $any($event.target).value)">
+            <option value="">{{ 'web.leads.account.any_link' | t }}</option>
+            @for (lk of accountLinks(); track lk) {
+              <option [value]="lk" [selected]="accountLink() === lk">{{ ('web.leads.account.' + lk) | t }}</option>
+            }
+          </select>
+        </div>
         <input class="text-filter" type="text" dir="ltr" [value]="utmSource()"
                [placeholder]="'web.purchases.attr.utm_source' | t" (input)="onUtm('utmSource', $any($event.target).value)">
         <input class="text-filter" type="text" dir="ltr" [value]="utmCampaign()"
@@ -199,6 +214,7 @@
                   @if (row.organization || row.hospital) {
                     <div class="muted">{{ row.organization || row.hospital }}</div>
                   }
+                  @if (row.account) { <div><app-lead-account-badges [account]="row.account" /></div> }
                 </td>
                 <td>
                   @if (row.email) { <div dir="ltr" class="ltr-cell">{{ row.email }}</div> }

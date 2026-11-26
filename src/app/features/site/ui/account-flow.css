@@ -1,0 +1,73 @@
+/* Website-to-patient flow (2026-11-26): code step, confirmation, request
+   tracking. Unencapsulated like the rest of the site; scoped under .site. */
+
+.site .link-btn {
+  background: none; border: 0; padding: 4px 2px; margin-inline-start: 6px;
+  color: var(--blue-d); font: inherit; font-weight: 700; text-decoration: underline;
+  text-underline-offset: 3px; cursor: pointer; min-height: 32px;
+}
+.site .link-btn:disabled { opacity: 0.6; cursor: wait; }
+
+/* ---- code step ---- */
+.site .otp-step {
+  display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: #fff; max-width: 520px;
+}
+.site .otp-title { margin: 0; font-size: 20px; color: var(--navy); }
+.site .otp-intro, .site .otp-sent { margin: 0; line-height: 1.7; }
+.site .otp-sent .muted { display: block; font-size: 14px; }
+.site .otp-phone { font-weight: 700; white-space: nowrap; }
+.site .otp-form { display: grid; gap: 14px; }
+.site .otp-step .otp-code {
+  width: 100%; max-width: 220px; min-height: 56px; padding: 8px 14px;
+  border: 1px solid var(--line); border-radius: 10px;
+  font-size: 28px; font-weight: 700; letter-spacing: 0.5em; text-align: center;
+  font-variant-numeric: tabular-nums; font-family: inherit;
+}
+.site .otp-step .otp-code:focus { outline: 3px solid rgba(2, 134, 242, 0.35); border-color: var(--blue); }
+.site .has-error .otp-code { border-color: var(--bad); }
+.site .otp-submit { min-height: 52px; width: 100%; font-size: 17px; }
+.site .otp-resend { margin: 0; font-size: 14px; color: var(--muted); }
+.site .otp-call { display: inline-block; margin-inline-start: 8px; font-weight: 700; color: var(--bad); }
+
+/* "Continuing as +20 10•• ••• 678 · Not you?" in place of the mobile input */
+.site .continuing { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--tint-blue); color: var(--navy); }
+.site .continuing bdi { font-weight: 700; }
+.site .label-like { font-weight: 700; font-size: 14px; color: var(--ink); }
+
+/* ---- confirmation ---- */
+.site .req-link { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block-start: 14px; }
+.site .req-link .muted { flex-basis: 100%; margin: 0; font-size: 14px; }
+.site .app-soft {
+  display: grid; gap: 12px; margin-block-start: 16px; padding: 16px;
+  border-radius: var(--radius); background: var(--paper);
+}
+.site .app-soft p { margin: 0; line-height: 1.7; }
+.site .after-verify { margin-block-start: 16px; }
+
+/* ---- request tracking page ---- */
+.site .req-card { display: grid; gap: 14px; max-width: 640px; }
+.site .req-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; color: var(--muted); font-size: 14px; }
+.site .req-linked { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--ok-tint); color: var(--ok); font-size: 13px; font-weight: 700; }
+.site .req-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.site .req-steps li {
+  position: relative; display: grid; gap: 2px; padding-block: 0 20px;
+  padding-inline-start: 36px; color: var(--muted);
+}
+.site .req-steps li::before {
+  content: ''; position: absolute; inset-inline-start: 0; inset-block-start: 2px;
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); background: #fff;
+  box-sizing: border-box;
+}
+.site .req-steps li:not(:last-child)::after {
+  content: ''; position: absolute; inset-inline-start: 9px; inset-block: 24px 2px;
+  width: 2px; background: var(--line);
+}
+.site .req-steps li.done { color: var(--ink); }
+.site .req-steps li.done::before { background: var(--ok); border-color: var(--ok); }
+.site .req-steps li.done:not(:last-child)::after { background: var(--ok); }
+.site .req-steps li.current { color: var(--navy); }
+.site .req-steps li.current::before { border-color: var(--blue); border-width: 6px; }
+.site .req-steps strong { font-size: 16px; }
+.site .req-steps time { font-size: 13px; }
+.site .req-closed { padding: 12px 14px; border-radius: 10px; background: var(--tint-coral); color: var(--bad); margin: 0; }

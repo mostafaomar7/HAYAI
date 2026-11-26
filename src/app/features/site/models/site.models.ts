@@ -171,7 +171,41 @@ export interface FormDefinition {
   privacy_url?: string | null;
   honeypot_field?: string | null;
   submit_endpoint: string;
+  /** Website-to-patient (2026-11-26): whether sending verifies the mobile. */
+  account?: FormAccount | null;
   fields: FormField[];
+}
+
+/**
+ * `none`: a plain lead. `before_submit`: one SMS code, then the request is
+ * filed under the patient's account. `after_submit` (emergencies): the request
+ * goes at once and the code comes after, on the confirmation.
+ */
+export type AccountMode = 'none' | 'before_submit' | 'after_submit';
+
+export interface FormAccount {
+  mode: AccountMode;
+  otp_endpoint?: string | null;
+  verify_endpoint?: string | null;
+}
+
+/** `tracking` on the first (201) submission response only. */
+export interface RequestTrackingLink {
+  token: string;
+  url?: string | null;
+  endpoint?: string | null;
+}
+
+/** `GET /public/{locale}/requests/{reference}?token=`: no personal details, on purpose. */
+export interface RequestTracking {
+  reference: string;
+  type?: string | null;
+  title?: string | null;
+  stage: 'received' | 'in_progress' | 'completed' | 'closed' | string;
+  steps: { key: string; done: boolean; at: string | null }[];
+  account_linked?: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 /** Payload of `kind: page` (and of `/preview/{token}`), section 18.2. */

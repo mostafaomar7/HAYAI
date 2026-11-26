@@ -29,6 +29,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     : req.headers.set('Accept', 'application/json');
 
   if (!session.isCookieMode) {
+    // Never on the public website's calls: an admin signed in to the
+    // dashboard in the same browser would otherwise have every request they
+    // send from the site filed under the admin account ("signed_in"), and
+    // the site has its own website-only session (`X-Website-Session`).
+    if (isAnonymous(req)) return next(req.clone({ headers: accept.delete('Authorization') }));
     const token = inject(TokenService).getToken();
     const headers = token ? accept.set('Authorization', `Bearer ${token}`) : accept;
     return next(req.clone({ headers }));

@@ -140,6 +140,18 @@
                   </div>
                 }
 
+                <div class="form-group full">
+                  <label>{{ 'web.forms.account_mode' | t }}</label>
+                  <select [value]="accountLocked() ? 'none' : settings().account_mode" [disabled]="accountLocked()"
+                          (change)="setSetting('account_mode', $any($event.target).value)">
+                    @for (m of accountModes(); track m) {
+                      <option [value]="m" [selected]="(accountLocked() ? 'none' : settings().account_mode) === m">{{ ('web.forms.account_mode.' + m) | t }}</option>
+                    }
+                  </select>
+                  <span class="hint">{{ (accountLocked() ? 'web.forms.account_mode_locked' : 'web.forms.account_mode_hint.' + (settings().account_mode || 'none')) | t }}</span>
+                  @if (err('account_mode')) { <span class="field-error">{{ err('account_mode')! | t }}</span> }
+                </div>
+
                 <div class="form-group">
                   <label>{{ 'web.forms.notify_emails' | t }}</label>
                   <textarea rows="3" dir="ltr" [value]="settings().notify_emails" placeholder="sales@example.com"

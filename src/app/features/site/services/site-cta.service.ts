@@ -66,6 +66,8 @@ export class SiteCtaService {
     this.tags.ctaClick(cta.kind, cta.trackingKey, placement);
 
     if (cta.kind === 'form' && cta.formKey) {
+      // A Request / Book button: the top of the website-to-patient funnel.
+      this.analytics.trackOnce('request_started', cta.formKey, { form_key: cta.formKey, ...base });
       event.preventDefault();
       this.openForm(cta.formKey, cta.trackingKey);
     } else if (cta.kind === 'purchase' && cta.product?.['id'] && this.purchaseInfo(cta.product)) {

@@ -47,6 +47,9 @@ export interface PatientItem extends BaseUserListItem {
   plan_status?: PlanStatus | null;
   /** The server's own answer to "moved off the default plan?". */
   has_plan_exception?: boolean;
+  /** Where the account was made (2026-11-26): the app, or a website request. */
+  signup_source?: 'app' | 'website' | string | null;
+  has_password?: boolean;
 }
 
 /** What an admin recorded after confirming the tourist lives abroad. */
@@ -175,6 +178,8 @@ export interface UserListQuery {
   plan_id?: number;
   /** Tourists only: `'false'` is the verification queue. Anything else is a 422. */
   verified?: 'true' | 'false';
+  /** Patients only (2026-11-26). */
+  signup_source?: 'app' | 'website';
 }
 
 @Injectable({ providedIn: 'root' })

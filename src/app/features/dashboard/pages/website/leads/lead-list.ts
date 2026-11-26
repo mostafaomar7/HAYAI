@@ -17,6 +17,7 @@ import { PaginationComponent } from '../../../../../shared/ui/pagination.compone
 import { debounce } from '../../../../../shared/utils/debounce.util';
 import { fmtDate } from '../shared/website-utils';
 import { attrLabel, attributionRows, enumLabel } from '../purchases/sales-shared';
+import { LeadAccountBadges } from './lead-account-badges';
 
 const SPAM = 'spam';
 const ICU_TYPE = 'icu_bed_request';
@@ -33,7 +34,7 @@ const LOCAL_TYPES = [ICU_TYPE, 'treatment_plan'];
 @Component({
   selector: 'app-lead-list',
   standalone: true,
-  imports: [CommonModule, TPipe, PaginationComponent],
+  imports: [CommonModule, TPipe, PaginationComponent, LeadAccountBadges],
   templateUrl: './lead-list.html',
   styleUrls: ['../shared/website.shared.css', './lead-list.css']
 })
@@ -84,6 +85,10 @@ export class LeadList {
   locale = signal('');
   from = signal('');
   to = signal('');
+  /** The account behind the request (2026-11-26): `1` / `0`, and how it was linked. */
+  hasAccount = signal('');
+  accountLink = signal('');
+  accountLinks = signal<string[]>(['verified_phone', 'signed_in']);
   filtersOpen = signal(false);
 
   private sub?: Subscription;
@@ -99,7 +104,7 @@ export class LeadList {
   icuQueue = computed(() => this.type() === ICU_TYPE);
 
   activeFilters = computed(() =>
-    [this.type(), this.formId(), this.utmCampaign(), this.utmSource(), this.locale(), this.from(), this.to()]
+    [this.type(), this.formId(), this.utmCampaign(), this.utmSource(), this.locale(), this.from(), this.to(), this.hasAccount(), this.accountLink()]
       .filter(Boolean).length
   );
 
@@ -118,7 +123,9 @@ export class LeadList {
     this.formId.set(q.get('form_id') ?? '');
     this.type.set(q.get('type') ?? '');
     this.status.set(q.get('status') ?? '');
-    if (this.formId() || this.type()) this.filtersOpen.set(true);
+    this.hasAccount.set(['0', '1'].includes(q.get('has_account') ?? '') ? q.get('has_account')! : '');
+    this.accountLink.set(q.get('account_link') ?? '');
+    if (this.formId() || this.type() || this.hasAccount() || this.accountLink()) this.filtersOpen.set(true);
     this.load();
 
     this.ctx.enums().pipe(takeUntilDestroyed()).subscribe({
@@ -128,6 +135,8 @@ export class LeadList {
         const leadTypes = e['lead_types'];
         this.addTypes(Array.isArray(leadTypes) ? (leadTypes as string[]) : e.form_types ?? []);
         this.locales.set(e.locales ?? []);
+        const links = e['lead_account_links'];
+        if (Array.isArray(links) && links.length) this.accountLinks.set(links.filter((l): l is string => typeof l === 'string'));
       },
       error: () => this.flows.set([])
     });
@@ -168,7 +177,9 @@ export class LeadList {
       utm_source: this.utmSource() || undefined,
       locale: this.locale() || undefined,
       from: this.from() || undefined,
-      to: this.to() || undefined
+      to: this.to() || undefined,
+      has_account: this.hasAccount() || undefined,
+      account_link: this.accountLink() || undefined
     };
   }
 
@@ -204,13 +215,13 @@ export class LeadList {
     this.reload();
   }
 
-  setFilter(which: 'type' | 'formId' | 'locale' | 'from' | 'to', value: string): void {
+  setFilter(which: 'type' | 'formId' | 'locale' | 'from' | 'to' | 'hasAccount' | 'accountLink', value: string): void {
     this[which].set(value);
     this.reload();
   }
 
   clearFilters(): void {
-    for (const s of [this.type, this.formId, this.utmCampaign, this.utmSource, this.locale, this.from, this.to]) s.set('');
+    for (const s of [this.type, this.formId, this.utmCampaign, this.utmSource, this.locale, this.from, this.to, this.hasAccount, this.accountLink]) s.set('');
     // Drop the deep-link params too, so a refresh does not bring them back.
     this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
     this.reload();

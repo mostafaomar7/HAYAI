@@ -99,8 +99,51 @@ export class SiteApiService {
     );
   }
 
-  submitForm(endpoint: string, body: Dict | FormData): Observable<ApiEnvelope<Dict> | Dict> {
-    return this.http.post<ApiEnvelope<Dict>>(apiUrl(endpoint), body);
+  /** `headers`: `X-Website-Session` when verified, `Idempotency-Key` per attempt. */
+  submitForm(endpoint: string, body: Dict | FormData, headers: Record<string, string> = {}): Observable<ApiEnvelope<Dict> | Dict> {
+    return this.http.post<ApiEnvelope<Dict>>(apiUrl(endpoint), body, { headers: new HttpHeaders(headers) });
+  }
+
+  // ---- Website-to-patient (2026-11-26). Browser-only calls: never cached.
+
+  sendCode(endpoint: string, body: Dict): Observable<Dict> {
+    return this.http.post<ApiEnvelope<Dict>>(apiUrl(endpoint), body).pipe(map(r => (r?.data ?? r) as Dict));
+  }
+
+  verifyCode(endpoint: string, body: Dict): Observable<Dict> {
+    return this.http.post<ApiEnvelope<Dict>>(apiUrl(endpoint), body).pipe(map(r => (r?.data ?? r) as Dict));
+  }
+
+  accountSession(locale: SiteLocale, token: string): Observable<Dict> {
+    return this.http
+      .get<ApiEnvelope<Dict>>(`${PUBLIC}/${locale}/account/session`, {
+        headers: new HttpHeaders({ 'X-Website-Session': token }),
+        transferCache: false
+      })
+      .pipe(map(r => (r?.data ?? r) as Dict));
+  }
+
+  endAccountSession(locale: SiteLocale, token: string): Observable<unknown> {
+    return this.http.delete(`${PUBLIC}/${locale}/account/session`, {
+      headers: new HttpHeaders({ 'X-Website-Session': token })
+    });
+  }
+
+  /** The policy versions a verification must accept (`application_policy_version`, …). */
+  about(): Observable<Dict | null> {
+    return this.http.get<ApiEnvelope<Dict>>(`${API_BASE}/about`, { transferCache: false }).pipe(
+      map(r => (r?.data ?? null) as Dict | null),
+      catchError(() => of(null))
+    );
+  }
+
+  trackRequest(locale: SiteLocale, reference: string, token: string): Observable<Dict> {
+    return this.http
+      .get<ApiEnvelope<Dict>>(
+        `${PUBLIC}/${locale}/requests/${encodeURIComponent(reference)}?token=${encodeURIComponent(token)}`,
+        { transferCache: false }
+      )
+      .pipe(map(r => (r?.data ?? r) as Dict));
   }
 
   purchase(endpoint: string, body: Dict, idempotencyKey: string): Observable<ApiEnvelope<Dict>> {

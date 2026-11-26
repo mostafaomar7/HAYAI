@@ -16,6 +16,7 @@ import { fmtDate, nullIfEmpty } from '../shared/website-utils';
 import {
   adminLabel, attrLabel, attributionRows, enumLabel, fmtSize, formatValue, humanize
 } from '../purchases/sales-shared';
+import { LeadAccountBadges } from './lead-account-badges';
 
 /**
  * One lead. `data` holds every submitted field by its form key, including the
@@ -30,7 +31,7 @@ import {
 @Component({
   selector: 'app-lead-detail',
   standalone: true,
-  imports: [CommonModule, TPipe, RouterLink],
+  imports: [CommonModule, TPipe, RouterLink, LeadAccountBadges],
   templateUrl: './lead-detail.html',
   styleUrls: ['../shared/website.shared.css', '../purchases/purchase-detail.css', './lead-detail.css']
 })

@@ -94,6 +94,14 @@ export interface WebsiteOverview {
   leads_new_7d: number;
   purchases: Record<string, number>;
   purchases_open: number;
+  /** Website-to-patient funnel (2026-11-26). Created is not activated: both are shown. */
+  patient_accounts?: {
+    created_on_website: number;
+    app_activated: number;
+    password_set: number;
+    leads_linked: number;
+    leads_linked_by_phone: number;
+  } | null;
 }
 
 // ───────────────────────────── media ─────────────────────────────
@@ -649,6 +657,19 @@ export interface WebsiteLead {
   history?: StatusHistoryRow[];
   /** Set on a lead created from a WhatsApp chat's reference code. */
   whatsapp_ref?: string | null;
+  /** The HAYAI account behind the request (2026-11-26); null when none. */
+  account?: LeadAccount | null;
+}
+
+/** `link`: how the request reached the account; null on older links. */
+export interface LeadAccount {
+  user_id: number;
+  user_type: string | null;
+  link: 'verified_phone' | 'signed_in' | string | null;
+  linked_at: string | null;
+  created_on_website: boolean;
+  has_password: boolean;
+  app_activated: boolean;
 }
 
 /** A WhatsApp chat's reference code and the visit it came from (§7.2). */
@@ -720,6 +741,8 @@ export interface WebsiteForm {
   requires_consent?: boolean;
   consent_text_en?: string | null;
   consent_text_ar?: string | null;
+  /** `none` | `after_submit` | `before_submit` (enum `account_modes`). */
+  account_mode?: string;
   notify_emails?: string[];
   is_active: boolean;
   leads_count?: number;

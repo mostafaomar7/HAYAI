@@ -53,6 +53,10 @@
           <div><dt>{{ 'common.phone' | t }}</dt><dd dir="ltr" class="ltr-cell">
             @if (l.phone) { <a [href]="'tel:' + l.phone">{{ l.phone }}</a> } @else { — }
           </dd></div>
+          <div class="wide"><dt>{{ 'web.leads.account.title' | t }}</dt><dd>
+            <app-lead-account-badges [account]="l.account" [detail]="true" />
+            @if (l.account?.linked_at) { <span class="text-gray"> · {{ 'web.leads.account.linked_at' | t: { date: date(l.account?.linked_at) } }}</span> }
+          </dd></div>
           <div><dt>{{ 'web.purchases.country' | t }}</dt><dd>{{ l.country || '—' }}</dd></div>
           <div><dt>{{ 'common.city' | t }}</dt><dd>{{ l.city || '—' }}</dd></div>
           <div><dt>{{ 'web.purchases.locale' | t }}</dt><dd>{{ l.locale === 'ar' ? 'العربية' : 'English' }}</dd></div>

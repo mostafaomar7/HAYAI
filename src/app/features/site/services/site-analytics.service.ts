@@ -167,6 +167,17 @@ export class SiteAnalyticsService {
     else if (!this.timer) this.timer = this.zone.runOutsideAngular(() => setTimeout(() => this.flush(false), 4000));
   }
 
+  private sentOnce = new Set<string>();
+
+  /** `track`, at most once per page load for the same event and key. */
+  trackOnce(event: string, key: string, extra: Dict = {}): void {
+    if (!this.isBrowser) return;
+    const id = `${event}:${key}`;
+    if (this.sentOnce.has(id)) return;
+    this.sentOnce.add(id);
+    this.track(event, extra);
+  }
+
   private listen(): void {
     if (this.listening) return;
     this.listening = true;
