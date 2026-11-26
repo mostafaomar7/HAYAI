@@ -78,6 +78,42 @@
       </div>
     </div>
 
+    <!-- breakdowns: already inside earned / redeemed above, not added to them -->
+    <div class="two-col">
+      <a class="card card-link" routerLink="/dashboard/loyalty/promo-codes">
+        <div class="card-head">
+          <div>
+            <h2>{{ 'loyalty.promo.card_title' | t }}</h2>
+            <p class="sub">{{ 'loyalty.promo.card_hint' | t }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <dl class="detail-grid">
+            <div><dt>{{ 'loyalty.promo.card_uses' | t }}</dt><dd dir="ltr">{{ num(d.promo_codes?.redemptions ?? 0) }}</dd></div>
+            <div><dt>{{ 'loyalty.points' | t }}</dt><dd dir="ltr" class="pos">{{ num(d.promo_codes?.points ?? 0) }}</dd></div>
+            <div><dt>{{ 'loyalty.promo.card_members' | t }}</dt><dd dir="ltr">{{ num(d.promo_codes?.members ?? 0) }}</dd></div>
+            <div><dt>{{ 'loyalty.promo.card_active' | t }}</dt><dd dir="ltr">{{ num(d.promo_codes?.active_codes ?? 0) }}</dd></div>
+          </dl>
+        </div>
+      </a>
+      <a class="card card-link" routerLink="/dashboard/loyalty/ai-exchanges" [queryParams]="{ from: from(), to: to() }">
+        <div class="card-head">
+          <div>
+            <h2>{{ 'loyalty.ai.card_title' | t }}</h2>
+            <p class="sub">{{ 'loyalty.ai.card_hint' | t }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <dl class="detail-grid">
+            <div><dt>{{ 'loyalty.ai.card_count' | t }}</dt><dd dir="ltr">{{ num(d.ai_exchanges?.count ?? 0) }}</dd></div>
+            <div><dt>{{ 'loyalty.points' | t }}</dt><dd dir="ltr">{{ num(d.ai_exchanges?.points ?? 0) }}</dd></div>
+            <div><dt>{{ 'loyalty.ai.tokens' | t }}</dt><dd dir="ltr">{{ num(d.ai_exchanges?.tokens ?? 0) }}</dd></div>
+            <div><dt>{{ 'loyalty.promo.card_members' | t }}</dt><dd dir="ltr">{{ num(d.ai_exchanges?.members ?? 0) }}</dd></div>
+          </dl>
+        </div>
+      </a>
+    </div>
+
     <div class="two-col">
       <div class="card">
         <div class="card-head"><div><h2>{{ 'loyalty.overview.by_event' | t }}</h2></div></div>

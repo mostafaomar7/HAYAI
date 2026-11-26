@@ -1,0 +1,216 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.promo.title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.promo.subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        <button class="btn-primary btn-sm" *appCanManage="'loyalty'" (click)="openNew()">+ {{ 'loyalty.promo.add' | t }}</button>
+      </div>
+    </div>
+
+    <div class="card-body filters">
+      <label class="field">
+        <span>{{ 'common.search' | t }}</span>
+        <input type="search" [placeholder]="'loyalty.promo.search_ph' | t" [value]="search()" (input)="onSearch($any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>{{ 'common.status' | t }}</span>
+        <select [value]="status()" (change)="setStatus($any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          @for (s of statuses; track s) { <option [value]="s">{{ ('loyalty.promo.status.' + s) | t }}</option> }
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'loyalty.rules.audience' | t }}</span>
+        <select [value]="audienceFilter()" (change)="setAudience($any($event.target).value)">
+          <option value="">{{ 'common.all' | t }}</option>
+          @for (a of audiences; track a) { <option [value]="a">{{ ('loyalty.audience.' + a) | t }}</option> }
+        </select>
+      </label>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.promo.code' | t }}</th>
+            <th>{{ 'loyalty.promo.owner' | t }}</th>
+            <th>{{ 'loyalty.points' | t }}</th>
+            <th>{{ 'loyalty.promo.uses' | t }}</th>
+            <th>{{ 'loyalty.promo.awarded' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'loyalty.rules.dates' | t }}</th>
+            <th>{{ 'loyalty.rules.on' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="9" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="9" class="table-hint">{{ 'loyalty.load_failed' | t }} <button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="9" class="table-hint">{{ (search() || status() || audienceFilter() ? 'loyalty.promo.empty_filtered' : 'loyalty.promo.empty') | t }}</td></tr>
+          } @else {
+            @for (p of items(); track p.id) {
+              <tr>
+                <td class="nowrap">
+                  <span class="mono-code" dir="ltr">{{ p.code }}</span>
+                  <button type="button" class="link-btn copy-btn" (click)="copy(p)" [title]="'loyalty.promo.copy' | t">
+                    {{ (copied() === p.id ? 'loyalty.promo.copied' : 'loyalty.promo.copy') | t }}
+                  </button>
+                  @if (p.audience !== 'all') { <span class="sub">{{ ('loyalty.audience.' + p.audience) | t }}</span> }
+                </td>
+                <td class="name-cell">
+                  {{ p.owner_name }}
+                  @if (p.note) { <span class="sub" [title]="p.note">{{ p.note }}</span> }
+                </td>
+                <td class="num">
+                  {{ num(p.points) }}
+                  @if (p.max_account_age_days) { <span class="sub">{{ 'loyalty.promo.new_only' | t : { n: p.max_account_age_days } }}</span> }
+                </td>
+                <td class="num">
+                  <bdi dir="ltr">{{ usesText(p) }}</bdi>
+                  @if (p.last_used_at) { <span class="sub">{{ 'loyalty.promo.last_used' | t }} <bdi dir="ltr">{{ p.last_used_at | date:'d MMM, HH:mm' }}</bdi></span> }
+                </td>
+                <td class="num">{{ num(p.points_awarded) }}</td>
+                <td><span class="pill" [ngClass]="'pill-' + p.promo_status">{{ ('loyalty.promo.status.' + p.promo_status) | t }}</span></td>
+                <td class="nowrap">
+                  @if (!p.starts_at && !p.ends_at) {
+                    <span class="muted">{{ 'loyalty.promo.no_dates' | t }}</span>
+                  } @else {
+                    <bdi dir="ltr">{{ p.starts_at ? (p.starts_at | date:'d MMM y, HH:mm') : '…' }}</bdi>
+                    <span class="sub"><bdi dir="ltr">→ {{ p.ends_at ? (p.ends_at | date:'d MMM y, HH:mm') : '…' }}</bdi></span>
+                  }
+                </td>
+                <td>
+                  <label class="switch" [class.readonly]="!canManage()">
+                    <input type="checkbox" [checked]="p.is_active" [disabled]="busy().has(p.id) || !canManage()"
+                           [attr.aria-label]="'loyalty.promo.active' | t"
+                           (change)="toggle(p, $any($event.target))" />
+                  </label>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <a class="link-btn" [routerLink]="['/dashboard/loyalty/promo-codes', p.id]">{{ 'loyalty.promo.used_by' | t }}</a>
+                    <button class="link-btn" *appCanManage="'loyalty'" (click)="openEdit(p)">{{ 'common.edit' | t }}</button>
+                    <button class="link-btn danger" *appCanManage="'loyalty'" [disabled]="busy().has(p.id)" (click)="remove(p)">{{ 'common.delete' | t }}</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>
+
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ (editing() ? 'loyalty.promo.edit' : 'loyalty.promo.add') | t }}</h3>
+        <button class="modal-close" (click)="closeForm()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.code' | t }} @if (!editing()) { <span class="optional">{{ 'common.optional' | t }}</span> }</label>
+            <input type="text" dir="ltr" class="mono-code" maxlength="40" autocomplete="off" spellcheck="false"
+                   [placeholder]="'loyalty.promo.code_ph' | t" [value]="code()" (input)="typeCode($any($event.target))" />
+            @if (shownError('code'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ (editing() ? 'loyalty.promo.code_hint_edit' : 'loyalty.promo.code_hint') | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.owner_label' | t }} <span class="req">*</span></label>
+            <input type="text" maxlength="191" [value]="owner()" (input)="set('owner_name', owner, $any($event.target).value)" />
+            @if (shownError('owner_name'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.points_label' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" max="1000000" step="1" dir="ltr" inputmode="numeric"
+                   [value]="points()" (input)="set('points', points, $any($event.target).value)" />
+            @if (shownError('points'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else if (editing()) { <span class="hint">{{ 'loyalty.promo.points_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.max_uses' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="number" min="1" step="1" dir="ltr" inputmode="numeric" [placeholder]="'loyalty.promo.no_limit' | t"
+                   [value]="maxUses()" (input)="set('max_uses', maxUses, $any($event.target).value)" />
+            @if (shownError('max_uses'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.max_age' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="number" min="1" max="3650" step="1" dir="ltr" inputmode="numeric" [placeholder]="'loyalty.promo.anyone' | t"
+                   [value]="maxAge()" (input)="set('max_account_age_days', maxAge, $any($event.target).value)" />
+            @if (shownError('max_account_age_days'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ 'loyalty.promo.max_age_hint' | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.audience' | t }}</label>
+            <select [value]="audience()" (change)="audience.set($any($event.target).value)">
+              @for (a of audiences; track a) { <option [value]="a">{{ ('loyalty.audience.' + a) | t }}</option> }
+            </select>
+            @if (shownError('audience'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.starts_at' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="datetime-local" dir="ltr" [value]="startsAt()" (input)="set('starts_at', startsAt, $any($event.target).value)" />
+            @if (shownError('starts_at'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.rules.ends_at' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="datetime-local" dir="ltr" [value]="endsAt()" [attr.min]="startsAt() || null" (input)="set('ends_at', endsAt, $any($event.target).value)" />
+            @if (shownError('ends_at'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.title_en' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="text" dir="ltr" maxlength="191" [placeholder]="'Promo code ' + defaultTitle()"
+                   [value]="titleEn()" (input)="set('title_en', titleEn, $any($event.target).value)" />
+            @if (shownError('title_en'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group">
+            <label>{{ 'loyalty.promo.title_ar' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="text" dir="rtl" maxlength="191" [placeholder]="'كود ترويجي ' + defaultTitle()"
+                   [value]="titleAr()" (input)="set('title_ar', titleAr, $any($event.target).value)" />
+            @if (shownError('title_ar'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+          <div class="form-group full">
+            <span class="hint">{{ 'loyalty.promo.titles_hint' | t }}</span>
+          </div>
+
+          <div class="form-group full">
+            <label>{{ 'loyalty.promo.note' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <textarea rows="2" maxlength="500" [value]="note()" (input)="set('note', note, $any($event.target).value)"></textarea>
+            @if (shownError('note'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint"><bdi dir="ltr">{{ note().length }} / 500</bdi></span> }
+          </div>
+
+          <div class="form-group full">
+            <label class="checkbox">
+              <input type="checkbox" [checked]="active()" (change)="active.set($any($event.target).checked)" />
+              {{ 'loyalty.promo.active' | t }}
+            </label>
+          </div>
+        </div>
+        @if (formError()) { <div class="form-error">{{ formError()! | t }}</div> }
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">{{ (saving() ? 'common.saving' : 'common.save') | t }}</button>
+      </div>
+    </div>
+  </div>
+}

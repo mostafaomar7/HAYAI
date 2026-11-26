@@ -38,7 +38,7 @@ export class AiGrants {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  readonly sources: AiAllocationSource[] = ['admin_grant', 'purchase', 'subscription'];
+  readonly sources: AiAllocationSource[] = ['admin_grant', 'purchase', 'subscription', 'loyalty_points'];
 
   loading = signal(true);
   failed = signal(false);
@@ -232,7 +232,7 @@ export class AiGrants {
   sourceClass(a: AiAllocation): string {
     const s = String(a.source || '');
     if (s === 'admin_grant') return 'pill-approved';
-    if (s === 'purchase') return 'pill-ok';
+    if (s === 'purchase' || s === 'loyalty_points') return 'pill-ok';
     return 'pill-draft';
   }
 

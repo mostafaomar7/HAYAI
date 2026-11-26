@@ -1,0 +1,80 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>{{ 'loyalty.ai.list_title' | t }}</h2>
+        <p class="sub">{{ 'loyalty.ai.list_subtitle' | t }}</p>
+      </div>
+      <div class="actions-area">
+        <a class="btn-secondary btn-sm" routerLink="/dashboard/loyalty/settings" style="text-decoration:none">{{ 'loyalty.ai.rate_settings' | t }}</a>
+      </div>
+    </div>
+
+    <div class="card-body filters">
+      <label class="field">
+        <span>{{ 'loyalty.ai.member_id' | t }}</span>
+        <input type="text" dir="ltr" inputmode="numeric" [value]="userId()" (input)="onUser($any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>{{ 'common.from' | t }}</span>
+        <input type="date" dir="ltr" [value]="from()" [max]="to() || null" (change)="setDate('from', $any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>{{ 'common.to' | t }}</span>
+        <input type="date" dir="ltr" [value]="to()" [min]="from() || null" (change)="setDate('to', $any($event.target).value)" />
+      </label>
+      @if (hasFilters()) {
+        <button class="btn-secondary btn-sm" (click)="clearFilters()">{{ 'common.reset' | t }}</button>
+      }
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.ai.date' | t }}</th>
+            <th>{{ 'loyalty.vouchers.member' | t }}</th>
+            <th>{{ 'loyalty.points' | t }}</th>
+            <th>{{ 'loyalty.ai.tokens' | t }}</th>
+            <th>{{ 'loyalty.ai.rate_then' | t }}</th>
+            <th>{{ 'loyalty.ai.used' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="6" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="6" class="table-hint">{{ 'loyalty.load_failed' | t }} <button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="6" class="table-hint">{{ (hasFilters() ? 'loyalty.ai.empty_filtered' : 'loyalty.ai.empty') | t }}</td></tr>
+          } @else {
+            @for (x of items(); track x.id) {
+              <tr>
+                <td class="nowrap"><bdi dir="ltr">{{ x.created_at | date:'d MMM y, HH:mm' }}</bdi></td>
+                <td class="name-cell">
+                  @if (x.member) {
+                    <a [routerLink]="['/dashboard/loyalty/accounts', x.member.id]">{{ x.member.name || ('#' + x.member.id) }}</a>
+                    @if (x.member.phone) { <span class="sub"><bdi dir="ltr">{{ x.member.phone }}</bdi></span> }
+                  } @else { — }
+                </td>
+                <td class="num">{{ num(x.points) }}</td>
+                <td class="num">{{ num(x.tokens) }}</td>
+                <td class="nowrap">
+                  @if (x.rate) {
+                    {{ 'loyalty.ai.rate_text' | t : { points: num(x.rate.points), tokens: num(x.rate.tokens) } }}
+                  } @else { — }
+                </td>
+                <td class="nowrap">
+                  {{ 'loyalty.ai.used_of' | t : { used: num(x.consumed_tokens ?? 0), total: num(x.tokens) } }}
+                  <span class="usage-bar" [attr.aria-hidden]="true"><span [style.width.%]="usedPercent(x)"></span></span>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>

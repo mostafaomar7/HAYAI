@@ -67,7 +67,9 @@
 }
 
 .inline-pair { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.inline-pair input { width: 120px; }
+.inline-pair input,
+.form-group .inline-pair input,
+.form-group .inline-pair select { width: 140px; flex: none; }
 
 .mono-code { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .5px; }
 
@@ -98,3 +100,11 @@ a.btn-secondary { display: inline-block; text-decoration: none; white-space: now
 @media (max-width: 900px) {
   .two-col { grid-template-columns: 1fr; }
 }
+
+/* Promo codes, AI exchanges (2026-11-26) */
+.pill-used_up { background: #FFF7ED; color: #C2410C; }
+.copy-btn { margin-inline-start: 6px; font-size: 12px; }
+.usage-bar { display: block; width: 90px; height: 4px; margin-top: 4px; border-radius: 2px; background: #E5E7EB; overflow: hidden; }
+.usage-bar > span { display: block; height: 100%; background: #2563EB; }
+a.card-link { display: block; color: inherit; text-decoration: none; transition: box-shadow 0.15s; }
+a.card-link:hover { box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08); }

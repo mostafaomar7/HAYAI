@@ -118,7 +118,8 @@ export interface AiUsageQuery {
 
 // ------------------------------------------------------------- allocations
 
-export type AiAllocationSource = 'admin_grant' | 'purchase' | 'subscription';
+/** `loyalty_points`: tokens a member bought with Hayai points (2026-11-24). */
+export type AiAllocationSource = 'admin_grant' | 'purchase' | 'subscription' | 'loyalty_points';
 
 export interface AiAllocation {
   id: number;

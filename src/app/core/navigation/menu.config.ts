@@ -35,6 +35,8 @@ export const MENU_ITEMS: MenuItem[] = [
       { id: 'LoyaltyPartners', label: 'menu.loyalty.partners', route: '/dashboard/loyalty/partners', area: 'loyalty' },
       { id: 'LoyaltyAccounts', label: 'menu.loyalty.accounts', route: '/dashboard/loyalty/accounts', area: 'loyalty' },
       { id: 'LoyaltyVouchers', label: 'menu.loyalty.vouchers', route: '/dashboard/loyalty/vouchers', area: 'loyalty' },
+      { id: 'LoyaltyAiExchanges', label: 'menu.loyalty.ai_exchanges', route: '/dashboard/loyalty/ai-exchanges', area: 'loyalty' },
+      { id: 'LoyaltyPromoCodes', label: 'menu.loyalty.promo_codes', route: '/dashboard/loyalty/promo-codes', area: 'loyalty' },
       { id: 'LoyaltySettings', label: 'menu.loyalty.settings', route: '/dashboard/loyalty/settings', area: 'loyalty' },
     ]
   },

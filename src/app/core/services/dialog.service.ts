@@ -44,6 +44,36 @@ export class DialogService {
   }
 
   /**
+   * Two actions and a way out: 'confirm' (the safe one, blue), 'deny' (the
+   * risky one, red), or null when the dialog is cancelled or dismissed.
+   */
+  async choose(opts: {
+    title: string;
+    text?: string;
+    confirmText: string;
+    denyText: string;
+    cancelText?: string;
+    icon?: 'warning' | 'question' | 'info' | 'error';
+    params?: DialogParams;
+  }): Promise<'confirm' | 'deny' | null> {
+    const result: SweetAlertResult = await Swal.fire({
+      title: this.t(opts.title, opts.params),
+      text: this.t(opts.text, opts.params),
+      icon: opts.icon ?? 'warning',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: this.t(opts.confirmText),
+      denyButtonText: this.t(opts.denyText),
+      cancelButtonText: this.t(opts.cancelText ?? 'common.cancel'),
+      confirmButtonColor: '#2563eb',
+      denyButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      reverseButtons: true
+    });
+    return result.isConfirmed ? 'confirm' : result.isDenied ? 'deny' : null;
+  }
+
+  /**
    * Prompt for input. Returns the string or null if cancelled.
    */
   async prompt(opts: {

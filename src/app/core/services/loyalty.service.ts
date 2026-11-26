@@ -42,6 +42,10 @@ export interface LoyaltyOverview {
   vouchers: Partial<Record<VoucherStatus, LoyaltyAmount>>;
   unsettled: LoyaltyAmount;
   partners_accepting: number;
+  /** Points swapped for AI tokens in the period (already inside `points.redeemed`). */
+  ai_exchanges?: { count: number; points: number; tokens: number; members: number } | null;
+  /** Promo-code uses in the period (already inside `points.earned`). */
+  promo_codes?: { redemptions: number; points: number; members: number; active_codes: number } | null;
 }
 
 // ---------------------------------------------------------------- settings
@@ -61,6 +65,13 @@ export interface LoyaltySettings {
   referral_window_days: number;
   terms_en: string | null;
   terms_ar: string | null;
+  /** Points → AI tokens (2026-11-24). Off by default; pilot accounts can use it while off. */
+  ai_exchange_enabled?: boolean;
+  ai_exchange_points?: number;
+  ai_exchange_tokens?: number;
+  ai_exchange_min_points?: number;
+  /** null: no maximum per exchange. */
+  ai_exchange_max_points?: number | null;
   updated_by?: number | null;
   updated_at?: string | null;
 }
@@ -251,6 +262,77 @@ export interface VoucherTotals { count: number; amount: number; points: number; 
 
 export interface SettleResult { settled_ids: number[]; skipped_ids: number[]; settled_amount: number; }
 
+// ------------------------------------------------------------ AI exchanges
+
+/** A member's points swapped for AI tokens, at the rate of that moment. Read-only. */
+export interface LoyaltyAiExchange {
+  id: number;
+  points: number;
+  tokens: number;
+  rate: { points: number; tokens: number } | null;
+  remaining_tokens: number | null;
+  consumed_tokens: number | null;
+  created_at: string;
+  member: { id: number; name?: string | null; phone?: string | null; user_type?: string | null } | null;
+  allocation_id?: number | null;
+  loyalty_entry_id?: number | null;
+}
+
+// ------------------------------------------------------------- promo codes
+
+export type PromoStatus = 'active' | 'scheduled' | 'ended' | 'used_up' | 'inactive';
+export const PROMO_STATUSES: PromoStatus[] = ['active', 'scheduled', 'ended', 'used_up', 'inactive'];
+
+/** A code an advertiser or influencer hands out; typing it in the app pays points. */
+export interface LoyaltyPromoCode {
+  id: number;
+  code: string;
+  owner_name: string;
+  title_en: string | null;
+  title_ar: string | null;
+  points: number;
+  /** null: no limit. */
+  max_uses: number | null;
+  uses_count: number;
+  remaining_uses: number | null;
+  points_awarded: number;
+  last_used_at: string | null;
+  /** null: any account. */
+  max_account_age_days: number | null;
+  audience: RuleAudience;
+  is_active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  promo_status: PromoStatus;
+  note: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
+}
+
+export interface LoyaltyPromoBody {
+  code?: string | null;
+  owner_name: string;
+  points: number;
+  max_uses: number | null;
+  max_account_age_days: number | null;
+  audience: RuleAudience;
+  is_active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  title_en: string | null;
+  title_ar: string | null;
+  note: string | null;
+}
+
+export interface LoyaltyPromoRedemption {
+  id: number;
+  points: number;
+  created_at: string;
+  member: { id: number; name?: string | null; phone?: string | null; user_type?: string | null; joined_at?: string | null } | null;
+  loyalty_entry_id?: number | null;
+}
+
 type Query = Record<string, string | number | null | undefined>;
 
 @Injectable({ providedIn: 'root' })
@@ -324,6 +406,41 @@ export class LoyaltyService {
   settle(voucherIds: number[], reference: string | null): Observable<SettleResult> {
     return this.api.post<SettleResult>(`${BASE}/vouchers/settle`, { voucher_ids: voucherIds, settlement_reference: reference });
   }
+
+  aiExchanges(q: Query): Observable<PagedResult<LoyaltyAiExchange>> {
+    return this.api.getPaged<LoyaltyAiExchange>(`${BASE}/ai-exchanges`, q);
+  }
+
+  promoCodes(q: Query): Observable<PagedResult<LoyaltyPromoCode>> {
+    return this.api.getPaged<LoyaltyPromoCode>(`${BASE}/promo-codes`, q);
+  }
+
+  /** Deleted (archived) codes too, for their history. */
+  promoCode(id: number): Observable<LoyaltyPromoCode> {
+    return this.api.get<LoyaltyPromoCode>(`${BASE}/promo-codes/${id}`);
+  }
+
+  createPromoCode(body: LoyaltyPromoBody): Observable<LoyaltyPromoCode> {
+    return this.api.post<LoyaltyPromoCode>(`${BASE}/promo-codes`, body);
+  }
+
+  updatePromoCode(id: number, body: Partial<LoyaltyPromoBody>): Observable<LoyaltyPromoCode> {
+    return this.api.patch<LoyaltyPromoCode>(`${BASE}/promo-codes/${id}`, body);
+  }
+
+  /** `purged: false` = it had been used, so it was archived (history kept). */
+  deletePromoCode(id: number): Observable<{ purged?: boolean } | null> {
+    return this.api.delete<{ purged?: boolean } | null>(`${BASE}/promo-codes/${id}`);
+  }
+
+  promoRedemptions(id: number, q: Query): Observable<PagedResult<LoyaltyPromoRedemption>> {
+    return this.api.getPaged<LoyaltyPromoRedemption>(`${BASE}/promo-codes/${id}/redemptions`, q);
+  }
+}
+
+/** What the server will store for a typed code: upper case, no spaces or dashes. */
+export function normaliseCode(v: string): string {
+  return v.toUpperCase().replace(/[\s-]+/g, '');
 }
 
 /** A 422's `errors` as one message per field, or null when it is not a 422. */

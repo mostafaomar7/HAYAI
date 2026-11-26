@@ -1,0 +1,76 @@
+<div class="page-container">
+  <p style="margin:0 0 12px"><a routerLink="/dashboard/loyalty/promo-codes">← {{ 'loyalty.promo.back' | t }}</a></p>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        @if (promo(); as p) {
+          <h2><span class="mono-code" dir="ltr">{{ p.code }}</span> · {{ p.owner_name }}</h2>
+          <p class="sub">
+            @if (p.deleted_at) { <span class="pill pill-inactive">{{ 'loyalty.promo.archived_label' | t }}</span> }
+            @else { <span class="pill" [ngClass]="'pill-' + p.promo_status">{{ ('loyalty.promo.status.' + p.promo_status) | t }}</span> }
+            · {{ 'loyalty.promo.points_each' | t : { n: num(p.points) } }}
+            · {{ 'loyalty.promo.uses' | t }} <bdi dir="ltr">{{ usesText(p) }}</bdi>
+            · {{ 'loyalty.promo.awarded' | t }} <bdi dir="ltr">{{ num(p.points_awarded) }}</bdi>
+          </p>
+        } @else if (promoFailed()) {
+          <h2>{{ 'loyalty.promo.used_by' | t }}</h2>
+          <p class="sub">{{ 'loyalty.load_failed' | t }}</p>
+        } @else {
+          <h2>{{ 'loyalty.promo.used_by' | t }}</h2>
+          <p class="sub">{{ 'common.loading' | t }}</p>
+        }
+      </div>
+      <div class="actions-area filters">
+        <label class="field">
+          <span>{{ 'common.from' | t }}</span>
+          <input type="date" dir="ltr" [value]="from()" [max]="to() || null" (change)="setDate('from', $any($event.target).value)" />
+        </label>
+        <label class="field">
+          <span>{{ 'common.to' | t }}</span>
+          <input type="date" dir="ltr" [value]="to()" [min]="from() || null" (change)="setDate('to', $any($event.target).value)" />
+        </label>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'loyalty.ai.date' | t }}</th>
+            <th>{{ 'loyalty.vouchers.member' | t }}</th>
+            <th>{{ 'loyalty.promo.joined' | t }}</th>
+            <th>{{ 'loyalty.points' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="4" class="table-hint">{{ 'common.loading' | t }}</td></tr>
+          } @else if (failed()) {
+            <tr><td colspan="4" class="table-hint">{{ 'loyalty.load_failed' | t }} <button class="btn-secondary btn-sm" (click)="load()">{{ 'common.retry' | t }}</button></td></tr>
+          } @else if (!items().length) {
+            <tr><td colspan="4" class="table-hint">{{ 'loyalty.promo.no_uses' | t }}</td></tr>
+          } @else {
+            @for (r of items(); track r.id) {
+              <tr>
+                <td class="nowrap"><bdi dir="ltr">{{ r.created_at | date:'d MMM y, HH:mm' }}</bdi></td>
+                <td class="name-cell">
+                  @if (r.member) {
+                    <a [routerLink]="['/dashboard/loyalty/accounts', r.member.id]">{{ r.member.name || ('#' + r.member.id) }}</a>
+                    @if (r.member.phone) { <span class="sub"><bdi dir="ltr">{{ r.member.phone }}</bdi></span> }
+                  } @else { — }
+                </td>
+                <td class="nowrap">
+                  @if (r.member?.joined_at) { <bdi dir="ltr">{{ r.member!.joined_at | date:'d MMM y, HH:mm' }}</bdi> } @else { — }
+                </td>
+                <td class="num">{{ num(r.points) }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [page]="page()" [perPage]="perPage" [total]="total()" (pageChange)="goToPage($event)" />
+  </div>
+</div>

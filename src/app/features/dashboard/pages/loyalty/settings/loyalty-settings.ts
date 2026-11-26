@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DialogService } from '../../../../../core/services/dialog.service';
 import {
   LoyaltyService,
@@ -22,7 +23,7 @@ import { LoyaltyPage, numOrNull } from '../loyalty-shared';
 @Component({
   selector: 'app-loyalty-settings',
   standalone: true,
-  imports: [CommonModule, TPipe],
+  imports: [CommonModule, TPipe, RouterLink],
   templateUrl: './loyalty-settings.html',
   styleUrls: ['../../website/shared/website.shared.css', '../loyalty.css']
 })
@@ -52,6 +53,15 @@ export class LoyaltySettingsPage extends LoyaltyPage {
   termsEn = signal('');
   termsAr = signal('');
 
+  // AI tokens with points (its own card, Save and switch)
+  readonly aiMaxValue = 100_000_000;
+  aiPoints = signal('');
+  aiTokens = signal('');
+  aiMin = signal('');
+  aiMax = signal('');
+  aiSaving = signal(false);
+  aiSwitching = signal(false);
+
   constructor() {
     super();
     this.load();
@@ -78,8 +88,114 @@ export class LoyaltySettingsPage extends LoyaltyPage {
     this.referralDays.set(String(s.referral_window_days ?? ''));
     this.termsEn.set(s.terms_en ?? '');
     this.termsAr.set(s.terms_ar ?? '');
+    this.fillAi(s);
     this.fieldErrors.set({});
     this.formError.set(null);
+  }
+
+  private fillAi(s: LoyaltySettings): void {
+    const str = (v: number | null | undefined) => (v === null || v === undefined ? '' : String(v));
+    this.aiPoints.set(str(s.ai_exchange_points));
+    this.aiTokens.set(str(s.ai_exchange_tokens));
+    this.aiMin.set(str(s.ai_exchange_min_points));
+    this.aiMax.set(str(s.ai_exchange_max_points));
+  }
+
+  // ---------------------------------------------------------------- AI tokens
+
+  private aiValues = computed(() => ({
+    ai_exchange_points: numOrNull(this.aiPoints()),
+    ai_exchange_tokens: numOrNull(this.aiTokens()),
+    ai_exchange_min_points: numOrNull(this.aiMin()),
+    // Empty = no maximum, sent as null so it clears.
+    ai_exchange_max_points: numOrNull(this.aiMax())
+  }));
+
+  aiClientErrors = computed(() => {
+    const v = this.aiValues();
+    const e: Record<string, string> = {};
+    const ok = (n: number | null) => n !== null && Number.isInteger(n) && n >= 1 && n <= this.aiMaxValue;
+    if (!ok(v.ai_exchange_points)) e['ai_exchange_points'] = 'loyalty.ai.err.range';
+    if (!ok(v.ai_exchange_tokens)) e['ai_exchange_tokens'] = 'loyalty.ai.err.range';
+    if (!ok(v.ai_exchange_min_points)) e['ai_exchange_min_points'] = 'loyalty.ai.err.range';
+    if (v.ai_exchange_max_points !== null) {
+      if (!ok(v.ai_exchange_max_points)) e['ai_exchange_max_points'] = 'loyalty.ai.err.range';
+      else if (ok(v.ai_exchange_min_points) && v.ai_exchange_max_points < v.ai_exchange_min_points!) e['ai_exchange_max_points'] = 'loyalty.ai.err.max';
+    }
+    return e;
+  });
+
+  aiErrorFor(field: string): string | null {
+    return this.fieldErrors()[field] ?? this.aiClientErrors()[field] ?? null;
+  }
+
+  aiChanges = computed<LoyaltySettingsPatch>(() => {
+    const s = this.saved();
+    if (!s) return {};
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(this.aiValues())) {
+      if (val !== ((s as unknown as Record<string, unknown>)[k] ?? null)) out[k] = val;
+    }
+    return out as LoyaltySettingsPatch;
+  });
+
+  aiDirty = computed(() => Object.keys(this.aiChanges()).length > 0);
+  canSaveAi = computed(() => this.canManage() && this.aiDirty() && !this.aiSaving() && !Object.keys(this.aiClientErrors()).length);
+
+  saveAi(): void {
+    if (!this.canSaveAi()) return;
+    const s = this.saved()!;
+    this.aiSaving.set(true);
+    this.fieldErrors.set({});
+    this.svc.updateSettings(this.aiChanges()).subscribe({
+      next: r => {
+        this.aiSaving.set(false);
+        // Only the AI fields: anything typed in the other card stays as typed.
+        const next = { ...s, ...r };
+        this.saved.set(next);
+        this.fillAi(next);
+        this.dialog.toast('success', 'loyalty.saved');
+      },
+      error: err => {
+        this.aiSaving.set(false);
+        const fe = fieldErrorsOf(err);
+        if (fe) { this.fieldErrors.set(fe); return; }
+        this.dialog.error('loyalty.save_failed', messageOf(err, 'loyalty.save_failed'));
+      }
+    });
+  }
+
+  resetAi(): void {
+    const s = this.saved();
+    if (s) this.fillAi(s);
+  }
+
+  /** Its own confirmed action, like the program switch: members can use it at once. */
+  async toggleAi(box: HTMLInputElement): Promise<void> {
+    const s = this.saved();
+    if (!s || !this.canManage()) { box.checked = !!s?.ai_exchange_enabled; return; }
+    const turningOn = box.checked;
+    const ok = await this.dialog.confirm({
+      title: turningOn ? 'loyalty.ai.on_title' : 'loyalty.ai.off_title',
+      text: turningOn ? 'loyalty.ai.on_text' : 'loyalty.ai.off_text',
+      confirmText: turningOn ? 'loyalty.settings.turn_on' : 'loyalty.settings.turn_off',
+      danger: !turningOn,
+      params: { points: this.num(s.ai_exchange_points), tokens: this.num(s.ai_exchange_tokens) }
+    });
+    if (!ok) { box.checked = !!s.ai_exchange_enabled; return; }
+    this.aiSwitching.set(true);
+    this.svc.updateSettings({ ai_exchange_enabled: turningOn }).subscribe({
+      next: r => {
+        this.aiSwitching.set(false);
+        this.saved.set({ ...s, ai_exchange_enabled: r?.ai_exchange_enabled ?? turningOn });
+        this.dialog.toast('success', turningOn ? 'loyalty.ai.turned_on' : 'loyalty.ai.turned_off');
+      },
+      error: err => {
+        this.aiSwitching.set(false);
+        box.checked = !!s.ai_exchange_enabled;
+        this.dialog.error('loyalty.save_failed', messageOf(err, 'loyalty.save_failed'));
+      }
+    });
   }
 
   /** What the form says, as the API wants it. NaN marks a field that is not a number. */
@@ -195,7 +311,10 @@ export class LoyaltySettingsPage extends LoyaltyPage {
     this.svc.updateSettings(this.changes()).subscribe({
       next: r => {
         this.saving.set(false);
+        // The AI card has its own Save: keep what is typed there.
+        const ai = this.aiDirty() ? [this.aiPoints(), this.aiTokens(), this.aiMin(), this.aiMax()] : null;
         this.fill(r);
+        if (ai) { this.aiPoints.set(ai[0]); this.aiTokens.set(ai[1]); this.aiMin.set(ai[2]); this.aiMax.set(ai[3]); }
         this.dialog.toast('success', 'loyalty.saved');
       },
       error: err => {

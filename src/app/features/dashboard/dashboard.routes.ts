@@ -337,6 +337,21 @@ export const DASHBOARD_ROUTES: Routes = [
     loadComponent: () => import('./pages/loyalty/accounts/loyalty-account').then(m => m.LoyaltyAccountPage)
   },
   {
+    path: 'loyalty/promo-codes',
+    data: { title: 'menu.loyalty.promo_codes' },
+    loadComponent: () => import('./pages/loyalty/promo-codes/loyalty-promo-codes').then(m => m.LoyaltyPromoCodesPage)
+  },
+  {
+    path: 'loyalty/promo-codes/:id',
+    data: { title: 'menu.loyalty.promo_codes' },
+    loadComponent: () => import('./pages/loyalty/promo-codes/loyalty-promo-redemptions').then(m => m.LoyaltyPromoRedemptionsPage)
+  },
+  {
+    path: 'loyalty/ai-exchanges',
+    data: { title: 'menu.loyalty.ai_exchanges' },
+    loadComponent: () => import('./pages/loyalty/ai-exchanges/loyalty-ai-exchanges').then(m => m.LoyaltyAiExchangesPage)
+  },
+  {
     path: 'loyalty/vouchers',
     data: { title: 'menu.loyalty.vouchers' },
     loadComponent: () => import('./pages/loyalty/vouchers/loyalty-vouchers').then(m => m.LoyaltyVouchersPage)

@@ -136,5 +136,73 @@
         }
       </div>
     </div>
+
+    <!-- AI tokens with points: own switch (confirmed) and own Save -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>{{ 'loyalty.ai.title' | t }}</h2>
+          <p class="sub">{{ 'loyalty.ai.subtitle' | t }}</p>
+        </div>
+        <div class="actions-area">
+          <label class="switch" [class.readonly]="!canManage()">
+            <input type="checkbox" [checked]="!!s.ai_exchange_enabled" [disabled]="aiSwitching() || !canManage()"
+                   (change)="toggleAi($any($event.target))" />
+            {{ 'loyalty.ai.enabled' | t }}
+            <span class="pill" [ngClass]="s.ai_exchange_enabled ? 'pill-active' : 'pill-inactive'">{{ (s.ai_exchange_enabled ? 'loyalty.on' : 'loyalty.off') | t }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="muted" style="margin:0 0 14px">{{ 'loyalty.ai.pilot_hint' | t }}</p>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>{{ 'loyalty.ai.rate' | t }} <span class="req">*</span></label>
+            <!-- "1000 points = 20000 AI tokens", both numbers editable -->
+            <div class="inline-pair">
+              <input type="number" min="1" [attr.max]="aiMaxValue" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                     [attr.aria-label]="'loyalty.ai.points' | t"
+                     [value]="aiPoints()" (input)="edit('ai_exchange_points', aiPoints, $any($event.target).value)" />
+              <span>{{ 'loyalty.ai.points_eq' | t }}</span>
+              <input type="number" min="1" [attr.max]="aiMaxValue" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                     [attr.aria-label]="'loyalty.ai.tokens' | t"
+                     [value]="aiTokens()" (input)="edit('ai_exchange_tokens', aiTokens, $any($event.target).value)" />
+              <span>{{ 'loyalty.ai.tokens_word' | t }}</span>
+            </div>
+            @if (aiErrorFor('ai_exchange_points'); as e) { <span class="field-error">{{ 'loyalty.ai.points' | t }}: {{ e | t }}</span> }
+            @if (aiErrorFor('ai_exchange_tokens'); as e) { <span class="field-error">{{ 'loyalty.ai.tokens' | t }}: {{ e | t }}</span> }
+            <span class="hint">{{ 'loyalty.ai.rate_hint' | t }}</span>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.ai.min' | t }} <span class="req">*</span></label>
+            <input type="number" min="1" [attr.max]="aiMaxValue" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                   [value]="aiMin()" (input)="edit('ai_exchange_min_points', aiMin, $any($event.target).value)" />
+            @if (aiErrorFor('ai_exchange_min_points'); as e) { <span class="field-error">{{ e | t }}</span> }
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'loyalty.ai.max' | t }} <span class="optional">{{ 'common.optional' | t }}</span></label>
+            <input type="number" min="1" [attr.max]="aiMaxValue" step="1" dir="ltr" inputmode="numeric" [disabled]="!canManage()"
+                   [placeholder]="'loyalty.settings.no_max' | t"
+                   [value]="aiMax()" (input)="edit('ai_exchange_max_points', aiMax, $any($event.target).value)" />
+            @if (aiErrorFor('ai_exchange_max_points'); as e) { <span class="field-error">{{ e | t }}</span> }
+            @else { <span class="hint">{{ 'loyalty.ai.max_hint' | t }}</span> }
+          </div>
+        </div>
+
+        @if (canManage()) {
+          <div class="row" style="justify-content:flex-end">
+            <button class="btn-secondary" [disabled]="!aiDirty() || aiSaving()" (click)="resetAi()">{{ 'common.cancel' | t }}</button>
+            <button class="btn-primary" [disabled]="!canSaveAi()" (click)="saveAi()">
+              {{ (aiSaving() ? 'common.saving' : 'common.save') | t }}
+            </button>
+          </div>
+        }
+        <p class="muted" style="margin:12px 0 0">
+          <a routerLink="/dashboard/loyalty/ai-exchanges">{{ 'loyalty.ai.see_exchanges' | t }}</a>
+        </p>
+      </div>
+    </div>
   }
 </div>
